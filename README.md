@@ -1,8 +1,13 @@
 # FetchSandbox Playground
 
-5 small brownfield apps with planted bugs in real API integrations.
-Clone, run, point your agent at it, see whether [FetchSandbox](https://fetchsandbox.com)
-catches the bug.
+> **Open-source test project for [FetchSandbox](https://fetchsandbox.com).**
+> 5 brownfield apps with planted bugs in real API integrations. Run them
+> against your agent, write up what you found, open a PR. Merged PRs
+> appear on your GitHub contribution graph and in the
+> [contributors](https://github.com/fetchsandbox/playground/graphs/contributors)
+> list.
+
+Clone, run, point your agent at it, see whether FetchSandbox catches the bug.
 
 ## What's in here
 
@@ -42,11 +47,30 @@ hand back a receipt URL. That's the proof artifact.
 
 Each app's README has the suggested prompt + expected outcome.
 
-## How to send feedback
+## How to contribute findings
 
-Tried it? **Open a GitHub issue** at
-[github.com/fetchsandbox/playground/issues/new](https://github.com/fetchsandbox/playground/issues/new)
-with [FEEDBACK.md](FEEDBACK.md) filled in. Takes 2 minutes.
+1. **Fork** the repo on GitHub.
+2. **Create a branch** named for yourself, e.g. `jane-doe/stripe`.
+3. **Copy** [FINDINGS_TEMPLATE.md](FINDINGS_TEMPLATE.md) into the
+   `findings/` folder. Name your file using the pattern:
+   ```
+   findings/<YYYY-MM-DD>-<app>-<your-github-username>.md
+   ```
+   e.g. `findings/2026-06-24-stripe-jane-doe.md`.
+4. **Fill it in** with the prompt, the agent's tool-call sequence, the
+   receipt URLs you got back (or "none" if the agent never produced any),
+   the bug + fix, and an honest 1–10 rating of the brain. See
+   [findings/EXAMPLE-2026-06-24-stripe-example-contributor.md](findings/EXAMPLE-2026-06-24-stripe-example-contributor.md)
+   for the shape.
+5. **Open a PR** against `main`. Once merged it shows up on your GitHub
+   contribution graph and on the
+   [contributors](https://github.com/fetchsandbox/playground/graphs/contributors)
+   page.
+
+**Filename pattern matters** — the `<date>-<app>-<username>` shape makes
+contributor diversity visible at a glance and keeps date/app/author
+searchable. PRs that don't follow the pattern will be asked to rename
+before merge.
 
 What we want to learn:
 - Did the brain match the right bug pattern?
@@ -54,7 +78,9 @@ What we want to learn:
 - What did your agent do well / badly?
 - What was missing?
 
-Honest negative feedback is more useful than green-checkmark feedback.
+**Honest negative findings are more valuable than green-checkmark ones.**
+If your session failed or the receipt was misleading, write that up — that's
+the most useful PR you can ship.
 
 ## License
 
