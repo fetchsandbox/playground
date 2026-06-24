@@ -1,0 +1,5 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+pyjwt==2.9.0
+cryptography==43.0.1
+pydantic==2.9.2
