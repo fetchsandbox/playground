@@ -56,6 +56,9 @@ def send_reminder(appointment_id: str) -> dict:
     if not contact:
         raise HTTPException(404, "Contact not found")
 
+    if contact.get("sms_status") == "opted_out":
+        raise HTTPException(403, "Contact has opted out of SMS — TCPA prohibits sending")
+
     # Send via Surge API.
     with httpx.Client() as client:
         resp = client.post(
@@ -87,6 +90,13 @@ async def surge_webhook(
         for contact_id, contact in contacts.items():
             if contact["phone"] == phone:
                 contacts[contact_id]["last_delivery_at"] = payload.get("created_at")
+                break
+
+    elif event_type in ("contact.opted_out", "message.opted_out"):
+        phone = payload.get("data", {}).get("phone") or payload.get("data", {}).get("to")
+        for contact_id, contact in contacts.items():
+            if contact["phone"] == phone:
+                contacts[contact_id]["sms_status"] = "opted_out"
                 break
 
     return {"received": True}
