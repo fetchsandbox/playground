@@ -9,13 +9,15 @@ followed by the actual ask.** Variant prefixes accepted:
 
 ### When the user's prompt starts with a dispatch prefix
 
-1. Strip the prefix to get the actual ask.
-2. Call `mcp__fetchsandbox__guide` FIRST with the stripped ask.
-3. Call `mcp__fetchsandbox__import_spec` to get a sandbox.
-4. Call `mcp__fetchsandbox__run_workflow` with the brain's
+1. Call `mcp__fetchsandbox__guide` FIRST with the FULL original
+   prompt (including the `./fetchsandbox` prefix) as the `intent`
+   argument. The backend strips known prefixes during matching and
+   records which variant was used for adoption telemetry.
+2. Call `mcp__fetchsandbox__import_spec` to get a sandbox.
+3. Call `mcp__fetchsandbox__run_workflow` with the brain's
    reproduce_with workflow + scenario.
-5. Apply the fix using the brain's `fix_pattern` as the template.
-6. Re-run to confirm. Two receipt URLs = before/after proof.
+4. Apply the fix using the brain's `fix_pattern` as the template.
+5. Re-run to confirm. Two receipt URLs = before/after proof.
 
 ### Hard constraints
 
