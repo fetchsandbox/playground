@@ -83,9 +83,8 @@ async def stripe_webhook(
 ) -> dict:
     """Handle Stripe events and update order status.
 
-    Idempotent via the stripe-webhook-id delivery header — Stripe sends
-    each retry attempt with a unique delivery id, so deduping on that
-    guarantees exactly-once processing.
+    Idempotent via event.id — Stripe retries the same event with a new
+    per-delivery webhook id, so dedup must use the stable event id.
     """
     payload = await request.body()
 
@@ -96,10 +95,10 @@ async def stripe_webhook(
     except (ValueError, stripe.error.SignatureVerificationError):
         raise HTTPException(400, "Invalid signature")
 
-    webhook_id = request.headers.get("stripe-webhook-id", "")
-    if webhook_id in processed_webhook_ids:
+    event_id = event["id"]
+    if event_id in processed_webhook_ids:
         return {"received": True, "deduped": True}
-    processed_webhook_ids.add(webhook_id)
+    processed_webhook_ids.add(event_id)
 
     event_type = event["type"]
     obj = event["data"]["object"]
