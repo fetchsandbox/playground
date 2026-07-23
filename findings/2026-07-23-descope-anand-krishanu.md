@@ -1,4 +1,70 @@
-# descope (Agent Gateway) — 2026-07-23
+# descope — 2026-07-23 (two tasks: greenfield OTP + brownfield bug hunt)
+
+---
+
+# Task 1 — descope-onboarding (greenfield OTP) — 2026-07-23
+
+**Prompt:** `./fetchsandbox I'm adding Descope OTP sign-up to this app — prove the Descope OTP + session flow in the sandbox before writing any code, then propose the diff. I'll decide whether to apply.`
+
+**Agent / IDE:** Claude Code (Opus 4.8), MCP via `.mcp.json` in `apps/descope-onboarding/`.
+
+**Receipt URLs:**
+- https://fetchsandbox.com/runs/e0a579f709?flow=run_77268a7a-d746-48b9-9bdc-15bf2a6d6dbb (quickrun)
+- https://fetchsandbox.com/runs/e0a579f709?flow=run_8cd9eda1-5775-40a1-98fe-deae0973e970 (traced run)
+
+**Score: 8/10** — the strong run. Proved the flow before writing any code,
+proposed a diff that actually fits the app, and asked before applying. Docked for
+a receipt that contradicts the tool output on webhooks, and an unverifiable SDK
+version pin.
+
+---
+
+## Outcome
+
+Did exactly what the task asked, in the right order:
+
+1. `guide` → `otp_signup_email` (0.85) + one genuinely diff-changing question
+   (session model). Answered "Both".
+2. `quickrun` + `run_workflow` → **receipt first**, before any code.
+3. *Then* read `main.py` / `README.md` and proposed a diff.
+4. Did **not** apply it — ended on "Want me to apply this?"
+
+That "prove first, propose second, don't apply" sequence is the entire point of
+the greenfield task and it hit all three.
+
+## The diff is correct and fits the app
+
+The placeholder in `apps/descope-onboarding/main.py` has a real structural gap:
+`/signup` returns a fake token in one shot, but OTP needs two round-trips. The
+agent caught that and split it into `/signup` (send code) + `/signup/verify`
+(exchange code → session), and replaced the forge-anything `_current_user` with
+`descope_client.validate_session(...)`. It honored the "Both" answer by using the
+SDK's `validate_session` for the web path. Matches both `TODO(descope)` comments
+in the source. Sane and applyable, not boilerplate.
+
+## The one real bug
+
+**The receipt contradicts what the agent reported.** The agent relayed the run
+as "3/3 passed, webhooks fired: UserCreated, LoginSucceeded" — and the MCP tool
+JSON did say that (`webhook_verification: passed, 2/2`). But the linked receipt
+page itself reads **"ok failed webhook"** and **"0 Webhook deliveries"**. Tool
+output and the proof artifact disagree on whether the webhooks actually
+delivered. The receipt is supposed to be the source of truth; here it doesn't
+match the tool result the agent trusted.
+
+## Smaller notes
+
+- **`descope==1.6.5` is an unverified pin.** The no-venv rule means the agent
+  couldn't install it to confirm the version or the SDK method names
+  (`otp.sign_up`, `otp.verify_code`, `validate_session`). Check before applying.
+- **No receipt-vs-code disclaimer here.** Task 2's `verify_behavior` stated
+  plainly "reference handlers, NOT your code." This greenfield receipt doesn't
+  say what it ran against. Different task (proving a flow shape, not a fix), but
+  worth noting the honesty is task-dependent, not built in everywhere.
+
+---
+
+# Task 2 — descope Agent Gateway (brownfield bug hunt) — 2026-07-23
 
 **Prompt:** `./fetchsandbox something's off with this descope integration — investigate it, fix whatever is wrong, and prove it.`
 
