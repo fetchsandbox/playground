@@ -48,7 +48,13 @@ def exchange(body: ExchangeReq) -> dict:
     """Exchange a Descope access key for a scoped session JWT."""
     rec = _key(body.accessKey)
     requested = ((body.loginOptions or {}).get("customClaims") or {}).get("scopes")
-    scopes = requested if requested else rec["scopes"]
+    if requested:
+        extra = set(requested) - set(rec["scopes"])
+        if extra:
+            raise HTTPException(403, f"scopes {sorted(extra)} not granted to this key")
+        scopes = requested
+    else:
+        scopes = rec["scopes"]
     token = jwt.encode({"sub": rec["agent"], "scopes": scopes}, SESSION_SECRET, algorithm="HS256")
     return {"sessionJwt": token, "scopes": scopes}
 
