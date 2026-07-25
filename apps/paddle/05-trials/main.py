@@ -24,7 +24,7 @@ async def paddle_webhook(request: Request) -> dict:
         subscriptions[sid] = {
             "id": sid,
             "customer_id": data.get("customer_id", ""),
-            "status": "created",
+            "status": data.get("status", "trialing"),
         }
 
     elif event_type == "subscription.trialing":
@@ -33,7 +33,7 @@ async def paddle_webhook(request: Request) -> dict:
             subscriptions[sid]["trial_ends_at"] = data.get("next_billed_at", "")
 
     elif event_type == "subscription.activated":
-        if sid in subscriptions and subscriptions[sid]["status"] == "trialing":
+        if sid in subscriptions:
             subscriptions[sid]["status"] = "active"
             subscriptions[sid].pop("trial_ends_at", None)
 
