@@ -28,7 +28,7 @@ async def paddle_webhook(request: Request) -> dict:
             "id": sid,
             "customer_id": data.get("customer_id", ""),
             "plan_id": plan_id,
-            "status": "created",
+            "status": data.get("status", "active"),
             "updated_at": occurred_at,
         }
 
@@ -42,6 +42,7 @@ async def paddle_webhook(request: Request) -> dict:
             items = data.get("items") or []
             plan_id = items[0].get("price", {}).get("product_id", "") if items else subscriptions[sid]["plan_id"]
             subscriptions[sid]["plan_id"] = plan_id
+            subscriptions[sid]["status"] = data.get("status", subscriptions[sid]["status"])
             subscriptions[sid]["updated_at"] = occurred_at
 
     return {"received": True}
