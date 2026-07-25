@@ -23,12 +23,15 @@ async def paddle_webhook(request: Request) -> dict:
 
     if event_type == "transaction.completed":
         account_id = (data.get("custom_data") or {}).get("account_id", "")
-        quantity = int((data.get("details", {}).get("line_items") or [{}])[0].get("quantity", 1))
-        if account_id:
+        quantity = int((data.get("details", {}).get("line_items") or [{}])[0].get("quantity", 0))
+        txn_id = data.get("id")
+        if account_id and txn_id:
             acc = accounts.setdefault(account_id, {"credits": 0, "transactions": []})
-            credits = quantity * CREDITS_PER_UNIT
-            acc["credits"] += credits
-            acc["transactions"].append({"transaction_id": data.get("id"), "credits": credits})
+            already_seen = any(t["transaction_id"] == txn_id for t in acc["transactions"])
+            if not already_seen:
+                credits = quantity * CREDITS_PER_UNIT
+                acc["credits"] += credits
+                acc["transactions"].append({"transaction_id": txn_id, "credits": credits})
 
     return {"received": True}
 
