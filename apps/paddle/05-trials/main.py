@@ -6,11 +6,31 @@ Surface:
 """
 from __future__ import annotations
 
+import logging
+
 from fastapi import FastAPI, Request
 
+logger = logging.getLogger(__name__)
 app = FastAPI(title="Helix Trial")
 
 subscriptions: dict[str, dict] = {}
+
+HANDLED_EVENTS = {
+    "subscription.created",
+    "subscription.trialing",
+    "subscription.activated",
+    "subscription.canceled",
+}
+
+
+def _upsert(sid: str, data: dict) -> dict:
+    if sid not in subscriptions:
+        subscriptions[sid] = {
+            "id": sid,
+            "customer_id": data.get("customer_id", ""),
+            "status": "created",
+        }
+    return subscriptions[sid]
 
 
 @app.post("/webhook")
@@ -20,6 +40,10 @@ async def paddle_webhook(request: Request) -> dict:
     data = event.get("data", {})
     sid = data.get("id", "")
 
+    if event_type not in HANDLED_EVENTS:
+        logger.warning("unhandled paddle event type: %s", event_type)
+        return {"received": True}
+
     if event_type == "subscription.created":
         subscriptions[sid] = {
             "id": sid,
@@ -28,18 +52,19 @@ async def paddle_webhook(request: Request) -> dict:
         }
 
     elif event_type == "subscription.trialing":
-        if sid in subscriptions:
-            subscriptions[sid]["status"] = "trialing"
-            subscriptions[sid]["trial_ends_at"] = data.get("next_billed_at", "")
+        sub = _upsert(sid, data)
+        sub["status"] = "trialing"
+        sub["trial_ends_at"] = data.get("next_billed_at", "")
 
     elif event_type == "subscription.activated":
-        if sid in subscriptions and subscriptions[sid]["status"] == "trialing":
-            subscriptions[sid]["status"] = "active"
-            subscriptions[sid].pop("trial_ends_at", None)
+        sub = _upsert(sid, data)
+        if sub["status"] != "canceled":
+            sub["status"] = "active"
+            sub.pop("trial_ends_at", None)
 
     elif event_type == "subscription.canceled":
-        if sid in subscriptions:
-            subscriptions[sid]["status"] = "canceled"
+        sub = _upsert(sid, data)
+        sub["status"] = "canceled"
 
     return {"received": True}
 
