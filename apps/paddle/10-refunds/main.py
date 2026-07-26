@@ -31,10 +31,16 @@ async def paddle_webhook(request: Request) -> dict:
                 "access": True,
             }
 
-    elif event_type == "transaction.refunded":
-        if license_id in licenses:
-            licenses[license_id]["status"] = "refunded"
-            licenses[license_id]["access"] = False
+    elif event_type == "adjustment.created":
+        action = data.get("action", "")
+        status = data.get("status", "")
+        adj_transaction_id = data.get("transaction_id", "")
+        if action == "refund" and status == "approved":
+            for lic in licenses.values():
+                if lic["transaction_id"] == adj_transaction_id:
+                    lic["status"] = "refunded"
+                    lic["access"] = False
+                    break
 
     return {"received": True}
 
