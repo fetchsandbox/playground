@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 app = FastAPI(title="Aterna Cloud")
 
 accounts: dict[str, dict] = {}
+processed_events: set[str] = set()
 
 CREDITS_PER_UNIT = 100
 
@@ -18,8 +19,12 @@ CREDITS_PER_UNIT = 100
 @app.post("/webhook")
 async def paddle_webhook(request: Request) -> dict:
     event = await request.json()
+    event_id = event.get("event_id", "")
     event_type = event.get("event_type", "")
     data = event.get("data", {})
+
+    if event_id and event_id in processed_events:
+        return {"received": True}
 
     if event_type == "transaction.completed":
         account_id = (data.get("custom_data") or {}).get("account_id", "")
@@ -29,6 +34,9 @@ async def paddle_webhook(request: Request) -> dict:
             credits = quantity * CREDITS_PER_UNIT
             acc["credits"] += credits
             acc["transactions"].append({"transaction_id": data.get("id"), "credits": credits})
+
+    if event_id:
+        processed_events.add(event_id)
 
     return {"received": True}
 
