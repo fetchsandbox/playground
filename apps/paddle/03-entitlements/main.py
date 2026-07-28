@@ -24,20 +24,12 @@ async def paddle_webhook(request: Request) -> dict:
         subscriptions[sid] = {
             "id": sid,
             "customer_id": data.get("customer_id", ""),
-            "status": data.get("status", "active"),
-        }
-
-    elif event_type == "subscription.trialing":
-        subscriptions[sid] = {
-            "id": sid,
-            "customer_id": data.get("customer_id", ""),
-            "status": "trialing",
+            "status": "created",
         }
 
     elif event_type == "subscription.activated":
-        existing = subscriptions.get(sid, {"id": sid, "customer_id": data.get("customer_id", "")})
-        existing["status"] = "active"
-        subscriptions[sid] = existing
+        if sid in subscriptions:
+            subscriptions[sid]["status"] = "active"
 
     elif event_type == "subscription.canceled":
         subscriptions.pop(sid, None)
@@ -48,6 +40,6 @@ async def paddle_webhook(request: Request) -> dict:
 @app.get("/entitlements/{subscription_id}")
 def check_entitlement(subscription_id: str) -> dict:
     sub = subscriptions.get(subscription_id)
-    if not sub or sub["status"] not in ("active", "trialing"):
+    if not sub or sub["status"] != "active":
         return {"subscription_id": subscription_id, "entitled": False}
     return {"subscription_id": subscription_id, "entitled": True, "status": sub["status"]}

@@ -23,14 +23,10 @@ async def paddle_webhook(request: Request) -> dict:
     if event_type == "subscription.created":
         subscriptions[sid] = {
             "id": sid,
-            "status": data.get("status", "active"),
+            "status": "created",
             "customer_id": data.get("customer_id", ""),
             "plan_id": (data.get("items") or [{}])[0].get("price", {}).get("product_id", ""),
         }
-
-    elif event_type == "subscription.trialing":
-        if sid in subscriptions:
-            subscriptions[sid]["status"] = "trialing"
 
     elif event_type == "subscription.activated":
         if sid in subscriptions:
@@ -48,5 +44,5 @@ def get_subscription(subscription_id: str) -> dict:
     sub = subscriptions.get(subscription_id)
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    entitled = sub["status"] in ("active", "trialing")
+    entitled = sub["status"] == "active"
     return {**sub, "entitled": entitled}

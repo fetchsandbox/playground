@@ -26,42 +26,24 @@ async def paddle_webhook(request: Request) -> dict:
         items = data.get("items") or []
         seats = items[0].get("quantity", 1) if items else 1
         if team_id:
-            team = teams.setdefault(team_id, {
+            teams[team_id] = {
                 "team_id": team_id,
                 "subscription_id": data.get("id", ""),
                 "seats": seats,
-                "status": data.get("status", "created"),
+                "status": "created",
                 "updated_at": occurred_at,
-            })
-            team["subscription_id"] = data.get("id", team.get("subscription_id", ""))
-            team["seats"] = seats
-            team["status"] = data.get("status", team.get("status", "created"))
-            team["updated_at"] = occurred_at
+            }
 
     elif event_type == "subscription.activated":
-        team = teams.setdefault(team_id, {
-            "team_id": team_id,
-            "subscription_id": data.get("id", ""),
-            "seats": 1,
-            "status": data.get("status", "active"),
-            "updated_at": occurred_at,
-        })
-        team["status"] = data.get("status", "active")
-        team["updated_at"] = occurred_at
+        if team_id in teams:
+            teams[team_id]["status"] = "active"
+            teams[team_id]["updated_at"] = occurred_at
 
     elif event_type == "subscription.updated":
-        team = teams.setdefault(team_id, {
-            "team_id": team_id,
-            "subscription_id": data.get("id", ""),
-            "seats": 1,
-            "status": data.get("status", ""),
-            "updated_at": occurred_at,
-        })
-        items = data.get("items") or []
-        seats = items[0].get("quantity", team["seats"]) if items else team["seats"]
-        team["seats"] = seats
-        team["status"] = data.get("status", team.get("status", ""))
-        team["updated_at"] = occurred_at
+        if team_id in teams:
+            items = data.get("items") or []
+            seats = items[0].get("quantity", teams[team_id]["seats"]) if items else teams[team_id]["seats"]
+            teams[team_id]["seats"] = seats
 
     return {"received": True}
 

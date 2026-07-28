@@ -28,24 +28,21 @@ async def paddle_webhook(request: Request) -> dict:
             "id": sid,
             "customer_id": data.get("customer_id", ""),
             "plan_id": plan_id,
-            "status": data.get("status", "created"),
+            "status": "created",
             "updated_at": occurred_at,
         }
 
     elif event_type == "subscription.activated":
-        # Upsert: activated can arrive before created (Paddle delivers unordered)
-        sub = subscriptions.setdefault(sid, {"id": sid, "customer_id": data.get("customer_id", ""), "plan_id": ""})
-        sub["status"] = "active"
-        sub["updated_at"] = occurred_at
+        if sid in subscriptions:
+            subscriptions[sid]["status"] = "active"
+            subscriptions[sid]["updated_at"] = occurred_at
 
     elif event_type == "subscription.updated":
-        # Upsert: updated can arrive before created (Paddle delivers unordered)
-        items = data.get("items") or []
-        sub = subscriptions.setdefault(sid, {"id": sid, "customer_id": data.get("customer_id", ""), "plan_id": ""})
-        plan_id = items[0].get("price", {}).get("product_id", "") if items else sub.get("plan_id", "")
-        sub["plan_id"] = plan_id
-        sub["status"] = data.get("status", sub.get("status", ""))
-        sub["updated_at"] = occurred_at
+        if sid in subscriptions:
+            items = data.get("items") or []
+            plan_id = items[0].get("price", {}).get("product_id", "") if items else subscriptions[sid]["plan_id"]
+            subscriptions[sid]["plan_id"] = plan_id
+            subscriptions[sid]["updated_at"] = occurred_at
 
     return {"received": True}
 

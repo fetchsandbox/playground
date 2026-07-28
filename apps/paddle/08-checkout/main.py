@@ -11,7 +11,6 @@ from fastapi import FastAPI, Request
 app = FastAPI(title="Nova Checkout")
 
 workspaces: dict[str, dict] = {}
-processed_events: set[str] = set()
 
 
 def _provision_seats(workspace_id: str, seats: int) -> None:
@@ -24,22 +23,12 @@ def _provision_seats(workspace_id: str, seats: int) -> None:
 @app.post("/webhook")
 async def paddle_webhook(request: Request) -> dict:
     event = await request.json()
-    event_id = event.get("id", "")
-    if event_id and event_id in processed_events:
-        return {"received": True}
-    if event_id:
-        processed_events.add(event_id)
-
     event_type = event.get("event_type", "")
     data = event.get("data", {})
     custom_data = data.get("custom_data") or {}
     workspace_id = custom_data.get("workspace_id", "")
 
     if event_type == "transaction.completed":
-        # Skip if this transaction belongs to a subscription — subscription.created
-        # fires alongside it and is the canonical provisioning event for subscriptions.
-        if data.get("subscription_id"):
-            return {"received": True}
         items = data.get("details", {}).get("line_items") or []
         seats = sum(int(item.get("quantity", 1)) for item in items)
         if workspace_id:
