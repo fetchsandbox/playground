@@ -53,16 +53,6 @@ app.post('/webhook', (req, res) => {
         // Engagement signals — useful for analytics, no status change.
         contact.lastEventAt = new Date().toISOString();
         break;
-      case 'email.bounced':
-        // Hard bounce — suppress permanently so we stop emailing a dead address.
-        contact.status = 'bounced';
-        contact.lastEventAt = new Date().toISOString();
-        break;
-      case 'email.complained':
-        // Spam complaint — suppress immediately (CAN-SPAM / GDPR required).
-        contact.status = 'complained';
-        contact.lastEventAt = new Date().toISOString();
-        break;
     }
 
     contacts.set(email, contact);
