@@ -18,13 +18,12 @@ router.post('/webhook', async (req, res) => {
     return res.json({ received: true, ignored: event.type });
   }
 
-  // claim() checks-and-sets atomically before any await, preventing a
-  // concurrent retry from slipping past the guard and double-charging.
-  if (!dedupe.claim(key)) {
+  if (dedupe.has(key)) {
     return res.json({ received: true, duplicate: true });
   }
 
   await fulfillOrder(event);
+  dedupe.add(key);
 
   return res.json({ received: true });
 });
