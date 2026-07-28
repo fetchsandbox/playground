@@ -47,6 +47,10 @@ def _key(access_key: str) -> dict:
 def exchange(body: ExchangeReq) -> dict:
     """Exchange a Descope access key for a scoped session JWT."""
     rec = _key(body.accessKey)
+    # BUG (descope): we mint the session with whatever scopes the caller asked
+    # for in loginOptions, instead of CLAMPING to the scopes Descope issued the
+    # key. A read-only agent can request users:write and get it — privilege
+    # escalation at exchange time.
     requested = ((body.loginOptions or {}).get("customClaims") or {}).get("scopes")
     scopes = requested if requested else rec["scopes"]
     token = jwt.encode({"sub": rec["agent"], "scopes": scopes}, SESSION_SECRET, algorithm="HS256")
