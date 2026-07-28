@@ -1,71 +1,51 @@
-"""Acme Notes — API with Descope OTP sign-up/sign-in + SDK-managed session validation.
+"""Acme Notes — API (greenfield: Descope auth NOT wired yet).
+
+A tiny notes backend with a PLACEHOLDER login that trusts whatever the client
+sends — there is no real authentication yet. Your task (via the fetchsandbox
+MCP): add real Descope OTP sign-up + a validated session — but PROVE the Descope
+flow in FetchSandbox FIRST, then propose the diff. Don't write auth code blind.
 
 Surface:
-  POST /auth/send    send OTP to email (sign-up or sign-in)
-  POST /auth/verify  verify code → return real sessionJwt + refreshJwt
-  GET  /notes        list notes for the authenticated user
-  POST /notes        add a note
+  POST /signup     placeholder: trusts the email, returns a fake token
+  GET  /notes      list notes for the (insecurely) identified user
+  POST /notes      add a note
 """
 from __future__ import annotations
 
-import os
-
-from descope import AuthException, DeliveryMethod, DescopeClient
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI(title="Acme Notes")
 
-_descope = DescopeClient(project_id=os.environ["DESCOPE_PROJECT_ID"])
-
-# In-memory store keyed by Descope user ID (sub).
+# In-memory store keyed by user. Fine for a stub.
 _NOTES: dict[str, list[str]] = {}
 
 
-class SendOtpReq(BaseModel):
+class SignupReq(BaseModel):
     email: str
-
-
-class VerifyOtpReq(BaseModel):
-    email: str
-    code: str
 
 
 class Note(BaseModel):
     text: str
 
 
-@app.post("/auth/send")
-def auth_send(body: SendOtpReq) -> dict:
-    try:
-        _descope.otp.sign_up_or_in(DeliveryMethod.EMAIL, body.email)
-    except AuthException as exc:
-        raise HTTPException(400, detail=str(exc)) from exc
-    return {"ok": True}
-
-
-@app.post("/auth/verify")
-def auth_verify(body: VerifyOtpReq) -> dict:
-    try:
-        token = _descope.otp.verify_code(DeliveryMethod.EMAIL, body.email, body.code)
-    except AuthException as exc:
-        raise HTTPException(401, detail=str(exc)) from exc
-    return {
-        "ok": True,
-        "session_jwt": token["sessionToken"]["jwt"],
-        "refresh_jwt": token["refreshSessionToken"]["jwt"],
-    }
+@app.post("/signup")
+def signup(body: SignupReq) -> dict:
+    # TODO(descope): replace with Descope OTP — send a code, verify it, and
+    # return a real session (sessionJwt / refreshJwt). Right now we just trust
+    # the email and hand back a fake token.
+    _NOTES.setdefault(body.email, [])
+    return {"ok": True, "user": body.email, "session": "INSECURE-PLACEHOLDER-TOKEN"}
 
 
 def _current_user(authorization: str) -> str:
-    bearer = authorization.removeprefix("Bearer ").strip()
-    if not bearer:
+    # TODO(descope): validate the Descope session JWT (validateSession + JWKS,
+    # algorithm pinned, expiry checked). Right now the "session" IS trusted
+    # verbatim as the user id — anyone can forge it.
+    token = authorization.replace("Bearer ", "", 1)
+    if not token:
         raise HTTPException(401, "no session")
-    try:
-        claims = _descope.validate_session(bearer)
-    except AuthException as exc:
-        raise HTTPException(401, detail=str(exc)) from exc
-    return claims["sub"]
+    return token
 
 
 @app.get("/notes")
