@@ -24,9 +24,6 @@ STRIPE_WEBHOOK_SECRET = "whsec_demo"
 stripe.api_key = STRIPE_API_KEY
 
 subscriptions: dict[str, dict] = {}
-
-# BUG 1 (idempotency): this set stores stripe-webhook-id delivery headers,
-# but the dedup check below reads event["id"] — they never match.
 processed_stripe_ids: set[str] = set()
 
 
@@ -72,8 +69,6 @@ async def stripe_webhook(
     except (ValueError, stripe.error.SignatureVerificationError):
         raise HTTPException(400, "Invalid signature")
 
-    # BUG 1: dedup check reads event["id"] but the set stores the delivery
-    # header value — these never match, so replays always double-process.
     webhook_delivery_id = request.headers.get("stripe-webhook-id", "")
     if event["id"] in processed_stripe_ids:
         return {"received": True, "deduped": True}
@@ -124,8 +119,6 @@ async def paddle_webhook(request: Request) -> dict:
             subscriptions[sub_id]["provider_sub_id"] = data.get("id", "")
 
     elif event_type == "subscription.activated":
-        # BUG 2: reads "metadata" (Stripe-style) instead of "custom_data"
-        # (Paddle's actual field). sub_id is always None — silent no-op.
         sub_id = data.get("metadata", {}).get("subscription_id")
         if sub_id and sub_id in subscriptions:
             subscriptions[sub_id]["status"] = "active"
