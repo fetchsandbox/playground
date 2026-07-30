@@ -13,6 +13,7 @@ Surface:
 """
 from __future__ import annotations
 
+import os
 import uuid
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -24,6 +25,8 @@ app = FastAPI(title="Apex Billing")
 STRIPE_API_KEY = "sk_test_demo"
 STRIPE_WEBHOOK_SECRET = "whsec_demo"
 stripe.api_key = STRIPE_API_KEY
+if os.environ.get("STRIPE_API_BASE"):
+    stripe.api_base = os.environ["STRIPE_API_BASE"]
 
 subscriptions: dict[str, dict] = {}
 processed_stripe_ids: set[str] = set()
@@ -79,11 +82,10 @@ async def stripe_webhook(
     processed_stripe_ids.add(event["id"])
 
     event_type = event["type"]
-    obj = event["data"]["object"]
+    obj = event["data"]["object"].to_dict()
 
     if event_type == "customer.subscription.created":
         provider_sub_id = obj.get("id", "")
-        # find matching stub by provider_sub_id or create inline
         for sub in subscriptions.values():
             if sub["provider"] == "stripe" and sub["provider_sub_id"] == provider_sub_id:
                 sub["status"] = "pending"
@@ -116,7 +118,7 @@ def pay_subscription(sub_id: str) -> dict:
         raise HTTPException(404, "Subscription not found")
     if sub["provider"] != "stripe":
         raise HTTPException(400, "Direct pay only supported for Stripe subscriptions")
-    if sub["status"] not in ("pending", "active"):
+    if sub["status"] != "pending":
         raise HTTPException(400, f"Cannot pay a {sub['status']} subscription")
 
     intent = stripe.PaymentIntent.create(
@@ -143,7 +145,7 @@ def refund_subscription(sub_id: str) -> dict:
     if sub["status"] != "active":
         raise HTTPException(400, "Only active subscriptions can be refunded")
 
-    pi_id = sub.get("stripe_pi_id")
+    pi_id = sub.get("payment_intent_id")
     if not pi_id:
         raise HTTPException(400, "No payment found to refund")
 
