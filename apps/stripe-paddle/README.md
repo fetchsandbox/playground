@@ -7,7 +7,9 @@ use Paddle. Both webhook streams run simultaneously against a unified subscripti
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /subscriptions` | Create a stub subscription record (provider + email) |
+| `POST /subscriptions` | Create a stub subscription record (provider + email + amount_cents) |
+| `POST /subscriptions/{id}/pay` | Create a Stripe PaymentIntent (Stripe subscriptions only) |
+| `POST /subscriptions/{id}/refund` | Refund a Stripe payment |
 | `POST /stripe-webhook` | Receive Stripe subscription + invoice events |
 | `POST /paddle-webhook` | Receive Paddle subscription events |
 | `GET /subscriptions/{id}` | Subscription state + access flag |

@@ -4,10 +4,12 @@ Handles Stripe (legacy) and Paddle (new) subscriptions simultaneously.
 Routes events by provider; unified subscription store.
 
 Surface:
-  POST /subscriptions        create a stub subscription record
-  POST /stripe-webhook       handle Stripe subscription + invoice events
-  POST /paddle-webhook       handle Paddle subscription events
-  GET  /subscriptions/{id}   current state + access flag
+  POST /subscriptions            create a stub subscription record
+  POST /subscriptions/{id}/pay   create a Stripe PaymentIntent (Stripe subs only)
+  POST /subscriptions/{id}/refund  refund a Stripe payment
+  POST /stripe-webhook           handle Stripe subscription + invoice events
+  POST /paddle-webhook           handle Paddle subscription events
+  GET  /subscriptions/{id}       current state + access flag
 """
 from __future__ import annotations
 
@@ -31,6 +33,7 @@ class CreateSubReq(BaseModel):
     provider: str  # "stripe" or "paddle"
     email: str
     provider_sub_id: str = ""
+    amount_cents: int = 2999
 
 
 @app.post("/subscriptions")
@@ -43,6 +46,7 @@ def create_subscription(body: CreateSubReq) -> dict:
         "status": "pending",
         "access": False,
         "provider_sub_id": body.provider_sub_id,
+        "amount_cents": body.amount_cents,
     }
     return subscriptions[sub_id]
 
@@ -72,7 +76,7 @@ async def stripe_webhook(
     webhook_delivery_id = request.headers.get("stripe-webhook-id", "")
     if event["id"] in processed_stripe_ids:
         return {"received": True, "deduped": True}
-    processed_stripe_ids.add(webhook_delivery_id)
+    processed_stripe_ids.add(event["id"])
 
     event_type = event["type"]
     obj = event["data"]["object"]
@@ -105,6 +109,50 @@ async def stripe_webhook(
     return {"received": True}
 
 
+@app.post("/subscriptions/{sub_id}/pay")
+def pay_subscription(sub_id: str) -> dict:
+    sub = subscriptions.get(sub_id)
+    if not sub:
+        raise HTTPException(404, "Subscription not found")
+    if sub["provider"] != "stripe":
+        raise HTTPException(400, "Direct pay only supported for Stripe subscriptions")
+    if sub["status"] not in ("pending", "active"):
+        raise HTTPException(400, f"Cannot pay a {sub['status']} subscription")
+
+    intent = stripe.PaymentIntent.create(
+        amount=sub.get("amount_cents", 2999),
+        currency="usd",
+        receipt_email=sub["email"],
+        metadata={"subscription_id": sub_id},
+    )
+    sub["payment_intent_id"] = intent["id"]
+    sub["status"] = "active"
+    sub["access"] = True
+    return {
+        "payment_intent_id": intent["id"],
+        "client_secret": intent["client_secret"],
+        "amount": intent["amount"],
+    }
+
+
+@app.post("/subscriptions/{sub_id}/refund")
+def refund_subscription(sub_id: str) -> dict:
+    sub = subscriptions.get(sub_id)
+    if not sub:
+        raise HTTPException(404, "Subscription not found")
+    if sub["status"] != "active":
+        raise HTTPException(400, "Only active subscriptions can be refunded")
+
+    pi_id = sub.get("stripe_pi_id")
+    if not pi_id:
+        raise HTTPException(400, "No payment found to refund")
+
+    refund = stripe.Refund.create(payment_intent=pi_id)
+    sub["status"] = "refunded"
+    sub["access"] = False
+    return {"refund_id": refund["id"], "status": refund["status"]}
+
+
 @app.post("/paddle-webhook")
 async def paddle_webhook(request: Request) -> dict:
     event = await request.json()
@@ -119,7 +167,7 @@ async def paddle_webhook(request: Request) -> dict:
             subscriptions[sub_id]["provider_sub_id"] = data.get("id", "")
 
     elif event_type == "subscription.activated":
-        sub_id = data.get("metadata", {}).get("subscription_id")
+        sub_id = (data.get("custom_data") or {}).get("subscription_id")
         if sub_id and sub_id in subscriptions:
             subscriptions[sub_id]["status"] = "active"
             subscriptions[sub_id]["access"] = True
