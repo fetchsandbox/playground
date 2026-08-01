@@ -140,10 +140,7 @@ def create_ticket(
 @app.get("/api/customer/tickets")
 def list_my_tickets(authorization: str = Header(default="")) -> list[dict]:
     claims = _require_clerk(authorization)
-    # BUG: filters by email claim, but owner_id is stored as the Clerk sub
-    # (e.g. "user_abc123") — the comparison never matches so this always
-    # returns an empty list.
-    return [t for t in tickets.values() if t["owner_id"] == claims.get("email")]
+    return [t for t in tickets.values() if t["owner_id"] == claims["sub"]]
 
 
 @app.get("/api/customer/tickets/{ticket_id}")
@@ -156,9 +153,7 @@ def get_ticket(ticket_id: str, authorization: str = Header(default="")) -> dict:
     if not ticket:
         raise HTTPException(404, "Ticket not found")
 
-    # BUG: checks agentmail_inbox_id instead of owner_id — any authed user
-    # can read any ticket.
-    if role != "admin" and ticket["agentmail_inbox_id"] != user_id:
+    if role != "admin" and ticket["owner_id"] != user_id:
         raise HTTPException(403, "Not your ticket")
 
     return ticket
@@ -215,12 +210,9 @@ def agent_reply(
     if not ticket:
         raise HTTPException(404, "Ticket not found")
 
-    # BUG: passes agentmail_inbox_id as the path segment but AgentMail's send
-    # endpoint expects the inbox id in the URL, not agentmail_address — the
-    # wrong field is used so the send request always 404s on AgentMail's side.
     with httpx.Client() as client:
         client.post(
-            f"{AGENTMAIL_BASE}/inboxes/{ticket['agentmail_address']}/send",
+            f"{AGENTMAIL_BASE}/inboxes/{ticket['agentmail_inbox_id']}/send",
             headers={"Authorization": f"Bearer {AGENTMAIL_API_KEY}"},
             json={
                 "to": tickets[ticket_id]["messages"][0]["from"],
@@ -252,9 +244,7 @@ def agent_update_status(
     if body.status not in ("open", "resolved"):
         raise HTTPException(422, "status must be 'open' or 'resolved'")
 
-    # BUG: hardcodes "open" instead of using body.status — tickets can never
-    # be marked resolved.
-    tickets[ticket_id]["status"] = "open"
+    tickets[ticket_id]["status"] = body.status
     return tickets[ticket_id]
 
 
@@ -293,13 +283,12 @@ async def agentmail_webhook(request: Request) -> dict:
         message = payload.get("message", {})
         inbox_id = message.get("inbox_id")
 
-        # BUG: missing inbox_id guard — appends the incoming message to the
-        # first ticket in the store regardless of which inbox received it.
         for ticket in tickets.values():
-            ticket["messages"].append({
-                "from": message.get("from"),
-                "body": message.get("text") or message.get("html"),
-            })
-            break
+            if ticket["agentmail_inbox_id"] == inbox_id:
+                ticket["messages"].append({
+                    "from": message.get("from"),
+                    "body": message.get("text") or message.get("html"),
+                })
+                break
 
     return {"received": True}
