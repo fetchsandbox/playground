@@ -65,7 +65,7 @@ async def agentmail_webhook(
     When a customer replies, append it to the ticket thread.
     """
     payload = await request.json()
-    event_type = payload.get("type", "")
+    event_type = payload.get("event_type", "")
 
     if event_type == "message.received":
         message = payload.get("message", {})
