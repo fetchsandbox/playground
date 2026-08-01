@@ -140,8 +140,10 @@ def create_ticket(
 @app.get("/api/customer/tickets")
 def list_my_tickets(authorization: str = Header(default="")) -> list[dict]:
     claims = _require_clerk(authorization)
-    user_id = claims["sub"]
-    return [t for t in tickets.values() if t["owner_id"] == user_id]
+    # BUG: filters by email claim, but owner_id is stored as the Clerk sub
+    # (e.g. "user_abc123") — the comparison never matches so this always
+    # returns an empty list.
+    return [t for t in tickets.values() if t["owner_id"] == claims.get("email")]
 
 
 @app.get("/api/customer/tickets/{ticket_id}")
@@ -250,7 +252,9 @@ def agent_update_status(
     if body.status not in ("open", "resolved"):
         raise HTTPException(422, "status must be 'open' or 'resolved'")
 
-    tickets[ticket_id]["status"] = body.status
+    # BUG: hardcodes "open" instead of using body.status — tickets can never
+    # be marked resolved.
+    tickets[ticket_id]["status"] = "open"
     return tickets[ticket_id]
 
 
@@ -289,12 +293,13 @@ async def agentmail_webhook(request: Request) -> dict:
         message = payload.get("message", {})
         inbox_id = message.get("inbox_id")
 
+        # BUG: missing inbox_id guard — appends the incoming message to the
+        # first ticket in the store regardless of which inbox received it.
         for ticket in tickets.values():
-            if ticket.get("agentmail_inbox_id") == inbox_id:
-                ticket["messages"].append({
-                    "from": message.get("from"),
-                    "body": message.get("text") or message.get("html"),
-                })
-                break
+            ticket["messages"].append({
+                "from": message.get("from"),
+                "body": message.get("text") or message.get("html"),
+            })
+            break
 
     return {"received": True}
