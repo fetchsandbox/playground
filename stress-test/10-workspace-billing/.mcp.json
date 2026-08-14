@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "fetchsandbox": {
-      "command": "npx",
-      "args": ["-y", "fetchsandbox-mcp@latest"]
-    }
-  }
-}
