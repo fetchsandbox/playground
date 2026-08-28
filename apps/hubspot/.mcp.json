@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "fetchsandbox": {
+      "command": "npx",
+      "args": ["-y", "fetchsandbox-mcp@latest"],
+      "env": { "FETCHSANDBOX_BASE_URL": "https://fetchsandbox.com" }
+    }
+  }
+}

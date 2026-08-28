@@ -23,6 +23,7 @@ Clone, run, point your agent at it, see whether FetchSandbox catches the bug.
 | [apps/surge](apps/surge) | FastAPI + Surge messaging |
 | [apps/descope](apps/descope) | FastAPI + Descope agentic auth |
 | [apps/descope-onboarding](apps/descope-onboarding) | FastAPI + Descope (greenfield — auth is a placeholder) |
+| [apps/hubspot](apps/hubspot) | FastAPI + HubSpot CRM v3 |
 
 Every app except `apps/descope-onboarding` is a brownfield integration with a
 planted bug — what the bug is, is for you (and your agent) to discover.
