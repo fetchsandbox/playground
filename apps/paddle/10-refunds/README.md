@@ -16,11 +16,6 @@ completed transactions and revokes them on refund.
 - In-memory `licenses` dict (Postgres in prod)
 - Webhook events: `transaction.completed`, `transaction.refunded`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

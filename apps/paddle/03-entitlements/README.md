@@ -16,11 +16,6 @@ state and grants or revokes access to premium features.
 - In-memory `subscriptions` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `subscription.canceled`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

@@ -16,11 +16,6 @@ completions and provisions workspace seats for new subscribers.
 - In-memory `workspaces` dict (Postgres in prod)
 - Webhook events: `transaction.completed`, `subscription.created`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

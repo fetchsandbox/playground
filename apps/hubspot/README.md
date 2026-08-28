@@ -25,8 +25,3 @@ from our own store, and this service keeps the two in step.
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-
-## How to investigate and validate
-
-All investigation and validation in this app goes through FetchSandbox.
-See the repo's [TESTING.md](../../TESTING.md).

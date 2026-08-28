@@ -16,11 +16,6 @@ lifecycle from free trial through activation and cancellation.
 - In-memory `subscriptions` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.trialing`, `subscription.activated`, `subscription.canceled`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

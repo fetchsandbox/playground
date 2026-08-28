@@ -16,11 +16,6 @@ changes and keeps the local plan record in sync.
 - In-memory `subscriptions` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `subscription.updated`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

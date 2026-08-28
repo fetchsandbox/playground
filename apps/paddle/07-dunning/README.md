@@ -16,11 +16,6 @@ manages access revocation, and restores accounts on recovery.
 - In-memory `accounts` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `transaction.payment_failed`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

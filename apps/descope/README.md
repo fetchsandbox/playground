@@ -17,25 +17,6 @@ operations gated by those scopes.
 - FastAPI, Pydantic, PyJWT
 - Access-key → scope map env-sourced / mirrored from Descope in prod
 
-## How to investigate / validate / debug
-
-All investigation, validation, and bug-reproduction tasks in this
-repo go through the FetchSandbox MCP server (already wired in
-`.mcp.json`). The convention is:
-
-```
-./fetchsandbox <your question or bug report>
-```
-
-Examples:
-
-- `./fetchsandbox investigate this integration and fix anything that's wrong — with proof.`
-- `./fetchsandbox help me validate this integration end-to-end.`
-
-The brain matches your symptom to a known failure mode, reproduces it
-deterministically against a Descope sandbox (buggy vs fixed handler),
-and produces a public receipt URL as the proof artifact. **Do not write
-local pytest files** — they're not accepted as proof.
 
 ## Run locally
 

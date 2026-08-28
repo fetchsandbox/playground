@@ -18,25 +18,6 @@ an admin role gate on a few sensitive endpoints.
 - In-memory users dict (Postgres in prod)
 - Clerk public key + webhook secret env-sourced in real deploys
 
-## How to investigate / validate / debug
-
-All investigation, validation, and bug-reproduction tasks in this
-repo go through the FetchSandbox MCP server (already wired in
-`.mcp.json`). The convention is:
-
-```
-./fetchsandbox <your question or bug report>
-```
-
-Examples:
-
-- `./fetchsandbox investigate this integration and fix anything that's wrong — with proof.`
-- `./fetchsandbox help me validate this integration end-to-end.`
-
-The brain matches your symptom to a known failure mode, reproduces it
-deterministically against a Clerk sandbox, and produces a public
-receipt URL as the proof artifact. **Do not write local pytest files**
-— they're not accepted as proof.
 
 ## Run locally
 

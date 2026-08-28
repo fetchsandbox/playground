@@ -16,11 +16,6 @@ Paddle transactions complete.
 - In-memory `accounts` dict (Postgres in prod)
 - Webhook events: `transaction.completed`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

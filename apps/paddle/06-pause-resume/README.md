@@ -16,11 +16,6 @@ subscription lifecycle including mid-period pauses and user-initiated resumes.
 - In-memory `subscriptions` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `subscription.paused`, `subscription.resumed`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 

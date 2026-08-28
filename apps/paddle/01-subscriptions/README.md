@@ -16,15 +16,6 @@ events to track subscription state and gate feature access.
 - In-memory `subscriptions` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `subscription.canceled`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
-
-Examples:
-- `./fetchsandbox investigate this integration and fix anything wrong — with proof.`
-- `./fetchsandbox why is my subscription never activating?`
 
 ## Run locally
 

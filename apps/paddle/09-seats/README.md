@@ -16,11 +16,6 @@ through Paddle subscription events and keeps counts in sync on upgrades.
 - In-memory `teams` dict (Postgres in prod)
 - Webhook events: `subscription.created`, `subscription.activated`, `subscription.updated`
 
-## How to investigate / validate / debug
-
-```
-./fetchsandbox <your question or bug report>
-```
 
 ## Run locally
 
