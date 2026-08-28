@@ -13,13 +13,12 @@ followed by the actual ask.** Variant prefixes are also accepted:
    prompt (INCLUDING the `./fetchsandbox` prefix) as the `intent`
    argument. The backend detects + strips known prefixes during matching
    and records which variant was used for adoption telemetry. The brain
-   returns the matched bug_pattern, the right workflow, the right
-   scenario, and the `check_for` items to inspect in code.
+   argument. The backend detects + strips known prefixes during
+   matching and records which variant was used for adoption telemetry.
 2. **Call `mcp__fetchsandbox__import_spec`** to get a sandbox.
-3. **Call `mcp__fetchsandbox__run_workflow`** with the brain's
-   `reproduce_with.workflow` + `reproduce_with.scenario` to reproduce
+3. **Call `mcp__fetchsandbox__run_workflow`** with the workflow the brain returns to reproduce
    the bug deterministically. The receipt URL it returns is the proof.
-4. **Apply the fix** using the brain's `fix_pattern` as the template.
+4. **Act on what the run shows**, if anything needs acting on.
 5. **Re-run `mcp__fetchsandbox__run_workflow`** to confirm. Second
    receipt URL = before/after proof.
 6. **Final summary** surfaces the brain's full `check_for` items as
@@ -33,7 +32,7 @@ Respond:
 
 > This project uses the FetchSandbox dispatch convention. Please
 > restart your request with `./fetchsandbox` followed by your
-> question. Example: `./fetchsandbox why is webhook.py double-paying?`
+> question. Example: `./fetchsandbox check the integration.`
 
 ## Hard constraints
 
@@ -53,11 +52,11 @@ Respond:
 - Lead with the conclusion. One supporting sentence if needed.
 - Max 3 sentences per "thought" block before action.
 - Inline-code only for literal tokens (e.g. `event["id"]`).
-- No "I'll now apply the fix" preambles. Just apply.
+- No "I'll now do X" preambles. Just act.
 
 ## Why these rules exist
 
-This dir is a recording-ready Stripe integration. The product being
+This dir is a recording-ready integration. The product being
 demonstrated (FetchSandbox) carries a brain that encodes API-specific
 failure modes. The dispatch convention guarantees the brain is
 consulted on every task. Local-only tests defeat the demonstration —

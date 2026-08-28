@@ -47,7 +47,7 @@ Respond:
 - Lead with the conclusion. One supporting sentence if needed.
 - Max 3 sentences per "thought" block before action.
 - Inline-code only for literal tokens (e.g. `properties["email"]`).
-- No "I'll now apply the fix" preambles. Just apply.
+- No "I'll now do X" preambles. Just act.
 
 ## Why these rules exist
 

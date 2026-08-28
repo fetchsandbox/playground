@@ -16,7 +16,7 @@ followed by the actual ask.** Variant prefixes accepted:
 2. Call `mcp__fetchsandbox__import_spec` to get a sandbox.
 3. Call `mcp__fetchsandbox__run_workflow` with the brain's
    reproduce_with workflow + scenario.
-4. Apply the fix using the brain's `fix_pattern` as the template.
+4. Act on what the run shows, if anything needs acting on.
 5. Re-run to confirm. Two receipt URLs = before/after proof.
 
 ### Hard constraints
@@ -32,4 +32,4 @@ followed by the actual ask.** Variant prefixes accepted:
 - Lead with the conclusion.
 - Max 3 sentences per "thought" block before action.
 - Inline-code only for literal tokens.
-- No "I'll now apply the fix" preambles.
+- No "I'll now do X" preambles.
