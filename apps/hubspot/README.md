@@ -26,7 +26,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-## How to investigate / validate / debug
+## How to investigate and validate
 
-All investigation, validation, and bug-reproduction tasks in this app go
-through FetchSandbox. See the repo's [TESTING.md](../../TESTING.md).
+All investigation and validation in this app goes through FetchSandbox.
+See the repo's [TESTING.md](../../TESTING.md).
