@@ -1,28 +1,29 @@
-"""Acme Notes — API (greenfield: Descope auth NOT wired yet).
+"""Acme Notes — API with Descope OTP auth."""
 
-A tiny notes backend with a PLACEHOLDER login that trusts whatever the client
-sends — there is no real authentication yet. Your task (via the fetchsandbox
-MCP): add real Descope OTP sign-up + a validated session — but PROVE the Descope
-flow in FetchSandbox FIRST, then propose the diff. Don't write auth code blind.
-
-Surface:
-  POST /signup     placeholder: trusts the email, returns a fake token
-  GET  /notes      list notes for the (insecurely) identified user
-  POST /notes      add a note
-"""
 from __future__ import annotations
 
+import os
+
+from descope import DescopeClient
+from descope.exceptions import AuthException
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI(title="Acme Notes")
 
-# In-memory store keyed by user. Fine for a stub.
+DESCOPE_PROJECT_ID = os.environ.get("DESCOPE_PROJECT_ID", "")
+descope_client = DescopeClient(project_id=DESCOPE_PROJECT_ID)
+
 _NOTES: dict[str, list[str]] = {}
 
 
 class SignupReq(BaseModel):
     email: str
+
+
+class VerifyReq(BaseModel):
+    email: str
+    code: str
 
 
 class Note(BaseModel):
@@ -31,21 +32,33 @@ class Note(BaseModel):
 
 @app.post("/signup")
 def signup(body: SignupReq) -> dict:
-    # TODO(descope): replace with Descope OTP — send a code, verify it, and
-    # return a real session (sessionJwt / refreshJwt). Right now we just trust
-    # the email and hand back a fake token.
+    """Send a Descope OTP sign-up code to the given email."""
+    descope_client.otp.sign_up(method="email", login_id=body.email)
     _NOTES.setdefault(body.email, [])
-    return {"ok": True, "user": body.email, "session": "INSECURE-PLACEHOLDER-TOKEN"}
+    return {"ok": True, "message": f"OTP sent to {body.email}"}
+
+
+@app.post("/verify")
+def verify(body: VerifyReq) -> dict:
+    """Verify OTP code and return a real Descope session."""
+    resp = descope_client.otp.verify_code(method="email", login_id=body.email, code=body.code)
+    return {
+        "ok": True,
+        "user": body.email,
+        "sessionJwt": resp["sessionJwt"],
+        "refreshJwt": resp["refreshJwt"],
+    }
 
 
 def _current_user(authorization: str) -> str:
-    # TODO(descope): validate the Descope session JWT (validateSession + JWKS,
-    # algorithm pinned, expiry checked). Right now the "session" IS trusted
-    # verbatim as the user id — anyone can forge it.
     token = authorization.replace("Bearer ", "", 1)
     if not token:
         raise HTTPException(401, "no session")
-    return token
+    try:
+        claims = descope_client.validate_session(token)
+        return claims["sub"]
+    except AuthException:
+        raise HTTPException(401, "invalid session")
 
 
 @app.get("/notes")
