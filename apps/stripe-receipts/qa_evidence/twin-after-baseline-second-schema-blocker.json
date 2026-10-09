@@ -1,0 +1,128 @@
+{
+  "case": "baseline",
+  "run_id": null,
+  "app_sha256": "c67f5f94ea065b2228ee474fd8b48f29b6b0e98a2a303119d2033c46362ef17c",
+  "execution": "real uvicorn subprocess; app HTTP endpoints; SDK/urllib provider traffic via allowlisted forwarding proxies",
+  "forwarding_transport": {
+    "user_agent": "stripe-receipts-qa/1.0",
+    "allowed_destination_host": "fetchsandbox.com",
+    "flow_run_id_header": false
+  },
+  "unverified": [
+    "Independent provider-side stored resource counts; correlate this output with FetchSandbox traces.",
+    "Webhook events are signed and injected by QA; Stripe confirmation and provider webhook delivery are not exercised.",
+    "Real Stripe payments and real email delivery are intentionally untested."
+  ],
+  "execution_error": "RuntimeError: Payment creation failed; dependent steps cannot run",
+  "app_log_tail": "INFO:     Started server process [71276]\nINFO:     Waiting for application startup.\nINFO:     Application startup complete.\nINFO:     Uvicorn running on http://127.0.0.1:61498 (Press CTRL+C to quit)\nINFO:     127.0.0.1:61505 - \"GET /openapi.json HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:61506 - \"POST /orders HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:61507 - \"POST /orders/order_7590928600234fffa33c3157f01dc403/pay HTTP/1.1\" 502 Bad Gateway\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [71276]\n",
+  "steps": [
+    {
+      "name": "create_main",
+      "method": "POST",
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "id": "order_7590928600234fffa33c3157f01dc403",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-main-6252ed83@example.test",
+        "status": "pending",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [],
+        "receipt_status": "not_sent",
+        "amount_refunded": 0
+      },
+      "started_at": 1791574242.2699862,
+      "completed_at": 1791574242.279257,
+      "duration_seconds": 0.009270906448364258
+    },
+    {
+      "name": "pay_main",
+      "method": "POST",
+      "path": "/orders/order_7590928600234fffa33c3157f01dc403/pay",
+      "status": 502,
+      "body": {
+        "detail": "Invalid payment provider response"
+      },
+      "started_at": 1791574242.2792609,
+      "completed_at": 1791574242.838102,
+      "duration_seconds": 0.5588412284851074
+    }
+  ],
+  "checks": [
+    {
+      "name": "main: order creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "main: payment intent creation",
+      "passed": false,
+      "observed": 502
+    }
+  ],
+  "provider_calls": {
+    "stripe": [
+      {
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/payment_intents",
+        "status": 200,
+        "started_at": 1791574242.5693812,
+        "idempotency_key": "pay:order_7590928600234fffa33c3157f01dc403",
+        "response": {
+          "amount_capturable": 0,
+          "amount_received": 0,
+          "application": null,
+          "application_fee_amount": null,
+          "automatic_payment_methods": null,
+          "canceled_at": null,
+          "cancellation_reason": null,
+          "capture_method": "automatic",
+          "client_secret": "[redacted]",
+          "confirmation_method": "automatic",
+          "created": 86,
+          "currency": "usd",
+          "customer": null,
+          "customer_account": null,
+          "description": null,
+          "excluded_payment_method_types": null,
+          "id": "pi_ALINGSN62WM0ZZVDQV3588EU",
+          "last_payment_error": null,
+          "latest_charge": null,
+          "livemode": false,
+          "next_action": null,
+          "object": "payment_intent",
+          "on_behalf_of": null,
+          "payment_method": null,
+          "payment_method_configuration_details": null,
+          "payment_method_options": null,
+          "processing": null,
+          "receipt_email": null,
+          "review": null,
+          "setup_future_usage": "off_session",
+          "shipping": null,
+          "statement_descriptor": null,
+          "statement_descriptor_suffix": null,
+          "status": "requires_payment_method",
+          "transfer_data": null,
+          "transfer_group": null,
+          "amount": "1000",
+          "metadata[order_id]": "order_7590928600234fffa33c3157f01dc403"
+        },
+        "upstream_completed_at": 1791574242.829176,
+        "completed_at": 1791574242.829453,
+        "duration_seconds": 0.2600717544555664
+      }
+    ],
+    "resend": []
+  },
+  "passed": [
+    "main: order creation"
+  ],
+  "failed": [
+    "main: payment intent creation"
+  ],
+  "result": "failed"
+}

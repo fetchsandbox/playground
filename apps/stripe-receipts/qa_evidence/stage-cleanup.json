@@ -1,0 +1,55 @@
+{
+  "disposable_key_revoked": true,
+  "key_revocation_evidence": "Existing _AccountRecovery completed DELETE and GET revoked=true before its directory removal raised on the remaining binding file.",
+  "private_bindings_removed": true,
+  "sandboxes": [
+    {
+      "sandbox_id": "7db31227f2",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "247bfa6776",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "480c991fe1",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "ac13be18ea",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "7199ccb7ad",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "5ad0497e4d",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "2bc1996e66",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "5eb222d236",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "c2435e17f4",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "db828f4133",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "f2cfb40195",
+      "confirmed_absent": true
+    },
+    {
+      "sandbox_id": "f9fcb64ecf",
+      "confirmed_absent": true
+    }
+  ]
+}

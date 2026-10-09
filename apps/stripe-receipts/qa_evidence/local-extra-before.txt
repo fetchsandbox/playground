@@ -1,0 +1,128 @@
+FFFFFF.FFFFFFFF                                                          [100%]
+=================================== FAILURES ===================================
+____________ test_extra_concurrent_webhooks_send_one_receipt[False] ____________
+tests/test_regressions.py:363: in test_extra_concurrent_webhooks_send_one_receipt
+    assert len(providers.email_deliveries) == 1
+E   AssertionError: assert 4 == 1
+E    +  where 4 = len({'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}, 'unkeyed-3': {'id': 'email_3'}, 'unkeyed-4': {'id': 'email_4'}})
+E    +    where {'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}, 'unkeyed-3': {'id': 'email_3'}, 'unkeyed-4': {'id': 'email_4'}} = <test_regressions.Providers object at 0x10d3f8fe0>.email_deliveries
+----------------------------- Captured stdout call -----------------------------
+[db] order order_0798da74 marked paid
+[db] order order_0798da74 marked paid
+[db] order order_0798da74 marked paid
+[db] order order_0798da74 marked paid
+____________ test_extra_concurrent_webhooks_send_one_receipt[True] _____________
+tests/test_regressions.py:363: in test_extra_concurrent_webhooks_send_one_receipt
+    assert len(providers.email_deliveries) == 1
+E   AssertionError: assert 4 == 1
+E    +  where 4 = len({'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}, 'unkeyed-3': {'id': 'email_3'}, 'unkeyed-4': {'id': 'email_4'}})
+E    +    where {'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}, 'unkeyed-3': {'id': 'email_3'}, 'unkeyed-4': {'id': 'email_4'}} = <test_regressions.Providers object at 0x10d3f9280>.email_deliveries
+----------------------------- Captured stdout call -----------------------------
+[db] order order_fa43ba8e marked paid
+[db] order order_fa43ba8e marked paid
+[db] order order_fa43ba8e marked paid
+[db] order order_fa43ba8e marked paid
+__________ test_extra_stripe_create_error_is_controlled_and_retryable __________
+tests/test_regressions.py:378: in test_extra_stripe_create_error_is_controlled_and_retryable
+    assert failed.status_code in (502, 503), failed.text
+E   AssertionError: Internal Server Error
+E   assert 500 in (502, 503)
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+__________ test_extra_stripe_refund_error_is_controlled_and_retryable __________
+tests/test_regressions.py:395: in test_extra_stripe_refund_error_is_controlled_and_retryable
+    assert failed.status_code in (502, 503), failed.text
+E   AssertionError: Internal Server Error
+E   assert 500 in (502, 503)
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+----------------------------- Captured stdout call -----------------------------
+[db] order order_ccc7d378 marked paid
+_________ test_extra_lost_stripe_response_reuses_idempotency_key[pay] __________
+tests/test_regressions.py:436: in test_extra_lost_stripe_response_reuses_idempotency_key
+    assert len(provider_objects) == 1
+E   AssertionError: assert 2 == 1
+E    +  where 2 = len({'pi_local_1': {'id': 'pi_local_1', 'object': 'payment_intent', 'livemode': False, 'client_secret': 'pi_local_1_secret...: {'id': 'pi_local_2', 'object': 'payment_intent', 'livemode': False, 'client_secret': 'pi_local_2_secret_local', ...}})
+________ test_extra_lost_stripe_response_reuses_idempotency_key[refund] ________
+tests/test_regressions.py:436: in test_extra_lost_stripe_response_reuses_idempotency_key
+    assert len(provider_objects) == 1
+E   AssertionError: assert 2 == 1
+E    +  where 2 = len({'re_local_1': {'id': 're_local_1', 'object': 'refund', 'status': 'succeeded', 'payment_intent': 'pi_local_1', ...}, 're_local_2': {'id': 're_local_2', 'object': 'refund', 'status': 'succeeded', 'payment_intent': 'pi_local_1', ...}})
+----------------------------- Captured stdout call -----------------------------
+[db] order order_012d1956 marked paid
+______ test_extra_signed_malformed_event_rejected_without_500[live_event] ______
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: {"received":true}
+E   assert 400 <= 200
+E    +  where 200 = <Response [200 OK]>.status_code
+----------------------------- Captured stdout call -----------------------------
+[db] order order_580494a9 marked paid
+___ test_extra_signed_malformed_event_rejected_without_500[missing_event_id] ___
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: {"received":true}
+E   assert 400 <= 200
+E    +  where 200 = <Response [200 OK]>.status_code
+----------------------------- Captured stdout call -----------------------------
+[db] order order_854ca330 marked paid
+__ test_extra_signed_malformed_event_rejected_without_500[missing_event_type] __
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 < 500
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+_____ test_extra_signed_malformed_event_rejected_without_500[missing_data] _____
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 < 500
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+____ test_extra_signed_malformed_event_rejected_without_500[null_resource] _____
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 < 500
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+___ test_extra_signed_malformed_event_rejected_without_500[string_resource] ____
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: Internal Server Error
+E   assert 500 < 500
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+_ test_extra_signed_malformed_event_rejected_without_500[missing_resource_id] __
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: {"received":true}
+E   assert 400 <= 200
+E    +  where 200 = <Response [200 OK]>.status_code
+----------------------------- Captured stdout call -----------------------------
+[db] order order_d33771f4 marked paid
+_ test_extra_signed_malformed_event_rejected_without_500[wrong_resource_type] __
+tests/test_regressions.py:482: in test_extra_signed_malformed_event_rejected_without_500
+    assert 400 <= response.status_code < 500, response.text
+E   AssertionError: {"received":true}
+E   assert 400 <= 200
+E    +  where 200 = <Response [200 OK]>.status_code
+----------------------------- Captured stdout call -----------------------------
+[db] order order_2637b282 marked paid
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:40
+  /Users/raj/.codex/demos/gptzero-playground-20261009/apps/stripe-receipts/.venv/lib/python3.12/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_regressions.py::test_extra_concurrent_webhooks_send_one_receipt[False]
+FAILED tests/test_regressions.py::test_extra_concurrent_webhooks_send_one_receipt[True]
+FAILED tests/test_regressions.py::test_extra_stripe_create_error_is_controlled_and_retryable
+FAILED tests/test_regressions.py::test_extra_stripe_refund_error_is_controlled_and_retryable
+FAILED tests/test_regressions.py::test_extra_lost_stripe_response_reuses_idempotency_key[pay]
+FAILED tests/test_regressions.py::test_extra_lost_stripe_response_reuses_idempotency_key[refund]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[live_event]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[missing_event_id]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[missing_event_type]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[missing_data]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[null_resource]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[string_resource]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[missing_resource_id]
+FAILED tests/test_regressions.py::test_extra_signed_malformed_event_rejected_without_500[wrong_resource_type]
+14 failed, 1 passed, 33 deselected, 1 warning in 0.80s

@@ -1,0 +1,8 @@
+{
+  "receipt_url": "https://fetchsandbox.com/runs/fix-58aa10e9eae9?flow=1cd3195dcf26",
+  "state": "unproven_unavailable",
+  "verified": false,
+  "buggy_exit_code": 1,
+  "fixed_exit_code": 2,
+  "scope": "Earlier engine comparison stopped at app setup; not a completed app proof."
+}

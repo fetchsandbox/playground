@@ -1,0 +1,97 @@
+{
+  "session_id": "vs_20cafc4bd4a5",
+  "step": "probe",
+  "result": {
+    "probe": "resend:recovery_server_error",
+    "run_id": "vr_54233d05e8394316a48df9daede04328",
+    "provider": "resend",
+    "observed": "inconclusive",
+    "evidence": "correlated provider refusal observed; application state was not verified",
+    "evidence_scope": "correlated_provider_traffic",
+    "app_verified": false,
+    "started_at": "2026-10-09T19:06:37.822817Z",
+    "finished_at": "2026-10-09T19:07:32.153116Z",
+    "request_ids": [
+      "878c3383c181",
+      "56f1a63c105c"
+    ],
+    "cleanup_ok": true,
+    "cleanup_errors": []
+  },
+  "verdict": {
+    "overall": "happy_path_only",
+    "providers": {
+      "stripe": {
+        "status": "happy_path_only",
+        "app_requests": 8,
+        "probes_available": 16,
+        "probes_run": 0,
+        "probes_not_run": [
+          "stripe:card_declined_insufficient_funds",
+          "stripe:card_declined_fraudulent",
+          "stripe:card_declined_generic",
+          "stripe:account_onboarding_failure",
+          "stripe:auth_failure",
+          "stripe:dispute_escalation",
+          "stripe:flaky_webhooks",
+          "stripe:fraud_hold",
+          "stripe:insufficient_funds",
+          "stripe:payment_declined",
+          "stripe:processing_error",
+          "stripe:rate_limited",
+          "stripe:replayed_old_signed_event",
+          "stripe:signed_event_with_mutated_body",
+          "stripe:slow_network",
+          "stripe:webhook_retries"
+        ],
+        "probes_inconclusive": [],
+        "failures": []
+      },
+      "resend": {
+        "status": "incomplete",
+        "app_requests": 6,
+        "probes_available": 12,
+        "probes_run": 1,
+        "probes_not_run": [
+          "resend:recipient_bounces",
+          "resend:recipient_complains",
+          "resend:accepted_response_loss",
+          "resend:auth_failure",
+          "resend:domain_unverified",
+          "resend:email_bounced",
+          "resend:rate_limited",
+          "resend:recipient_complained",
+          "resend:recovery_rate_limited",
+          "resend:recovery_timeout",
+          "resend:webhook_duplicate_delivery"
+        ],
+        "probes_inconclusive": [
+          "resend:recovery_server_error"
+        ],
+        "failures": []
+      }
+    },
+    "app_verified": false,
+    "evidence_scope": "provider_traffic",
+    "limitations": [
+      "application_execution_not_verified",
+      "application_state_not_verified",
+      "application_state_not_reset",
+      "session_not_durable"
+    ],
+    "note": "These are provider-traffic checks, not production-readiness proof. `happy_path_only` means external traffic was seen but no probe was evaluated; it does not establish a successful app workflow. `incomplete` means probes remain unrun. Even all traffic checks holding is inconclusive without isolated execution and exact application-state assertions. Failure findings are traffic diagnostics requiring confirmation against application state."
+  },
+  "message_for_user": "resend:recovery_server_error: inconclusive — correlated provider refusal observed; application state was not verified",
+  "coordination_guidance": {
+    "execution": {
+      "mode": "existing_backend_job",
+      "execute_returns_without_waiting_for_completion": true,
+      "additional_background_helper_required": false,
+      "instruction": "Execute once. Follow the returned status next_tool_call in this same builder agent; do not request a background helper just to monitor this run."
+    },
+    "owner_browser_handoff": {
+      "confirmation": "one_native_question",
+      "instruction": "If the browser is blocked, immediately offer the same run/order-verified original TEST checkout URL with livemode=false in one native owner question. Pause for its answer while the backend job continues. Record that confirmation once, retrieve the same run, and independently verify paid state. Never bypass a challenge, create a replacement checkout, retry Pay, or request confirmation again after it is recorded."
+    }
+  }
+}

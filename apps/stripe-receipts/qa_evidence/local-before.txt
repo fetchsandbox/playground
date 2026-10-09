@@ -1,0 +1,223 @@
+.FFFFFFFFFFFFFFFFFF.FFFFFFF...                                           [100%]
+=================================== FAILURES ===================================
+_________________ test_distinct_headerless_events_both_process _________________
+tests/test_regressions.py:192: in test_distinct_headerless_events_both_process
+    assert [detail(client, order)["status"] for order in (first, second)] == ["paid", "paid"]
+E   AssertionError: assert ['paid', 'pending'] == ['paid', 'paid']
+E     
+E     At index 1 diff: 'pending' != 'paid'
+E     Use -v to get more diff
+----------------------------- Captured stdout call -----------------------------
+[db] order order_1cc72d32 marked paid
+________________ test_event_id_dedupes_changed_delivery_headers ________________
+tests/test_regressions.py:202: in test_event_id_dedupes_changed_delivery_headers
+    assert len(providers.email_deliveries) == 1
+E   AssertionError: assert 2 == 1
+E    +  where 2 = len({'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}})
+E    +    where {'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}} = <test_regressions.Providers object at 0x10b2dbf50>.email_deliveries
+----------------------------- Captured stdout call -----------------------------
+[db] order order_03a5e5f6 marked paid
+[db] order order_03a5e5f6 marked paid
+_____ test_receipt_retry_recovers_without_duplicate_delivery[reject_first] _____
+tests/test_regressions.py:216: in test_receipt_retry_recovers_without_duplicate_delivery
+    assert len(providers.email_requests) == 2, "The failed receipt must actually be retried"
+E   AssertionError: The failed receipt must actually be retried
+E   assert 1 == 2
+E    +  where 1 = len([{'headers': {'authorization': 'Bearer re_local_regressions', 'content-type': 'application/json'}, 'body': {'from': 'r...'qa@example.test'], 'subject': 'Receipt for order_caaf6db3', 'html': '<p>Order order_caaf6db3: 1000 cents paid.</p>'}}])
+E    +    where [{'headers': {'authorization': 'Bearer re_local_regressions', 'content-type': 'application/json'}, 'body': {'from': 'r...'qa@example.test'], 'subject': 'Receipt for order_caaf6db3', 'html': '<p>Order order_caaf6db3: 1000 cents paid.</p>'}}] = <test_regressions.Providers object at 0x10b2d9730>.email_requests
+----------------------------- Captured stdout call -----------------------------
+[db] order order_caaf6db3 marked paid
+_ test_receipt_retry_recovers_without_duplicate_delivery[lose_first_response] __
+tests/test_regressions.py:216: in test_receipt_retry_recovers_without_duplicate_delivery
+    assert len(providers.email_requests) == 2, "The failed receipt must actually be retried"
+E   AssertionError: The failed receipt must actually be retried
+E   assert 1 == 2
+E    +  where 1 = len([{'headers': {'authorization': 'Bearer re_local_regressions', 'content-type': 'application/json'}, 'body': {'from': 'r...'qa@example.test'], 'subject': 'Receipt for order_be31a6fe', 'html': '<p>Order order_be31a6fe: 1000 cents paid.</p>'}}])
+E    +    where [{'headers': {'authorization': 'Bearer re_local_regressions', 'content-type': 'application/json'}, 'body': {'from': 'r...'qa@example.test'], 'subject': 'Receipt for order_be31a6fe', 'html': '<p>Order order_be31a6fe: 1000 cents paid.</p>'}}] = <test_regressions.Providers object at 0x10b29a300>.email_requests
+----------------------------- Captured stdout call -----------------------------
+[db] order order_be31a6fe marked paid
+________ test_distinct_success_events_for_same_payment_send_one_receipt ________
+tests/test_regressions.py:229: in test_distinct_success_events_for_same_payment_send_one_receipt
+    assert len(providers.email_deliveries) == 1
+E   AssertionError: assert 2 == 1
+E    +  where 2 = len({'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}})
+E    +    where {'unkeyed-1': {'id': 'email_1'}, 'unkeyed-2': {'id': 'email_2'}} = <test_regressions.Providers object at 0x10b2f7890>.email_deliveries
+----------------------------- Captured stdout call -----------------------------
+[db] order order_ce8509ca marked paid
+[db] order order_ce8509ca marked paid
+______________________ test_repeated_pay_uses_one_intent _______________________
+tests/test_regressions.py:238: in test_repeated_pay_uses_one_intent
+    assert retry.json()["payment_intent_id"] == intent["id"]
+E   AssertionError: assert 'pi_local_2' == 'pi_local_1'
+E     
+E     - pi_local_1
+E     ?          ^
+E     + pi_local_2
+E     ?          ^
+_____________________ test_concurrent_pay_uses_one_intent ______________________
+tests/test_regressions.py:250: in test_concurrent_pay_uses_one_intent
+    assert len({response.json()["payment_intent_id"] for response in responses}) == 1
+E   AssertionError: assert 4 == 1
+E    +  where 4 = len({'pi_local_1', 'pi_local_2', 'pi_local_3', 'pi_local_4'})
+___________ test_mismatched_payment_event_cannot_mark_paid[updates0] ___________
+tests/test_regressions.py:262: in test_mismatched_payment_event_cannot_mark_paid
+    assert detail(client, order)["status"] == before
+E   AssertionError: assert 'paid' == 'pending'
+E     
+E     - pending
+E     + paid
+----------------------------- Captured stdout call -----------------------------
+[db] order order_a0ea63e6 marked paid
+___________ test_mismatched_payment_event_cannot_mark_paid[updates1] ___________
+tests/test_regressions.py:262: in test_mismatched_payment_event_cannot_mark_paid
+    assert detail(client, order)["status"] == before
+E   AssertionError: assert 'paid' == 'pending'
+E     
+E     - pending
+E     + paid
+----------------------------- Captured stdout call -----------------------------
+[db] order order_49bc89ab marked paid
+___________ test_mismatched_payment_event_cannot_mark_paid[updates2] ___________
+tests/test_regressions.py:262: in test_mismatched_payment_event_cannot_mark_paid
+    assert detail(client, order)["status"] == before
+E   AssertionError: assert 'paid' == 'pending'
+E     
+E     - pending
+E     + paid
+----------------------------- Captured stdout call -----------------------------
+[db] order order_ed2ff04e marked paid
+___________ test_mismatched_payment_event_cannot_mark_paid[updates3] ___________
+tests/test_regressions.py:262: in test_mismatched_payment_event_cannot_mark_paid
+    assert detail(client, order)["status"] == before
+E   AssertionError: assert 'paid' == 'pending'
+E     
+E     - pending
+E     + paid
+----------------------------- Captured stdout call -----------------------------
+[db] order order_64c93cf2 marked paid
+____________________ test_late_failure_cannot_regress_paid _____________________
+tests/test_regressions.py:273: in test_late_failure_cannot_regress_paid
+    assert detail(client, order)["status"] == "paid"
+E   AssertionError: assert 'payment_failed' == 'paid'
+E     
+E     - paid
+E     + payment_failed
+----------------------------- Captured stdout call -----------------------------
+[db] order order_3ab20989 marked paid
+__________________ test_late_success_cannot_regress_refunded ___________________
+tests/test_regressions.py:283: in test_late_success_cannot_regress_refunded
+    assert detail(client, order)["status"] == "refunded"
+E   AssertionError: assert 'paid' == 'refunded'
+E     
+E     - refunded
+E     + paid
+----------------------------- Captured stdout call -----------------------------
+[db] order order_77ce448f marked paid
+[db] order order_77ce448f marked paid
+______________________ test_failed_payment_can_be_retried ______________________
+tests/test_regressions.py:294: in test_failed_payment_can_be_retried
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"Order is payment_failed, not pending"}
+E   assert 400 == 200
+E    +  where 400 = <Response [400 Bad Request]>.status_code
+___________ test_unsuccessful_refund_does_not_mark_refunded[pending] ___________
+tests/test_regressions.py:307: in test_unsuccessful_refund_does_not_mark_refunded
+    assert detail(client, order)["status"] != "refunded"
+E   AssertionError: assert 'refunded' != 'refunded'
+----------------------------- Captured stdout call -----------------------------
+[db] order order_7694b792 marked paid
+___________ test_unsuccessful_refund_does_not_mark_refunded[failed] ____________
+tests/test_regressions.py:307: in test_unsuccessful_refund_does_not_mark_refunded
+    assert detail(client, order)["status"] != "refunded"
+E   AssertionError: assert 'refunded' != 'refunded'
+----------------------------- Captured stdout call -----------------------------
+[db] order order_e0398eaa marked paid
+__________ test_unsuccessful_refund_does_not_mark_refunded[canceled] ___________
+tests/test_regressions.py:307: in test_unsuccessful_refund_does_not_mark_refunded
+    assert detail(client, order)["status"] != "refunded"
+E   AssertionError: assert 'refunded' != 'refunded'
+----------------------------- Captured stdout call -----------------------------
+[db] order order_c7c9cf54 marked paid
+________ test_refund_webhook_distinguishes_partial_and_full[500-False] _________
+tests/test_regressions.py:321: in test_refund_webhook_distinguishes_partial_and_full
+    assert (detail(client, order)["status"] == "refunded") == expected_full
+E   AssertionError: assert ('refunded' == 'refunded'
+E     
+E       refunded) == False
+----------------------------- Captured stdout call -----------------------------
+[db] order order_20bac0e0 marked paid
+_________________ test_invalid_order_input_rejected[updates0] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_106f1941","sku":"qa-widget","quantity":0,"email":"qa@example.test","status":"pending","amount_cents":0}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates1] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_89f15221","sku":"qa-widget","quantity":-1,"email":"qa@example.test","status":"pending","amount_cents":-1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates2] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_370af9ec","sku":"qa-widget","quantity":1,"email":"qa@example.test","status":"pending","amount_cents":1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates3] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_afe23982","sku":"","quantity":1,"email":"qa@example.test","status":"pending","amount_cents":1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates4] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_6327974b","sku":"   ","quantity":1,"email":"qa@example.test","status":"pending","amount_cents":1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates5] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_45090e23","sku":"qa-widget","quantity":1,"email":"invalid","status":"pending","amount_cents":1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+_________________ test_invalid_order_input_rejected[updates6] __________________
+tests/test_regressions.py:332: in test_invalid_order_input_rejected
+    assert response.status_code in (400, 422), response.text
+E   AssertionError: {"id":"order_ceebb163","sku":"qa-widget","quantity":1,"email":"","status":"pending","amount_cents":1000}
+E   assert 200 in (400, 422)
+E    +  where 200 = <Response [200 OK]>.status_code
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:40
+  /Users/raj/.codex/demos/gptzero-playground-20261009/apps/stripe-receipts/.venv/lib/python3.12/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_regressions.py::test_distinct_headerless_events_both_process
+FAILED tests/test_regressions.py::test_event_id_dedupes_changed_delivery_headers
+FAILED tests/test_regressions.py::test_receipt_retry_recovers_without_duplicate_delivery[reject_first]
+FAILED tests/test_regressions.py::test_receipt_retry_recovers_without_duplicate_delivery[lose_first_response]
+FAILED tests/test_regressions.py::test_distinct_success_events_for_same_payment_send_one_receipt
+FAILED tests/test_regressions.py::test_repeated_pay_uses_one_intent - Asserti...
+FAILED tests/test_regressions.py::test_concurrent_pay_uses_one_intent - Asser...
+FAILED tests/test_regressions.py::test_mismatched_payment_event_cannot_mark_paid[updates0]
+FAILED tests/test_regressions.py::test_mismatched_payment_event_cannot_mark_paid[updates1]
+FAILED tests/test_regressions.py::test_mismatched_payment_event_cannot_mark_paid[updates2]
+FAILED tests/test_regressions.py::test_mismatched_payment_event_cannot_mark_paid[updates3]
+FAILED tests/test_regressions.py::test_late_failure_cannot_regress_paid - Ass...
+FAILED tests/test_regressions.py::test_late_success_cannot_regress_refunded
+FAILED tests/test_regressions.py::test_failed_payment_can_be_retried - Assert...
+FAILED tests/test_regressions.py::test_unsuccessful_refund_does_not_mark_refunded[pending]
+FAILED tests/test_regressions.py::test_unsuccessful_refund_does_not_mark_refunded[failed]
+FAILED tests/test_regressions.py::test_unsuccessful_refund_does_not_mark_refunded[canceled]
+FAILED tests/test_regressions.py::test_refund_webhook_distinguishes_partial_and_full[500-False]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates0]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates1]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates2]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates3]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates4]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates5]
+FAILED tests/test_regressions.py::test_invalid_order_input_rejected[updates6]
+25 failed, 5 passed, 1 warning in 1.60s

@@ -1,0 +1,350 @@
+{
+  "date": "2026-10-09",
+  "app": "stripe-receipts",
+  "decision": "Corrected disposable app: 63 local regressions and six staging-twin QA-driver cases pass. Unprimed persona incomplete; no independent engine-issued before/after proof. Not production ready.",
+  "source": {
+    "original_commit": "0a2028cbf28b1c1a9b51465aca1ff1daafd1760e",
+    "original_main_sha256": "90bf6dbf013f95fd40356e7faa1fc21be3c2d3256e31f59e106d85d3f44b3772",
+    "final_main_sha256": "a06ed09c5ee1a33a254a2da7f41815f1b7d215e3ad90866c2637cd632f315a17"
+  },
+  "safety": {
+    "live_payments_used": false,
+    "real_customer_email_sent": false,
+    "provider_hosts": [
+      "fetchsandbox.com",
+      "127.0.0.1"
+    ],
+    "recipients": "synthetic @example.test only",
+    "app_listen_address": "127.0.0.1",
+    "production_auth_added": false
+  },
+  "fixes": [
+    "Dedupe using signed Stripe event IDs; record processed only after receipt acceptance.",
+    "Serialize state/effects within one process and use stable order/payment receipt idempotency keys.",
+    "Reuse PaymentIntents on repeated/concurrent pay and retain payment/refund keys after uncertain responses.",
+    "Check signed event shape, test mode, saved payment identity, currency, exact amount and amount_received.",
+    "Preserve terminal refund/payment state under late events; send initial receipt even if refund event arrived first.",
+    "Track cumulative partial refunds and pending/failed/canceled refund state; consume known failed attempts only once.",
+    "Controlled 502/503 provider failures; validate receipt acceptance ID; keep failed receipt events retryable.",
+    "Strict quantity/SKU/test-email validation; reject real provider endpoints/live keys and require explicit synthetic config.",
+    "Hide cached client_secret from order GET; Resend is the sole receipt sender (no Stripe receipt_email request)."
+  ],
+  "local_regressions": {
+    "evidence_scope": "actual FastAPI routes and signature verifier; deterministic fake provider boundaries",
+    "before": {
+      "passed": 6,
+      "failed": 39,
+      "files": [
+        "qa_evidence/local-before.txt",
+        "qa_evidence/local-extra-before.txt"
+      ]
+    },
+    "after": {
+      "passed": 63,
+      "failed": 0,
+      "additional_tests_without_original_baseline": 18,
+      "file": "qa_evidence/local-after.txt"
+    },
+    "command": ".venv/bin/python -m pytest tests/test_regressions.py -q --tb=short",
+    "warning": "One dependency deprecation warning in Starlette/AnyIO; no test failures."
+  },
+  "running_process_twins": {
+    "scope": "Actual uvicorn app, Stripe SDK and urllib client via forwarding proxy; synthetic signed success events injected by QA, without payment confirmation. Proxy adds identifying User-Agent and optional X-Flow-Run-Id; it does not fabricate provider responses.",
+    "before": "Synthetic event/receipt baseline passed; five scenarios exposed dropped second event, duplicate receipts, repeated PaymentIntents, lost recovery after Resend 503, and unrecorded receipt after accepted response loss. This is not usable end-to-end checkout proof.",
+    "after": "Six staging-twin checks passed; see stage-summary.json. Accepted-response-loss independently observed one added provider email, failed callback and retry before response release.",
+    "compatibility": "Stripe twin integer amount and synthetic non-null secret repaired on staging. App amount remains strictly integer. Synthetic secret is not usable for real card confirmation. QA forwarding User-Agent avoids edge transport rejection.",
+    "traces": [
+      {
+        "file": "qa_evidence/twin-after-baseline-initial-schema-blocker.json",
+        "case": "baseline",
+        "failed_checks": [
+          "main: payment intent creation"
+        ],
+        "execution_error": "RuntimeError: Payment creation failed; dependent steps cannot run",
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-after-baseline-second-schema-blocker.json",
+        "case": "baseline",
+        "failed_checks": [
+          "main: payment intent creation"
+        ],
+        "execution_error": "RuntimeError: Payment creation failed; dependent steps cannot run",
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-after-baseline.json",
+        "case": "baseline",
+        "failed_checks": [
+          "main: payment intent creation"
+        ],
+        "execution_error": "RuntimeError: Payment creation failed; dependent steps cannot run",
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-accepted-response-loss.json",
+        "case": "receipt_retry",
+        "failed_checks": [
+          "final: exactly one recorded receipt"
+        ],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-baseline-initial-access-failure.json",
+        "case": "baseline",
+        "failed_checks": [
+          "webhook acknowledged"
+        ],
+        "execution_error": "ReadError: [Errno 54] Connection reset by peer",
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-baseline.json",
+        "case": "baseline",
+        "failed_checks": [],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-duplicate.json",
+        "case": "duplicate_delivery_headers",
+        "failed_checks": [
+          "final: exactly one recorded receipt"
+        ],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-recovery-server-error.json",
+        "case": "receipt_retry",
+        "failed_checks": [
+          "final: exactly one recorded receipt"
+        ],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-repeated-pay.json",
+        "case": "repeated_pay",
+        "failed_checks": [
+          "repeated pay returns same intent"
+        ],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      },
+      {
+        "file": "qa_evidence/twin-before-two-orders.json",
+        "case": "two_orders_headerless",
+        "failed_checks": [
+          "final_second: paid",
+          "final_second: exactly one recorded receipt"
+        ],
+        "execution_error": null,
+        "note": "QA-authored HTTP observations; not independent FetchSandbox proof"
+      }
+    ]
+  },
+  "fetchsandbox": {
+    "session_id": "vs_20cafc4bd4a5",
+    "stripe_sandbox_id": "8a967d4eb0",
+    "resend_sandbox_id": "4877a29277",
+    "requirements_model_available": false,
+    "planning": "Builder-proposed coverage from inspected app, not a server-generated or executed contract.",
+    "prove_fix": {
+      "state": "unproven_unavailable",
+      "verified": false,
+      "green_allowed": false,
+      "reason": "Could not run your real code \u2014 diagnosed, not proven.",
+      "specific_execution_diagnosis": null,
+      "receipt_url": "https://fetchsandbox.com/runs/fix-58aa10e9eae9?flow=1cd3195dcf26",
+      "file": "qa_evidence/fetchsandbox-proof.json"
+    },
+    "provider_probes": {
+      "before_recovery_server_error": {
+        "run_id": "vr_54233d05e8394316a48df9daede04328",
+        "verdict": "inconclusive",
+        "cleanup_ok": true
+      },
+      "before_accepted_response_loss": {
+        "run_id": "vr_7a9de4b6627844b288d3ced7b3272640",
+        "verdict": "inconclusive",
+        "cleanup_ok": true
+      }
+    },
+    "app_verified": false
+  },
+  "audit_findings_not_treated_as_reproduced_bugs": [
+    "Missing-signature crash did not reproduce with pinned Stripe SDK; it returned 400 before and after.",
+    "Nested f-strings are valid on installed Python 3.12; syntax portability improved but original runtime did start.",
+    "All SKUs costing 1000 cents is documented fixture behavior; no product catalog/pricing policy was invented."
+  ],
+  "coverage_review": [
+    {
+      "dimension": "baseline",
+      "relevance": "relevant",
+      "reason": "Local success flow passes with fake providers; staging twin normal receipt check now passes.",
+      "check_ids": [
+        "local_happy_path",
+        "twin_final_baseline"
+      ]
+    },
+    {
+      "dimension": "identity_and_access",
+      "relevance": "relevant",
+      "reason": "Signature and payment/order identity checks pass locally; authentication and ownership authorization are absent.",
+      "check_ids": [
+        "local_signatures",
+        "local_identity"
+      ]
+    },
+    {
+      "dimension": "schema_and_value_boundaries",
+      "relevance": "relevant",
+      "reason": "Strict quantity, SKU, email, event shape and response amount checks pass locally.",
+      "check_ids": [
+        "local_schema"
+      ]
+    },
+    {
+      "dimension": "amount_currency_quantity",
+      "relevance": "relevant",
+      "reason": "Wrong payment id, total, received amount and currency rejected locally; partial refunds tracked.",
+      "check_ids": [
+        "local_identity",
+        "local_refunds"
+      ]
+    },
+    {
+      "dimension": "duplicate_replay",
+      "relevance": "relevant",
+      "reason": "Original real-process failures reproduced against twins; fixed dedupe passes locally; fixed staging twin duplicate-delivery check passes.",
+      "check_ids": [
+        "local_dedupe",
+        "twin_before_duplicate",
+        "twin_before_two_orders"
+      ]
+    },
+    {
+      "dimension": "concurrency",
+      "relevance": "relevant",
+      "reason": "Concurrent payment and receipt delivery tests pass within one process; multiple workers unsupported.",
+      "check_ids": [
+        "local_concurrency"
+      ]
+    },
+    {
+      "dimension": "ordering_and_stale_events",
+      "relevance": "relevant",
+      "reason": "Late failure/success, refund-before-success and stale signatures pass local checks.",
+      "check_ids": [
+        "local_ordering",
+        "local_signatures"
+      ]
+    },
+    {
+      "dimension": "delayed_or_missing_events",
+      "relevance": "relevant",
+      "reason": "No background outbox/reconciliation; real delayed or missing provider events remain unverified.",
+      "check_ids": [
+        "unverified_reconciliation"
+      ]
+    },
+    {
+      "dimension": "provider_auth_and_scopes",
+      "relevance": "relevant",
+      "reason": "Synthetic twin keys used; permanent authentication failures/scopes not separately exercised.",
+      "check_ids": [
+        "unverified_provider_auth"
+      ]
+    },
+    {
+      "dimension": "rate_limit_server_error_timeout",
+      "relevance": "relevant",
+      "reason": "Controlled local provider failures tested; original Resend twin 503 and response hold exposed lost recovery. Fixed staging twin recovery after server error passes.",
+      "check_ids": [
+        "local_provider_errors",
+        "twin_before_recovery"
+      ]
+    },
+    {
+      "dimension": "accepted_effect_response_loss",
+      "relevance": "relevant",
+      "reason": "Local payment/refund/email response-loss tests pass. Original twin accepted email after timeout while app lost receipt state; fixed staging twin response-loss recovery passes with independently observed provider count.",
+      "check_ids": [
+        "local_response_loss",
+        "twin_before_response_loss"
+      ]
+    },
+    {
+      "dimension": "partial_effects_and_recovery",
+      "relevance": "relevant",
+      "reason": "Local retry and pending/failed/partial-refund behavior passes; real provider recovery not independently verified.",
+      "check_ids": [
+        "local_refunds",
+        "local_response_loss"
+      ]
+    },
+    {
+      "dimension": "restart_and_durability",
+      "relevance": "relevant",
+      "reason": "Known unsupported: all state and dedupe records are process-local.",
+      "check_ids": [
+        "unverified_durability"
+      ]
+    },
+    {
+      "dimension": "reconciliation",
+      "relevance": "relevant",
+      "reason": "No durable ledger, background reconciliation or refund-update webhook handler; pending refunds refresh on /refund.",
+      "check_ids": [
+        "unverified_reconciliation"
+      ]
+    },
+    {
+      "dimension": "cancellation_refund_entitlements",
+      "relevance": "relevant",
+      "reason": "Local pending/failed/canceled/full/partial refunds tested; no access-entitlement feature or customer cancellation flow exists.",
+      "check_ids": [
+        "local_refunds"
+      ]
+    },
+    {
+      "dimension": "data_and_privacy_boundaries",
+      "relevance": "relevant",
+      "reason": "Only example.test recipients and isolated endpoint allowlist; secrets redacted in twin traces, cached client_secret hidden from order reads. Auth absent.",
+      "check_ids": [
+        "local_safety"
+      ]
+    },
+    {
+      "dimension": "cleanup_and_isolation",
+      "relevance": "relevant",
+      "reason": "Fresh subprocess per twin scenario, loopback listeners stopped, provider probes report cleanup_ok. All new stage sandboxes deleted and private bindings removed.",
+      "check_ids": [
+        "cleanup"
+      ]
+    }
+  ],
+  "unverified_or_unsupported": [
+    "Independent FetchSandbox execution proof.",
+    "Original-provider Stripe test card confirmation, 3DS, issuer declines, capture/settlement and browser checkout (no frontend exists).",
+    "Actual email inbox delivery, bounces, complaints and suppression handling.",
+    "Authentication/authorization, persistent storage, multiple workers, restart/crash recovery, durable outbox.",
+    "Long-delay duplicate safety beyond provider idempotency retention (Resend 24h; Stripe at least24h).",
+    "Missing event reconciliation, sustained load, exhaustive fault coverage."
+  ],
+  "next_steps": [
+    "Rerun independent FetchSandbox prove_fix when its execution runner is available, preserving an original tree for measured comparison.",
+    "Before nonlocal QA/deployment, add authentication/ownership, durable shared state, transactional outbox and reconciliation; use separate authorized provider test accounts."
+  ],
+  "persona_evaluation": {
+    "outcome": "UNMEASURED",
+    "persona": "lovable/unprimed.txt unchanged, editor checkout mode",
+    "client": "Claude subscription CLI",
+    "mcp_version": "0.7.11",
+    "fixture_commit": "0a2028cbf28b1c1a9b51465aca1ff1daafd1760e",
+    "reason": "No terminal result before harness turn deadline; zero completed judge continuations; no prove_fix receipt.",
+    "cleanup": "Exact disposable MCP key revoked and independently confirmed by existing recovery helper."
+  }
+}

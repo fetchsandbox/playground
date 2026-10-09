@@ -1,0 +1,400 @@
+{
+  "case": "two_orders_headerless",
+  "run_id": null,
+  "app_sha256": "a06ed09c5ee1a33a254a2da7f41815f1b7d215e3ad90866c2637cd632f315a17",
+  "execution": "real uvicorn subprocess; app HTTP endpoints; SDK/urllib provider traffic via allowlisted forwarding proxies",
+  "forwarding_transport": {
+    "user_agent": "stripe-receipts-qa/1.0",
+    "allowed_destination_host": "fetchsandbox.com",
+    "flow_run_id_header": false
+  },
+  "unverified": [
+    "Independent provider-side stored resource counts; correlate this output with FetchSandbox traces.",
+    "Webhook events are signed and injected by QA; Stripe confirmation and provider webhook delivery are not exercised.",
+    "Real Stripe payments and real email delivery are intentionally untested."
+  ],
+  "steps": [
+    {
+      "name": "create_first",
+      "method": "POST",
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "id": "order_34522f8ef21a48c6b47056d21640ea70",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-first-bc123877@example.test",
+        "status": "pending",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [],
+        "receipt_status": "not_sent",
+        "amount_refunded": 0
+      },
+      "started_at": 1791582934.795522,
+      "completed_at": 1791582934.801415,
+      "duration_seconds": 0.00589299201965332
+    },
+    {
+      "name": "pay_first",
+      "method": "POST",
+      "path": "/orders/order_34522f8ef21a48c6b47056d21640ea70/pay",
+      "status": 200,
+      "body": {
+        "payment_intent_id": "pi_4M6GF517AXRBXAQEE7ANNHHL",
+        "client_secret": "[redacted]",
+        "amount": 1000
+      },
+      "started_at": 1791582934.801419,
+      "completed_at": 1791582935.3286169,
+      "duration_seconds": 0.5271978378295898
+    },
+    {
+      "name": "webhook_first",
+      "method": "POST",
+      "path": "/stripe-webhook",
+      "status": 200,
+      "body": {
+        "received": true
+      },
+      "started_at": 1791582935.3287199,
+      "completed_at": 1791582935.564594,
+      "duration_seconds": 0.23587417602539062
+    },
+    {
+      "name": "final_first",
+      "method": "GET",
+      "path": "/orders/order_34522f8ef21a48c6b47056d21640ea70",
+      "status": 200,
+      "body": {
+        "id": "order_34522f8ef21a48c6b47056d21640ea70",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-first-bc123877@example.test",
+        "status": "paid",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [
+          "ee1f6c24-1a5e-4ef0-84d1-288d894681c0"
+        ],
+        "receipt_status": "sent",
+        "amount_refunded": 0,
+        "payment_intent_id": "pi_4M6GF517AXRBXAQEE7ANNHHL",
+        "paid_at": 1791582935
+      },
+      "started_at": 1791582935.564609,
+      "completed_at": 1791582935.567355,
+      "duration_seconds": 0.0027458667755126953
+    },
+    {
+      "name": "create_second",
+      "method": "POST",
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "id": "order_383f5b1bf4974ca2b969167a95246617",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-second-cb862c81@example.test",
+        "status": "pending",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [],
+        "receipt_status": "not_sent",
+        "amount_refunded": 0
+      },
+      "started_at": 1791582935.567393,
+      "completed_at": 1791582935.570473,
+      "duration_seconds": 0.0030798912048339844
+    },
+    {
+      "name": "pay_second",
+      "method": "POST",
+      "path": "/orders/order_383f5b1bf4974ca2b969167a95246617/pay",
+      "status": 200,
+      "body": {
+        "payment_intent_id": "pi_GIM4ZSHZ821LJ49P4G46Q6NC",
+        "client_secret": "[redacted]",
+        "amount": 1000
+      },
+      "started_at": 1791582935.570482,
+      "completed_at": 1791582935.817253,
+      "duration_seconds": 0.24677109718322754
+    },
+    {
+      "name": "webhook_second",
+      "method": "POST",
+      "path": "/stripe-webhook",
+      "status": 200,
+      "body": {
+        "received": true
+      },
+      "started_at": 1791582935.8173451,
+      "completed_at": 1791582936.022971,
+      "duration_seconds": 0.2056257724761963
+    },
+    {
+      "name": "final_second",
+      "method": "GET",
+      "path": "/orders/order_383f5b1bf4974ca2b969167a95246617",
+      "status": 200,
+      "body": {
+        "id": "order_383f5b1bf4974ca2b969167a95246617",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-second-cb862c81@example.test",
+        "status": "paid",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [
+          "5952e944-ffbd-409f-977c-1a4ccfc02c35"
+        ],
+        "receipt_status": "sent",
+        "amount_refunded": 0,
+        "payment_intent_id": "pi_GIM4ZSHZ821LJ49P4G46Q6NC",
+        "paid_at": 1791582935
+      },
+      "started_at": 1791582936.0229828,
+      "completed_at": 1791582936.0247622,
+      "duration_seconds": 0.001779317855834961
+    }
+  ],
+  "checks": [
+    {
+      "name": "first: order creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "first: payment intent creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "first: webhook acknowledged",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final_first: readable order",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final_first: paid",
+      "passed": true,
+      "observed": "paid"
+    },
+    {
+      "name": "final_first: exactly one recorded receipt",
+      "passed": true,
+      "observed": {
+        "count": 1,
+        "ids": [
+          "ee1f6c24-1a5e-4ef0-84d1-288d894681c0"
+        ]
+      }
+    },
+    {
+      "name": "second: order creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "second: payment intent creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "second: webhook acknowledged",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final_second: readable order",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final_second: paid",
+      "passed": true,
+      "observed": "paid"
+    },
+    {
+      "name": "final_second: exactly one recorded receipt",
+      "passed": true,
+      "observed": {
+        "count": 1,
+        "ids": [
+          "5952e944-ffbd-409f-977c-1a4ccfc02c35"
+        ]
+      }
+    }
+  ],
+  "provider_calls": {
+    "stripe": [
+      {
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/payment_intents",
+        "status": 200,
+        "started_at": 1791582935.10054,
+        "idempotency_key": "pay:order_34522f8ef21a48c6b47056d21640ea70",
+        "response": {
+          "amount_capturable": 0,
+          "amount_received": 0,
+          "application": null,
+          "application_fee_amount": null,
+          "automatic_payment_methods": null,
+          "canceled_at": null,
+          "cancellation_reason": null,
+          "capture_method": "automatic",
+          "client_secret": "[redacted]",
+          "confirmation_method": "automatic",
+          "created": 1791582935,
+          "currency": "usd",
+          "customer": null,
+          "customer_account": null,
+          "description": null,
+          "excluded_payment_method_types": null,
+          "id": "pi_4M6GF517AXRBXAQEE7ANNHHL",
+          "last_payment_error": null,
+          "latest_charge": null,
+          "livemode": false,
+          "next_action": null,
+          "object": "payment_intent",
+          "on_behalf_of": null,
+          "payment_method": null,
+          "payment_method_configuration_details": null,
+          "payment_method_options": null,
+          "processing": null,
+          "receipt_email": null,
+          "review": null,
+          "setup_future_usage": "off_session",
+          "shipping": null,
+          "statement_descriptor": null,
+          "statement_descriptor_suffix": null,
+          "status": "requires_payment_method",
+          "transfer_data": null,
+          "transfer_group": null,
+          "amount": 1000,
+          "metadata": {
+            "order_id": "order_34522f8ef21a48c6b47056d21640ea70"
+          }
+        },
+        "payment_secret_present": true,
+        "payment_secret_type": "str",
+        "upstream_completed_at": 1791582935.3248482,
+        "completed_at": 1791582935.3249578,
+        "duration_seconds": 0.22441792488098145
+      },
+      {
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/payment_intents",
+        "status": 200,
+        "started_at": 1791582935.573971,
+        "idempotency_key": "pay:order_383f5b1bf4974ca2b969167a95246617",
+        "response": {
+          "amount_capturable": 0,
+          "amount_received": 0,
+          "application": null,
+          "application_fee_amount": null,
+          "automatic_payment_methods": null,
+          "canceled_at": null,
+          "cancellation_reason": null,
+          "capture_method": "automatic",
+          "client_secret": "[redacted]",
+          "confirmation_method": "automatic",
+          "created": 1791582935,
+          "currency": "usd",
+          "customer": null,
+          "customer_account": null,
+          "description": null,
+          "excluded_payment_method_types": null,
+          "id": "pi_GIM4ZSHZ821LJ49P4G46Q6NC",
+          "last_payment_error": null,
+          "latest_charge": null,
+          "livemode": false,
+          "next_action": null,
+          "object": "payment_intent",
+          "on_behalf_of": null,
+          "payment_method": null,
+          "payment_method_configuration_details": null,
+          "payment_method_options": null,
+          "processing": null,
+          "receipt_email": null,
+          "review": null,
+          "setup_future_usage": "off_session",
+          "shipping": null,
+          "statement_descriptor": null,
+          "statement_descriptor_suffix": null,
+          "status": "requires_payment_method",
+          "transfer_data": null,
+          "transfer_group": null,
+          "amount": 1000,
+          "metadata": {
+            "order_id": "order_383f5b1bf4974ca2b969167a95246617"
+          }
+        },
+        "payment_secret_present": true,
+        "payment_secret_type": "str",
+        "upstream_completed_at": 1791582935.8144,
+        "completed_at": 1791582935.81455,
+        "duration_seconds": 0.24057888984680176
+      }
+    ],
+    "resend": [
+      {
+        "provider": "resend",
+        "method": "POST",
+        "path": "/emails",
+        "status": 200,
+        "started_at": 1791582935.340516,
+        "recipients": [
+          "qa-first-bc123877@example.test"
+        ],
+        "idempotency_key": "receipt:order_34522f8ef21a48c6b47056d21640ea70:pi_4M6GF517AXRBXAQEE7ANNHHL",
+        "response": {
+          "id": "ee1f6c24-1a5e-4ef0-84d1-288d894681c0"
+        },
+        "upstream_completed_at": 1791582935.5619369,
+        "completed_at": 1791582935.562145,
+        "duration_seconds": 0.22162890434265137
+      },
+      {
+        "provider": "resend",
+        "method": "POST",
+        "path": "/emails",
+        "status": 200,
+        "started_at": 1791582935.8195992,
+        "recipients": [
+          "qa-second-cb862c81@example.test"
+        ],
+        "idempotency_key": "receipt:order_383f5b1bf4974ca2b969167a95246617:pi_GIM4ZSHZ821LJ49P4G46Q6NC",
+        "response": {
+          "id": "5952e944-ffbd-409f-977c-1a4ccfc02c35"
+        },
+        "upstream_completed_at": 1791582936.0217972,
+        "completed_at": 1791582936.021913,
+        "duration_seconds": 0.20231389999389648
+      }
+    ]
+  },
+  "passed": [
+    "first: order creation",
+    "first: payment intent creation",
+    "first: webhook acknowledged",
+    "final_first: readable order",
+    "final_first: paid",
+    "final_first: exactly one recorded receipt",
+    "second: order creation",
+    "second: payment intent creation",
+    "second: webhook acknowledged",
+    "final_second: readable order",
+    "final_second: paid",
+    "final_second: exactly one recorded receipt"
+  ],
+  "failed": [],
+  "result": "passed"
+}

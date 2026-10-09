@@ -1,0 +1,60 @@
+[
+  {
+    "case": "receipt_retry",
+    "scenario": "accepted_response_loss",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "injected receipt failure is retryable",
+        "passed": true,
+        "observed": 503
+      },
+      {
+        "name": "after_first_receipt_attempt: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "after_receipt_attempt_2: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "receipt retry acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "c107d264-a993-4e44-8524-623eaf2325da"
+          ]
+        }
+      }
+    ],
+    "failed": []
+  }
+]

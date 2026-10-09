@@ -1,0 +1,215 @@
+{
+  "case": "baseline",
+  "run_id": null,
+  "app_sha256": "a06ed09c5ee1a33a254a2da7f41815f1b7d215e3ad90866c2637cd632f315a17",
+  "execution": "real uvicorn subprocess; app HTTP endpoints; SDK/urllib provider traffic via allowlisted forwarding proxies",
+  "forwarding_transport": {
+    "user_agent": "stripe-receipts-qa/1.0",
+    "allowed_destination_host": "fetchsandbox.com",
+    "flow_run_id_header": false
+  },
+  "unverified": [
+    "Independent provider-side stored resource counts; correlate this output with FetchSandbox traces.",
+    "Webhook events are signed and injected by QA; Stripe confirmation and provider webhook delivery are not exercised.",
+    "Real Stripe payments and real email delivery are intentionally untested."
+  ],
+  "steps": [
+    {
+      "name": "create_main",
+      "method": "POST",
+      "path": "/orders",
+      "status": 200,
+      "body": {
+        "id": "order_fd1624023a3541fb8d7ede76ed43b137",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-main-df10c4c2@example.test",
+        "status": "pending",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [],
+        "receipt_status": "not_sent",
+        "amount_refunded": 0
+      },
+      "started_at": 1791582930.4320629,
+      "completed_at": 1791582930.4423192,
+      "duration_seconds": 0.010256290435791016
+    },
+    {
+      "name": "pay_main",
+      "method": "POST",
+      "path": "/orders/order_fd1624023a3541fb8d7ede76ed43b137/pay",
+      "status": 200,
+      "body": {
+        "payment_intent_id": "pi_1L65F1B22O14UAFK6KPJTCUH",
+        "client_secret": "[redacted]",
+        "amount": 1000
+      },
+      "started_at": 1791582930.442326,
+      "completed_at": 1791582931.305624,
+      "duration_seconds": 0.8632979393005371
+    },
+    {
+      "name": "webhook",
+      "method": "POST",
+      "path": "/stripe-webhook",
+      "status": 200,
+      "body": {
+        "received": true
+      },
+      "started_at": 1791582931.30574,
+      "completed_at": 1791582931.602269,
+      "duration_seconds": 0.29652881622314453
+    },
+    {
+      "name": "final",
+      "method": "GET",
+      "path": "/orders/order_fd1624023a3541fb8d7ede76ed43b137",
+      "status": 200,
+      "body": {
+        "id": "order_fd1624023a3541fb8d7ede76ed43b137",
+        "sku": "qa-test-item",
+        "quantity": 1,
+        "email": "qa-main-df10c4c2@example.test",
+        "status": "paid",
+        "amount_cents": 1000,
+        "currency": "usd",
+        "receipt_ids": [
+          "aa598f31-8766-4d06-9cc2-22968912a7b4"
+        ],
+        "receipt_status": "sent",
+        "amount_refunded": 0,
+        "payment_intent_id": "pi_1L65F1B22O14UAFK6KPJTCUH",
+        "paid_at": 1791582931
+      },
+      "started_at": 1791582931.602277,
+      "completed_at": 1791582931.603571,
+      "duration_seconds": 0.0012938976287841797
+    }
+  ],
+  "checks": [
+    {
+      "name": "main: order creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "main: payment intent creation",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "webhook acknowledged",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final: readable order",
+      "passed": true,
+      "observed": 200
+    },
+    {
+      "name": "final: paid",
+      "passed": true,
+      "observed": "paid"
+    },
+    {
+      "name": "final: exactly one recorded receipt",
+      "passed": true,
+      "observed": {
+        "count": 1,
+        "ids": [
+          "aa598f31-8766-4d06-9cc2-22968912a7b4"
+        ]
+      }
+    }
+  ],
+  "provider_calls": {
+    "stripe": [
+      {
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/payment_intents",
+        "status": 200,
+        "started_at": 1791582931.1021702,
+        "idempotency_key": "pay:order_fd1624023a3541fb8d7ede76ed43b137",
+        "response": {
+          "amount_capturable": 0,
+          "amount_received": 0,
+          "application": null,
+          "application_fee_amount": null,
+          "automatic_payment_methods": null,
+          "canceled_at": null,
+          "cancellation_reason": null,
+          "capture_method": "automatic",
+          "client_secret": "[redacted]",
+          "confirmation_method": "automatic",
+          "created": 1791582931,
+          "currency": "usd",
+          "customer": null,
+          "customer_account": null,
+          "description": null,
+          "excluded_payment_method_types": null,
+          "id": "pi_1L65F1B22O14UAFK6KPJTCUH",
+          "last_payment_error": null,
+          "latest_charge": null,
+          "livemode": false,
+          "next_action": null,
+          "object": "payment_intent",
+          "on_behalf_of": null,
+          "payment_method": null,
+          "payment_method_configuration_details": null,
+          "payment_method_options": null,
+          "processing": null,
+          "receipt_email": null,
+          "review": null,
+          "setup_future_usage": "off_session",
+          "shipping": null,
+          "statement_descriptor": null,
+          "statement_descriptor_suffix": null,
+          "status": "requires_payment_method",
+          "transfer_data": null,
+          "transfer_group": null,
+          "amount": 1000,
+          "metadata": {
+            "order_id": "order_fd1624023a3541fb8d7ede76ed43b137"
+          }
+        },
+        "payment_secret_present": true,
+        "payment_secret_type": "str",
+        "upstream_completed_at": 1791582931.300947,
+        "completed_at": 1791582931.3010828,
+        "duration_seconds": 0.1989126205444336
+      }
+    ],
+    "resend": [
+      {
+        "provider": "resend",
+        "method": "POST",
+        "path": "/emails",
+        "status": 200,
+        "started_at": 1791582931.315579,
+        "recipients": [
+          "qa-main-df10c4c2@example.test"
+        ],
+        "idempotency_key": "receipt:order_fd1624023a3541fb8d7ede76ed43b137:pi_1L65F1B22O14UAFK6KPJTCUH",
+        "response": {
+          "id": "aa598f31-8766-4d06-9cc2-22968912a7b4"
+        },
+        "upstream_completed_at": 1791582931.601195,
+        "completed_at": 1791582931.60125,
+        "duration_seconds": 0.2856709957122803
+      }
+    ]
+  },
+  "passed": [
+    "main: order creation",
+    "main: payment intent creation",
+    "webhook acknowledged",
+    "final: readable order",
+    "final: paid",
+    "final: exactly one recorded receipt"
+  ],
+  "failed": [],
+  "result": "passed"
+}

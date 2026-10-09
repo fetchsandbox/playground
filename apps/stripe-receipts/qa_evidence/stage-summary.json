@@ -1,0 +1,333 @@
+[
+  {
+    "case": "baseline",
+    "file": "stage-baseline-default.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "webhook acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "aa598f31-8766-4d06-9cc2-22968912a7b4"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "case": "duplicate_delivery_headers",
+    "file": "stage-duplicate_delivery_headers-default.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "delivery 1: acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "delivery 2: acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "7d7dd497-0eb7-41d2-9d00-f9b7e47692e9"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "case": "receipt_retry",
+    "file": "stage-receipt_retry-accepted_response_loss.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "injected receipt failure is retryable",
+        "passed": true,
+        "observed": 503
+      },
+      {
+        "name": "after_first_receipt_attempt: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "after_receipt_attempt_2: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "receipt retry acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "e805f3c1-3795-4c56-ada9-bd58348a5a24"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "case": "receipt_retry",
+    "file": "stage-receipt_retry-recovery_server_error.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "injected receipt failure is retryable",
+        "passed": true,
+        "observed": 503
+      },
+      {
+        "name": "after_first_receipt_attempt: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "after_receipt_attempt_2: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "receipt retry acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "236079f7-02ab-47ce-8d47-813d4c640b15"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "case": "repeated_pay",
+    "file": "stage-repeated_pay-default.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "main: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "main: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "repeated pay returns same intent",
+        "passed": true,
+        "observed": {
+          "status": 200,
+          "first": "pi_D442UZ3YPJZGHK4FRV61QR0V",
+          "second": "pi_D442UZ3YPJZGHK4FRV61QR0V"
+        }
+      },
+      {
+        "name": "webhook acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "17cb84cc-0970-4478-b6bd-a35421ff851c"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "case": "two_orders_headerless",
+    "file": "stage-two_orders_headerless-default.json",
+    "result": "passed",
+    "checks": [
+      {
+        "name": "first: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "first: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "first: webhook acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final_first: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final_first: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final_first: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "ee1f6c24-1a5e-4ef0-84d1-288d894681c0"
+          ]
+        }
+      },
+      {
+        "name": "second: order creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "second: payment intent creation",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "second: webhook acknowledged",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final_second: readable order",
+        "passed": true,
+        "observed": 200
+      },
+      {
+        "name": "final_second: paid",
+        "passed": true,
+        "observed": "paid"
+      },
+      {
+        "name": "final_second: exactly one recorded receipt",
+        "passed": true,
+        "observed": {
+          "count": 1,
+          "ids": [
+            "5952e944-ffbd-409f-977c-1a4ccfc02c35"
+          ]
+        }
+      }
+    ]
+  }
+]

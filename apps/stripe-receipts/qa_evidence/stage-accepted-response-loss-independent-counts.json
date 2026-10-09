@@ -1,0 +1,107 @@
+{
+  "initial_emails": 3,
+  "final_emails": 4,
+  "added_emails": 1,
+  "samples": [
+    {
+      "observed_at": 1791584280.7033222,
+      "stored_emails": 3
+    },
+    {
+      "observed_at": 1791584281.3793569,
+      "stored_emails": 3
+    },
+    {
+      "observed_at": 1791584282.13726,
+      "stored_emails": 3
+    },
+    {
+      "observed_at": 1791584282.814066,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584283.487725,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584284.151593,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584284.849685,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584285.5264251,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584286.272419,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584286.977644,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584287.623258,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584288.35517,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584289.012521,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584289.698049,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584290.364403,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584291.016449,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584291.695647,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584292.436361,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584293.130104,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584293.841721,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584294.538222,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584295.303637,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584295.992007,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584296.716118,
+      "stored_emails": 4
+    },
+    {
+      "observed_at": 1791584297.4217532,
+      "stored_emails": 4
+    }
+  ]
+}

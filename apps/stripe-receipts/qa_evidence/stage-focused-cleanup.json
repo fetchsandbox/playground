@@ -1,0 +1,14 @@
+{
+  "disposable_key_revoked": true,
+  "account_cleanup_complete": true,
+  "sandboxes": [
+    {
+      "id": "32cb85cfe6",
+      "deleted": true
+    },
+    {
+      "id": "d0e28b537d",
+      "deleted": true
+    }
+  ]
+}
