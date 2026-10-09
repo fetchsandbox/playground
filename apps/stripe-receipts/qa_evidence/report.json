@@ -346,5 +346,39 @@
     "fixture_commit": "0a2028cbf28b1c1a9b51465aca1ff1daafd1760e",
     "reason": "No terminal result before harness turn deadline; zero completed judge continuations; no prove_fix receipt.",
     "cleanup": "Exact disposable MCP key revoked and independently confirmed by existing recovery helper."
+  },
+  "payment_completion_follow_up": {
+    "owner": "FetchSandbox Stripe twin engine and QA evidence; app amount validation unchanged",
+    "baseline": "Existing generic completion handler; same linked assertion",
+    "before": {
+      "result": "failed",
+      "status": "requires_capture",
+      "amount_received": 0
+    },
+    "after": {
+      "result": "passed",
+      "status": "succeeded",
+      "amount_received": 1000,
+      "emails_before": 3,
+      "emails_after_success": 4,
+      "emails_after_replay": 4
+    },
+    "evidence": [
+      "linked-payment-before.json",
+      "linked-payment-after.json"
+    ],
+    "environment": "local running uvicorn app + actual twin servers over loopback HTTP",
+    "external_webhook_delivery": false,
+    "autonomous_persona_pass": false,
+    "deployed": false,
+    "scope": "Synchronous test Visa aliases, automatic confirmation and full manual capture; not full Stripe parity",
+    "validation": {
+      "payment_creation_completion_contract": "18 passed",
+      "app_regressions": "63 passed",
+      "rechecked_completion_operation_events_and_golden_guards": "15 passed; full-fleet golden excluded; Stripe-only golden separately checked",
+      "stripe_workflow_snapshots": "all Stripe workflow timelines identical after reviewed update",
+      "earlier_broad_run": "84 passed, 4 failed; confirm replay repaired and passed on rerun; 3 operation-event tests passed when rerun from their required backend working directory",
+      "linked_http_test": "1 passed; unchanged generic completion baseline failed the same assertion"
+    }
   }
 }

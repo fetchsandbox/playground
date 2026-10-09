@@ -38,3 +38,39 @@ The staging PaymentIntent secret is synthetic and cannot confirm a real card.
 
 Use [the README](README.md) for setup and private test bindings. Do not use live
 provider credentials. Original buggy code is preserved at commit 0a2028c.
+
+## Payment-completion follow-up
+
+The earlier staging checks injected a synthetic success object. They did not
+confirm the created PaymentIntent. The original twin's generic completion
+handler incorrectly returned `requires_capture` for automatic confirmation
+and left `amount_received` at zero.
+
+The bounded Stripe adapter now supports the synchronous Visa test-card aliases
+for automatic confirmation and full manual capture. Missing methods, capture
+before authorization, unsupported methods and attempts to overwrite outcomes
+are rejected without changing state. It does not implement 3DS, issuer behavior,
+partial capture, real settlement or all payment-method types.
+
+The same loopback integration assertion failed with the original generic
+completion handler and passed with the adapter. Actual uvicorn app and twin
+servers exchanged HTTP requests; the test delivered the twin-emitted payment
+payload, then replayed the same signed event. Stored emails increased from
+three seed records to four and remained four after replay.
+
+Inspect [before](qa_evidence/linked-payment-before.json) and
+[after](qa_evidence/linked-payment-after.json). Webhook transport/signing remains
+QA-controlled; external hosted delivery and the autonomous MCP persona are not
+proved by this check. This candidate is local, not deployed.
+
+Run this check with the backend checkout's Python environment (it contains the
+engine dependencies), from this app directory:
+
+```sh
+FETCHSANDBOX_ENGINE_ROOT=/absolute/path/to/sandbox/backend \
+  /absolute/path/to/sandbox/backend/.venv/bin/python -m pytest \
+  tests/test_twin_completion.py -q
+```
+
+The app's existing `.venv` still runs its ordinary regression suite. The linked
+engine integration test is explicitly skipped unless an engine checkout is supplied.
