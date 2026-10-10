@@ -17,6 +17,7 @@ Clone, run, point your agent at it, see whether FetchSandbox catches the bug.
 | App | Stack |
 |---|---|
 | [apps/stripe-receipts](apps/stripe-receipts/CURSOR.md) | FastAPI + Stripe + Resend, buggy baseline and repaired example |
+| [apps/stripe-workflow-boundaries](apps/stripe-workflow-boundaries) | Twenty FastAPI + SQLite business-rule fixtures with [production proof records](evidence/stripe-workflows-20261010) |
 | [apps/stripe](apps/stripe) | FastAPI + Stripe SDK |
 | [apps/resend](apps/resend) | FastAPI + Resend webhooks |
 | [apps/clerk](apps/clerk) | FastAPI + Clerk auth |
