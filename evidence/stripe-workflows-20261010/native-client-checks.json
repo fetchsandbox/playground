@@ -1,0 +1,130 @@
+[
+  {
+    "client": "claude",
+    "scope": "unchanged unprimed support persona; Paddle/Resend fixture, not Stripe",
+    "attempt": "20261010T084941Z",
+    "backend": "https://fetchsandbox.com",
+    "mcp_source": "locally built 0.7.12 candidate; npm release blocked, not the published npm client",
+    "actor_completed": true,
+    "assertion_verdict": "FAIL",
+    "assertions": "5/8",
+    "run_invariants_exit": 0,
+    "cleanup_confirmed": true,
+    "receipts": [
+      [
+        "/runs/67bb0f7b5f?flow=run_2431ba1e-1d0b-403f-bbb3-33a47cb03455",
+        null,
+        null
+      ]
+    ],
+    "failed_assertions": [
+      "measured_green",
+      "receipt_state:proven",
+      "ran_real_app (mode + both sides executed)"
+    ],
+    "measured_app_proof": false
+  },
+  {
+    "client": "claude",
+    "scope": "primed Stripe debugging control",
+    "attempt": "20261010T093531Z",
+    "backend": "https://fetchsandbox.com",
+    "mcp_source": "locally built 0.7.12 candidate; npm release blocked, not the published npm client",
+    "actor_completed": true,
+    "assertion_verdict": "FAIL",
+    "assertions": "6/12",
+    "run_invariants_exit": 0,
+    "cleanup_confirmed": true,
+    "receipts": [
+      [
+        "/runs/a8c3b9fbd9?flow=run_8e498631-760d-4b30-bb78-1cc51bbe1cd0",
+        null,
+        null
+      ]
+    ],
+    "failed_assertions": [
+      "tools_exclude:quickrun",
+      "measured_green",
+      "receipt_state:proven",
+      "exit_flip:buggy=1,fixed=0",
+      "ran_real_app (mode + both sides executed)",
+      "a measured side-effect changed buggy->fixed"
+    ],
+    "measured_app_proof": false
+  },
+  {
+    "client": "codex",
+    "scope": "primed Stripe debugging control",
+    "attempt": "20261010T090914Z",
+    "backend": "https://fetchsandbox.com",
+    "mcp_source": "locally built 0.7.12 candidate; npm release blocked, not the published npm client",
+    "actor_completed": true,
+    "assertion_verdict": "FAIL",
+    "assertions": "11/12",
+    "run_invariants_exit": 0,
+    "cleanup_confirmed": true,
+    "receipts": [
+      [
+        "/runs/fix-de931767a604?flow=9bc5e490b43b",
+        "proven",
+        {
+          "buggy": 1,
+          "fixed": 0
+        }
+      ],
+      [
+        "/runs/a8c3b9fbd9?flow=run_3bcdb718-3bb7-4c73-a9b1-bb1f6f4ff824",
+        null,
+        null
+      ],
+      [
+        "/runs/fix-8b464488a6c5?flow=2f1ab0706bea",
+        "proven",
+        {
+          "buggy": 1,
+          "fixed": 0
+        }
+      ]
+    ],
+    "failed_assertions": [
+      "tools_exclude:quickrun"
+    ],
+    "measured_app_proof": true
+  },
+  {
+    "client": "cursor",
+    "scope": "primed Stripe debugging control",
+    "attempt": "20261010T091102Z",
+    "backend": "https://fetchsandbox.com",
+    "mcp_source": "locally built 0.7.12 candidate; npm release blocked, not the published npm client",
+    "actor_completed": true,
+    "assertion_verdict": "FAIL",
+    "assertions": "11/12",
+    "run_invariants_exit": 0,
+    "cleanup_confirmed": true,
+    "receipts": [
+      [
+        "/runs/fix-34bdd9690fec?flow=432bbb826cfe",
+        "proven",
+        {
+          "buggy": 1,
+          "fixed": 0
+        }
+      ],
+      [
+        "/runs/a8c3b9fbd9?flow=run_36499793-882c-4335-966f-b25b0d8e7e61",
+        null,
+        null
+      ],
+      [
+        "/runs/a8c3b9fbd9?flow=run_3716d933-7ef3-44a5-b0b9-c738156449f2",
+        null,
+        null
+      ]
+    ],
+    "failed_assertions": [
+      "tools_exclude:quickrun"
+    ],
+    "measured_app_proof": true
+  }
+]

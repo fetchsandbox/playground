@@ -3659,12 +3659,21 @@
     "guide": "workflow-coupon-promotion-code",
     "title": "Create Coupons and Promotion Codes",
     "source_sha256": "a7d015f2e75435bbf823368d18725a27b4a52dc56f26a04cab3ae53c4cb062bc",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-3981ccbaea40?flow=de20cb26f179",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 17,
+      "fixed": 17
+    },
+    "sql_trace_lines": {
+      "buggy": 30,
+      "fixed": 30
+    },
     "declared_rule": "Stripe consumer-state app: Create Coupons and Promotion Codes: For this percentage-discount app, discount cents equal integer subtotal cents times percent_off divided by 100. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3683,18 +3692,266 @@
         "path": "/v1/promotion_codes"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_80d659dd84/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_80d659dd84",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_404fed2737/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_404fed2737",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_de0445d4f5/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_de0445d4f5",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_e61ade652c",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_e61ade652c/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_e61ade652c",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_a",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_b",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_c",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_missing",
+        "status": 404
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_c3784dd326/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_c3784dd326",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_09896b5481/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_09896b5481",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_4e31cf1f53/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_4e31cf1f53",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_fb4ec5457c",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_fb4ec5457c/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_fb4ec5457c",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_a",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_b",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_c",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/coupons/coupon_missing",
+        "status": 404
+      }
+    ]
   },
   {
     "guide": "workflow-subscription-schedule-management",
     "title": "Schedule Subscription Changes",
     "source_sha256": "fbb52eb3cd7e65a31b93e2142e5e3976e7ca6ae88fb23c22cc3b51553d92671b",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-d254fe1ac3c9?flow=b98b876ea610",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 17,
+      "fixed": 17
+    },
+    "sql_trace_lines": {
+      "buggy": 0,
+      "fixed": 0
+    },
     "declared_rule": "Stripe consumer-state app: Schedule Subscription Changes: This example applies the selected first schedule phase only at or after its start_date, never immediately for a future phase. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3717,18 +3974,266 @@
         "path": "/v1/subscription_schedules/{schedule}/release"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_future",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_bc593f5c5b/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_bc593f5c5b",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_past",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_641d08a1fc/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_641d08a1fc",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_now",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_a998501f55/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a998501f55",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a48fff0ec6",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_missing",
+        "status": 500
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_a48fff0ec6/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a48fff0ec6",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_future",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_91b4c94f9b/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_91b4c94f9b",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_past",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_de975be430/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_de975be430",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_now",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_a053177f1f/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a053177f1f",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_07e41f4fc3",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/subscription_schedules/sub_sched_missing",
+        "status": 500
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_07e41f4fc3/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_07e41f4fc3",
+        "status": 200
+      }
+    ]
   },
   {
     "guide": "workflow-issuing-card-management",
     "title": "Issue Virtual Cards (Stripe Issuing)",
     "source_sha256": "faf0f6e014f27d6d021676a347a71778d3534c7c25f8092914413268810719e8",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-61c35adbc18c?flow=2daf28b39e86",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 17,
+      "fixed": 17
+    },
+    "sql_trace_lines": {
+      "buggy": 30,
+      "fixed": 30
+    },
     "declared_rule": "Stripe consumer-state app: Issue Virtual Cards (Stripe Issuing): An inactive Issuing card must not be treated as usable; active must be usable and canceled must not. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3751,18 +4256,266 @@
         "path": "/v1/issuing/authorizations"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_5e4e36b058/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_5e4e36b058",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_7c86b7a2a6/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_7c86b7a2a6",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_4683c50f68/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_4683c50f68",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_6f821eb6b9",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_6f821eb6b9/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_6f821eb6b9",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_active",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_inactive",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_canceled",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_missing",
+        "status": 500
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_2ed809388b/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_2ed809388b",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_ddfa0f28f3/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_ddfa0f28f3",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_55dd33f193/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_55dd33f193",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_0633fe5c2f",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_0633fe5c2f/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_0633fe5c2f",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_active",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_inactive",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_canceled",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-issuing-recorder",
+        "method": "GET",
+        "path": "/v1/issuing/cards/ic_missing",
+        "status": 500
+      }
+    ]
   },
   {
     "guide": "workflow-identity-verification",
     "title": "Verify Customer Identity (Stripe Identity)",
     "source_sha256": "2bea0f180889be56a29b4fdc0e1c232296614e1c6d3d580680d6e280d02232b6",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-220775a55c38?flow=899817a7fcb3",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 20,
+      "fixed": 20
+    },
+    "sql_trace_lines": {
+      "buggy": 0,
+      "fixed": 0
+    },
     "declared_rule": "Stripe consumer-state app: Verify Customer Identity (Stripe Identity): Processing identity verification is not verified; only verified grants this app identity approval. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3781,18 +4534,308 @@
         "path": "/v1/identity/verification_reports"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_32b092eb18/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_32b092eb18",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d8e76f93a4/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d8e76f93a4",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d9c5ad697e/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d9c5ad697e",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_aacd35c86f/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_aacd35c86f",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_6678539b37/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_6678539b37",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_verified",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_processing",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_requires",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_canceled",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_unknown",
+        "status": 404
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_3a8bc8dcde/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_3a8bc8dcde",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_410dae3324/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_410dae3324",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_a15f1af9ca/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a15f1af9ca",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_c4edc95106/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_c4edc95106",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_7fe4e9cf1d/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_7fe4e9cf1d",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_verified",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_processing",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_requires",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_canceled",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-identity",
+        "method": "GET",
+        "path": "/v1/identity/verification_sessions/vs_unknown",
+        "status": 404
+      }
+    ]
   },
   {
     "guide": "workflow-terminal-in-person-payment",
     "title": "Accept In-Person Payment (Stripe Terminal)",
     "source_sha256": "7df11812e59272686a3bfd18f3423589204a3f579a158a47560557a33ad772d1",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-8b618f528d53?flow=db7395a8f3ca",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 20,
+      "fixed": 20
+    },
+    "sql_trace_lines": {
+      "buggy": 35,
+      "fixed": 35
+    },
     "declared_rule": "Stripe consumer-state app: Accept In-Person Payment (Stripe Terminal): This Terminal sale is paid only after payment succeeds, not when authorized for later capture. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3815,18 +4858,308 @@
         "path": "/v1/terminal/readers/{reader}/process_payment_intent"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d2f8588ad3/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d2f8588ad3",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_ef317bf1ee/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_ef317bf1ee",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_409c569875/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_409c569875",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_162087c502/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_162087c502",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d2f8588ad3",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d2f8588ad3/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d2f8588ad3",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_succ",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_auth",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_proc",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_pm",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_succ",
+        "status": 500
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_3262fb8b48/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_3262fb8b48",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_df3c1a9cc7/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_df3c1a9cc7",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_ed4234bf51/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_ed4234bf51",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_be71646838/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_be71646838",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_3262fb8b48",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_3262fb8b48/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_3262fb8b48",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_succ",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_auth",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_proc",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_pm",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-recorder",
+        "method": "GET",
+        "path": "/v1/payment_intents/pi_succ",
+        "status": 500
+      }
+    ]
   },
   {
     "guide": "workflow-treasury-financial-account",
     "title": "Set Up Treasury Financial Account",
     "source_sha256": "182b641c40567c150e1290c9f01ccaa5fc6742cf3de1aab2dafd6fbaaec9a297",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-a759d458135b?flow=e8417aec89f1",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 17,
+      "fixed": 17
+    },
+    "sql_trace_lines": {
+      "buggy": 30,
+      "fixed": 30
+    },
     "declared_rule": "Stripe consumer-state app: Set Up Treasury Financial Account: This app authorizes an outbound payment only against cash balance; inbound pending money is not spendable. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3849,18 +5182,266 @@
         "path": "/v1/treasury/outbound_payments"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_ec390744be/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_ec390744be",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_8b12b94cce/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_8b12b94cce",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_c9b0cbfcf2/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_c9b0cbfcf2",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_f104109657",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_f104109657/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_f104109657",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_cash_ok",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_pending_only",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_zero_cash",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_missing",
+        "status": 500
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_ca7d86c24e/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_ca7d86c24e",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_c9184dd647/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_c9184dd647",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_98c590b975/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_98c590b975",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d89f69fd33",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d89f69fd33/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d89f69fd33",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_cash_ok",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_pending_only",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_zero_cash",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe-treasury-recorder",
+        "method": "GET",
+        "path": "/v1/treasury/financial_accounts/fa_missing",
+        "status": 500
+      }
+    ]
   },
   {
     "guide": "workflow-billing-portal-customer-self-service",
     "title": "Customer Self-Service Billing Portal",
     "source_sha256": "dff415b509da93757988c908a8525508cf5c5920a02c71d5fa0a5374c90976af",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-3f4b7098bc83?flow=d77987668c57",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 8,
+      "fixed": 8
+    },
+    "sql_trace_lines": {
+      "buggy": 0,
+      "fixed": 0
+    },
     "declared_rule": "Stripe consumer-state app: Customer Self-Service Billing Portal: A billing portal session is usable by this application only for the selected customer, never another customer. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3875,18 +5456,140 @@
         "path": "/v1/billing_portal/sessions"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d9518f40e3/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_623300c57b/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d9518f40e3",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_623300c57b",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/billing_portal/sessions",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/billing_portal/sessions",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_6fe891ecc5/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_84fdc93b0a/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_6fe891ecc5",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_84fdc93b0a",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/billing_portal/sessions",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "POST",
+        "path": "/v1/billing_portal/sessions",
+        "status": 200
+      }
+    ]
   },
   {
     "guide": "workflow-quote-to-subscription",
     "title": "Create a Quote and Convert to Subscription",
     "source_sha256": "a5a6abb46fc04802c467b8c76d3320305cf1e1ae60bab5b8b33780ce13160290",
-    "state": "pending",
-    "independent_snapshot_verified": false,
-    "receipt_url": null,
-    "exit_codes": null,
-    "proof_event_counts": null,
-    "sql_trace_lines": null,
+    "state": "proven",
+    "independent_snapshot_verified": true,
+    "receipt_url": "https://fetchsandbox.com/runs/fix-b365d3bdb3d9?flow=1866d8ce8027",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 0
+    },
+    "proof_event_counts": {
+      "buggy": 20,
+      "fixed": 20
+    },
+    "sql_trace_lines": {
+      "buggy": 37,
+      "fixed": 37
+    },
     "declared_rule": "Stripe consumer-state app: Create a Quote and Convert to Subscription: A finalized open quote has not been accepted; this app records acceptance only for accepted quotes. The current sync route persists an incorrect business decision for provider snapshots. Prove this on the real application routes and persisted reads, not a source-text assertion.",
     "provider_mode": "recording double; full twin/live fidelity unmeasured",
     "provider_schema_validation": "unmeasured",
@@ -3909,6 +5612,287 @@
         "path": "/v1/quotes/{quote}"
       }
     ],
-    "observed_requests": []
+    "observed_requests": [
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_29e68175fa/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_29e68175fa",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_285022d06e/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_285022d06e",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_9a0ba7ca3d/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_9a0ba7ca3d",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_a5b58e40cb/sync",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_a5b58e40cb",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_cfd531ff15/sync",
+        "status": 503
+      },
+      {
+        "side": "buggy",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_cfd531ff15",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_open",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_accepted",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_canceled",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_draft",
+        "status": 200
+      },
+      {
+        "side": "buggy",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_missing",
+        "status": 500
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_bb9a436ada/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_bb9a436ada",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_40c9f0d636/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_40c9f0d636",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_00c0ae697b/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_00c0ae697b",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_f9585062c6/sync",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_f9585062c6",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records",
+        "status": 201
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "POST",
+        "path": "/records/record_d9c4ca5bf4/sync",
+        "status": 503
+      },
+      {
+        "side": "fixed",
+        "provider": null,
+        "method": "GET",
+        "path": "/records/record_d9c4ca5bf4",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_open",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_accepted",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_canceled",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_draft",
+        "status": 200
+      },
+      {
+        "side": "fixed",
+        "provider": "stripe",
+        "method": "GET",
+        "path": "/v1/quotes/qt_missing",
+        "status": 500
+      }
+    ]
   }
 ]

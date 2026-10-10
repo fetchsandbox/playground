@@ -35,14 +35,14 @@ trace lines, not invented database telemetry.
 | Set Up Product Catalog with Prices | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-eb9098c99808?flow=f958e94ff397) |
 | Create a No-Code Payment Link | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-2ac1b0db0331?flow=7c92dda1fb6b) |
 | Set Up Webhook Endpoints for Event Handling | Recorded rule verified | 22 / 22 | [receipt](https://fetchsandbox.com/runs/fix-b136a696922b?flow=3aaf2b7d9175) |
-| Create Coupons and Promotion Codes | Pending | — | not recorded yet |
-| Schedule Subscription Changes | Pending | — | not recorded yet |
-| Issue Virtual Cards (Stripe Issuing) | Pending | — | not recorded yet |
-| Verify Customer Identity (Stripe Identity) | Pending | — | not recorded yet |
-| Accept In-Person Payment (Stripe Terminal) | Pending | — | not recorded yet |
-| Set Up Treasury Financial Account | Pending | — | not recorded yet |
-| Customer Self-Service Billing Portal | Pending | — | not recorded yet |
-| Create a Quote and Convert to Subscription | Pending | — | not recorded yet |
+| Create Coupons and Promotion Codes | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-3981ccbaea40?flow=de20cb26f179) |
+| Schedule Subscription Changes | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-d254fe1ac3c9?flow=b98b876ea610) |
+| Issue Virtual Cards (Stripe Issuing) | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-61c35adbc18c?flow=2daf28b39e86) |
+| Verify Customer Identity (Stripe Identity) | Recorded rule verified | 20 / 20 | [receipt](https://fetchsandbox.com/runs/fix-220775a55c38?flow=899817a7fcb3) |
+| Accept In-Person Payment (Stripe Terminal) | Recorded rule verified | 20 / 20 | [receipt](https://fetchsandbox.com/runs/fix-8b618f528d53?flow=db7395a8f3ca) |
+| Set Up Treasury Financial Account | Recorded rule verified | 17 / 17 | [receipt](https://fetchsandbox.com/runs/fix-a759d458135b?flow=e8417aec89f1) |
+| Customer Self-Service Billing Portal | Recorded rule verified | 8 / 8 | [receipt](https://fetchsandbox.com/runs/fix-3f4b7098bc83?flow=d77987668c57) |
+| Create a Quote and Convert to Subscription | Recorded rule verified | 20 / 20 | [receipt](https://fetchsandbox.com/runs/fix-b365d3bdb3d9?flow=1866d8ce8027) |
 
 [Machine-readable scope and observations](coverage.json)
 
@@ -65,8 +65,36 @@ returns 401. Do not treat `0.7.12` as available from npm yet.
 
 Native Claude Code, Codex and Cursor checks are recorded separately from the
 SDK controls. A completed application receipt does not establish that an
-agent conversation or its unchanged assertion gate passed. Results will be
-updated when the current client checks finish.
+agent conversation or its unchanged assertion gate passed. Codex and Cursor each received measured own-code Stripe proofs through their
+actual CLI clients. Their unchanged debug assertion contracts each scored
+11/12 because they exclude `quickrun`, which current tool guidance recommends.
+Those gates remain failed. Claude's earlier runs ended without receiving a
+completed measured proof; later completed jobs do not retroactively pass a
+conversation. Fresh post-release checks are in progress.
+
+[Native client assertion results](native-client-checks.json) remain separate
+from the twenty SDK application controls. The native Stripe prompt is primed;
+it does not establish unprimed tool discovery. An unchanged unprimed persona is
+also recorded against a Paddle/Resend fixture, not silently relabelled Stripe.
+
+## False-green controls
+
+Three candidate patches changed only an application title, leaving its planted
+bug in place. The production engine rejected all three as `fix_incomplete`,
+with original and candidate assertion exits **1 → 1** and nonempty evidence.
+These controls cover PaymentIntent, refunds and billing portal boundaries.
+[Measured negative controls](negative-controls.json).
+
+## Follow-up production release
+
+Backend `2566c09efa02f5210488556d9bfcf4cf128a8296` and hosted MCP
+`b7438ad5` were deployed after the twenty-application batch. This repair binds
+jobs to their initiating account, preserves active jobs under retention and
+capacity pressure, reports observed elapsed time, and bounds complete HTTP
+reads without resubmitting ambiguous starts. A two-account production control
+confirmed owner reads return 200 and a different account receives 403.
+This is auth evidence, not an application proof. Jobs are still in-process and
+do not survive a backend restart.
 
 No live Stripe payments or messages were sent. Each test used a disposable
 FetchSandbox account/key and records its independently confirmed revocation.

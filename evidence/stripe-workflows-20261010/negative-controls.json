@@ -1,0 +1,47 @@
+[
+  {
+    "workflow": "workflow-billing-portal-customer-self-service",
+    "state": "fix_incomplete",
+    "receipt_url": "https://fetchsandbox.com/runs/fix-de349b66cafd?flow=017172b2ee81",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 1
+    },
+    "proof_event_counts": {
+      "buggy": 13,
+      "fixed": 13
+    },
+    "negative_control_measured": true,
+    "scope": "candidate changes only title; business bug remains"
+  },
+  {
+    "workflow": "workflow-accept-payment-with-payment-intent",
+    "state": "fix_incomplete",
+    "receipt_url": "https://fetchsandbox.com/runs/fix-1340e74fe0d5?flow=c824d9f31ea7",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 1
+    },
+    "proof_event_counts": {
+      "buggy": 112,
+      "fixed": 112
+    },
+    "negative_control_measured": true,
+    "scope": "candidate changes only title; business bug remains"
+  },
+  {
+    "workflow": "workflow-issue-refund",
+    "state": "fix_incomplete",
+    "receipt_url": "https://fetchsandbox.com/runs/fix-a0ba3b90a38b?flow=41e92b0c6e71",
+    "exit_codes": {
+      "buggy": 1,
+      "fixed": 1
+    },
+    "proof_event_counts": {
+      "buggy": 20,
+      "fixed": 20
+    },
+    "negative_control_measured": true,
+    "scope": "candidate changes only title; business bug remains"
+  }
+]
