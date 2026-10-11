@@ -1,0 +1,1305 @@
+{
+  "app_version": "stripe-receipts-durable-candidate-v1",
+  "disposable_test_app": true,
+  "require_verifier_token": true,
+  "event_delivery": "provider_lifecycle",
+  "event_destinations": {
+    "stripe": "/stripe-webhook"
+  },
+  "observation_seconds": 0.1,
+  "checks": [
+    {
+      "id": "baseline",
+      "name": "Create one pending order from an empty ledger",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders"
+      },
+      "assertion": {
+        "select": "orders[*]",
+        "required": true,
+        "count": 1
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "purchase_a",
+      "name": "A payment produces one saved receipt",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 1,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "purchase_b",
+      "name": "A distinct payment produces its own receipt",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 2,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 2,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 2000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "concurrent_redelivery",
+      "name": "Two overlapping first deliveries produce one receipt",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 3
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 3,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "webhook_withheld",
+        "evidence": "webhook_withheld"
+      }
+    },
+    {
+      "id": "missing_payment_webhook",
+      "name": "Reconciliation recovers a payment whose webhook was withheld",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/reconcile"
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 4,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "webhook_withheld",
+        "evidence": "webhook_withheld"
+      }
+    },
+    {
+      "id": "stripe_auth",
+      "name": "Stripe auth_failure prevents a write until recovery",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 500
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 5,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "auth_failure"
+      }
+    },
+    {
+      "id": "stripe_rate_limit",
+      "name": "Stripe rate_limited prevents a write until recovery",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 500
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 6,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "rate_limited"
+      }
+    },
+    {
+      "id": "stripe_5xx",
+      "name": "Stripe recovery_server_error prevents a write until recovery",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 500
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 7,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "recovery_server_error"
+      }
+    },
+    {
+      "id": "stripe_timeout",
+      "name": "Stripe recovery_timeout prevents a write until recovery",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 500
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 8,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "recovery_timeout"
+      }
+    },
+    {
+      "id": "resend_auth",
+      "name": "Resend auth_failure recovers one receipt for the paid order",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "resend",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 9,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "resend",
+        "scenario": "auth_failure"
+      }
+    },
+    {
+      "id": "resend_rate_limit",
+      "name": "Resend recovery_rate_limited recovers one receipt for the paid order",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "resend",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 10,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "resend",
+        "scenario": "recovery_rate_limited"
+      }
+    },
+    {
+      "id": "resend_5xx",
+      "name": "Resend recovery_server_error recovers one receipt for the paid order",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "resend",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 11,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "resend",
+        "scenario": "recovery_server_error"
+      }
+    },
+    {
+      "id": "resend_timeout",
+      "name": "Resend recovery_timeout recovers one receipt for the paid order",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "resend",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 12,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "resend",
+        "scenario": "recovery_timeout"
+      }
+    },
+    {
+      "id": "resend_response_loss",
+      "name": "Resend accepted_response_loss recovers one receipt for the paid order",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "provider_control": {
+            "provider": "resend",
+            "scenario": "default"
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 13,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "resend",
+        "scenario": "accepted_response_loss",
+        "evidence": "accepted_response_loss"
+      }
+    },
+    {
+      "id": "stale_or_reordered_event",
+      "name": "A genuine earlier failure cannot undo a later completed payment",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "body": {
+            "payment_method": "pm_card_chargeDeclined"
+          },
+          "expect_status": 402
+        },
+        {
+          "provider_control": {
+            "provider": "stripe",
+            "scenario": "default"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step4.failed_events.0.id}}"
+          }
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 14,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20,
+      "fault": {
+        "provider": "stripe",
+        "scenario": "webhook_withheld",
+        "evidence": "webhook_withheld",
+        "event_type": "payment_intent.payment_failed"
+      }
+    },
+    {
+      "id": "restart_durability",
+      "name": "A real process restart retains payment, receipt and event identity",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/orders/{{step1.id}}/pay",
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/orders/{{step1.id}}/payment-events"
+        },
+        {
+          "client_lifecycle": {
+            "operation": "restart",
+            "observe_path": "/verification/runtime",
+            "identity_field": "instance_id",
+            "timeout_seconds": 90
+          }
+        },
+        {
+          "event": {
+            "provider": "stripe",
+            "replay_of": "{{step3.events.0.id}}"
+          },
+          "concurrency": 1
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 15,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "status",
+            "equals": "paid",
+            "required": true
+          },
+          {
+            "select": "amount_cents",
+            "equals": 1000,
+            "required": true
+          },
+          {
+            "select": "receipt_status",
+            "equals": "sent",
+            "required": true
+          },
+          {
+            "select": "receipt_ids[*]",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "input_boundaries",
+      "name": "Invalid inputs create no orders",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 0,
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": -1,
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 101,
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": true,
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": "2",
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "unknown",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          },
+          "expect_status": 422
+        },
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "bad"
+          },
+          "expect_status": 422
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 16,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders"
+      },
+      "assertion": {
+        "select": "orders[*]",
+        "required": true,
+        "count": 16
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "invalid_signature",
+      "name": "An unsigned callback changes no orders",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/stripe-webhook",
+          "body": {
+            "id": "evt_forged"
+          },
+          "expect_status": 400
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 16,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders"
+      },
+      "assertion": {
+        "select": "orders[*]",
+        "required": true,
+        "count": 16
+      },
+      "observation_deadline_seconds": 20
+    },
+    {
+      "id": "cleanup_orders",
+      "name": "Archiving removes the order from the active list and preserves its ledger",
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/orders",
+          "body": {
+            "sku": "mug",
+            "quantity": 1,
+            "customer_email": "buyer@example.test"
+          }
+        },
+        {
+          "method": "DELETE",
+          "path": "/orders/{{step1.id}}"
+        }
+      ],
+      "before": {
+        "path": "/orders",
+        "assertion": {
+          "select": "orders[*]",
+          "count": 16,
+          "required": true
+        }
+      },
+      "observe": {
+        "path": "/orders/{{step1.id}}"
+      },
+      "assertion": {
+        "all_of": [
+          {
+            "select": "archived",
+            "equals": true,
+            "required": true
+          },
+          {
+            "select": "status",
+            "equals": "pending",
+            "required": true
+          }
+        ]
+      },
+      "observation_deadline_seconds": 20
+    }
+  ]
+}
