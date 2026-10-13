@@ -1,0 +1,4 @@
+-r requirements-local.txt
+pytest>=8
+boto3>=1.34
+moto>=5

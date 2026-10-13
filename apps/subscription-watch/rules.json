@@ -1,0 +1,22 @@
+{
+  "reminder_days_before_renewal": 3,
+  "default_reminder_days": 7,
+  "rules": [
+    {
+      "name": "subscription-charge",
+      "subject_any": [
+        "receipt", "invoice", "payment", "charged", "renewal", "renews", "renewed",
+        "subscription", "membership", "billing", "your plan", "trial ending", "trial ends"
+      ],
+      "text_any": [
+        "subscription", "membership", "renew", "renews", "renewal", "recurring",
+        "monthly plan", "annual plan", "yearly plan", "billing period", "next billing date",
+        "next payment", "auto-renew", "trial"
+      ],
+      "exclude_any": [
+        "order has shipped", "out for delivery", "password reset", "verification code",
+        "one-time purchase", "refund has been processed"
+      ]
+    }
+  ]
+}

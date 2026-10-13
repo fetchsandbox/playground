@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: subscription-watch - Gmail subscription charges -> Slack alert + Google Calendar "cancel?" reminder
+
+Parameters:
+  SecretsArn:
+    Type: String
+    Description: >-
+      Secrets Manager secret (JSON) holding GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+      GOOGLE_REFRESH_TOKEN, SLACK_BOT_TOKEN and PUSH_TOKEN.
+  SlackChannel:
+    Type: String
+    Description: Slack channel ID to alert (the bot must be invited to it).
+  ScheduleExpression:
+    Type: String
+    Default: rate(5 minutes)
+    Description: Safety-net sweep; Gmail push makes it real-time.
+  GmailQuery:
+    Type: String
+    Default: in:inbox newer_than:2d
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 120
+    MemorySize: 256
+    Architectures: [arm64]
+
+Resources:
+  ProcessedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: message_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: message_id
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  WorkflowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: lambda_handler.handler
+      # One run at a time: no two invocations race on the same message.
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          STATE_BACKEND: dynamodb
+          DYNAMODB_TABLE: !Ref ProcessedTable
+          SECRETS_ARN: !Ref SecretsArn
+          SLACK_CHANNEL: !Ref SlackChannel
+          GMAIL_QUERY: !Ref GmailQuery
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProcessedTable
+        - Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource: !Ref SecretsArn
+      FunctionUrlConfig:
+        # Pub/Sub push cannot sign SigV4; the handler checks PUSH_TOKEN instead.
+        AuthType: NONE
+      Events:
+        Sweep:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref ScheduleExpression
+
+Outputs:
+  PushEndpoint:
+    Description: Use as the Pub/Sub push endpoint, appending /gmail/push?token=<PUSH_TOKEN>
+    Value: !GetAtt WorkflowFunctionUrl.FunctionUrl
+  ProcessedTableName:
+    Value: !Ref ProcessedTable
