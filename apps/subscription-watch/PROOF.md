@@ -118,6 +118,22 @@ alerts after a state loss matter, the fix is a Slack-side dedupe: search channel
 history for the Gmail id before posting (needs `channels:history`). That's the
 same owner decision as the open `slack_accepted_response_loss` policy.
 
+### 6b. Re-run after FetchSandbox server changes (2026-10-14, later)
+
+The same app commit (`215eb80`), the same frozen 11-check contract and the same
+tunnel flow ran against fresh twins in session `vs_afc34933e5e4`. It was a single
+attempt, `vr_52799f2d4ade4aceb13ee73c3c5b9f6c`. Receipt:
+https://fetchsandbox.com/runs/8aff5ed78c?flow=vr_52799f2d4ade4aceb13ee73c3c5b9f6c
+
+- **9/9 executable checks held.** That's the 8 from the morning run plus
+  `slack_channel_not_found_is_failure`, which was unmeasured before. FetchSandbox
+  now records Slack's HTTP 200 `ok:false` fault as observed.
+- The 2 typed blockers are unchanged (`slack_accepted_response_loss` policy,
+  `restart_keeps_state` setup). The verdict is still **inconclusive**, not verified.
+- **Provider-side reconciliation:** 5 Slack alerts and 6 Calendar events for 6
+  subscription emails. Every Slack `ts` and Calendar id matches an app record. No
+  duplicates. App state was not wiped mid-session this time.
+
 ## Not verified
 
 - **Real Gmail, Calendar and Slack accounts.** Everything above ran against API
