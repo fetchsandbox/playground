@@ -68,6 +68,56 @@ independent (`processor.py`) and a test was added.
   against moto DynamoDB and Secrets Manager (scheduled sweep, push token check, 404).
 - `cfn-lint template.yaml`: clean.
 
+## 6. FetchSandbox-driven verification over the managed tunnel (2026-10-14)
+
+The local app ran on 127.0.0.1:8088 behind a FetchSandbox managed relay (`manage_tunnel`),
+bound to fresh twins in session `vs_633aa244f208`. FetchSandbox itself drove the
+app over HTTP and read back saved state, so the app was not reporting on itself.
+The drive and read-back went through the opt-in test adapter
+(`subwatch/test_adapter.py`: inbox insert plus record read-back, verifier-token
+protected) and the real `POST /run` entry point. Short-lived twin keys and the
+verifier token came through `install_test_credentials` and were loaded from a
+private dotenv file that was never printed. Preflight confirmed 200 with the
+token and 401 without it.
+
+Final attempt `vr_6c93a669248444cf94beb9aa2da80bb3`, receipt:
+https://fetchsandbox.com/runs/06afbb1d62?flow=vr_6c93a669248444cf94beb9aa2da80bb3
+
+| Check | Fault | Result |
+|---|---|---|
+| baseline: receipt → Slack + Calendar on 2026-11-10, $15.49 | – | **held** |
+| ignore_personal_mail | – | **held** |
+| rerun_no_duplicates: 1 email, 3 runs | – | **held** |
+| concurrent_runs_single_effect: 4 overlapping `/run` | – | **held** |
+| slack_429_reminder_still_created | slack rate_limited | **held** |
+| slack_429_recovery | slack rate_limited → cleared | **held** |
+| calendar_401_alert_still_posted | calendar auth_failure | **held** |
+| gmail_429_outage_then_recovery: `/run` 502, then completes | gmail rate_limited → cleared | **held** |
+| slack_channel_not_found_is_failure | slack channel_not_found | unmeasured: the fault is an HTTP 200 `ok:false`, so FetchSandbox records no refusal. App state was as asserted (failed, reminder created, no Slack ts). |
+| slack_accepted_response_loss | – | unmeasured: typed **policy** blocker (see below) |
+| restart_keeps_state | – | unmeasured: typed **setup** blocker (no runtime-identity observer or restart hook) |
+
+FetchSandbox's overall verdict is **inconclusive**, because 3 checks are
+unmeasured. It does not call the app verified.
+
+**The earlier attempt** `vr_c6101c1c4ba140d39a5cda1402247a98` reported
+`rerun_no_duplicates` as **violated** ("1 → 3"). That was a contract error on my
+side: `repeat: 3` replays the whole action list, including the email insert, so
+three *distinct* emails were inserted, and three records is correct. The check
+was corrected to insert once and then run three times. The failed attempt stays
+in the session history.
+
+**Provider-side reconciliation after both attempts:** 14 Calendar events, 14
+distinct ids, one per subscription email. Slack had **20** alerts against **13**
+recorded Slack posts. The 7 extra come from my harness wiping the app's SQLite
+state between attempts while the Gmail twin kept attempt 1's emails, so attempt
+2 re-alerted them. Calendar absorbed the replay through deterministic event ids,
+but Slack can't. **If the state store is lost, Slack alerts repeat.** In
+production DynamoDB (with point-in-time recovery) holds this state. If duplicate
+alerts after a state loss matter, the fix is a Slack-side dedupe: search channel
+history for the Gmail id before posting (needs `channels:history`). That's the
+same owner decision as the open `slack_accepted_response_loss` policy.
+
 ## Not verified
 
 - **Real Gmail, Calendar and Slack accounts.** Everything above ran against API
