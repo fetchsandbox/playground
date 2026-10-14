@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -24,6 +25,12 @@ log = logging.getLogger("subwatch")
 settings = load_settings()
 store = make_store(settings.state_backend, settings.sqlite_path, settings.dynamodb_table)
 app = FastAPI(title="subscription-watch")
+
+if os.environ.get("SUBWATCH_TEST_ADAPTER") == "1" and os.environ.get("SUBWATCH_VERIFIER_TOKEN"):
+    from subwatch.test_adapter import build_router
+
+    app.include_router(build_router(settings, store, os.environ["SUBWATCH_VERIFIER_TOKEN"]))
+    log.warning("TEST ADAPTER ENABLED: /test/* routes are mounted")
 
 
 @app.get("/health")
