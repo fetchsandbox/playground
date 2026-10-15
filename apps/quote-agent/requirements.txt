@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.27
+pydantic>=2.6
+anthropic>=1.14
+psycopg[binary]>=3.2
+psycopg-pool>=3.2
+boto3>=1.34
