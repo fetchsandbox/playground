@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = 8788;
-const APP_VERSION = "invoice-watch-verify-1.0.4";
+const APP_VERSION = "invoice-watch-verify-1.0.5";
 const CHANNEL = "C0BILLING01";
 const apiKey = JSON.parse(
   readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8"),
