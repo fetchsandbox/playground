@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = 8788;
-const APP_VERSION = "invoice-watch-verify-1.0.6";
+const APP_VERSION = "invoice-watch-verify-1.0.7";
 const CHANNEL = "C0BILLING01";
 const apiKey = JSON.parse(
   readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8"),
@@ -604,7 +604,7 @@ for (let attempt = 0; attempt < 8; attempt++) {
   const msg = JSON.stringify(tunnel);
   log("tunnel open retry", attempt, msg.slice(0, 180));
   // Capacity / rate-limit: wait and retry without treating as hard failure yet.
-  await sleep(45000);
+  await sleep(90000);
 }
 if (!tunnel?.app_base_url) {
   console.error("NO_TUNNEL", tunnel);
@@ -876,12 +876,21 @@ for (let i = 0; i < 90; i++) {
     st.complete === true ||
     st.app_verified === true ||
     st.declared_checks_complete === true ||
-    ["passed", "failed", "completed", "error", "done"].includes(String(s)) ||
-    (allSettled && verdict)
+    ["passed", "failed", "failing", "completed", "error", "done", "inconclusive"].includes(
+      String(s),
+    ) ||
+    ["passed", "failed", "failing", "inconclusive"].includes(String(verdict)) ||
+    (allSettled && (verdict || s))
   ) {
     stableTerminalPolls += 1;
     // Require two consecutive settled polls so late checks can still land.
-    if (stableTerminalPolls >= 2 || st.complete === true || st.app_verified === true) {
+    if (
+      stableTerminalPolls >= 2 ||
+      st.complete === true ||
+      st.app_verified === true ||
+      (allSettled &&
+        ["failing", "failed", "inconclusive", "passed"].includes(String(verdict || s)))
+    ) {
       break;
     }
   } else {
