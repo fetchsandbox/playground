@@ -74,7 +74,9 @@ npx @cursor/bdk run --dir . --dry-run --message "Dry-run: process sample-invoice
 Point FetchSandbox twins at the `restEquivalent` URLs/bodies from those
 tool results to verify behavior — not to redesign the contracts.
 
-Disposable HTTP driver for managed-tunnel / caller-executed checks:
+Disposable HTTP driver for managed-tunnel / caller-executed checks.
+Observation endpoints return keyed collections for FetchSandbox selectors
+(`invoices[*]`, `webhooks[*]`):
 
 ```bash
 # Env from validate_integration legs (+ optional FETCHSANDBOX_VERIFIER_TOKEN)
@@ -82,13 +84,18 @@ node verify/twin-driver.mjs
 curl -sS -X POST http://127.0.0.1:8788/process-invoice \
   -H 'content-type: application/json' \
   -d '{"merchant":"Notion","amount":"$29.00 USD","cancelBy":"2026-11-12","renewalDate":"2026-11-15","invoiceId":"INV-1001","channel":"C0BILLING01"}'
+# → GET /runs/{run_id}/invoices  { "invoices": [ ... ] }
+# → GET /webhooks                { "webhooks": [ ... ] }
 ```
 
-Caller-executed twin traffic (Gmail list → Calendar insert → Slack postMessage)
-and armed `slack:channel_not_found` have been exercised successfully. Managed-tunnel
-`application_workflow_v1` configures with a disposable baseline contract; preflight
-still reports `starting_state_not_observable` on empty `GET /processed` for the
-current FetchSandbox assertion rules.
+Submit the behavioral contract (baseline + provider faults + messy Slack
+webhooks) and let FetchSandbox drive the tunnel:
+
+```bash
+# Requires ~/.fetchsandbox/credentials.json from device auth
+node verify/run-proof-receipt.mjs
+# writes /tmp/fs-proof-final.json and /tmp/fs-proof-receipt-url.txt
+```
 
 ## Schedules
 

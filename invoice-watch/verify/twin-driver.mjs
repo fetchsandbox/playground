@@ -267,11 +267,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Collection observer: always an object with `invoices` array so
-    // before/after can share select:"invoices.invoiceKey" with count 0/1.
+    // Keyed collections so FetchSandbox can use select:"invoices[*]" /
+    // select:"webhooks[*]" for empty starting-state and outcome asserts.
     if (req.method === "GET" && url.pathname === "/invoices") {
       if (!requireVerifier(req, res)) return;
-      sendJson(res, 200, state.invoices);
+      sendJson(res, 200, { invoices: state.invoices });
       return;
     }
 
@@ -279,14 +279,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && runInvoices) {
       if (!requireVerifier(req, res)) return;
       const runId = decodeURIComponent(runInvoices[1]);
-      // Bare array collection so before{count:0} / after{select:invoiceKey,count:1} share one collection.
-      sendJson(res, 200, state.runs[runId] || []);
+      sendJson(res, 200, { invoices: state.runs[runId] || [] });
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/webhooks") {
       if (!requireVerifier(req, res)) return;
-      sendJson(res, 200, state.webhooks);
+      sendJson(res, 200, { webhooks: state.webhooks });
       return;
     }
 
@@ -294,14 +293,16 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && runWebhooks) {
       if (!requireVerifier(req, res)) return;
       const runId = decodeURIComponent(runWebhooks[1]);
-      sendJson(res, 200, state.webhooks.filter((w) => w.runId === runId || !w.runId));
+      sendJson(res, 200, {
+        webhooks: state.webhooks.filter((w) => w.runId === runId || !w.runId),
+      });
       return;
     }
 
     // Legacy alias
     if (req.method === "GET" && url.pathname === "/processed") {
       if (!requireVerifier(req, res)) return;
-      sendJson(res, 200, state.invoices);
+      sendJson(res, 200, { invoices: state.invoices });
       return;
     }
 
