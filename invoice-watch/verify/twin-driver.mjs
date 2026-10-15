@@ -64,8 +64,10 @@ async function runInvoiceWorkflow(input = {}) {
   const channel = input.channel || process.env.SLACK_CHANNEL || "C0123456789";
   const invoiceKey = `${merchant}|${invoiceId}|${amount}`.toLowerCase();
 
-  const gmailQ =
-    '(subject:(invoice OR receipt OR renewal OR subscription) OR "your invoice" OR "billing period") newer_than:7d -category:promotions -category:social';
+  // Twin verification uses a simple users.messages.list `q`. The agent’s
+  // Gmail MCP search_threads query stays the full boolean form; FetchSandbox
+  // twins currently reject grouped/boolean Gmail search with 501.
+  const gmailQ = "subject:invoice newer_than:7d";
 
   const steps = {};
 
