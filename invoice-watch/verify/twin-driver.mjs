@@ -271,7 +271,7 @@ const server = http.createServer(async (req, res) => {
     // before/after can share select:"invoices.invoiceKey" with count 0/1.
     if (req.method === "GET" && url.pathname === "/invoices") {
       if (!requireVerifier(req, res)) return;
-      sendJson(res, 200, { invoices: state.invoices });
+      sendJson(res, 200, state.invoices);
       return;
     }
 
@@ -279,13 +279,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && runInvoices) {
       if (!requireVerifier(req, res)) return;
       const runId = decodeURIComponent(runInvoices[1]);
-      sendJson(res, 200, { invoices: state.runs[runId] || [] });
+      // Bare array collection so before{count:0} / after{select:invoiceKey,count:1} share one collection.
+      sendJson(res, 200, state.runs[runId] || []);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/webhooks") {
       if (!requireVerifier(req, res)) return;
-      sendJson(res, 200, { webhooks: state.webhooks });
+      sendJson(res, 200, state.webhooks);
       return;
     }
 
@@ -293,9 +294,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && runWebhooks) {
       if (!requireVerifier(req, res)) return;
       const runId = decodeURIComponent(runWebhooks[1]);
-      sendJson(res, 200, {
-        webhooks: state.webhooks.filter((w) => w.runId === runId || !w.runId),
-      });
+      sendJson(res, 200, state.webhooks.filter((w) => w.runId === runId || !w.runId));
       return;
     }
 
