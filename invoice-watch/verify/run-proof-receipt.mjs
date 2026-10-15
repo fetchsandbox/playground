@@ -508,57 +508,33 @@ function buildChecks() {
       },
     },
     {
+      // Direct Slack event_delivery returned webhook_subscriptions:[] and
+      // posts lacked X-Slack-Signature, so the production signature-strict
+      // handler correctly refused them (cannot prove signed replay yet).
       id: "slack_webhook_replay",
       name: "Signed Slack event replay is idempotent",
-      before: emptyWebhooksBefore("slack_webhook_replay"),
-      actions: [
-        {
-          // Payload is the Slack event resource; FetchSandbox wraps/signs the envelope.
-          event: {
-            provider: "slack",
-            type: "message",
-            payload: {
-              type: "message",
-              // case:<id> marker survives envelope wrapping for observe isolation
-              text: "Subscription invoice noticed case:slack_webhook_replay",
-              channel: CHANNEL,
-              ts: "1710000000.000100",
-              run_id: "{{run_id}}",
-              case_id: "slack_webhook_replay",
-            },
-          },
-          expect_status: 200,
-        },
-        {
-          event: {
-            provider: "slack",
-            replay_of: "{{step1.event_id}}",
-          },
-          expect_status: 200,
-        },
-      ],
-      observe: { path: caseWebhooksPath("slack_webhook_replay") },
-      assertion: {
-        select: "webhooks[*]",
-        count: 2,
-        required: true,
-        where: [{ select: "type", equals: "message", required: true }],
-        repeat: 2,
-        stable_under_repeat: true,
+      blocker: {
+        category: "observation_missing",
+        reason:
+          "Slack direct event_delivery did not publish webhook_subscriptions or Slack signing headers to the exact /webhooks/slack handler; unsigned rejection is proven, but signed replay cannot be observed yet.",
+        evidence: [
+          "invoice-watch/verify/twin-driver.mjs POST /webhooks/slack (strict X-Slack-Signature)",
+          "config webhook_subscriptions: [] on application_workflow_v1 direct delivery",
+          "prior receipt https://fetchsandbox.com/runs/5ab2c3a0ce?flow=vr_b64e91d2fff14085b11da4e12bce07af",
+          "driver log: webhook/slack reject missing_signature hasSig=false hasAuth=true hasFlow=true",
+        ],
       },
     },
     {
-      // Prior attempt: fault.evidence=webhook_withheld was not independently
-      // observed on the Slack twin for this disposable destination.
       id: "slack_webhook_withheld",
       name: "Withheld Slack webhook leaves webhook log empty",
       blocker: {
         category: "observation_missing",
         reason:
-          "Slack twin did not independently expose webhook_withheld/simulated_drop evidence for the disposable /webhooks/slack/fs destination; state-empty alone cannot prove withheld delivery.",
+          "Slack twin did not independently expose webhook_withheld/simulated_drop evidence for the disposable /webhooks/slack destination; state-empty alone cannot prove withheld delivery.",
         evidence: [
-          "invoice-watch/verify/twin-driver.mjs POST /webhooks/slack/fs",
-          "prior receipt https://fetchsandbox.com/runs/06ef74d88b?flow=vr_7a41d3455630449bb894ae2d5367242c",
+          "invoice-watch/verify/twin-driver.mjs POST /webhooks/slack",
+          "prior receipt https://fetchsandbox.com/runs/5ab2c3a0ce?flow=vr_b64e91d2fff14085b11da4e12bce07af",
           "recorded_reason: Declared provider fault was not independently observed; state alone cannot prove fault recovery",
         ],
       },
@@ -657,9 +633,9 @@ async function configure(label, includeEvents) {
   };
   if (includeEvents) {
     application_config.event_delivery = "direct";
-    // Dedicated verifier-auth route; /webhooks/slack stays signature-strict.
+    // Exact production handler (signature-strict). Do not substitute a test route.
     application_config.event_destinations = {
-      slack: "/webhooks/slack/fs",
+      slack: "/webhooks/slack",
     };
   }
   let cfg = await mcp.call("validate_integration", {
