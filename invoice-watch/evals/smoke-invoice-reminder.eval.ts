@@ -6,14 +6,13 @@ export default defineEval({
     {
       id: "pasted-notion-invoice",
       description:
-        "Pasted Notion invoice should dedupe-check, record, and mention Calendar + Slack actions.",
+        "Pasted Notion invoice should dedupe, build real Calendar create_event + Slack chat.postMessage payloads, and record.",
       async test(t) {
         await t.send(
           [
-            "Dry-run / plan-only: process this subscription invoice.",
-            "Extract fields, call check_invoice_processed, then record_processed_invoice with dryRun true.",
-            "Describe the Google Calendar cancel reminder and Slack message you would create.",
-            "Do not invent missing fields.",
+            "Dry-run / plan-only: process this subscription invoice against real provider contracts.",
+            "Call check_invoice_processed, create_cancel_calendar_event, post_slack_invoice_alert (channel C0123456789), and record_processed_invoice with dryRun true.",
+            "Do not invent missing fields. Prefer authored tools over free-form MCP guesses.",
             "",
             "From: billing@notion.so",
             "Subject: Your Notion invoice for $29.00",
@@ -23,11 +22,16 @@ export default defineEval({
 
         t.succeeded();
         t.calledTool("check_invoice_processed");
+        t.calledTool("create_cancel_calendar_event", {
+          input: { merchant: /notion/i },
+        });
+        t.calledTool("post_slack_invoice_alert", {
+          input: { channel: "C0123456789" },
+        });
         t.calledTool("record_processed_invoice", {
           input: { merchant: /notion/i },
         });
         t.check(t.reply, includes(/cancel/i));
-        t.check(t.reply, includes(/slack/i));
       },
     },
   ],

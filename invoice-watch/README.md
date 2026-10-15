@@ -2,24 +2,50 @@
 
 BDK playground agent: **Gmail invoice → Google Calendar cancel reminder + Slack alert**.
 
+## Source of truth (providers)
+
+| Provider | Spec / SDK |
+| --- | --- |
+| Gmail | [Gmail MCP](https://developers.google.com/workspace/gmail/api/reference/mcp) (`search_threads`, `get_message`) · [messages.list/get REST](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list) |
+| Google Calendar | [Calendar MCP `create_event`](https://developers.google.com/workspace/calendar/api/v3/reference/mcp/tools_list/create_event) · [events.insert REST](https://developers.google.com/calendar/api/v3/reference/events/insert) |
+| Slack | [chat.postMessage](https://docs.slack.dev/reference/methods/chat.postMessage) · `@slack/web-api` |
+
+Authored tools under `bot/tools/` build those exact request shapes
+(`mcpArguments` / `apiArguments`) and also emit `restEquivalent` for
+inspection. **FetchSandbox twins are for verification only** — they do
+not redefine the workflow schema.
+
 ## Flow
 
-1. Trigger from a pasted email, a Slack mention, or the `poll-invoices` schedule.
+1. Trigger from a pasted email, Slack mention, or `poll-invoices` schedule.
 2. Extract merchant, amount, renewal / cancel-by dates.
-3. Dedupe with `check_invoice_processed` / `record_processed_invoice` (`ctx.host.kv`).
-4. Create a Calendar reminder and post a Slack message via Cursor account MCP connectors.
+3. Dedupe with `check_invoice_processed` / `record_processed_invoice`.
+4. `create_cancel_calendar_event` → Google Calendar MCP `create_event`.
+5. `post_slack_invoice_alert` → Slack `chat.postMessage`.
 
 ## Setup
 
 ```bash
 cd invoice-watch
 npm install
-npx @cursor/bdk login
+npx @cursor/bdk login   # model turns
 ```
 
-In the Cursor MCP dashboard, connect **Gmail**, **Google Calendar**, and **Slack**.
+**Gmail / Calendar auth (pick one):**
 
-Optional inbound Slack bot (channel mounts idle without tokens):
+1. **Direct Google MCP URLs (declared in-repo):**
+   `bot/mcp-connections/gmail.ts` → `https://gmailmcp.googleapis.com/mcp/v1`
+   `bot/mcp-connections/google-calendar.ts` → `https://calendarmcp.googleapis.com/mcp/v1`
+   Google does not support OAuth dynamic client registration — follow
+   Google’s configure-MCP guides (OAuth client with “AI-powered agent”).
+2. **Cursor account connectors:** connect Gmail + Google Calendar in the
+   MCP dashboard / Workspace plugins, add
+   `bot/mcp-connections/account.ts` with
+   `defineConnection({ cursorAccount: true, servers: ["Gmail", "Google Calendar"], advertiseTools: true, optional: true })`,
+   then `npx @cursor/bdk login`. Authored tools still send the same
+   official `search_threads` / `get_message` / `create_event` shapes.
+
+**Slack (Web API SDK):**
 
 ```bash
 npx @cursor/bdk slack create --dir . --name "Invoice Watch"
@@ -30,34 +56,27 @@ npx @cursor/bdk slack create --dir . --name "Invoice Watch"
 ```bash
 npx @cursor/bdk validate --dir .
 npx @cursor/bdk info --dir . --json
+npx @cursor/bdk call create_cancel_calendar_event --dir . --input '{
+  "merchant":"Notion","amount":"$29.00 USD","cancelBy":"2026-11-12",
+  "renewalDate":"2026-11-15","invoiceId":"INV-1001"
+}'
 npx @cursor/bdk dev --dir .
-# Playground: http://127.0.0.1:3000/playground
 ```
 
-Sample prompt (also seeded at `bot/sandbox/workspace/sample-invoice.txt`):
+### Dry-run / twin verification
 
-```text
-Process this subscription invoice: create a cancel reminder and Slack alert.
-
-From: billing@notion.so
-Subject: Your Notion invoice for $29.00
-Body: Invoice INV-1001. Amount $29.00 USD. Next renewal 2026-11-15.
-```
-
-### Dry-run
-
-Stub write tools (authored + MCP writes) while keeping reads live:
+Dry-run stubs writes but still returns the real provider payloads:
 
 ```bash
-npx @cursor/bdk run --dir . --dry-run --message "Dry-run: process sample-invoice.txt and show Calendar + Slack payloads."
+npx @cursor/bdk run --dir . --dry-run --message "Dry-run: process sample-invoice.txt; show create_event and chat.postMessage payloads."
 ```
 
-Use this path before pointing FetchSandbox twins at the same workflow.
+Point FetchSandbox twins at the `restEquivalent` URLs/bodies from those
+tool results to verify behavior — not to redesign the contracts.
 
 ## Schedules
 
-`bot/schedules/poll-invoices.md` runs every 4 hours in production serve /
-hosted deploys. Under `--dev`, dispatch manually:
+`bot/schedules/poll-invoices.md` every 4 hours (manual under `--dev`):
 
 ```bash
 curl -X POST http://127.0.0.1:3000/invoice-watch/v1/dev/schedules/poll-invoices
