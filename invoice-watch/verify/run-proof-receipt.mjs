@@ -519,7 +519,8 @@ function buildChecks() {
             type: "message",
             payload: {
               type: "message",
-              text: "Subscription invoice noticed",
+              // case:<id> marker survives envelope wrapping for observe isolation
+              text: "Subscription invoice noticed case:slack_webhook_replay",
               channel: CHANNEL,
               ts: "1710000000.000100",
               run_id: "{{run_id}}",
@@ -547,39 +548,19 @@ function buildChecks() {
       },
     },
     {
+      // Prior attempt: fault.evidence=webhook_withheld was not independently
+      // observed on the Slack twin for this disposable destination.
       id: "slack_webhook_withheld",
       name: "Withheld Slack webhook leaves webhook log empty",
-      fault: {
-        provider: "slack",
-        scenario: "rate_limited",
-        evidence: "webhook_withheld",
-        event_type: "message",
-      },
-      before: emptyWebhooksBefore("slack_webhook_withheld"),
-      actions: [
-        {
-          // Simulated drop: verifier marks the generated event withheld; app must stay empty.
-          event: {
-            provider: "slack",
-            type: "message",
-            payload: {
-              type: "message",
-              text: "should be withheld",
-              channel: CHANNEL,
-              ts: "1710000001.000100",
-              run_id: "{{run_id}}",
-              case_id: "slack_webhook_withheld",
-            },
-          },
-        },
-      ],
-      observe: { path: caseWebhooksPath("slack_webhook_withheld") },
-      assertion: {
-        select: "webhooks[*]",
-        count: 0,
-        required: true,
-        repeat: 2,
-        stable_under_repeat: true,
+      blocker: {
+        category: "observation_missing",
+        reason:
+          "Slack twin did not independently expose webhook_withheld/simulated_drop evidence for the disposable /webhooks/slack/fs destination; state-empty alone cannot prove withheld delivery.",
+        evidence: [
+          "invoice-watch/verify/twin-driver.mjs POST /webhooks/slack/fs",
+          "prior receipt https://fetchsandbox.com/runs/06ef74d88b?flow=vr_7a41d3455630449bb894ae2d5367242c",
+          "recorded_reason: Declared provider fault was not independently observed; state alone cannot prove fault recovery",
+        ],
       },
     },
   ];
@@ -610,8 +591,8 @@ const bootstrapPath = existsSync("/tmp/fs-proof-session.json")
     : "/tmp/fs-open-session.json";
 const bootstrap = JSON.parse(readFileSync(bootstrapPath, "utf8")).legs;
 await startDriver(bootstrap);
-log("cooling 180s before tunnel open...");
-await sleep(180000);
+log("cooling 120s before tunnel open...");
+await sleep(120000);
 
 const mcp = mcpClient();
 await mcp.init();
@@ -676,8 +657,9 @@ async function configure(label, includeEvents) {
   };
   if (includeEvents) {
     application_config.event_delivery = "direct";
+    // Dedicated verifier-auth route; /webhooks/slack stays signature-strict.
     application_config.event_destinations = {
-      slack: "/webhooks/slack",
+      slack: "/webhooks/slack/fs",
     };
   }
   let cfg = await mcp.call("validate_integration", {
