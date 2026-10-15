@@ -159,6 +159,11 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(state));
     return;
   }
+  // Fresh collection for FetchSandbox application_workflow_v1 before/observe.
+  if (req.method === "GET" && url.pathname === "/processed") {
+    res.end(JSON.stringify(state.processed));
+    return;
+  }
   if (req.method === "POST" && url.pathname === "/process-invoice") {
     const chunks = [];
     for await (const c of req) chunks.push(c);
