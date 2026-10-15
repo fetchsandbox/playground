@@ -19,6 +19,7 @@ class Store(Protocol):
     def get(self, message_id: str) -> Record | None: ...
     def put(self, record: Record) -> None: ...
     def all(self, limit: int = 100) -> list[Record]: ...
+    def delete(self, message_id: str) -> None: ...
 
 
 class SqliteStore:
@@ -43,6 +44,11 @@ class SqliteStore:
                 " ON CONFLICT(message_id) DO UPDATE SET updated_at = excluded.updated_at, data = excluded.data",
                 (record["message_id"], record["updated_at"], json.dumps(record)),
             )
+            self._db.commit()
+
+    def delete(self, message_id: str) -> None:
+        with self._lock:
+            self._db.execute("DELETE FROM processed WHERE message_id = ?", (message_id,))
             self._db.commit()
 
     def all(self, limit: int = 100) -> list[Record]:
@@ -70,6 +76,9 @@ class DynamoStore:
             "status": record["status"],
             "data": json.dumps(record),
         })
+
+    def delete(self, message_id: str) -> None:
+        self._table.delete_item(Key={"message_id": message_id})
 
     def all(self, limit: int = 100) -> list[Record]:
         items = self._table.scan(Limit=limit).get("Items", [])

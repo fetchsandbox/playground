@@ -134,6 +134,34 @@ https://fetchsandbox.com/runs/8aff5ed78c?flow=vr_52799f2d4ade4aceb13ee73c3c5b9f6
   subscription emails. Every Slack `ts` and Calendar id matches an app record. No
   duplicates. App state was not wiped mid-session this time.
 
+### 6c. Behaviour contract: provider read-back, state loss, real restart (2026-10-15)
+
+The earlier contracts asserted only the app's saved state, so twin gaps that
+didn't touch it could pass silently. This contract adds checks that read the
+**providers** back through the test adapter (`GET /test/state/{tag}`: Slack
+`conversations.history`, Calendar `events.get` and `events.list`). It asserts
+what the real APIs must do, and it makes restart executable. A check that can't
+be measured counts as **not passed**.
+
+Session `vs_1edb5232d42c`, attempt `vr_f69ec06f83fb4b1382d11d2a0d426ba8`, receipt:
+https://fetchsandbox.com/runs/8ebcf90201?flow=vr_f69ec06f83fb4b1382d11d2a0d426ba8.
+**Verdict: failing.** 10 held, 4 violated, 1 not measured.
+
+| Check | Result | Observed | Whose gap |
+|---|---|---|---|
+| 9 workflow and fault checks (as in 6b) | held | as before | – |
+| restart_keeps_state (real process restart via `client_lifecycle`) | **held** | new instance id; record `completed`, `attempts 0`, 1 Slack message | – |
+| gmail_inbox_filter_honoured | **violated** | an email labelled `SPAM` was processed (`completed`) | **Twin**: `messages.list` ignores `q=in:inbox`. Real Gmail filters it. The app relies on that server-side filter. |
+| provider_effects_readback | **violated** | Slack 1 message ✓; Calendar `events.get` **404**, `events.list` returns no `items` | **Twin**: an inserted event can't be read back |
+| state_loss_no_duplicate_calendar | **violated** | Calendar listing unavailable (see above), so it can't be confirmed | **Twin** (not measurable here); the 409 path is unit-tested only |
+| state_loss_no_duplicate_slack | **violated** | **2** Slack messages for one email after app state was lost | **App**: `chat.postMessage` has no idempotency key; real Slack would also show 2 |
+| slack_accepted_response_loss | unmeasured → **not passed** | policy blocker | Owner decision |
+
+What this means: the app's workflow, fault handling and restart durability
+hold. Three violations come from Gmail and Calendar twin behaviour that doesn't
+match the real APIs. One is a real app gap: duplicate Slack alerts if the state
+store is lost.
+
 ## Not verified
 
 - **Real Gmail, Calendar and Slack accounts.** Everything above ran against API
