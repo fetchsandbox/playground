@@ -97,6 +97,15 @@ node verify/run-proof-receipt.mjs
 # writes /tmp/fs-proof-final.json and /tmp/fs-proof-receipt-url.txt
 ```
 
+Latest FetchSandbox proof receipt (managed tunnel, disposable twin-driver):
+
+https://fetchsandbox.com/runs/33ea90a77f?flow=vr_bcf2db427531446b9de854b02d82d319
+
+Held: baseline, duplicate, Slack/Gmail/Calendar faults, unsigned webhook
+rejection. Typed `observation_missing` blockers retained for signed Slack
+event replay/withheld (direct delivery published no signing headers /
+`webhook_subscriptions`).
+
 ## Schedules
 
 `bot/schedules/poll-invoices.md` every 4 hours (manual under `--dev`):
