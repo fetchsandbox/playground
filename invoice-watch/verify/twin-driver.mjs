@@ -22,8 +22,17 @@ const flowHeaders = process.env.X_FLOW_RUN_ID
 
 const state = { last: null, processed: [] };
 
+/** Join twin base URL + vendor path without dropping `/sandbox/<id>`. */
+function joinTwinUrl(baseUrl, path) {
+  const base = String(baseUrl || "").replace(/\/+$/, "");
+  const rel = String(path || "").replace(/^\/+/, "");
+  return `${base}/${rel}`;
+}
+
 async function providerFetch(baseUrl, apiKey, path, { method = "GET", body } = {}) {
-  const url = new URL(path, baseUrl.endsWith("/") ? baseUrl : baseUrl + "/");
+  // Paths like `/gmail/v1/...` must append under the sandbox base — `new URL('/x', base)`
+  // would resolve against the origin and drop `/sandbox/<id>`.
+  const url = joinTwinUrl(baseUrl, path);
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     Accept: "application/json",
