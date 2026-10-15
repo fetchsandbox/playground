@@ -73,6 +73,13 @@ class Orchestrator:
         if not self.store.claim_event(f"{msg.channel}:{msg.external_id}"):
             log.info("duplicate %s message %s ignored", msg.channel, msg.external_id)
             return None
+        # Slack delivers one post as several events (message + app_mention) with different
+        # event ids; the post itself is identified by channel + ts.
+        ref = msg.reply_ref
+        if msg.channel == "slack" and ref.get("channel") and ref.get("ts"):
+            if not self.store.claim_event(f"slack-post:{ref['channel']}:{ref['ts']}"):
+                log.info("slack post %s/%s already handled (event %s)", ref["channel"], ref["ts"], msg.external_id)
+                return None
         run = {
             "id": _new_id("RUN"),
             "status": "running",

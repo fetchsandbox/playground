@@ -41,9 +41,11 @@ same thread, or a Slack reply in the same thread.
   email cannot raise what the agent is allowed to give.
 - **Runs are persisted (SQLite) step by step.** A run waiting on a manager
   survives a restart. `GET /runs/{id}` shows every step with its outcome.
-- **Duplicate deliveries are ignored.** Gmail message ids and Slack event
-  ids are deduplicated, and a double-clicked Approve button sends one quote,
-  not two.
+- **Duplicate deliveries are ignored.** Gmail message ids, Slack event ids
+  and Slack posts (channel + `ts`) are deduplicated. Slack delivers one
+  @-mention as both `message` and `app_mention` events with different ids,
+  and that still produces one quote. A double-clicked Approve button sends
+  one quote, not two.
 - **Writes are checked.** HubSpot deals are read back after every write. A
   Slack `ok:false` response fails the step, even though Slack returns
   HTTP 200 for it. A failed run alerts the manager channel.
@@ -51,6 +53,9 @@ same thread, or a Slack reply in the same thread.
   that already has 5% off becomes 25%, not 30%.
 - Only Slack users listed in `SLACK_MANAGER_USER_IDS` can approve or reject.
   The referenced quote must belong to the sender's own email address.
+- `GET /runs` and `GET /quotes` hold customer data. They require
+  `QUOTE_AGENT_ADMIN_TOKEN` as a Bearer token and are disabled when it isn't
+  set.
 
 ## Layout
 
@@ -135,6 +140,21 @@ sandboxes: quote, 5%, 25% with approval, and 80% declined. Messages and
 contacts were read back from the sandboxes afterwards. The HubSpot sandbox
 has no Deals API, so deal writes were only tested against the fakes. Gmail
 has no sandbox and has not been run against the real API.
+
+## External verification (FetchSandbox)
+
+`verification/fetchsandbox_contract.py <session_id>` builds the
+`application_workflow_v1` contract that FetchSandbox executed against this
+app through its managed tunnel. The results are in
+[`findings/2026-10-15-quote-agent-fetchsandbox.md`](../../findings/2026-10-15-quote-agent-fetchsandbox.md).
+
+The verification uses three test-only hooks, all off unless their env var
+is set:
+- `QUOTE_AGENT_VERIFIER_TOKEN` enables the read-only `/verifier` adapter
+  (Bearer-protected).
+- `QUOTE_AGENT_PROVIDER_HEADERS` adds a run-correlation header to every
+  provider request.
+- `DEV_ENDPOINTS` lets the verifier drive the workflow over plain HTTP.
 
 ## Not done yet
 

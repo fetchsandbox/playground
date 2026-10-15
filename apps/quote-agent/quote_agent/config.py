@@ -1,5 +1,6 @@
 """Settings, read once from the environment. See .env.example."""
 
+import json
 import os
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -58,6 +59,9 @@ class Settings:
     quote_valid_days: int = 30
     company_name: str = "Northwind"
     dev_endpoints: bool = False
+    verifier_token: str = ""  # enables the read-only /verifier test adapter
+    admin_token: str = ""  # enables /runs and /quotes (Bearer); unset = disabled
+    provider_headers: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -93,4 +97,7 @@ class Settings:
             quote_valid_days=int(e("QUOTE_VALID_DAYS", "30")),
             company_name=e("COMPANY_NAME", "Northwind"),
             dev_endpoints=_bool("DEV_ENDPOINTS"),
+            verifier_token=e("QUOTE_AGENT_VERIFIER_TOKEN", ""),
+            admin_token=e("QUOTE_AGENT_ADMIN_TOKEN", ""),
+            provider_headers=json.loads(e("QUOTE_AGENT_PROVIDER_HEADERS", "") or "{}"),
         )

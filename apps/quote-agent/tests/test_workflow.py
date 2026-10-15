@@ -343,3 +343,41 @@ def test_claude_refusal_falls_back_to_rules():
     fake = FakeAnthropic(SimpleNamespace(stop_reason="refusal", model="claude-opus-5-5", content=[]))
     c = IntentClassifier(ClaudeClassifier(fake)).classify("Quote for 4 seats of Pro please")
     assert c.classifier == "rules-fallback" and c.items[0].quantity == 4
+
+
+# ------------------------------------------------------------ verifier adapter
+
+
+def test_verifier_adapter_is_off_without_token(client):
+    assert client.get("/verifier/runtime").status_code == 404
+
+
+def test_verifier_adapter_requires_token_and_scopes_runs(settings, orch, fake):
+    from fastapi.testclient import TestClient
+    from quote_agent.app import create_app
+    settings.verifier_token = "vt"
+    c = TestClient(create_app(settings, orch))
+    assert c.get("/verifier/scopes/s1/state").status_code == 401
+    orch.handle_inbound(email("s1-a", "Quote for 25 seats of Pro please"))
+    orch.handle_inbound(email("other", "Quote for 2 seats of Pro please"))
+    state = c.get("/verifier/scopes/s1/state", headers={"Authorization": "Bearer vt"}).json()
+    assert state["run_count"] == 1 and state["runs"][0]["quote"]["total_cents"] == 1_500_000
+    assert state["quotes"][0]["status"] == "sent"
+
+
+def test_one_slack_post_delivered_as_message_and_mention_quotes_once(client, orch, fake):
+    base = slack_event()["event"]
+    for ev_id, typ in [("EvA", "message"), ("EvB", "app_mention")]:
+        body = json.dumps({"type": "event_callback", "event_id": ev_id, "event": {**base, "type": typ}}).encode()
+        client.post("/webhooks/slack/events", content=body, headers=sign(body))
+    assert len(orch.store.list_runs()) == 1 and len(fake.slack_posts) == 1
+
+
+def test_inspection_api_requires_admin_token(settings, orch):
+    from fastapi.testclient import TestClient
+    from quote_agent.app import create_app
+    assert TestClient(create_app(settings, orch)).get("/quotes").status_code == 404  # disabled by default
+    settings.admin_token = "adm"
+    c = TestClient(create_app(settings, orch))
+    assert c.get("/quotes").status_code == 401 and c.get("/runs").status_code == 401
+    assert c.get("/quotes", headers={"Authorization": "Bearer adm"}).status_code == 200
