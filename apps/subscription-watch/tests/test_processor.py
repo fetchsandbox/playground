@@ -170,3 +170,11 @@ def test_lost_app_state_does_not_double_post(env):
     assert run().completed == ["m-netflix"]
     assert len(fake.slack_posts) == 1
     assert len(fake.events) == 1  # calendar insert answered 409, treated as created
+
+
+def test_no_history_scope_still_posts_the_alert(env):
+    fake, _, run = env
+    fake.add("m-netflix", NETFLIX)
+    fake.slack_history_error = "missing_scope"  # app installed without channels:history
+    assert run().completed == ["m-netflix"]
+    assert len(fake.slack_posts) == 1

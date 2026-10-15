@@ -130,8 +130,16 @@ def _process(message_id: str, record: Record, store: Store, ruleset: RuleSet,
             # An earlier attempt may have posted without us recording it (lost
             # response or lost state); adopt that message instead of re-posting.
             received = record.get("received_at")
-            existing = clients.slack.find_posted(gmail_link(message_id),
-                                                 oldest=received - 86400 if received else None)
+            try:
+                existing = clients.slack.find_posted(gmail_link(message_id),
+                                                     oldest=received - 86400 if received else None)
+            except ProviderError as exc:
+                if exc.retryable:
+                    raise  # Slack is throttling or down: defer the whole post
+                # No history access (e.g. missing channels:history): an alert
+                # matters more than dedupe, so post without the lookup.
+                log.warning("slack history unavailable, posting without dedupe: %s", exc)
+                existing = None
             record["slack_ts"] = existing or clients.slack.post(slack_text(record))
             _save(store, record)
         except ProviderError as exc:

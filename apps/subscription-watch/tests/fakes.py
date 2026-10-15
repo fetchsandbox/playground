@@ -28,6 +28,7 @@ class FakeProviders:
     slack_error: str | None = None
     slack_429_once: bool = False
     slack_lose_response: bool = False  # Slack stores the post, the response is lost
+    slack_history_error: str | None = None  # e.g. missing_scope on conversations.history
     calendar_status: int | None = None
     gmail_status: int | None = None
 
@@ -51,6 +52,8 @@ class FakeProviders:
                 return httpx.Response(404, json={"error": {"code": 404}})
             return httpx.Response(200, json={"id": mid, "raw": self.messages[mid]})
         if host == "slack.test" and path == "/api/conversations.history":
+            if self.slack_history_error:
+                return httpx.Response(200, json={"ok": False, "error": self.slack_history_error})
             msgs = [{"ts": p["ts"], "text": p["text"]} for p in reversed(self.slack_posts)]
             return httpx.Response(200, json={"ok": True, "messages": msgs, "has_more": False})
         if host == "slack.test" and path == "/api/chat.postMessage":
