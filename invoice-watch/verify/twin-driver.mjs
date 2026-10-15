@@ -185,17 +185,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   // Fresh collection for FetchSandbox application_workflow_v1 before/observe.
+  // Include numeric `count` so before/after can share select:"count" on empty and filled state.
   if (req.method === "GET" && url.pathname === "/processed") {
     if (!requireVerifier(req, res)) return;
-    res.end(JSON.stringify(state.processed));
+    res.end(
+      JSON.stringify({ count: state.processed.length, items: state.processed }),
+    );
     return;
   }
-  // Per-run scoped collection: GET /runs/{{run_id}}/processed (bare array).
+  // Per-run scoped collection: GET /runs/{{run_id}}/processed
   const runProcessed = url.pathname.match(/^\/runs\/([^/]+)\/processed$/);
   if (req.method === "GET" && runProcessed) {
     if (!requireVerifier(req, res)) return;
     const runId = decodeURIComponent(runProcessed[1]);
-    res.end(JSON.stringify(state.runs[runId] || []));
+    const items = state.runs[runId] || [];
+    res.end(JSON.stringify({ count: items.length, items }));
     return;
   }
   if (req.method === "POST" && url.pathname === "/process-invoice") {
