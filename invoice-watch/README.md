@@ -74,6 +74,22 @@ npx @cursor/bdk run --dir . --dry-run --message "Dry-run: process sample-invoice
 Point FetchSandbox twins at the `restEquivalent` URLs/bodies from those
 tool results to verify behavior — not to redesign the contracts.
 
+Disposable HTTP driver for managed-tunnel / caller-executed checks:
+
+```bash
+# Env from validate_integration legs (+ optional FETCHSANDBOX_VERIFIER_TOKEN)
+node verify/twin-driver.mjs
+curl -sS -X POST http://127.0.0.1:8788/process-invoice \
+  -H 'content-type: application/json' \
+  -d '{"merchant":"Notion","amount":"$29.00 USD","cancelBy":"2026-11-12","renewalDate":"2026-11-15","invoiceId":"INV-1001","channel":"C0BILLING01"}'
+```
+
+Caller-executed twin traffic (Gmail list → Calendar insert → Slack postMessage)
+and armed `slack:channel_not_found` have been exercised successfully. Managed-tunnel
+`application_workflow_v1` configures with a disposable baseline contract; preflight
+still reports `starting_state_not_observable` on empty `GET /processed` for the
+current FetchSandbox assertion rules.
+
 ## Schedules
 
 `bot/schedules/poll-invoices.md` every 4 hours (manual under `--dev`):
