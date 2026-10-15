@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = 8788;
-const APP_VERSION = "invoice-watch-verify-1.0.3";
+const APP_VERSION = "invoice-watch-verify-1.0.4";
 const CHANNEL = "C0BILLING01";
 const apiKey = JSON.parse(
   readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8"),
@@ -513,20 +513,17 @@ function buildChecks() {
       before: emptyWebhooksBefore("slack_webhook_replay"),
       actions: [
         {
+          // Payload is the Slack event resource; FetchSandbox wraps/signs the envelope.
           event: {
             provider: "slack",
-            type: "event_callback",
+            type: "message",
             payload: {
-              type: "event_callback",
-              event_id: "ev_invoice_replay_1",
+              type: "message",
+              text: "Subscription invoice noticed",
+              channel: CHANNEL,
+              ts: "1710000000.000100",
               run_id: "{{run_id}}",
               case_id: "slack_webhook_replay",
-              event: {
-                type: "message",
-                text: "Subscription invoice noticed",
-                channel: CHANNEL,
-                ts: "1710000000.000100",
-              },
             },
           },
           expect_status: 200,
@@ -540,10 +537,24 @@ function buildChecks() {
         },
       ],
       observe: { path: caseWebhooksPath("slack_webhook_replay") },
-      assertion: webhookOutcome(
-        [{ select: "eventId", equals: "ev_invoice_replay_1" }],
-        { count: 2 },
-      ),
+      assertion: {
+        all_of: [
+          {
+            select: "webhooks[*]",
+            count: 2,
+            required: true,
+            where: [{ select: "type", equals: "message", required: true }],
+          },
+          {
+            select: "webhooks[*]",
+            count: 1,
+            required: true,
+            where: [{ select: "replay", equals: true, required: true }],
+          },
+        ],
+        repeat: 2,
+        stable_under_repeat: true,
+      },
     },
     {
       id: "slack_webhook_withheld",
@@ -552,26 +563,24 @@ function buildChecks() {
         provider: "slack",
         scenario: "rate_limited",
         evidence: "webhook_withheld",
+        event_type: "message",
       },
       before: emptyWebhooksBefore("slack_webhook_withheld"),
       actions: [
         {
+          // Simulated drop: verifier marks the generated event withheld; app must stay empty.
           event: {
             provider: "slack",
-            type: "event_callback",
+            type: "message",
             payload: {
-              type: "event_callback",
-              event_id: "ev_withheld_1",
+              type: "message",
+              text: "should be withheld",
+              channel: CHANNEL,
+              ts: "1710000001.000100",
               run_id: "{{run_id}}",
               case_id: "slack_webhook_withheld",
-              event: {
-                type: "message",
-                text: "should be withheld",
-                channel: CHANNEL,
-              },
             },
           },
-          expect_status: 200,
         },
       ],
       observe: { path: caseWebhooksPath("slack_webhook_withheld") },

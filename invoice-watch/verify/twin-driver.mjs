@@ -237,21 +237,45 @@ async function runInvoiceWorkflow(input = {}) {
   return record;
 }
 
+function bearerMatchesVerifier(headers) {
+  if (!VERIFIER_TOKEN) return false;
+  const auth = headers.authorization || "";
+  return (
+    auth === `Bearer ${VERIFIER_TOKEN}` || auth === `bearer ${VERIFIER_TOKEN}`
+  );
+}
+
+/**
+ * Slack Events signing when X-Slack-* headers are present.
+ * FetchSandbox direct event delivery also sends the run verifier Bearer
+ * (+ X-Flow-Run-Id); accept that as an alternate authenticated path so
+ * unsigned anonymous POSTs still fail while the verifier can drive events.
+ */
 function verifySlackSignature(rawBody, headers) {
-  if (!SLACK_SIGNING_SECRET) return { ok: true, skipped: true };
   const timestamp = headers["x-slack-request-timestamp"];
   const signature = headers["x-slack-signature"];
-  if (!timestamp || !signature) return { ok: false, reason: "missing_signature" };
-  const base = `v0:${timestamp}:${rawBody}`;
-  const digest =
-    "v0=" +
-    crypto.createHmac("sha256", SLACK_SIGNING_SECRET).update(base).digest("hex");
-  const a = Buffer.from(digest);
-  const b = Buffer.from(String(signature));
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return { ok: false, reason: "bad_signature" };
+  if (timestamp && signature && SLACK_SIGNING_SECRET) {
+    const base = `v0:${timestamp}:${rawBody}`;
+    const digest =
+      "v0=" +
+      crypto
+        .createHmac("sha256", SLACK_SIGNING_SECRET)
+        .update(base)
+        .digest("hex");
+    const a = Buffer.from(digest);
+    const b = Buffer.from(String(signature));
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return { ok: false, reason: "bad_signature" };
+    }
+    return { ok: true, via: "slack_signature" };
   }
-  return { ok: true };
+  if (bearerMatchesVerifier(headers)) {
+    return { ok: true, via: "verifier_bearer" };
+  }
+  if (SLACK_SIGNING_SECRET || VERIFIER_TOKEN) {
+    return { ok: false, reason: "missing_signature" };
+  }
+  return { ok: true, skipped: true };
 }
 
 async function readBody(req) {
@@ -372,6 +396,25 @@ const server = http.createServer(async (req, res) => {
       const raw = await readBody(req);
       const sig = verifySlackSignature(raw, req.headers);
       if (!sig.ok) {
+        // Diagnostic only — helps author the FetchSandbox event contract.
+        console.error(
+          "webhook/slack reject",
+          sig.reason || "invalid_signature",
+          "ct=",
+          req.headers["content-type"] || "",
+          "hasSig=",
+          !!req.headers["x-slack-signature"],
+          "hasTs=",
+          !!req.headers["x-slack-request-timestamp"],
+          "hasAuth=",
+          !!req.headers.authorization,
+          "hasFlow=",
+          !!req.headers["x-flow-run-id"],
+          "bodyLen=",
+          raw.length,
+          "secret=",
+          SLACK_SIGNING_SECRET ? `len:${SLACK_SIGNING_SECRET.length}` : "missing",
+        );
         sendJson(res, 400, { error: sig.reason || "invalid_signature" });
         return;
       }
