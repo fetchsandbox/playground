@@ -20,7 +20,7 @@ const flowHeaders = process.env.X_FLOW_RUN_ID
   ? { "X-Flow-Run-Id": process.env.X_FLOW_RUN_ID }
   : {};
 
-const state = { last: null, processed: [] };
+const state = { last: null, processed: [], runs: {} };
 
 /** Join twin base URL + vendor path without dropping `/sandbox/<id>`. */
 function joinTwinUrl(baseUrl, path) {
@@ -138,12 +138,19 @@ async function runInvoiceWorkflow(input = {}) {
     steps,
     at: new Date().toISOString(),
   };
-  state.last = record;
-  state.processed.push({
+  const summary = {
     invoiceKey,
     slackOk: record.slackOk,
     calendarEventId: record.calendarEventId,
-  });
+    runId: input.run_id || null,
+  };
+  state.last = record;
+  state.processed.push(summary);
+  if (input.run_id) {
+    const key = String(input.run_id);
+    if (!state.runs[key]) state.runs[key] = [];
+    state.runs[key].push(summary);
+  }
   return record;
 }
 
@@ -162,6 +169,13 @@ const server = http.createServer(async (req, res) => {
   // Fresh collection for FetchSandbox application_workflow_v1 before/observe.
   if (req.method === "GET" && url.pathname === "/processed") {
     res.end(JSON.stringify(state.processed));
+    return;
+  }
+  // Per-run scoped collection: GET /runs/{{run_id}}/processed
+  const runProcessed = url.pathname.match(/^\/runs\/([^/]+)\/processed$/);
+  if (req.method === "GET" && runProcessed) {
+    const runId = decodeURIComponent(runProcessed[1]);
+    res.end(JSON.stringify(state.runs[runId] || []));
     return;
   }
   if (req.method === "POST" && url.pathname === "/process-invoice") {
