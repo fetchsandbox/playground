@@ -1,3 +1,4 @@
+import base64
 from datetime import date, datetime, timezone
 
 from subwatch.config import DEFAULT_RULES
@@ -67,3 +68,21 @@ def test_parse_raw_html_body_and_garbage():
     assert "subscription renews on 2026-11-01" in e.body
     assert parse_raw("y", "sample-value") is None
     assert parse_raw("z", "!!!not base64") is None
+
+
+def test_trial_end_is_treated_as_the_charge_date():
+    m = evaluate(RULES, mail("Canva", "no-reply@canva.com", "Your Canva Pro trial ends soon",
+                             "Your free trial ends on 2026-11-30. After that you will be charged $119.99 per year."), TODAY)
+    assert m.renewal_date == date(2026, 11, 30) and m.reminder_date == date(2026, 11, 27)
+
+
+def test_day_first_numeric_date():
+    assert extract_renewal_date("Next payment date: 15/11/2026") == date(2026, 11, 15)
+    assert extract_renewal_date("Next payment date: 11/05/2026") == date(2026, 11, 5)  # ambiguous: month-first
+
+
+def test_body_without_charset_decodes_as_utf8():
+    raw = base64.urlsafe_b64encode(
+        "From: G <m@theguardian.com>\r\nSubject: Your membership payment receipt\r\n"
+        "Content-Type: text/plain\r\n\r\nPayment of \u00a37.99 received.\r\n".encode()).decode()
+    assert "\u00a37.99" in parse_raw("x", raw).body

@@ -45,12 +45,13 @@ def lam(monkeypatch):
         yield lambda_handler, fake, ddb
 
 
-def push_event(token, path="/gmail/push"):
+def push_event(token, path="/gmail/push", body=None, headers=None):
     data = base64.b64encode(json.dumps({"emailAddress": "me@example.test", "historyId": "42"}).encode()).decode()
     return {
         "rawPath": path, "requestContext": {"http": {"method": "POST"}},
         "queryStringParameters": {"token": token} if token else None,
-        "body": json.dumps({"message": {"data": data, "messageId": "1"}, "subscription": "s"}),
+        "headers": headers or {},
+        "body": body if body is not None else json.dumps({"message": {"data": data, "messageId": "1"}, "subscription": "s"}),
         "isBase64Encoded": False,
     }
 
@@ -79,3 +80,23 @@ def test_push_requires_token(lam):
 def test_unknown_route_404(lam):
     handler, _, _ = lam
     assert handler.handler(push_event("s3cret", path="/other"), None)["statusCode"] == 404
+
+
+def test_push_token_in_path_or_bearer_header(lam):
+    handler, fake, _ = lam
+    assert handler.handler(push_event(None, path="/gmail/push/wrong"), None)["statusCode"] == 403
+    # a path token is authoritative: a valid header does not rescue a wrong path token
+    assert handler.handler(push_event(None, path="/gmail/push/wrong",
+                                      headers={"Authorization": "Bearer s3cret"}), None)["statusCode"] == 403
+    assert fake.slack_posts == []
+    assert handler.handler(push_event(None, headers={"Authorization": "Bearer s3cret"}), None)["statusCode"] == 200
+    assert handler.handler(push_event(None, path="/gmail/push/s3cret"), None)["statusCode"] == 200
+    assert len(fake.slack_posts) == 1
+
+
+@pytest.mark.parametrize("body", ["not json", "[]", '{"message": "x"}', '{"message": {"data": "!!"}}', ""])
+def test_malformed_push_is_acknowledged_and_still_sweeps(lam, body):
+    handler, fake, _ = lam
+    resp = handler.handler(push_event("s3cret", body=body), None)
+    assert resp["statusCode"] == 200  # a 4xx/5xx would make Pub/Sub redeliver garbage forever
+    assert json.loads(resp["body"])["completed"] == ["m-netflix"]

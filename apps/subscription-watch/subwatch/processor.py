@@ -111,7 +111,8 @@ def _process(message_id: str, record: Record, store: Store, ruleset: RuleSet,
             report.unparsable += 1
             return
         match = evaluate(ruleset, msg, today=today)
-        record.update(subject=msg.subject, sender=msg.sender_address)
+        record.update(subject=msg.subject, sender=msg.sender_address,
+                      received_at=msg.date.timestamp() if msg.date else None)
         if match is None:
             record["status"] = "ignored"
             _save(store, record)
@@ -126,7 +127,12 @@ def _process(message_id: str, record: Record, store: Store, ruleset: RuleSet,
     errors: list[ProviderError] = []
     if not record.get("slack_ts"):
         try:
-            record["slack_ts"] = clients.slack.post(slack_text(record))
+            # An earlier attempt may have posted without us recording it (lost
+            # response or lost state); adopt that message instead of re-posting.
+            received = record.get("received_at")
+            existing = clients.slack.find_posted(gmail_link(message_id),
+                                                 oldest=received - 86400 if received else None)
+            record["slack_ts"] = existing or clients.slack.post(slack_text(record))
             _save(store, record)
         except ProviderError as exc:
             errors.append(exc)

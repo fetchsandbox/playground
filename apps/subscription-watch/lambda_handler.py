@@ -2,7 +2,7 @@
 
 Invoked two ways (see template.yaml):
   * EventBridge schedule: sweep the inbox every few minutes.
-  * Lambda Function URL:  Gmail Pub/Sub push -> POST /gmail/push?token=...
+  * Lambda Function URL:  Gmail Pub/Sub push -> POST /gmail/push/<PUSH_TOKEN>
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from typing import Any
 
 from subwatch.config import load_settings
 from subwatch.http import ProviderError
-from subwatch.service import describe_push, push_authorized, run
+from subwatch.service import describe_push, push_authorized, push_token, run
 from subwatch.store import make_store
 
 logging.getLogger().setLevel(logging.INFO)
@@ -46,15 +46,18 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         log.info("scheduled run: %s", json.dumps(report))
         return report
 
-    if http.get("method") != "POST" or event.get("rawPath") != "/gmail/push":
+    path = event.get("rawPath") or ""
+    if http.get("method") != "POST" or not (path == "/gmail/push" or path.startswith("/gmail/push/")):
         return _resp(404, {"error": "not found"})
-    token = (event.get("queryStringParameters") or {}).get("token")
+    path_token = path[len("/gmail/push/"):] if path.startswith("/gmail/push/") else None
+    headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
+    token = push_token(path_token, (event.get("queryStringParameters") or {}).get("token"), headers.get("authorization"))
     if not push_authorized(settings, token):
         return _resp(403, {"error": "bad push token"})
-    raw = event.get("body") or "{}"
+    raw = event.get("body") or ""
     if event.get("isBase64Encoded"):
-        raw = base64.b64decode(raw).decode()
-    log.info("gmail push: %s", describe_push(json.loads(raw)))
+        raw = base64.b64decode(raw)
+    log.info("gmail push: %s", describe_push(raw))
     try:
         report = run(settings, store)
     except ProviderError as exc:

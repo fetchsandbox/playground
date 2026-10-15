@@ -94,10 +94,15 @@ def _body_text(msg: email.message.EmailMessage) -> str:
     part = msg.get_body(preferencelist=("plain", "html"))
     if part is None:
         return ""
-    try:
-        text = part.get_content()
-    except (LookupError, ValueError):
-        return ""
+    if part.get_param("charset") is None:
+        # 8-bit body with no declared charset: real senders do this; UTF-8 is the usual intent.
+        raw = part.get_payload(decode=True) or b""
+        text = raw.decode("utf-8", errors="replace")
+    else:
+        try:
+            text = part.get_content()
+        except (LookupError, ValueError):
+            return ""
     if part.get_content_type() == "text/html":
         text = html.unescape(re.sub(r"<[^>]+>", " ", text))
     return re.sub(r"\s+", " ", text).strip()

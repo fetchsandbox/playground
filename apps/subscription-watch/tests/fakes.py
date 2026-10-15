@@ -27,6 +27,7 @@ class FakeProviders:
     # Fault switches
     slack_error: str | None = None
     slack_429_once: bool = False
+    slack_lose_response: bool = False  # Slack stores the post, the response is lost
     calendar_status: int | None = None
     gmail_status: int | None = None
 
@@ -49,6 +50,9 @@ class FakeProviders:
             if mid not in self.messages:
                 return httpx.Response(404, json={"error": {"code": 404}})
             return httpx.Response(200, json={"id": mid, "raw": self.messages[mid]})
+        if host == "slack.test" and path == "/api/conversations.history":
+            msgs = [{"ts": p["ts"], "text": p["text"]} for p in reversed(self.slack_posts)]
+            return httpx.Response(200, json={"ok": True, "messages": msgs, "has_more": False})
         if host == "slack.test" and path == "/api/chat.postMessage":
             if self.slack_429_once:
                 self.slack_429_once = False
@@ -58,6 +62,9 @@ class FakeProviders:
             body = json.loads(req.content)
             ts = f"1760000000.{len(self.slack_posts):06d}"
             self.slack_posts.append({**body, "ts": ts})
+            if self.slack_lose_response:
+                self.slack_lose_response = False
+                return httpx.Response(504, text="gateway timeout")
             return httpx.Response(200, json={"ok": True, "channel": body["channel"], "ts": ts})
         if host == "calendar.test" and path == "/calendars/primary/events":
             if self.calendar_status:

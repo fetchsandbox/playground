@@ -1,7 +1,8 @@
 """Local HTTP server for the workflow.
 
   POST /run               process the inbox now
-  POST /gmail/push?token= Gmail Pub/Sub push endpoint (real-time trigger)
+  POST /gmail/push/<token> Gmail Pub/Sub push endpoint (real-time trigger);
+                          /gmail/push?token= and a Bearer header also work
   GET  /processed         what the workflow has done, per Gmail message
   GET  /health
 """
@@ -12,11 +13,11 @@ import logging
 import os
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 
 from subwatch.config import load_settings
 from subwatch.http import ProviderError
-from subwatch.service import describe_push, push_authorized, run
+from subwatch.service import describe_push, push_authorized, push_token, run
 from subwatch.store import make_store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -47,10 +48,12 @@ def run_now() -> dict[str, Any]:
 
 
 @app.post("/gmail/push")
-async def gmail_push(request: Request, token: str | None = None) -> dict[str, Any]:
-    if not push_authorized(settings, token):
+@app.post("/gmail/push/{path_token}")
+async def gmail_push(request: Request, path_token: str | None = None, token: str | None = None,
+                     authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    if not push_authorized(settings, push_token(path_token, token, authorization)):
         raise HTTPException(403, "bad push token")
-    log.info("gmail push: %s", describe_push(await request.json()))
+    log.info("gmail push: %s", describe_push(await request.body()))
     try:
         return run(settings, store)
     except ProviderError as exc:

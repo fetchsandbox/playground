@@ -26,12 +26,13 @@ _DATE_TEXT = (
     rf"(?:(?:{_MONTHS})[a-z]*\.?\s+\d{{1,2}}(?:st|nd|rd|th)?,?\s+\d{{4}}"  # November 13, 2026
     rf"|\d{{1,2}}(?:st|nd|rd|th)?\s+(?:{_MONTHS})[a-z]*\.?,?\s+\d{{4}}"  # 13 November 2026
     r"|\d{4}-\d{2}-\d{2}"  # 2026-11-13
-    r"|\d{1,2}/\d{1,2}/\d{4})"  # 11/13/2026 (US order)
+    r"|\d{1,2}/\d{1,2}/\d{4})"  # 11/13/2026 or 13/11/2026
 )
 _RENEWAL = re.compile(
     r"(?:next\s+(?:billing|payment|charge|renewal|invoice)(?:\s+date)?"
     r"|renewal\s+date|renews\s+on|will\s+renew\s+on|will\s+be\s+(?:charged|billed|renewed)\s+on"
-    r"|auto[- ]renews?\s+on)"
+    r"|auto[- ]renews?\s+on"
+    r"|trial\s+(?:ends|will\s+end|expires|will\s+expire|period\s+ends)\s+on)"
     rf"\D{{0,20}}?({_DATE_TEXT})",
     re.IGNORECASE,
 )
@@ -137,7 +138,8 @@ def _parse_date(s: str) -> date | None:
     s = re.sub(r"(\d)(st|nd|rd|th)", r"\1", s.strip(), flags=re.IGNORECASE).replace(",", "").replace(".", "")
     s = re.sub(r"\s+", " ", s)
     s = re.sub(r"\bSept\b", "Sep", s, flags=re.IGNORECASE)
-    for fmt in ("%B %d %Y", "%b %d %Y", "%d %B %Y", "%d %b %Y", "%Y-%m-%d", "%m/%d/%Y"):
+    # Numeric dates are read month-first, then day-first ("15/11/2026" can only be day-first).
+    for fmt in ("%B %d %Y", "%b %d %Y", "%d %B %Y", "%d %b %Y", "%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"):
         try:
             return datetime.strptime(s, fmt).date()
         except ValueError:

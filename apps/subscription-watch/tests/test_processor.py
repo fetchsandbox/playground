@@ -145,3 +145,28 @@ def test_gmail_auth_failure_on_message_aborts_run(env):
     assert len(report.failed) == 1
     assert store.get("b") is None  # not touched; picked up on the next run
     assert fake.slack_posts == []
+
+
+def test_lost_slack_response_does_not_double_post(env):
+    fake, store, run = env
+    fake.add("m-netflix", NETFLIX)
+    fake.slack_lose_response = True  # Slack accepted the post, we got a 504
+
+    report = run()
+    assert report.failed and report.failed[0]["retryable"] is True
+    assert len(fake.slack_posts) == 1
+
+    assert run().completed == ["m-netflix"]
+    assert len(fake.slack_posts) == 1  # found in channel history, adopted
+    assert store.get("m-netflix")["slack_ts"] == fake.slack_posts[0]["ts"]
+
+
+def test_lost_app_state_does_not_double_post(env):
+    fake, store, run = env
+    fake.add("m-netflix", NETFLIX)
+    run()
+    store.delete("m-netflix")  # state store lost
+
+    assert run().completed == ["m-netflix"]
+    assert len(fake.slack_posts) == 1
+    assert len(fake.events) == 1  # calendar insert answered 409, treated as created
