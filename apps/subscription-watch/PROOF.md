@@ -134,6 +134,51 @@ https://fetchsandbox.com/runs/8aff5ed78c?flow=vr_52799f2d4ade4aceb13ee73c3c5b9f6
   subscription emails. Every Slack `ts` and Calendar id matches an app record. No
   duplicates. App state was not wiped mid-session this time.
 
+## 7. Current verdict: FetchSandbox-native behaviour contract (2026-10-15)
+
+**Rule for this section:** every check is driven by FetchSandbox through its
+managed relay and judged by its verification engine against its twins. Only
+FetchSandbox mechanisms count as evidence: relay-driven actions, fault
+injection, `provider_control`, `client_lifecycle` restart. My unit tests (30)
+support the code but are not behaviour evidence. Anything FetchSandbox can't
+prove counts as **not proven**. When the cause is a twin or engine gap, it's
+recorded as FetchSandbox's gap and neither the app nor the assertions were
+changed to compensate.
+
+App `0ac227a`, session `vs_2cafb4de5900`, attempt `vr_df3319d442ff40cbba54a4b58deb58ee`. Receipt:
+https://fetchsandbox.com/runs/5247fe57ef?flow=vr_df3319d442ff40cbba54a4b58deb58ee
+**Verdict: failing.** 25 held, 1 violated, 4 unmeasured.
+
+**Held (25):**
+- Core workflow: baseline (receipt → Slack + Calendar on renewal − 3 d), personal mail ignored.
+- Duplicates and concurrency: 3 sequential runs, 4 concurrent runs.
+- Messy input: messy receipts (HTML-only, multipart QP, RFC 2047, no renewal date, trial end, GBP without charset), newsletter and shipping notice ignored.
+- Gmail push webhook: 6-way duplicate burst, malformed bodies acknowledged, stale or out-of-order historyIds, push before the email arrives, wrong token → 403, push during a Gmail 429 → 502 then redelivery completes.
+- Slack faults: 429 (reminder still created) and recovery; channel_not_found, not_in_channel, missing_scope, invalid_arguments and 401, each recorded as a failure with the reminder still created, and recovery once the fault clears.
+- Calendar faults: 401 (alert still posted), 429 with recovery.
+- Gmail faults: 429 outage with recovery, 401 without damage.
+- Durability: real process restart keeps state.
+
+**Not proven (5):**
+
+| Check | FetchSandbox result | Whose gap |
+|---|---|---|
+| gmail_inbox_filter_honoured | violated: an email labelled SPAM was processed | **FetchSandbox Gmail twin.** It ignores `q=in:inbox` (and returns SPAM in `messages.list`). Real Gmail excludes SPAM from `messages.list` by default and honours `in:inbox`. The app sends the real query and was not changed. |
+| slack_slow_network | unmeasured: "fault not independently observed" | **FetchSandbox engine.** The 3 s delay isn't recorded as observed fault evidence. |
+| provider_side_exactly_once | unmeasured | **FetchSandbox.** Exactly-once must be read from its own Slack and Calendar twin state; `application_workflow_v1` has no provider read-back. FetchSandbox classifies this as app-side observation, and by owner decision no app-written read-back is used as evidence. |
+| state_loss_exactly_once | unmeasured (accepted as an engine limitation) | **FetchSandbox engine.** There's no restart that wipes storage. |
+| slack_accepted_response_lost | unmeasured | **FetchSandbox.** No Slack fault holds an accepted response until the client disconnects. |
+
+**Other FetchSandbox findings from this session:**
+- Its relay lease ends permanently after any single failed long-poll, with no reconnect. Two tunnels dropped, one mid-run, and that cost 7 checks in an earlier attempt.
+- The validator now rejects a path segment that looked like a token (`/gmail/push/not-the-push-token`), although it accepted the same path earlier.
+- It rejects a blocker that names a provider path. Its error message ("query credentials") doesn't point at the real cause.
+- Input emails reach the Gmail twin through the app's `/test/inbox` route, because FetchSandbox actions can only call the app. A native per-check "seed provider data" action would remove that harness step.
+
+Sections 6c and earlier used provider read-back computed by app-side code
+(`/test/state`) and my own reconciliation counts. Under the rule above, those
+are **superseded and are not evidence**.
+
 ### 6c. Behaviour contract: provider read-back, state loss, real restart (2026-10-15)
 
 The earlier contracts asserted only the app's saved state, so twin gaps that
