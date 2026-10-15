@@ -19,8 +19,22 @@ const PORT = Number(process.env.PORT || 8788);
 const flowHeaders = process.env.X_FLOW_RUN_ID
   ? { "X-Flow-Run-Id": process.env.X_FLOW_RUN_ID }
   : {};
+const VERIFIER_TOKEN = process.env.FETCHSANDBOX_VERIFIER_TOKEN || "";
 
 const state = { last: null, processed: [], runs: {} };
+
+function requireVerifier(req, res) {
+  if (!VERIFIER_TOKEN) return true;
+  const auth = req.headers.authorization || "";
+  const ok =
+    auth === `Bearer ${VERIFIER_TOKEN}` || auth === `bearer ${VERIFIER_TOKEN}`;
+  if (!ok) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: "unauthorized" }));
+    return false;
+  }
+  return true;
+}
 
 /** Join twin base URL + vendor path without dropping `/sandbox/<id>`. */
 function joinTwinUrl(baseUrl, path) {
@@ -157,6 +171,10 @@ async function runInvoiceWorkflow(input = {}) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${PORT}`);
   res.setHeader("content-type", "application/json");
+  res.setHeader("cache-control", "no-store");
+  console.error(
+    `[twin-driver] ${req.method} ${url.pathname} auth=${req.headers.authorization ? "yes" : "no"}`,
+  );
 
   if (req.method === "GET" && url.pathname === "/health") {
     res.end(JSON.stringify({ ok: true, flowHeader: !!process.env.X_FLOW_RUN_ID }));
@@ -168,12 +186,14 @@ const server = http.createServer(async (req, res) => {
   }
   // Fresh collection for FetchSandbox application_workflow_v1 before/observe.
   if (req.method === "GET" && url.pathname === "/processed") {
+    if (!requireVerifier(req, res)) return;
     res.end(JSON.stringify(state.processed));
     return;
   }
   // Per-run scoped collection: GET /runs/{{run_id}}/processed (bare array).
   const runProcessed = url.pathname.match(/^\/runs\/([^/]+)\/processed$/);
   if (req.method === "GET" && runProcessed) {
+    if (!requireVerifier(req, res)) return;
     const runId = decodeURIComponent(runProcessed[1]);
     res.end(JSON.stringify(state.runs[runId] || []));
     return;
