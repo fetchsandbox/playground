@@ -1,2 +1,3 @@
 -r requirements.txt
 pytest>=8
+moto[sqs]>=5

@@ -1,0 +1,6 @@
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+backend.hcl
+# Per-environment variable files live in envs/<env>.tfvars and are committed (no secrets in them).

@@ -98,6 +98,10 @@ class GmailClient:
             "labels": msg.get("labelIds", []),
         }
 
+    def watch(self, topic_name: str) -> dict[str, Any]:
+        """users.watch: push INBOX changes to a Pub/Sub topic. Returns {historyId, expiration}."""
+        return self._request("POST", "/users/me/watch", json={"topicName": topic_name, "labelIds": ["INBOX"]})
+
     # --- outbound -----------------------------------------------------------
 
     def send(self, *, to: str, subject: str, body: str, sender: str = "",

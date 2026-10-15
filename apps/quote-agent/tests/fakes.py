@@ -131,6 +131,9 @@ class FakeProviders:
         if path.startswith("/users/me/messages/") and req.method == "GET":
             m = self.gmail_inbox.get(path.rsplit("/", 1)[-1])
             return httpx.Response(200, json=m) if m else httpx.Response(404)
+        if path == "/users/me/watch":
+            self.gmail_watch = json.loads(req.content)
+            return httpx.Response(200, json={"historyId": "4242", "expiration": "1790000000000"})
         if path == "/users/me/messages/send":
             body = json.loads(req.content)
             raw = base64.urlsafe_b64decode(body["raw"] + "=" * (-len(body["raw"]) % 4))

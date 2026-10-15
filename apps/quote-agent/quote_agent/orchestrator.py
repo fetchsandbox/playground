@@ -106,6 +106,28 @@ class Orchestrator:
         run["approval_decision"] = {"decision": decision, "by": decided_by, "at": now_iso()}
         return self._guard(run, lambda: self._finish_approval(run, msg, approval, decision, decided_by))
 
+    def reap_stale_runs(self, older_than_seconds: int) -> list[str]:
+        """Fail runs a crashed worker left 'running', and tell the manager.
+
+        Such a run is not retried automatically: a step may have reached the
+        customer before the crash, so a human decides what happens next.
+        """
+        reaped = []
+        for run in self.store.stale_runs(older_than_seconds):
+            run["status"] = "failed"
+            run["error"] = f"interrupted: no progress for over {older_than_seconds}s (worker stopped mid-run)"
+            last = run["steps"][-1]["name"] if run["steps"] else "start"
+            self.store.save_run(run)
+            reaped.append(run["id"])
+            try:
+                if self.slack and self.s.slack_manager_channel:
+                    self._post_manager(f":warning: Quote workflow run {run['id']} was interrupted at step "
+                                       f"'{last}' and needs a human check (from "
+                                       f"{run['inbound'].get('sender_email') or 'unknown'} via {run['inbound']['channel']}).")
+            except Exception:  # noqa: BLE001
+                log.exception("could not alert manager about interrupted run %s", run["id"])
+        return reaped
+
     # ======================================================================
     # Routing
     # ======================================================================

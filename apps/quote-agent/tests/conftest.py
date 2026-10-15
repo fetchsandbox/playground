@@ -1,7 +1,9 @@
 import hashlib
 import hmac
+import os
 import sys
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -31,10 +33,30 @@ def fake():
     return FakeProviders()
 
 
+# Set TEST_DATABASE_URL=postgresql://... to run the whole suite against PostgreSQL;
+# each test gets its own schema. Otherwise tests use a fresh SQLite file.
+TEST_PG = os.environ.get("TEST_DATABASE_URL", "")
+
+
 @pytest.fixture
-def settings(tmp_path):
+def db_url(tmp_path):
+    if not TEST_PG:
+        yield ""
+        return
+    import psycopg
+    schema = "t_" + uuid.uuid4().hex[:12]
+    with psycopg.connect(TEST_PG, autocommit=True) as c:
+        c.execute(f"CREATE SCHEMA {schema}")
+    yield f"{TEST_PG}{'&' if '?' in TEST_PG else '?'}options=-csearch_path%3D{schema}"
+    with psycopg.connect(TEST_PG, autocommit=True) as c:
+        c.execute(f"DROP SCHEMA {schema} CASCADE")
+
+
+@pytest.fixture
+def settings(tmp_path, db_url):
     return Settings(
         db_path=str(tmp_path / "test.db"),
+        database_url=db_url,
         classifier="rules",
         hubspot_base_url=HUBSPOT, hubspot_token="hs-token",
         slack_base_url=SLACK, slack_bot_token="xoxb-test", slack_signing_secret=SIGNING_SECRET,
@@ -45,18 +67,25 @@ def settings(tmp_path):
     )
 
 
+def _migrated(store):
+    store.migrate()
+    return store
+
+
 @pytest.fixture
 def orch(settings, fake):
     http = fake.client()
-    return Orchestrator(
+    o = Orchestrator(
         settings=settings,
-        store=Store(settings.db_path),
+        store=_migrated(Store(settings.db_url)),
         classifier=IntentClassifier(None),
         pricing=PricingClient(),
         hubspot=HubSpotClient(HUBSPOT, "hs-token", http=http),
         slack=SlackClient(SLACK, "xoxb-test", http=http),
         gmail=GmailClient(base_url=GMAIL, token_url=GOOGLE_TOKEN, access_token="gm-token", http=http),
     )
+    yield o
+    o.store.db.close()
 
 
 @pytest.fixture

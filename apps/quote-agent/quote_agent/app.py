@@ -1,29 +1,33 @@
 """HTTP surface: Gmail + Slack webhooks in, run/quote inspection out.
 
-Webhooks acknowledge immediately and run the workflow in the background:
-Slack retries any event not acknowledged within 3 seconds, and a Claude call
-plus three provider round-trips can take longer than that.
+Webhooks verify the request, enqueue a job and acknowledge immediately: Slack
+retries any event not acknowledged within 3 seconds, and a Claude call plus
+three provider round-trips can take longer than that. The worker (SQS in
+production, in-process locally) runs the workflow; see jobs.py.
 """
 
 import json
 import logging
 import secrets
+import uuid
 from urllib.parse import parse_qs
 
 import anthropic
 import httpx
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from .classifier import ClaudeClassifier, IntentClassifier
 from .config import Settings
+from .jobs import JobQueue, build_queue
+from .logging_setup import request_id
 from .models import InboundMessage
 from .orchestrator import Orchestrator
 from .pricing import PricingClient
 from .pricing import router as pricing_router
 from .providers.gmail import GmailClient, GmailError, decode_push
 from .providers.hubspot import HubSpotClient
-from .providers.slack import SlackClient, SlackError, verify_signature
+from .providers.slack import SlackClient, verify_signature
 from .store import Store
 
 log = logging.getLogger(__name__)
@@ -34,9 +38,12 @@ def build_orchestrator(s: Settings) -> Orchestrator:
     primary = ClaudeClassifier(anthropic.Anthropic(api_key=s.anthropic_api_key), s.classifier_model) if use_claude else None
     # Extra headers on every provider request (test harnesses use this for run correlation).
     http = httpx.Client(timeout=20.0, headers=s.provider_headers)
+    store = Store(s.db_url)
+    if s.auto_migrate:
+        store.migrate()
     return Orchestrator(
         settings=s,
-        store=Store(s.db_path),
+        store=store,
         classifier=IntentClassifier(primary),
         pricing=PricingClient(s.pricing_service_url),
         hubspot=HubSpotClient(s.hubspot_base_url, s.hubspot_token, http=http) if s.hubspot_token else None,
@@ -48,17 +55,32 @@ def build_orchestrator(s: Settings) -> Orchestrator:
     )
 
 
-def create_app(settings: Settings | None = None, orchestrator: Orchestrator | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, orchestrator: Orchestrator | None = None,
+               queue: JobQueue | None = None) -> FastAPI:
     s = settings or Settings.from_env()
     orch = orchestrator or build_orchestrator(s)
-    app = FastAPI(title="Quote agent")
+    jobs = queue or build_queue(s, orch)
+    app = FastAPI(title="Quote agent", docs_url=None if s.is_production else "/docs",
+                  redoc_url=None, openapi_url=None if s.is_production else "/openapi.json")
     app.include_router(pricing_router)
     app.state.orchestrator = orch
+    app.state.queue = jobs
+
+    @app.middleware("http")
+    async def _request_id(request: Request, call_next):
+        rid = request.headers.get("X-Request-Id") or uuid.uuid4().hex
+        token = request_id.set(rid)
+        try:
+            response = await call_next(request)
+        finally:
+            request_id.reset(token)
+        response.headers["X-Request-Id"] = rid
+        return response
 
     # ------------------------------------------------------------------ Gmail
 
     @app.post("/webhooks/gmail")
-    async def gmail_push(request: Request, background: BackgroundTasks, token: str = ""):
+    async def gmail_push(request: Request, token: str = ""):
         if not s.gmail_push_token or not secrets.compare_digest(token, s.gmail_push_token):
             raise HTTPException(403, "bad push token")
         if orch.gmail is None:
@@ -69,7 +91,7 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
             # 2xx so Pub/Sub doesn't redeliver a message that can never parse.
             log.warning("unparseable Gmail push: %s", exc)
             return {"ok": False}
-        background.add_task(_process_gmail, orch, s, str(note.get("historyId", "")))
+        jobs.enqueue({"type": "gmail_push", "history_id": str(note.get("historyId", ""))})
         return {"ok": True}
 
     # ------------------------------------------------------------------ Slack
@@ -82,7 +104,7 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
         return raw
 
     @app.post("/webhooks/slack/events")
-    async def slack_events(request: Request, background: BackgroundTasks):
+    async def slack_events(request: Request):
         body = json.loads(await _verified_body(request))
         if body.get("type") == "url_verification":
             return {"challenge": body.get("challenge")}
@@ -91,11 +113,12 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
         event = body.get("event") or {}
         if not _is_customer_message(event, s):
             return {"ok": True}
-        background.add_task(_process_slack_event, orch, body.get("event_id") or event.get("client_msg_id") or event["ts"], event)
+        jobs.enqueue({"type": "slack_event", "event": event,
+                      "event_id": body.get("event_id") or event.get("client_msg_id") or event["ts"]})
         return {"ok": True}
 
     @app.post("/webhooks/slack/interactions")
-    async def slack_interactions(request: Request, background: BackgroundTasks):
+    async def slack_interactions(request: Request):
         raw = await _verified_body(request)
         payload = json.loads(parse_qs(raw.decode()).get("payload", ["{}"])[0])
         if payload.get("type") != "block_actions":
@@ -108,7 +131,8 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
                 return JSONResponse({"response_type": "ephemeral", "replace_original": False,
                                      "text": "Only an authorised manager can approve or reject discounts."})
             decision = "approved" if action["action_id"] == "discount_approve" else "rejected"
-            background.add_task(_resume, orch, action["value"], decision, user_id)
+            jobs.enqueue({"type": "approval_decision", "approval_id": action["value"],
+                          "decision": decision, "user_id": user_id})
         return {"ok": True}
 
     # ------------------------------------------------------------- Inspection
@@ -144,8 +168,16 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
 
     @app.get("/health")
     def health():
+        """Liveness: the process is serving. Used by the load balancer."""
         return {"ok": True, "classifier": "claude" if orch.classifier.primary else "rules",
                 "hubspot": orch.hubspot is not None, "slack": orch.slack is not None, "gmail": orch.gmail is not None}
+
+    @app.get("/ready")
+    def ready():
+        """Readiness: dependencies reachable. 503 takes the task out of rotation."""
+        if not orch.store.ping():
+            return JSONResponse({"ok": False, "database": False}, status_code=503)
+        return {"ok": True, "database": True}
 
     # ------------------------------------------------- Local testing (opt-in)
 
@@ -179,56 +211,3 @@ def _is_customer_message(event: dict, s: Settings) -> bool:
     return event.get("channel_type") == "im" or event.get("channel") in s.slack_intake_channels
 
 
-def _process_slack_event(orch: Orchestrator, event_id: str, event: dict) -> None:
-    email, name = None, None
-    try:
-        profile = orch.slack.user_profile(event["user"]) if orch.slack else {}
-        email = (profile.get("email") or "").lower() or None
-        name = profile.get("real_name") or profile.get("display_name") or None
-    except SlackError as exc:
-        log.warning("could not look up Slack user %s: %s", event.get("user"), exc)
-    orch.handle_inbound(InboundMessage(
-        channel="slack",
-        external_id=event_id,
-        sender_email=email,
-        sender_name=name,
-        text=event.get("text", ""),
-        reply_ref={"channel": event["channel"], "ts": event["ts"], "thread_ts": event.get("thread_ts") or event["ts"],
-                   "user": event.get("user")},
-    ))
-
-
-def _process_gmail(orch: Orchestrator, s: Settings, history_id: str) -> None:
-    cursor = orch.store.get_kv("gmail_history_id")
-    try:
-        ids = orch.gmail.new_message_ids(cursor)
-    except GmailError as exc:
-        log.error("Gmail history fetch failed: %s", exc)
-        return
-    for mid in ids:
-        try:
-            m = orch.gmail.get_message(mid)
-        except GmailError as exc:
-            log.error("Gmail message %s fetch failed: %s", mid, exc)
-            continue
-        if "SENT" in m["labels"] or (s.gmail_address and m["from_email"] == s.gmail_address.lower()):
-            continue  # our own replies land in the same thread
-        orch.handle_inbound(InboundMessage(
-            channel="email",
-            external_id=m["id"],
-            sender_email=m["from_email"],
-            sender_name=m["from_name"],
-            subject=m["subject"],
-            text=m["text"],
-            reply_ref={"thread_id": m["thread_id"], "message_id_header": m["message_id_header"],
-                       "subject": m["subject"]},
-        ))
-    if history_id and (not cursor or int(history_id) > int(cursor)):
-        orch.store.set_kv("gmail_history_id", history_id)
-
-
-def _resume(orch: Orchestrator, approval_id: str, decision: str, user_id: str) -> None:
-    try:
-        orch.resume_approval(approval_id, decision, user_id)
-    except KeyError:
-        log.warning("unknown approval %s", approval_id)

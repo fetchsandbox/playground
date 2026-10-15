@@ -1,50 +1,20 @@
-"""SQLite persistence: workflow runs, quotes, approvals, dedupe keys.
+"""Persistence: workflow runs, quotes, approvals, dedupe keys.
 
-Runs and approvals are persisted so a workflow paused on a manager's
-approval survives a restart and resumes when the Slack button is clicked.
+Backed by SQLite locally and PostgreSQL in production (see db.py). Runs and
+approvals are persisted so a workflow paused on a manager's approval
+survives restarts and deploys, and resumes when the Slack button is clicked.
+Every state change that must happen at most once (claiming an inbound
+message, deciding an approval) is a single conditional SQL statement, so it
+stays correct with many API and worker tasks running at once.
 """
 
 import json
-import sqlite3
-import threading
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from .db import Database, connect
 from .models import Quote
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS processed_events (
-    key TEXT PRIMARY KEY,
-    created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS runs (
-    id TEXT PRIMARY KEY,
-    status TEXT NOT NULL,
-    data TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS quotes (
-    id TEXT PRIMARY KEY,
-    customer_email TEXT NOT NULL,
-    status TEXT NOT NULL,
-    data TEXT NOT NULL,
-    created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS quotes_by_customer ON quotes (customer_email, created_at);
-CREATE TABLE IF NOT EXISTS approvals (
-    id TEXT PRIMARY KEY,
-    run_id TEXT NOT NULL,
-    status TEXT NOT NULL,
-    data TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    decided_at TEXT
-);
-CREATE TABLE IF NOT EXISTS kv (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-);
-"""
 
 
 def now_iso() -> str:
@@ -52,26 +22,23 @@ def now_iso() -> str:
 
 
 class Store:
-    def __init__(self, path: str):
-        self._conn = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
-        self._conn.row_factory = sqlite3.Row
-        self._lock = threading.Lock()
-        with self._lock:
-            self._conn.executescript(SCHEMA)
+    def __init__(self, db: Database | str):
+        self.db = connect(db) if isinstance(db, str) else db
 
-    def _exec(self, sql: str, args: tuple = ()) -> sqlite3.Cursor:
-        with self._lock:
-            return self._conn.execute(sql, args)
+    def migrate(self) -> list[str]:
+        return self.db.migrate()
+
+    def ping(self) -> bool:
+        return self.db.ping()
 
     # --- dedupe -------------------------------------------------------------
 
     def claim_event(self, key: str) -> bool:
         """True the first time a key is seen; False for every redelivery."""
-        cur = self._exec(
-            "INSERT OR IGNORE INTO processed_events (key, created_at) VALUES (?, ?)",
+        return self.db.execute(
+            "INSERT INTO processed_events (key, created_at) VALUES (?, ?) ON CONFLICT (key) DO NOTHING",
             (key, now_iso()),
-        )
-        return cur.rowcount == 1
+        ) == 1
 
     # --- runs ---------------------------------------------------------------
 
@@ -79,79 +46,94 @@ class Store:
         ts = now_iso()
         run["updated_at"] = ts
         run.setdefault("created_at", ts)
-        self._exec(
+        self.db.execute(
             "INSERT INTO runs (id, status, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(id) DO UPDATE SET status=excluded.status, data=excluded.data, updated_at=excluded.updated_at",
+            "ON CONFLICT (id) DO UPDATE SET status = excluded.status, data = excluded.data, updated_at = excluded.updated_at",
             (run["id"], run["status"], json.dumps(run), run["created_at"], ts),
         )
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
-        row = self._exec("SELECT data FROM runs WHERE id = ?", (run_id,)).fetchone()
+        row = self.db.fetchone("SELECT data FROM runs WHERE id = ?", (run_id,))
         return json.loads(row["data"]) if row else None
 
     def list_runs(self, limit: int = 50) -> list[dict[str, Any]]:
-        rows = self._exec("SELECT data FROM runs ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        rows = self.db.fetchall("SELECT data FROM runs ORDER BY created_at DESC, id DESC LIMIT ?", (limit,))
+        return [json.loads(r["data"]) for r in rows]
+
+    def stale_runs(self, older_than_seconds: int, limit: int = 100) -> list[dict[str, Any]]:
+        """Runs still marked running whose last update is older than the cutoff."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(seconds=older_than_seconds)).isoformat(timespec="seconds")
+        rows = self.db.fetchall(
+            "SELECT data FROM runs WHERE status = 'running' AND updated_at < ? ORDER BY updated_at LIMIT ?",
+            (cutoff, limit),
+        )
         return [json.loads(r["data"]) for r in rows]
 
     # --- quotes -------------------------------------------------------------
 
     def save_quote(self, quote: Quote) -> None:
-        self._exec(
-            "INSERT INTO quotes (id, customer_email, status, data, created_at) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(id) DO UPDATE SET status=excluded.status, data=excluded.data",
-            (quote.id, quote.customer_email.lower(), quote.status, quote.model_dump_json(), quote.created_at),
+        self.db.execute(
+            "INSERT INTO quotes (id, customer_email, status, data, created_at, seq) VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT (id) DO UPDATE SET status = excluded.status, data = excluded.data",
+            (quote.id, quote.customer_email.lower(), quote.status, quote.model_dump_json(), quote.created_at,
+             time.time_ns()),
         )
 
     def get_quote(self, quote_id: str) -> Quote | None:
-        row = self._exec("SELECT data FROM quotes WHERE id = ?", (quote_id.upper(),)).fetchone()
+        row = self.db.fetchone("SELECT data FROM quotes WHERE id = ?", (quote_id.upper(),))
         return Quote.model_validate_json(row["data"]) if row else None
 
     def latest_sent_quote(self, customer_email: str) -> Quote | None:
-        row = self._exec(
+        row = self.db.fetchone(
             "SELECT data FROM quotes WHERE customer_email = ? AND status = 'sent' "
-            "ORDER BY created_at DESC, rowid DESC LIMIT 1",
+            "ORDER BY created_at DESC, seq DESC LIMIT 1",
             (customer_email.lower(),),
-        ).fetchone()
+        )
         return Quote.model_validate_json(row["data"]) if row else None
 
     def list_quotes(self, limit: int = 50) -> list[Quote]:
-        rows = self._exec("SELECT data FROM quotes ORDER BY created_at DESC, rowid DESC LIMIT ?", (limit,)).fetchall()
+        rows = self.db.fetchall("SELECT data FROM quotes ORDER BY created_at DESC, seq DESC LIMIT ?", (limit,))
         return [Quote.model_validate_json(r["data"]) for r in rows]
 
     # --- approvals ----------------------------------------------------------
 
     def create_approval(self, approval_id: str, run_id: str, data: dict[str, Any]) -> None:
-        self._exec(
+        self.db.execute(
             "INSERT INTO approvals (id, run_id, status, data, created_at) VALUES (?, ?, 'pending', ?, ?)",
             (approval_id, run_id, json.dumps(data), now_iso()),
         )
 
     def get_approval(self, approval_id: str) -> dict[str, Any] | None:
-        row = self._exec("SELECT * FROM approvals WHERE id = ?", (approval_id,)).fetchone()
+        row = self.db.fetchone("SELECT * FROM approvals WHERE id = ?", (approval_id,))
         if not row:
             return None
         return {**json.loads(row["data"]), "id": row["id"], "run_id": row["run_id"],
                 "status": row["status"], "decided_at": row["decided_at"]}
 
     def update_approval_data(self, approval_id: str, data: dict[str, Any]) -> None:
-        self._exec("UPDATE approvals SET data = ? WHERE id = ?", (json.dumps(data), approval_id))
+        self.db.execute("UPDATE approvals SET data = ? WHERE id = ?", (json.dumps(data), approval_id))
 
     def decide_approval(self, approval_id: str, decision: str) -> bool:
         """Atomically move pending -> decision. False if already decided."""
-        cur = self._exec(
+        return self.db.execute(
             "UPDATE approvals SET status = ?, decided_at = ? WHERE id = ? AND status = 'pending'",
             (decision, now_iso(), approval_id),
-        )
-        return cur.rowcount == 1
+        ) == 1
 
     # --- kv -----------------------------------------------------------------
 
     def get_kv(self, key: str) -> str | None:
-        row = self._exec("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
+        row = self.db.fetchone("SELECT value FROM kv WHERE key = ?", (key,))
         return row["value"] if row else None
 
     def set_kv(self, key: str, value: str) -> None:
-        self._exec(
-            "INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        self.db.execute(
+            "INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
             (key, value),
         )
+
+    def advance_kv_int(self, key: str, value: int) -> None:
+        """Set key to value only if it moves forward (e.g. the Gmail history cursor)."""
+        current = self.get_kv(key)
+        if current is None or int(current) < value:
+            self.set_kv(key, str(value))
