@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = 8788;
-const APP_VERSION = "invoice-watch-verify-1.0.2";
+const APP_VERSION = "invoice-watch-verify-1.0.3";
 const CHANNEL = "C0BILLING01";
 const apiKey = JSON.parse(
   readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8"),
@@ -252,10 +252,19 @@ function coverageReview(checkIds) {
   });
 }
 
+/** Per-check isolation path: /runs/{{run_id}}/cases/<checkId>/invoices */
+function caseInvoicesPath(checkId) {
+  return `/runs/{{run_id}}/cases/${checkId}/invoices`;
+}
+
+function caseWebhooksPath(checkId) {
+  return `/runs/{{run_id}}/cases/${checkId}/webhooks`;
+}
+
 /** Empty starting-state for keyed invoice collection (FetchSandbox select invoices[*]). */
-function emptyInvoicesBefore(path = "/runs/{{run_id}}/invoices") {
+function emptyInvoicesBefore(checkId) {
   return {
-    path,
+    path: caseInvoicesPath(checkId),
     assertion: {
       select: "invoices[*]",
       count: 0,
@@ -264,7 +273,11 @@ function emptyInvoicesBefore(path = "/runs/{{run_id}}/invoices") {
   };
 }
 
-function emptyWebhooksBefore(path = "/runs/{{run_id}}/webhooks") {
+function emptyWebhooksBefore(pathOrCheckId) {
+  const path =
+    pathOrCheckId.startsWith("/")
+      ? pathOrCheckId
+      : caseWebhooksPath(pathOrCheckId);
   return {
     path,
     assertion: {
@@ -298,7 +311,7 @@ function webhookOutcome(where, { count = 1 } = {}) {
   };
 }
 
-function invoiceBody(overrides = {}) {
+function invoiceBody(checkId, overrides = {}) {
   return {
     merchant: "Notion",
     amount: "$29.00 USD",
@@ -307,6 +320,7 @@ function invoiceBody(overrides = {}) {
     invoiceId: "INV-3001",
     channel: CHANNEL,
     run_id: "{{run_id}}",
+    case_id: checkId,
     ...overrides,
   };
 }
@@ -315,195 +329,161 @@ function invoiceKeyFor(invoiceId) {
   return `notion|${String(invoiceId).toLowerCase()}|$29.00 usd`;
 }
 
-function processAction(overrides = {}) {
+function processAction(checkId, overrides = {}) {
   return {
     method: "POST",
     path: "/process-invoice",
-    body: invoiceBody(overrides),
+    body: invoiceBody(checkId, overrides),
     expect_status: 200,
   };
 }
 
+function invoiceCheck(id, name, { fault, actions, where, count = 1 }) {
+  const path = caseInvoicesPath(id);
+  return {
+    id,
+    name,
+    ...(fault ? { fault } : {}),
+    before: emptyInvoicesBefore(id),
+    actions,
+    observe: { path },
+    assertion: invoiceOutcome(where, { count }),
+  };
+}
+
 function buildChecks() {
-  const invoicesPath = "/runs/{{run_id}}/invoices";
-  const webhooksPath = "/runs/{{run_id}}/webhooks";
   const checks = [
-    {
-      id: "baseline",
-      name: "Happy path: invoice creates calendar reminder and Slack alert",
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-3001" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+    invoiceCheck("baseline", "Happy path: invoice creates calendar reminder and Slack alert", {
+      actions: [processAction("baseline", { invoiceId: "INV-3001" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-3001") },
         { select: "slackOk", equals: true },
         { select: "calendarOk", equals: true },
         { select: "gmailOk", equals: true },
-      ]),
-    },
-    {
-      id: "duplicate_invoice",
-      name: "Duplicate invoice in same run does not double-write",
-      before: emptyInvoicesBefore(),
-      actions: [
-        processAction({ invoiceId: "INV-DUP-1" }),
-        processAction({ invoiceId: "INV-DUP-1" }),
       ],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
-        { select: "invoiceKey", equals: invoiceKeyFor("INV-DUP-1") },
-      ]),
-    },
-    {
-      id: "slack_channel_not_found",
-      name: "Slack channel_not_found leaves slackOk false",
+    }),
+    invoiceCheck("duplicate_invoice", "Duplicate invoice in same run does not double-write", {
+      actions: [
+        processAction("duplicate_invoice", { invoiceId: "INV-DUP-1" }),
+        processAction("duplicate_invoice", { invoiceId: "INV-DUP-1" }),
+      ],
+      where: [{ select: "invoiceKey", equals: invoiceKeyFor("INV-DUP-1") }],
+    }),
+    invoiceCheck("slack_channel_not_found", "Slack channel_not_found leaves slackOk false", {
       fault: {
         provider: "slack",
         scenario: "channel_not_found",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
       actions: [
-        processAction({
+        processAction("slack_channel_not_found", {
           invoiceId: "INV-CNF-1",
           channel: "C_DOES_NOT_EXIST",
         }),
       ],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-CNF-1") },
         { select: "slackOk", equals: false },
-      ]),
-    },
-    {
-      id: "slack_not_in_channel",
-      name: "Slack not_in_channel is refused",
+      ],
+    }),
+    invoiceCheck("slack_not_in_channel", "Slack not_in_channel is refused", {
       fault: {
         provider: "slack",
         scenario: "not_in_channel",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-NIC-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("slack_not_in_channel", { invoiceId: "INV-NIC-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-NIC-1") },
         { select: "slackOk", equals: false },
-      ]),
-    },
-    {
-      id: "slack_auth_failure",
-      name: "Slack auth_failure does not mark slackOk",
+      ],
+    }),
+    invoiceCheck("slack_auth_failure", "Slack auth_failure does not mark slackOk", {
       fault: { provider: "slack", scenario: "auth_failure", evidence: "refusal" },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-SAUTH-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("slack_auth_failure", { invoiceId: "INV-SAUTH-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-SAUTH-1") },
         { select: "slackOk", equals: false },
-      ]),
-    },
-    {
-      id: "slack_missing_scope",
-      name: "Slack missing_scope is refused",
+      ],
+    }),
+    invoiceCheck("slack_missing_scope", "Slack missing_scope is refused", {
       fault: {
         provider: "slack",
         scenario: "missing_scope",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-SCOPE-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("slack_missing_scope", { invoiceId: "INV-SCOPE-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-SCOPE-1") },
         { select: "slackOk", equals: false },
-      ]),
-    },
-    {
-      id: "slack_rate_limited",
-      name: "Slack rate_limited is observed as failure",
+      ],
+    }),
+    invoiceCheck("slack_rate_limited", "Slack rate_limited is observed as failure", {
       fault: {
         provider: "slack",
         scenario: "rate_limited",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-SRL-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("slack_rate_limited", { invoiceId: "INV-SRL-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-SRL-1") },
         { select: "slackOk", equals: false },
-      ]),
-    },
-    {
-      id: "gmail_auth_failure",
-      name: "Gmail auth_failure marks gmailOk false",
+      ],
+    }),
+    invoiceCheck("gmail_auth_failure", "Gmail auth_failure marks gmailOk false", {
       fault: {
         provider: "gmail",
         scenario: "auth_failure",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-GAUTH-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("gmail_auth_failure", { invoiceId: "INV-GAUTH-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-GAUTH-1") },
         { select: "gmailOk", equals: false },
-      ]),
-    },
-    {
-      id: "gmail_rate_limited",
-      name: "Gmail rate_limited marks gmailOk false",
+      ],
+    }),
+    invoiceCheck("gmail_rate_limited", "Gmail rate_limited marks gmailOk false", {
       fault: {
         provider: "gmail",
         scenario: "rate_limited",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-GRL-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("gmail_rate_limited", { invoiceId: "INV-GRL-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-GRL-1") },
         { select: "gmailOk", equals: false },
-      ]),
-    },
-    {
-      id: "calendar_auth_failure",
-      name: "Calendar auth_failure marks calendarOk false",
+      ],
+    }),
+    invoiceCheck("calendar_auth_failure", "Calendar auth_failure marks calendarOk false", {
       fault: {
         provider: "google-calendar",
         scenario: "auth_failure",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-CAUTH-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("calendar_auth_failure", { invoiceId: "INV-CAUTH-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-CAUTH-1") },
         { select: "calendarOk", equals: false },
-      ]),
-    },
-    {
-      id: "calendar_rate_limited",
-      name: "Calendar rate_limited marks calendarOk false",
+      ],
+    }),
+    invoiceCheck("calendar_rate_limited", "Calendar rate_limited marks calendarOk false", {
       fault: {
         provider: "google-calendar",
         scenario: "rate_limited",
         evidence: "refusal",
       },
-      before: emptyInvoicesBefore(),
-      actions: [processAction({ invoiceId: "INV-CRL-1" })],
-      observe: { path: invoicesPath },
-      assertion: invoiceOutcome([
+      actions: [processAction("calendar_rate_limited", { invoiceId: "INV-CRL-1" })],
+      where: [
         { select: "invoiceKey", equals: invoiceKeyFor("INV-CRL-1") },
         { select: "calendarOk", equals: false },
-      ]),
-    },
-    // Messy webhook surfaces: unsigned rejection via ordinary HTTP
+      ],
+    }),
+    // Messy webhook surfaces: unsigned rejection via ordinary HTTP on a
+    // case-scoped log that stays empty when signature check rejects.
     {
       id: "slack_webhook_unsigned_rejected",
       name: "Unsigned Slack webhook is rejected (production signature check)",
-      before: emptyWebhooksBefore("/webhooks"),
+      before: emptyWebhooksBefore("slack_webhook_unsigned_rejected"),
       actions: [
         {
           method: "POST",
@@ -511,12 +491,14 @@ function buildChecks() {
           body: {
             type: "event_callback",
             event_id: "ev_unsigned_1",
+            run_id: "{{run_id}}",
+            case_id: "slack_webhook_unsigned_rejected",
             event: { type: "message", text: "invoice ping", channel: CHANNEL },
           },
           expect_status: 400,
         },
       ],
-      observe: { path: "/webhooks" },
+      observe: { path: caseWebhooksPath("slack_webhook_unsigned_rejected") },
       assertion: {
         select: "webhooks[*]",
         count: 0,
@@ -528,7 +510,7 @@ function buildChecks() {
     {
       id: "slack_webhook_replay",
       name: "Signed Slack event replay is idempotent",
-      before: emptyWebhooksBefore(),
+      before: emptyWebhooksBefore("slack_webhook_replay"),
       actions: [
         {
           event: {
@@ -538,6 +520,7 @@ function buildChecks() {
               type: "event_callback",
               event_id: "ev_invoice_replay_1",
               run_id: "{{run_id}}",
+              case_id: "slack_webhook_replay",
               event: {
                 type: "message",
                 text: "Subscription invoice noticed",
@@ -556,7 +539,7 @@ function buildChecks() {
           expect_status: 200,
         },
       ],
-      observe: { path: webhooksPath },
+      observe: { path: caseWebhooksPath("slack_webhook_replay") },
       assertion: webhookOutcome(
         [{ select: "eventId", equals: "ev_invoice_replay_1" }],
         { count: 2 },
@@ -570,7 +553,7 @@ function buildChecks() {
         scenario: "rate_limited",
         evidence: "webhook_withheld",
       },
-      before: emptyWebhooksBefore(),
+      before: emptyWebhooksBefore("slack_webhook_withheld"),
       actions: [
         {
           event: {
@@ -580,6 +563,7 @@ function buildChecks() {
               type: "event_callback",
               event_id: "ev_withheld_1",
               run_id: "{{run_id}}",
+              case_id: "slack_webhook_withheld",
               event: {
                 type: "message",
                 text: "should be withheld",
@@ -590,7 +574,7 @@ function buildChecks() {
           expect_status: 200,
         },
       ],
-      observe: { path: webhooksPath },
+      observe: { path: caseWebhooksPath("slack_webhook_withheld") },
       assertion: {
         select: "webhooks[*]",
         count: 0,
@@ -659,7 +643,7 @@ let ctx = await mcp.call("validate_integration", {
       "POST /process-invoice drives provider REST calls; GET /runs/{run_id}/invoices observes results; POST /webhooks/slack handles signed Slack events with replay idempotency and unsigned rejection.",
     entry_points: ["POST /process-invoice", "POST /webhooks/slack"],
     state_store:
-      "Per-run keyed JSON at GET /runs/{run_id}/invoices → {invoices:[...]} and GET /runs/{run_id}/webhooks → {webhooks:[...]}; selectors invoices[*] / webhooks[*].",
+      "Case-scoped keyed JSON at GET /runs/{run_id}/cases/{check_id}/invoices → {invoices:[...]} and .../webhooks → {webhooks:[...]}; selectors invoices[*] / webhooks[*]. POST /process-invoice accepts case_id for isolation.",
   },
 });
 ctx = await awaitJob(mcp, ctx, "context");
@@ -793,9 +777,9 @@ if (pre.status === "setup_blocked") {
       {
         id: "baseline",
         name: "Happy path invoice processing",
-        before: emptyInvoicesBefore(),
-        actions: [processAction({ invoiceId: "INV-BASE-1" })],
-        observe: { path: "/runs/{{run_id}}/invoices" },
+        before: emptyInvoicesBefore("baseline"),
+        actions: [processAction("baseline", { invoiceId: "INV-BASE-1" })],
+        observe: { path: caseInvoicesPath("baseline") },
         assertion: invoiceOutcome([
           { select: "invoiceKey", equals: invoiceKeyFor("INV-BASE-1") },
           { select: "slackOk", equals: true },
@@ -861,37 +845,82 @@ OUT("execute", exe);
 log("execute", exe.status || exe.step, exe.message_for_user || "");
 
 let final = exe;
-for (let i = 0; i < 48; i++) {
-  await sleep(Math.max(8000, (exe.retry_after_seconds || 8) * 1000));
-  let st = await mcp.call("validate_integration", {
-    session_id: sid,
-    run_id: exe.run_id || pre.run_id || runId,
-  });
+let stableTerminalPolls = 0;
+for (let i = 0; i < 90; i++) {
+  await sleep(Math.max(10000, (exe.retry_after_seconds || 10) * 1000));
+  // Session-only retrieve while suite runs (do not re-execute / cancel).
+  let st = await mcp.call("validate_integration", { session_id: sid });
   st = await awaitJob(mcp, st, `status-${i}`);
   OUT("status", st);
-  const s = st.status || st.step || st.verdict?.overall;
+  const verdict =
+    typeof st.verdict === "string" ? st.verdict : st.verdict?.overall || st.verdict?.state;
+  const s = st.status || st.step || "";
   const share = st.share_url || st.receipt_url || st.verdict?.share_url || "";
-  log("poll", i, s, share);
+  const checks = st.checks || [];
+  const held = checks.filter((c) => c.status === "held").length;
+  const unmeasured = checks.filter((c) => c.status === "unmeasured").length;
+  const failed = checks.filter((c) => c.status === "failed").length;
+  const passed = checks.filter((c) => c.status === "passed").length;
+  log(
+    "poll",
+    i,
+    s || verdict || "?",
+    `complete=${st.complete} held=${held} passed=${passed} failed=${failed} unmeasured=${unmeasured}`,
+    share,
+  );
   final = st;
+
+  // Keep the tunnel open until FetchSandbox finishes driving checks.
+  // share_url appears mid-run and must NOT close the tunnel early.
+  if (s === "running" || st.status === "running") {
+    stableTerminalPolls = 0;
+    continue;
+  }
+  const allSettled =
+    checks.length > 0 &&
+    checks.every((c) =>
+      ["held", "passed", "failed", "unmeasured", "blocked", "error"].includes(c.status),
+    );
   if (
-    ["passed", "failed", "complete", "completed", "error", "inconclusive", "done"].includes(
-      String(s),
-    ) ||
-    share ||
-    st.verdict?.overall ||
-    st.verdict?.state
+    st.complete === true ||
+    st.app_verified === true ||
+    st.declared_checks_complete === true ||
+    ["passed", "failed", "completed", "error", "done"].includes(String(s)) ||
+    (allSettled && verdict)
   ) {
-    break;
+    stableTerminalPolls += 1;
+    // Require two consecutive settled polls so late checks can still land.
+    if (stableTerminalPolls >= 2 || st.complete === true || st.app_verified === true) {
+      break;
+    }
+  } else {
+    stableTerminalPolls = 0;
   }
 }
 OUT("final", final);
-const share =
+const shareRaw =
   final.share_url ||
   final.receipt_url ||
   final.verdict?.share_url ||
-  final.attempt?.share_url;
+  final.attempt?.share_url ||
+  "";
+const share =
+  shareRaw && shareRaw.startsWith("http")
+    ? shareRaw
+    : shareRaw
+      ? `https://fetchsandbox.com${shareRaw.startsWith("/") ? "" : "/"}${shareRaw}`
+      : "";
+const verdict =
+  typeof final.verdict === "string"
+    ? final.verdict
+    : final.verdict?.overall || final.status || final.step;
 log("SHARE_URL", share || "(none)");
-log("FINAL_STATUS", final.status || final.step, final.verdict?.overall || "");
+log("FINAL_STATUS", verdict, "complete=", final.complete, "app_verified=", final.app_verified);
+if (Array.isArray(final.checks)) {
+  for (const c of final.checks) {
+    log("check", c.id, c.status, (c.explanation || "").slice(0, 120));
+  }
+}
 writeFileSync(
   "/tmp/fs-proof-receipt-url.txt",
   String(share || final.status || "no-receipt") + "\n",

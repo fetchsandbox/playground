@@ -29,12 +29,15 @@ const SLACK_SIGNING_SECRET =
   process.env.SLACK_SIGNING_SECRET ||
   "";
 
-/** @type {{ last: any, invoices: any[], runs: Record<string, any[]>, webhooks: any[], effects: any[] }} */
+/** @type {{ last: any, invoices: any[], runs: Record<string, any[]>, cases: Record<string, any[]>, webhooks: any[], caseWebhooks: Record<string, any[]>, effects: any[] }} */
 const state = {
   last: null,
   invoices: [],
   runs: {},
+  /** Per-check isolation: `${runId}::${caseId}` → invoice records */
+  cases: {},
   webhooks: [],
+  caseWebhooks: {},
   effects: [],
 };
 
@@ -80,17 +83,29 @@ async function providerFetch(baseUrl, apiKey, path, { method = "GET", body } = {
   return { status: res.status, json, url, method, requestBody: body };
 }
 
-function invoiceCollection(runId) {
+function caseKey(runId, caseId) {
+  if (!runId || !caseId) return null;
+  return `${runId}::${caseId}`;
+}
+
+function invoiceCollection(runId, caseId) {
+  const ck = caseKey(runId, caseId);
+  if (ck) return state.cases[ck] || [];
   if (runId) return state.runs[String(runId)] || [];
   return state.invoices;
 }
 
-function pushInvoice(runId, summary) {
+function pushInvoice(runId, summary, caseId) {
   state.invoices.push(summary);
   if (runId) {
     const key = String(runId);
     if (!state.runs[key]) state.runs[key] = [];
     state.runs[key].push(summary);
+  }
+  const ck = caseKey(runId, caseId);
+  if (ck) {
+    if (!state.cases[ck]) state.cases[ck] = [];
+    state.cases[ck].push(summary);
   }
 }
 
@@ -102,10 +117,13 @@ async function runInvoiceWorkflow(input = {}) {
   const invoiceId = input.invoiceId || "INV-1001";
   const channel = input.channel || process.env.SLACK_CHANNEL || "C0BILLING01";
   const runId = input.run_id || null;
+  const caseId = input.case_id || null;
   const invoiceKey = `${merchant}|${invoiceId}|${amount}`.toLowerCase();
 
-  // Dedupe within a run scope (and global list)
-  const existing = invoiceCollection(runId).find((r) => r.invoiceKey === invoiceKey);
+  // Dedupe within case/run scope (and global list)
+  const existing = invoiceCollection(runId, caseId).find(
+    (r) => r.invoiceKey === invoiceKey,
+  );
   if (existing) {
     const record = {
       ...existing,
@@ -188,6 +206,7 @@ async function runInvoiceWorkflow(input = {}) {
     slackTs: steps.slack.json?.ts || null,
     slackError: steps.slack.json?.error || null,
     runId,
+    caseId,
     status:
       slackOk && calendarOk
         ? "processed"
@@ -198,7 +217,7 @@ async function runInvoiceWorkflow(input = {}) {
 
   // Only record successful or partial effects that touched providers;
   // full auth failures still get a failed record for observation.
-  pushInvoice(runId, summary);
+  pushInvoice(runId, summary, caseId);
   state.effects.push({
     kind: "invoice_process",
     invoiceKey,
@@ -275,6 +294,19 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    const caseInvoices = url.pathname.match(
+      /^\/runs\/([^/]+)\/cases\/([^/]+)\/invoices$/,
+    );
+    if (req.method === "GET" && caseInvoices) {
+      if (!requireVerifier(req, res)) return;
+      const runId = decodeURIComponent(caseInvoices[1]);
+      const caseId = decodeURIComponent(caseInvoices[2]);
+      sendJson(res, 200, {
+        invoices: state.cases[caseKey(runId, caseId)] || [],
+      });
+      return;
+    }
+
     const runInvoices = url.pathname.match(/^\/runs\/([^/]+)\/invoices$/);
     if (req.method === "GET" && runInvoices) {
       if (!requireVerifier(req, res)) return;
@@ -286,6 +318,19 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/webhooks") {
       if (!requireVerifier(req, res)) return;
       sendJson(res, 200, { webhooks: state.webhooks });
+      return;
+    }
+
+    const caseWebhooks = url.pathname.match(
+      /^\/runs\/([^/]+)\/cases\/([^/]+)\/webhooks$/,
+    );
+    if (req.method === "GET" && caseWebhooks) {
+      if (!requireVerifier(req, res)) return;
+      const runId = decodeURIComponent(caseWebhooks[1]);
+      const caseId = decodeURIComponent(caseWebhooks[2]);
+      sendJson(res, 200, {
+        webhooks: state.caseWebhooks[caseKey(runId, caseId)] || [],
+      });
       return;
     }
 
@@ -358,16 +403,24 @@ const server = http.createServer(async (req, res) => {
         (w) => w.provider === "slack" && w.eventId && w.eventId === eventId,
       );
 
+      const whRunId = payload.run_id || payload.event?.run_id || null;
+      const whCaseId = payload.case_id || payload.event?.case_id || null;
       const entry = {
         provider: "slack",
         type: eventType,
         eventId: eventId || null,
         replay,
-        runId: payload.run_id || payload.event?.run_id || null,
+        runId: whRunId,
+        caseId: whCaseId,
         ok: !replay,
         at: new Date().toISOString(),
       };
       state.webhooks.push(entry);
+      const whCk = caseKey(whRunId, whCaseId);
+      if (whCk) {
+        if (!state.caseWebhooks[whCk]) state.caseWebhooks[whCk] = [];
+        state.caseWebhooks[whCk].push(entry);
+      }
 
       // Idempotent ack for replays
       if (replay) {
