@@ -167,15 +167,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   // Fresh collection for FetchSandbox application_workflow_v1 before/observe.
+  // Envelope form lets before/observe use select+count on `items`.
   if (req.method === "GET" && url.pathname === "/processed") {
-    res.end(JSON.stringify(state.processed));
+    res.end(JSON.stringify({ items: state.processed }));
     return;
   }
   // Per-run scoped collection: GET /runs/{{run_id}}/processed
   const runProcessed = url.pathname.match(/^\/runs\/([^/]+)\/processed$/);
   if (req.method === "GET" && runProcessed) {
     const runId = decodeURIComponent(runProcessed[1]);
-    res.end(JSON.stringify(state.runs[runId] || []));
+    res.end(JSON.stringify({ items: state.runs[runId] || [] }));
     return;
   }
   if (req.method === "POST" && url.pathname === "/process-invoice") {
