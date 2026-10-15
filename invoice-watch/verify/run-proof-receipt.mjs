@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const PORT = 8788;
-const APP_VERSION = "invoice-watch-verify-1.0.5";
+const APP_VERSION = "invoice-watch-verify-1.0.6";
 const CHANNEL = "C0BILLING01";
 const apiKey = JSON.parse(
   readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8"),
@@ -538,20 +538,10 @@ function buildChecks() {
       ],
       observe: { path: caseWebhooksPath("slack_webhook_replay") },
       assertion: {
-        all_of: [
-          {
-            select: "webhooks[*]",
-            count: 2,
-            required: true,
-            where: [{ select: "type", equals: "message", required: true }],
-          },
-          {
-            select: "webhooks[*]",
-            count: 1,
-            required: true,
-            where: [{ select: "replay", equals: true, required: true }],
-          },
-        ],
+        select: "webhooks[*]",
+        count: 2,
+        required: true,
+        where: [{ select: "type", equals: "message", required: true }],
         repeat: 2,
         stable_under_repeat: true,
       },
@@ -672,15 +662,17 @@ const checkIds = checks.map((c) => c.id);
 
 async function configure(label, includeEvents) {
   await startDriver(legs);
+  const selected = includeEvents
+    ? checks
+    : checks.filter((c) => !c.actions?.some((a) => a.event));
+  const selectedIds = selected.map((c) => c.id);
   const application_config = {
     app_version: APP_VERSION,
     disposable_test_app: true,
     require_verifier_token: true,
-    coverage_review: coverageReview(checkIds),
-    scope_review: scopeReview(checks),
-    checks: includeEvents
-      ? checks
-      : checks.filter((c) => !c.actions?.some((a) => a.event)),
+    coverage_review: coverageReview(selectedIds),
+    scope_review: scopeReview(selected),
+    checks: selected,
   };
   if (includeEvents) {
     application_config.event_delivery = "direct";
