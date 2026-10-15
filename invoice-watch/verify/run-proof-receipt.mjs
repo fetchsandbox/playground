@@ -620,14 +620,22 @@ const bootstrapPath = existsSync("/tmp/fs-proof-session.json")
     : "/tmp/fs-open-session.json";
 const bootstrap = JSON.parse(readFileSync(bootstrapPath, "utf8")).legs;
 await startDriver(bootstrap);
-log("cooling 90s before tunnel open...");
-await sleep(90000);
+log("cooling 180s before tunnel open...");
+await sleep(180000);
 
 const mcp = mcpClient();
 await mcp.init();
-const tunnel = await mcp.call("manage_tunnel", { action: "open", port: PORT });
-OUT("tunnel", tunnel);
-if (!tunnel.app_base_url) {
+let tunnel = null;
+for (let attempt = 0; attempt < 8; attempt++) {
+  tunnel = await mcp.call("manage_tunnel", { action: "open", port: PORT });
+  OUT("tunnel", tunnel);
+  if (tunnel.app_base_url) break;
+  const msg = JSON.stringify(tunnel);
+  log("tunnel open retry", attempt, msg.slice(0, 180));
+  // Capacity / rate-limit: wait and retry without treating as hard failure yet.
+  await sleep(45000);
+}
+if (!tunnel?.app_base_url) {
   console.error("NO_TUNNEL", tunnel);
   process.exit(2);
 }
