@@ -393,7 +393,9 @@ FetchSandbox then drove the real app through its managed relay
 **20 of 21 checks held, none violated.** The one unmeasured check is the
 accepted-response-loss check: this cloud container's egress proxy hides
 the app's disconnect from the twin. The app's own log shows `uncertain →
-reconciled → verified` with one email. Details and receipts are in
+reconciled → verified` with one email.
+Receipt: https://fetchsandbox.com/runs/f1d3d78d6c?flow=vr_8013cf6db26f4982a0581b8021d70838
+(session `vs_a536cdd1a634`; owner access may be required). Details and both receipts are in
 [`findings/2026-10-16-handoff-agents-fetchsandbox-relay.md`](../../findings/2026-10-16-handoff-agents-fetchsandbox-relay.md).
 `verification/handoff_fetchsandbox.py` is the arm/probe harness used before
 the relay run.
