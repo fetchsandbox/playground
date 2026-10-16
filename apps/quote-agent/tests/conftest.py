@@ -12,10 +12,11 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fakes import GMAIL, GOOGLE_TOKEN, HUBSPOT, SLACK, FakeProviders  # noqa: E402
+from fakes import GMAIL, GOOGLE_TOKEN, HUBSPOT, RESEND, SLACK, STRIPE, FakeProviders  # noqa: E402
 from quote_agent.app import create_app  # noqa: E402
 from quote_agent.classifier import IntentClassifier  # noqa: E402
 from quote_agent.config import Settings  # noqa: E402
+from quote_agent.handoff import build_handoff  # noqa: E402
 from quote_agent.orchestrator import Orchestrator  # noqa: E402
 from quote_agent.pricing import PricingClient  # noqa: E402
 from quote_agent.providers.gmail import GmailClient  # noqa: E402
@@ -26,6 +27,7 @@ from quote_agent.store import Store  # noqa: E402
 SIGNING_SECRET = "slack-signing-secret"
 MANAGER = "U_MANAGER"
 MANAGER_CHANNEL = "C_APPROVALS"
+HANDOFF_TOKEN = "handoff-token"
 
 
 @pytest.fixture
@@ -63,6 +65,9 @@ def settings(tmp_path, db_url):
         slack_manager_channel=MANAGER_CHANNEL, slack_manager_user_ids=[MANAGER],
         gmail_base_url=GMAIL, gmail_token_url=GOOGLE_TOKEN, gmail_access_token="gm-token",
         gmail_address="sales@northwind.test", gmail_push_token="push-secret",
+        stripe_base_url=STRIPE, stripe_secret_key="sk_test_fake",
+        resend_base_url=RESEND, resend_api_key="re_fake", handoff_from_email="welcome@northwind.test",
+        handoff_api_token=HANDOFF_TOKEN,
         dev_endpoints=True,
     )
 
@@ -84,6 +89,7 @@ def orch(settings, fake):
         slack=SlackClient(SLACK, "xoxb-test", http=http),
         gmail=GmailClient(base_url=GMAIL, token_url=GOOGLE_TOKEN, access_token="gm-token", http=http),
     )
+    o.handoff, o.research = build_handoff(settings, o.store, http=http)
     yield o
     o.store.db.close()
 

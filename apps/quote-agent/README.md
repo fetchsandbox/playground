@@ -57,6 +57,85 @@ same thread, or a Slack reply in the same thread.
   `QUOTE_AGENT_ADMIN_TOKEN` as a Bearer token and are disabled when it isn't
   set.
 
+## Customer handoff and research agents
+
+Four more agents sit on top of the quote workflow, in the order a deal
+moves:
+
+| Agent | Trigger | Does | Writes to |
+|---|---|---|---|
+| **Research** | `POST /research/briefs {"customer_email"}` | Reads allowlisted HubSpot fields plus the customer's quotes, and writes a short brief | Nothing. Read-only |
+| **CRM** | Handoff step 1 | Sets the contact's lifecycle stage to `customer`, then reads it back | HubSpot |
+| **Billing** | Handoff step 2, after step 1 is verified | Creates one Stripe invoice for the sent quote's total and finalizes it, then reads it back | Stripe |
+| **Messaging** | Handoff step 3, after step 2 is verified | Sends one welcome email with the invoice number and link, then reads it back | Resend |
+
+A handoff starts when a deal is won:
+`POST /handoff/runs {"quote_id": "Q-..."}` with `Authorization: Bearer
+$HANDOFF_API_TOKEN`. A CRM automation or an external agent makes the same
+call.
+
+```
+ quote agent ── sent quote Q-… ──► POST /handoff/runs
+                                         │
+   crm_lifecycle ──verify──► billing_invoice ──verify──► welcome_email ──verify──► completed
+   (CRM agent, HubSpot)     (billing agent, Stripe)     (messaging agent, Resend)
+        │ fails                  │ fails                     │ response lost
+        ▼                        ▼                           ▼
+   run failed: nothing      run failed: no email;       uncertain → repeat with the same
+   billed, nothing sent     retry reuses the draft      Idempotency-Key → one email → verified
+```
+
+**Rules**
+
+- **Each step waits for the one before it to be verified by reading the
+  provider back.** There's no invoice unless HubSpot shows the contact as a
+  customer, and no welcome email unless the invoice exists and matches the
+  quote.
+- **Only the sent quote can be handed off, and only once.** A quote waiting
+  on discount approval, superseded by a revision, or never sent is refused
+  with 409. A repeated or concurrent start returns the same run. The
+  invoice amount is the sent quote's total, so an approved discount is
+  what gets billed.
+- **A lost response is uncertain, not failed, and is never retried
+  blindly.** Every agent's action is safe to repeat:
+  - CRM reads the stage before it writes.
+  - Billing looks up the customer and this run's invoice before creating
+    them, so it doesn't depend on Stripe idempotency keys alone.
+  - Messaging resends with the same `Idempotency-Key`, which Resend
+    answers with the original email.
+
+  The action log keeps the whole `uncertain → reconciling → verified`
+  sequence.
+- **Pause** (`/handoff/runs/{id}/pause`) stops new steps. It doesn't undo
+  a step that already ran. **Retry** re-queues a failed step after its cause
+  is fixed. **Verify** resolves an uncertain step on demand.
+- **Contain** (`POST /agents/{agent}/contain`) is the per-agent stop
+  button. That agent's next action is blocked, and a step of that agent
+  that's running at that moment is marked uncertain rather than assumed
+  undone. `release` lifts it.
+- **Every agent action goes through one gateway** (`handoff/gateway.py`).
+  - Each agent's manifest names its owner, the actions it may take, the
+    systems it touches, and the credential it uses. An action outside the
+    manifest is blocked.
+  - `GET /agents` serves the manifests, so an external control plane can
+    discover the agents. That gateway is where it would take over the
+    allow/hold/block decision.
+  - `GET /actions` is the append-only action log (export). Each entry
+    carries a hash of the exact payload.
+- **The research agent is read-only by construction.** Its HubSpot client
+  refuses any write. Only `RESEARCH_ALLOWED_FIELDS` are read, and only those
+  fields go to Claude. The email address doesn't. Each brief lists the
+  fields it shared.
+- **Each agent has its own credential**: `HANDOFF_HUBSPOT_TOKEN`,
+  `STRIPE_SECRET_KEY`, `RESEND_API_KEY` and `RESEARCH_HUBSPOT_TOKEN`.
+  Handoff steps are `handoff_advance` jobs routed by agent, so with
+  `AGENT_QUEUE_URLS` each agent can run as its own worker service with only
+  its own secret.
+
+Stripe is told not to finalize or email the invoice itself
+(`auto_advance=false`). The welcome email is the only thing that reaches
+the customer, and it goes out once.
+
 ## Layout
 
 | File | What it does |
@@ -65,7 +144,12 @@ same thread, or a Slack reply in the same thread.
 | `quote_agent/policy.py` | Discount thresholds |
 | `quote_agent/classifier.py` | Claude intent + field extraction, rule-based fallback |
 | `quote_agent/pricing.py` | Pricing service (catalog, volume tiers), also served at `POST /pricing/quote` |
-| `quote_agent/providers/` | HubSpot, Slack, Gmail API clients |
+| `quote_agent/providers/` | HubSpot, Slack, Gmail, Stripe, Resend API clients |
+| `quote_agent/handoff/workflow.py` | Customer handoff: step order, verify gates, uncertain/pause/retry/contain |
+| `quote_agent/handoff/agents.py` | CRM, billing and messaging agents (act + verify) |
+| `quote_agent/handoff/gateway.py` | Agent manifests, allowlist, containment, append-only action log |
+| `quote_agent/handoff/research.py` | Read-only research agent |
+| `quote_agent/handoff/api.py` | `/handoff`, `/agents`, `/actions`, `/research` routes |
 | `quote_agent/app.py` | Webhooks (verify, enqueue, acknowledge), health, inspection endpoints |
 | `quote_agent/jobs.py` | Job queue (SQS or in-process) and the jobs the worker runs |
 | `quote_agent/worker.py` | SQS consumer |

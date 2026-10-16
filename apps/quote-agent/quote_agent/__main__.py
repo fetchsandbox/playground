@@ -4,7 +4,8 @@
     python -m quote_agent worker            SQS job consumer
     python -m quote_agent migrate           apply database migrations, then exit
     python -m quote_agent gmail-watch       renew the Gmail push watch (schedule daily)
-    python -m quote_agent reap-stale-runs   fail runs left 'running' by a dead worker (schedule every 5 min)
+    python -m quote_agent reap-stale-runs   fail runs left 'running' by a dead worker, and mark interrupted
+                                            handoff steps uncertain (schedule every 5 min)
 """
 
 import argparse
@@ -50,7 +51,9 @@ def main(argv: list[str] | None = None) -> int:
         if s.queue_backend != "sqs":
             log.error("the worker needs QUEUE_BACKEND=sqs (inline mode runs jobs inside the api)")
             return 2
+        from .jobs import build_queue
         from .worker import Worker
+        build_queue(s, orch)  # lets handoff steps queue the next agent's job
         Worker(orch, s).run_forever()
         return 0
     if args.command == "gmail-watch":
@@ -60,6 +63,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "reap-stale-runs":
         reaped = orch.reap_stale_runs(s.stale_run_seconds)
         log.info("reaped %d stale run(s): %s", len(reaped), reaped)
+        if orch.handoff is not None:
+            uncertain = orch.handoff.reap_stale(s.stale_run_seconds)
+            log.info("marked %d interrupted handoff step(s) uncertain: %s", len(uncertain), uncertain)
         return 0
     return 1
 

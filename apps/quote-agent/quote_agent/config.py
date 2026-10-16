@@ -72,6 +72,23 @@ class Settings:
     gmail_push_token: str = ""  # shared secret on the Pub/Sub push URL
     gmail_pubsub_topic: str = ""  # projects/<p>/topics/<t>, used by the gmail-watch job
 
+    # Customer handoff (CRM -> billing -> welcome email). Each agent has its own credential.
+    handoff_hubspot_token: str = ""  # CRM agent; defaults to HUBSPOT_ACCESS_TOKEN
+    stripe_base_url: str = "https://api.stripe.com"
+    stripe_secret_key: str = ""  # billing agent
+    resend_base_url: str = "https://api.resend.com"
+    resend_api_key: str = ""  # messaging agent
+    handoff_from_email: str = ""
+    handoff_account_team: str = "your Northwind account team"
+    invoice_days_until_due: int = 30
+    handoff_api_token: str = ""  # Bearer for /handoff, /agents, /actions, /research; unset = disabled
+    handoff_auto_reconcile: bool = True  # resolve an uncertain step straight away
+    agent_owners: dict[str, str] = field(default_factory=dict)  # {"billing": "finance-ops@..."}
+    agent_queue_urls: dict[str, str] = field(default_factory=dict)  # {"billing": "https://sqs..."}; else SQS_QUEUE_URL
+    research_hubspot_token: str = ""  # research agent (read-only); defaults to HUBSPOT_ACCESS_TOKEN
+    research_allowed_fields: list[str] = field(default_factory=list)  # empty = the built-in allowlist
+    provider_timeout_seconds: float = 20.0
+
     quote_valid_days: int = 30
     company_name: str = "Northwind"
     dev_endpoints: bool = False
@@ -126,6 +143,21 @@ class Settings:
             gmail_refresh_token=e("GMAIL_REFRESH_TOKEN", ""),
             gmail_push_token=e("GMAIL_PUSH_TOKEN", ""),
             gmail_pubsub_topic=e("GMAIL_PUBSUB_TOPIC", ""),
+            handoff_hubspot_token=e("HANDOFF_HUBSPOT_TOKEN", ""),
+            stripe_base_url=e("STRIPE_BASE_URL", "https://api.stripe.com"),
+            stripe_secret_key=e("STRIPE_SECRET_KEY", ""),
+            resend_base_url=e("RESEND_BASE_URL", "https://api.resend.com"),
+            resend_api_key=e("RESEND_API_KEY", ""),
+            handoff_from_email=e("HANDOFF_FROM_EMAIL", ""),
+            handoff_account_team=e("HANDOFF_ACCOUNT_TEAM", "your Northwind account team"),
+            invoice_days_until_due=int(e("INVOICE_DAYS_UNTIL_DUE", "30")),
+            handoff_api_token=e("HANDOFF_API_TOKEN", ""),
+            handoff_auto_reconcile=_bool("HANDOFF_AUTO_RECONCILE", True),
+            agent_owners=json.loads(e("AGENT_OWNERS", "") or "{}"),
+            agent_queue_urls=json.loads(e("AGENT_QUEUE_URLS", "") or "{}"),
+            research_hubspot_token=e("RESEARCH_HUBSPOT_TOKEN", ""),
+            research_allowed_fields=_csv("RESEARCH_ALLOWED_FIELDS"),
+            provider_timeout_seconds=float(e("PROVIDER_TIMEOUT_SECONDS", "20")),
             quote_valid_days=int(e("QUOTE_VALID_DAYS", "30")),
             company_name=e("COMPANY_NAME", "Northwind"),
             dev_endpoints=_bool("DEV_ENDPOINTS"),
@@ -168,6 +200,8 @@ class Settings:
                 problems.append("Slack is configured without SLACK_SIGNING_SECRET")
             if (self.gmail_access_token or self.gmail_refresh_token) and not self.gmail_push_token:
                 problems.append("Gmail is configured without GMAIL_PUSH_TOKEN")
+        if self.resend_api_key and not self.handoff_from_email:
+            problems.append("RESEND_API_KEY is set without HANDOFF_FROM_EMAIL")
         if self.slack_bot_token and not self.slack_manager_channel:
             problems.append("Slack is configured without SLACK_MANAGER_CHANNEL")
         if problems:

@@ -63,6 +63,9 @@ class Orchestrator:
         self.slack = slack
         self.gmail = gmail
         self.policy = DiscountPolicy(settings.approval_threshold_pct, settings.decline_above_pct)
+        # Customer handoff and research agents (quote_agent/handoff), attached by app.build_orchestrator.
+        self.handoff = None
+        self.research = None
 
     # ======================================================================
     # Entry points

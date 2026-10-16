@@ -19,6 +19,8 @@ from fastapi.responses import JSONResponse
 
 from .classifier import ClaudeClassifier, IntentClassifier
 from .config import Settings
+from .handoff import build_handoff
+from .handoff.api import build_router as build_handoff_router
 from .jobs import JobQueue, build_queue
 from .logging_setup import request_id
 from .models import InboundMessage
@@ -41,7 +43,7 @@ def build_orchestrator(s: Settings) -> Orchestrator:
     store = Store(s.db_url)
     if s.auto_migrate:
         store.migrate()
-    return Orchestrator(
+    orch = Orchestrator(
         settings=s,
         store=store,
         classifier=IntentClassifier(primary),
@@ -53,6 +55,11 @@ def build_orchestrator(s: Settings) -> Orchestrator:
                           refresh_token=s.gmail_refresh_token, http=http)
         if (s.gmail_access_token or s.gmail_refresh_token) else None,
     )
+    alert = orch._post_manager if (orch.slack and s.slack_manager_channel) else None
+    orch.handoff, orch.research = build_handoff(
+        s, store, http=httpx.Client(timeout=s.provider_timeout_seconds, headers=s.provider_headers),
+        alert=alert, claude=primary.client if primary else None)
+    return orch
 
 
 def create_app(settings: Settings | None = None, orchestrator: Orchestrator | None = None,
@@ -63,6 +70,8 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     app = FastAPI(title="Quote agent", docs_url=None if s.is_production else "/docs",
                   redoc_url=None, openapi_url=None if s.is_production else "/openapi.json")
     app.include_router(pricing_router)
+    if orch.handoff is not None:
+        app.include_router(build_handoff_router(s, orch.handoff, orch.research))
     app.state.orchestrator = orch
     app.state.queue = jobs
 

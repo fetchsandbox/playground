@@ -78,6 +78,14 @@ class HubSpotClient:
             raise HubSpotError(f"contact {created['id']} read back with a different email")
         return stored
 
+    def read_contact(self, contact_id: str, properties: list[str]) -> dict[str, Any]:
+        r = self._request("GET", f"/crm/v3/objects/contacts/{contact_id}", params={"properties": ",".join(properties)})
+        return self._ok(r, "contact read")
+
+    def update_contact(self, contact_id: str, properties: dict[str, str]) -> dict[str, Any]:
+        r = self._request("PATCH", f"/crm/v3/objects/contacts/{contact_id}", json={"properties": properties})
+        return self._ok(r, "contact update")
+
     # --- deals (one deal per quote; revisions update its amount) ------------
 
     def get_deal(self, deal_id: str) -> dict[str, Any]:

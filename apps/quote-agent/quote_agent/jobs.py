@@ -11,6 +11,11 @@ database before any side effect, and approval decisions are atomic.
     {"type": "slack_event", "event_id": "...", "event": {...}}
     {"type": "gmail_push", "history_id": "123"}
     {"type": "approval_decision", "approval_id": "APR-...", "decision": "approved", "user_id": "U..."}
+    {"type": "handoff_advance", "run_id": "HND-...", "agent": "billing"}
+
+Handoff jobs carry the agent that runs the next step. With AGENT_QUEUE_URLS
+set, each goes to that agent's own queue, so every agent can be its own
+worker service; otherwise they share SQS_QUEUE_URL.
 """
 
 import json
@@ -54,10 +59,27 @@ class SqsQueue:
                                  MessageAttributes={"type": {"DataType": "String", "StringValue": job["type"]}})
 
 
+class AgentRoutingQueue:
+    """Sends handoff jobs to their agent's queue, everything else to the default queue."""
+
+    def __init__(self, default: JobQueue, per_agent: dict[str, JobQueue]):
+        self.default = default
+        self.per_agent = per_agent
+
+    def enqueue(self, job: dict[str, Any]) -> None:
+        self.per_agent.get(job.get("agent", ""), self.default).enqueue(job)
+
+
 def build_queue(s: Settings, orch: Orchestrator) -> JobQueue:
     if s.queue_backend == "sqs":
-        return SqsQueue(s.sqs_queue_url, s.aws_region)
-    return InlineQueue(lambda job: run_job(orch, s, job))
+        default = SqsQueue(s.sqs_queue_url, s.aws_region)
+        queue: JobQueue = AgentRoutingQueue(default, {a: SqsQueue(url, s.aws_region)
+                                                      for a, url in s.agent_queue_urls.items()})
+    else:
+        queue = InlineQueue(lambda job: run_job(orch, s, job))
+    if orch.handoff is not None:
+        orch.handoff.enqueue = queue.enqueue
+    return queue
 
 
 # ---------------------------------------------------------------------- jobs
@@ -74,6 +96,10 @@ def run_job(orch: Orchestrator, s: Settings, job: dict[str, Any]) -> None:
             orch.resume_approval(job["approval_id"], job["decision"], job["user_id"])
         except KeyError:
             log.warning("unknown approval %s", job["approval_id"])
+    elif kind == "handoff_advance":
+        if orch.handoff is None:
+            raise RuntimeError("handoff job received but the handoff is not configured")
+        orch.handoff.advance(job["run_id"])
     else:
         log.error("dropping unknown job type %r", kind)
 
