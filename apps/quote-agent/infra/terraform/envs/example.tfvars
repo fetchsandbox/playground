@@ -18,3 +18,6 @@ app_config = {
   HUBSPOT_DEAL_STAGE     = "presentationscheduled"
   COMPANY_NAME           = "Northwind"
 }
+
+# Amazon Bedrock AgentCore Runtime: execution role + security group (runtime via infra/agentcore/deploy.py)
+agentcore_enabled = false

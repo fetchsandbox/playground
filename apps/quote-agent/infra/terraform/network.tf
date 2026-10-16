@@ -85,11 +85,11 @@ resource "aws_security_group" "endpoints" {
   description = "VPC interface endpoints"
   vpc_id      = aws_vpc.main.id
   ingress {
-    description     = "HTTPS from tasks"
+    description     = "HTTPS from tasks and the AgentCore Runtime"
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
-    security_groups = [aws_security_group.tasks.id]
+    security_groups = concat([aws_security_group.tasks.id], [for sg in aws_security_group.agentcore : sg.id])
   }
 }
 
@@ -167,13 +167,13 @@ resource "aws_security_group_rule" "tasks_from_alb" {
 
 resource "aws_security_group" "db" {
   name        = "${local.name}-db"
-  description = "PostgreSQL from ECS tasks only"
+  description = "PostgreSQL from ECS tasks and the AgentCore Runtime only"
   vpc_id      = aws_vpc.main.id
   ingress {
     description     = "PostgreSQL"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.tasks.id]
+    security_groups = concat([aws_security_group.tasks.id], [for sg in aws_security_group.agentcore : sg.id])
   }
 }

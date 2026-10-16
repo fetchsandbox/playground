@@ -88,6 +88,7 @@ class Settings:
     research_hubspot_token: str = ""  # research agent (read-only); defaults to HUBSPOT_ACCESS_TOKEN
     research_allowed_fields: list[str] = field(default_factory=list)  # empty = the built-in allowlist
     provider_timeout_seconds: float = 20.0
+    agentcore_operator_actions: bool = False  # AgentCore operator runtime only (see agentcore.py)
 
     quote_valid_days: int = 30
     company_name: str = "Northwind"
@@ -158,6 +159,7 @@ class Settings:
             research_hubspot_token=e("RESEARCH_HUBSPOT_TOKEN", ""),
             research_allowed_fields=_csv("RESEARCH_ALLOWED_FIELDS"),
             provider_timeout_seconds=float(e("PROVIDER_TIMEOUT_SECONDS", "20")),
+            agentcore_operator_actions=_bool("AGENTCORE_OPERATOR_ACTIONS"),
             quote_valid_days=int(e("QUOTE_VALID_DAYS", "30")),
             company_name=e("COMPANY_NAME", "Northwind"),
             dev_endpoints=_bool("DEV_ENDPOINTS"),
@@ -175,7 +177,7 @@ class Settings:
         return self.environment == "production"
 
     def validate(self, role: str = "api") -> None:
-        """Fail fast on configuration that is unsafe or unusable. role: api | worker | job."""
+        """Fail fast on configuration that is unsafe or unusable. role: api | worker | agentcore | job."""
         problems: list[str] = []
         if self.environment not in {"development", "staging", "production"}:
             problems.append(f"ENVIRONMENT must be development, staging or production, not {self.environment!r}")
@@ -186,7 +188,8 @@ class Settings:
         if self.environment != "development":
             if not self.database_url:
                 problems.append("a non-development environment needs PostgreSQL (DATABASE_URL or DB_HOST/...)")
-            if self.queue_backend != "sqs":
+            # AgentCore runs handoff steps inside the invocation, so inline is allowed there.
+            if self.queue_backend != "sqs" and role != "agentcore":
                 problems.append("a non-development environment needs QUEUE_BACKEND=sqs")
         if self.is_production:
             if self.dev_endpoints:

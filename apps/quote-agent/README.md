@@ -349,6 +349,70 @@ transfer), about $250–300 in total:
 Production defaults (a NAT gateway per AZ, Multi-AZ database) add roughly
 another $100. Use the AWS Pricing Calculator for your own numbers.
 
+## Running on Amazon Bedrock AgentCore Runtime
+
+The same code also runs as an AgentCore Runtime agent (`quote_agent/agentcore.py`).
+It uses the official `bedrock-agentcore` SDK server, which implements the
+runtime's HTTP service contract.
+
+| AgentCore requirement | How it's met |
+|---|---|
+| ARM64 container image in ECR | `docker buildx build --platform linux/arm64 --target agentcore`. All dependencies have linux/arm64 wheels. CI builds the image and smoke-tests it under QEMU |
+| Listens on `0.0.0.0:8080` | `python -m quote_agent agentcore` is the `agentcore` target's default command |
+| `POST /invocations` (JSON) and `GET /ping` (`Healthy` / `HealthyBusy`) | `BedrockAgentCoreApp`. The handler is synchronous, so the SDK runs it in a thread and `/ping` keeps answering |
+| One microVM per session, isolated filesystem | All state is in PostgreSQL (RDS). Outside development the role refuses to start without it. Every at-most-once change is a conditional SQL statement, so many microVMs can run at once |
+| No init container | `AUTO_MIGRATE=true`. Migrations take a Postgres advisory lock |
+| Credentials | The runtime only gets `APP_SECRET_ARN` / `DB_SECRET_ARN`. The execution role reads the secrets at start-up, and already-set variables win |
+| VPC access to RDS | VPC network mode on the private subnets, with a security group allowed into PostgreSQL and the VPC endpoints (`infra/terraform/agentcore.tf`) |
+
+**Invocation payloads**
+(`{"action": ...}`):
+- `quote.message` (an `InboundMessage`)
+- `quote.decide`
+- `handoff.start`
+- `handoff.get`
+- `research.brief`
+- `agents.list`
+
+Callers are authenticated by AgentCore itself, with IAM SigV4 or the
+runtime's JWT authorizer.
+
+**Two runtimes from one image** keep "start work" apart from "change the
+controls":
+
+| Runtime | Accepts | Who gets invoke rights |
+|---|---|---|
+| `quote_agent_<env>` | The agent actions above | Callers that start work |
+| `quote_agent_<env>_operator` | Also `agents.contain`/`release`, `handoff.pause`/`resume`/`retry`/`verify` and `actions.export` (`AGENTCORE_OPERATOR_ACTIONS=true`) | Operators only |
+
+On the agent runtime, operator actions get a 403.
+
+**Deploy**
+
+```bash
+# 1. Infrastructure: execution role + security group (agentcore_enabled = true in envs/<env>.tfvars)
+terraform -chdir=infra/terraform apply -var-file=envs/staging.tfvars -var image_tag=$SHA
+# 2. Image
+docker buildx build --platform linux/arm64 --target agentcore --push -t <ecr_repository_url>:agentcore-$SHA .
+# 3. Runtimes: create or update (--dry-run checks the request against the AgentCore API model, no AWS calls)
+terraform -chdir=infra/terraform output -json agentcore > agentcore.json
+python infra/agentcore/deploy.py --outputs agentcore.json --image-tag $SHA
+python infra/agentcore/deploy.py --outputs agentcore.json --image-tag $SHA --operator
+```
+
+CI runs steps 2 and 3 after the ECS deploy when `vars.AGENTCORE_ENABLED ==
+'true'`.
+
+- **Handoff steps** run inside the invocation by default. Pass `--queue sqs`
+  to queue them for the ECS workers instead.
+- **AWS provider.** The pinned provider (`~> 5.70`) has no AgentCore
+  resources, so the runtime is created with boto3
+  (`bedrock-agentcore-control`).
+- **Inbound webhooks.** AgentCore exposes only `/invocations`, not the
+  Slack/Gmail webhook routes. Keep the ECS `api` service (or a small Lambda)
+  for webhooks and have it call `InvokeAgentRuntime`, or let callers invoke
+  the runtime directly.
+
 ## Tests
 
 Without `TEST_DATABASE_URL` the suite runs on SQLite. Set it to run the
@@ -437,3 +501,10 @@ is set:
     webhook.
   - The invoice is one line for the quote total, not one line per quote
     line.
+- AgentCore:
+  - Not deployed to a real AWS account yet. What's verified is the SDK
+    server in-process, the real `agentcore` process locally, the deploy
+    request against the AgentCore API model, `terraform validate`, and
+    arm64 wheel resolution.
+  - The arm64 image build and the container smoke test run in CI; no
+    Docker daemon was available while writing this.
