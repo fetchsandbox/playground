@@ -1,0 +1,65 @@
+# Local stack that mirrors production: PostgreSQL, an SQS-compatible queue (ElasticMQ),
+# a one-shot migration, the API and the worker. `docker compose up --build`.
+# Provider credentials come from .env (see .env.example); unset providers are skipped.
+
+x-app: &app
+  build: .
+  env_file:
+    - path: .env
+      required: false
+  environment: &app-env
+    ENVIRONMENT: development
+    LOG_FORMAT: json
+    DATABASE_URL: postgresql://quote:quote@postgres:5432/quote_agent?sslmode=disable
+    AUTO_MIGRATE: "false"
+    QUEUE_BACKEND: sqs
+    SQS_QUEUE_URL: http://elasticmq:9324/000000000000/quote-jobs
+    AWS_REGION: us-east-1
+    AWS_ENDPOINT_URL_SQS: http://elasticmq:9324
+    AWS_ACCESS_KEY_ID: local
+    AWS_SECRET_ACCESS_KEY: local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: quote
+      POSTGRES_PASSWORD: quote
+      POSTGRES_DB: quote_agent
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quote -d quote_agent"]
+      interval: 2s
+      retries: 30
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  elasticmq:
+    image: softwaremill/elasticmq-native:1.6.9
+    volumes: [./deploy/elasticmq.conf:/opt/elasticmq.conf:ro]
+
+  migrate:
+    <<: *app
+    command: ["migrate"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  api:
+    <<: *app
+    command: ["api"]
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"]
+      interval: 10s
+      retries: 3
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      elasticmq: {condition: service_started}
+
+  worker:
+    <<: *app
+    command: ["worker"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      elasticmq: {condition: service_started}
+
+volumes:
+  pgdata:

@@ -1,0 +1,159 @@
+name: quote-agent
+
+on:
+  pull_request:
+    paths: ["apps/quote-agent/**", ".github/workflows/quote-agent.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/quote-agent/**", ".github/workflows/quote-agent.yml"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        type: choice
+        options: [staging, production]
+        default: staging
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: apps/quote-agent
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: qa
+          POSTGRES_PASSWORD: qa
+          POSTGRES_DB: qa
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qa" --health-interval 2s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/quote-agent/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Tests (SQLite)
+        run: pytest -q
+      - name: Tests (PostgreSQL)
+        run: pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql://qa:qa@localhost:5432/qa
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/quote-agent/infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t quote-agent:${{ github.sha }} .
+      # Amazon Bedrock AgentCore Runtime runs linux/arm64 images serving POST /invocations and GET /ping on 8080.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build AgentCore image (linux/arm64)
+        run: docker buildx build --platform linux/arm64 --target agentcore --load -t quote-agent:agentcore .
+      - name: AgentCore service contract smoke test (arm64)
+        run: |
+          docker run -d --name agentcore --platform linux/arm64 -p 8080:8080 \
+            -e CLASSIFIER=rules -e QUOTE_AGENT_DB=/tmp/agentcore.db quote-agent:agentcore
+          for i in $(seq 1 60); do curl -fsS localhost:8080/ping && break; sleep 2; done
+          curl -fsS localhost:8080/ping | grep -q '"status":"Healthy"'
+          curl -fsS -X POST localhost:8080/invocations -H 'Content-Type: application/json' \
+            -H 'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id: ci-smoke-session-0000000000000000000' \
+            -d '{"action": "agents.list"}' | grep -q '"billing"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST localhost:8080/invocations \
+            -H 'Content-Type: application/json' -d '{"action": "agents.contain", "agent": "billing"}')" = 403
+          docker exec agentcore uname -m | grep -q aarch64
+          docker logs agentcore | tail -20
+
+  # Deploys only when the repository is configured for it:
+  #   vars.AWS_DEPLOY_ROLE_ARN  IAM role trusted for GitHub OIDC (per GitHub environment)
+  #   vars.AWS_REGION, vars.TF_STATE_BUCKET, vars.TF_LOCK_TABLE
+  #   infra/terraform/envs/<environment>.tfvars committed (non-secret settings)
+  # Use GitHub environment protection rules to require approval for production.
+  deploy:
+    needs: [test, terraform, image]
+    if: >-
+      vars.AWS_DEPLOY_ROLE_ARN != '' &&
+      (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'staging' }}
+    concurrency: deploy-quote-agent-${{ inputs.environment || 'staging' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push image
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/quote-agent-${ENVIRONMENT}:${IMAGE_TAG}"
+          if ! aws ecr describe-images --repository-name "quote-agent-${ENVIRONMENT}" --image-ids imageTag="${IMAGE_TAG}" >/dev/null 2>&1; then
+            docker build -t "$IMAGE" .
+            docker push "$IMAGE"
+          fi
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Terraform apply
+        working-directory: apps/quote-agent/infra/terraform
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=quote-agent/${ENVIRONMENT}.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ vars.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
+          terraform apply -input=false -auto-approve \
+            -var-file="envs/${ENVIRONMENT}.tfvars" -var "image_tag=${IMAGE_TAG}"
+      - name: Wait for services to stabilise
+        run: |
+          aws ecs wait services-stable --cluster "quote-agent-${ENVIRONMENT}" --services api worker
+      # Optional: also run the agents on Amazon Bedrock AgentCore Runtime.
+      # Needs vars.AGENTCORE_ENABLED = 'true' and agentcore_enabled = true in envs/<environment>.tfvars.
+      - name: Build and push AgentCore image (linux/arm64)
+        if: vars.AGENTCORE_ENABLED == 'true'
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/quote-agent-${ENVIRONMENT}:agentcore-${IMAGE_TAG}"
+          if ! aws ecr describe-images --repository-name "quote-agent-${ENVIRONMENT}" --image-ids imageTag="agentcore-${IMAGE_TAG}" >/dev/null 2>&1; then
+            docker buildx create --use >/dev/null
+            docker run --privileged --rm tonistiigi/binfmt --install arm64 >/dev/null
+            docker buildx build --platform linux/arm64 --target agentcore --push -t "$IMAGE" .
+          fi
+      - name: Deploy AgentCore runtimes
+        if: vars.AGENTCORE_ENABLED == 'true'
+        run: |
+          pip install --quiet "boto3>=1.43" "botocore>=1.43"
+          terraform -chdir=infra/terraform output -json agentcore > /tmp/agentcore.json
+          python infra/agentcore/deploy.py --outputs /tmp/agentcore.json --image-tag "${IMAGE_TAG}"
+          python infra/agentcore/deploy.py --outputs /tmp/agentcore.json --image-tag "${IMAGE_TAG}" --operator
