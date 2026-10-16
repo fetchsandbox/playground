@@ -14,7 +14,17 @@ from customer_ops.store import InMemoryWorkflowStore, reset_store_for_tests
 def setup_function():
     reset_store_for_tests(InMemoryWorkflowStore())
     observe.reset()
-    os.environ.pop("FETCHSANDBOX_VERIFIER_TOKEN", None)
+    for key in (
+        "FETCHSANDBOX_VERIFIER_TOKEN",
+        "X_FLOW_RUN_ID",
+        "FETCHSANDBOX_FLOW_RUN_ID",
+        "SLACK_SIGNING_SECRET",
+        "REQUIRE_SLACK_SIGNATURE",
+        "CUSTOMER_OPS_REQUIRE_SLACK_SIG",
+        "STRIPE_WEBHOOK_SECRET",
+        "CUSTOMER_OPS_REQUIRE_STRIPE_SIG",
+    ):
+        os.environ.pop(key, None)
 
 
 def test_process_workflow_case_scoped_observe():
@@ -84,3 +94,43 @@ def test_unsigned_stripe_webhook_rejected_with_secret():
         },
     )
     assert resp.status_code == 400
+
+
+def test_observe_401_without_auth_when_verifier_set():
+    os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
+    client = TestClient(app)
+    resp = client.get("/runs/runX/cases/baseline/workflows")
+    assert resp.status_code == 401
+
+
+def test_observe_accepts_bearer_verifier():
+    os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
+    client = TestClient(app)
+    resp = client.get(
+        "/runs/runX/cases/baseline/workflows",
+        headers={"Authorization": "Bearer verif_secret"},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"workflows": []}
+
+
+def test_observe_accepts_flow_run_id_matching_path():
+    """Managed-tunnel observe often sends only X-Flow-Run-Id (see FS request_headers)."""
+    os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
+    client = TestClient(app)
+    resp = client.get(
+        "/runs/vr_abc/cases/baseline/workflows",
+        headers={"X-Flow-Run-Id": "vr_abc"},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"workflows": []}
+
+
+def test_observe_rejects_mismatched_flow_run_id():
+    os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
+    client = TestClient(app)
+    resp = client.get(
+        "/runs/vr_abc/cases/baseline/workflows",
+        headers={"X-Flow-Run-Id": "vr_OTHER"},
+    )
+    assert resp.status_code == 401

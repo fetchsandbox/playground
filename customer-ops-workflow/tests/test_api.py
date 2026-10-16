@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi.testclient import TestClient
 
 from customer_ops.api import app
@@ -10,6 +12,16 @@ from customer_ops.store import InMemoryWorkflowStore, reset_store_for_tests
 
 def setup_function():
     reset_store_for_tests(InMemoryWorkflowStore())
+    for key in (
+        "FETCHSANDBOX_VERIFIER_TOKEN",
+        "X_FLOW_RUN_ID",
+        "SLACK_SIGNING_SECRET",
+        "REQUIRE_SLACK_SIGNATURE",
+        "CUSTOMER_OPS_REQUIRE_SLACK_SIG",
+        "STRIPE_WEBHOOK_SECRET",
+        "CUSTOMER_OPS_REQUIRE_STRIPE_SIG",
+    ):
+        os.environ.pop(key, None)
 
 
 def test_health():

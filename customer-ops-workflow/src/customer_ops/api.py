@@ -53,26 +53,46 @@ class ProcessBody(BaseModel):
     idempotency_key: str | None = None
 
 
-def _require_verifier(request: Request) -> None:
-    """FetchSandbox observe GETs send Authorization: Bearer <verifier>.
+def _bearer_token(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    parts = authorization.strip().split(None, 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+    return parts[1].strip() or None
 
-    Also accept a matching X-Flow-Run-Id when the bearer is omitted on a
-    relay hop (seen intermittently on managed-tunnel before/observe).
+
+def _require_verifier(request: Request, *, run_id: str | None = None) -> None:
+    """Authorize FetchSandbox observe GETs.
+
+    Managed-tunnel config advertises ``request_headers: {X-Flow-Run-Id}``.
+    The relay usually also sends ``Authorization: Bearer <FETCHSANDBOX_VERIFIER_TOKEN>``,
+    but observe hops have been seen with only the flow header — which caused
+    intermittent 401s and baseline ``found 0``.
+
+    Accept (any one):
+    1. Bearer verifier token
+    2. ``X-Flow-Run-Id`` equal to the path ``run_id``
+    3. ``X-Flow-Run-Id`` equal to ``X_FLOW_RUN_ID`` env from handoff
     """
-    token = os.environ.get("FETCHSANDBOX_VERIFIER_TOKEN")
+    token = (os.environ.get("FETCHSANDBOX_VERIFIER_TOKEN") or "").strip()
     if not token:
         return
-    auth = (request.headers.get("authorization") or "").strip()
-    expected = {f"Bearer {token}", f"bearer {token}"}
-    if auth in expected:
+
+    presented = _bearer_token(request.headers.get("authorization"))
+    if presented is not None and hmac.compare_digest(presented, token):
         return
-    # Some relay observes present only the flow header after the action hop.
-    flow = request.headers.get("x-flow-run-id") or ""
-    expected_flow = os.environ.get("X_FLOW_RUN_ID") or os.environ.get(
-        "FETCHSANDBOX_FLOW_RUN_ID"
-    )
-    if flow and expected_flow and flow == expected_flow:
+
+    flow = (request.headers.get("x-flow-run-id") or "").strip()
+    if flow and run_id and hmac.compare_digest(flow, run_id):
         return
+
+    expected_flow = (
+        os.environ.get("X_FLOW_RUN_ID") or os.environ.get("FETCHSANDBOX_FLOW_RUN_ID") or ""
+    ).strip()
+    if flow and expected_flow and hmac.compare_digest(flow, expected_flow):
+        return
+
     raise HTTPException(401, "unauthorized")
 
 
@@ -219,13 +239,13 @@ def get_workflow(workflow_id: str) -> dict[str, Any]:
 
 @app.get("/runs/{run_id}/workflows")
 def run_workflows(run_id: str, request: Request) -> dict[str, Any]:
-    _require_verifier(request)
+    _require_verifier(request, run_id=run_id)
     return {"workflows": observe.list_workflows(run_id=run_id)}
 
 
 @app.get("/runs/{run_id}/cases/{case_id}/workflows")
 def case_workflows(run_id: str, case_id: str, request: Request) -> dict[str, Any]:
-    _require_verifier(request)
+    _require_verifier(request, run_id=run_id)
     return {"workflows": observe.list_workflows(run_id=run_id, case_id=case_id)}
 
 
@@ -237,13 +257,13 @@ def list_webhooks(request: Request) -> dict[str, Any]:
 
 @app.get("/runs/{run_id}/webhooks")
 def run_webhooks(run_id: str, request: Request) -> dict[str, Any]:
-    _require_verifier(request)
+    _require_verifier(request, run_id=run_id)
     return {"webhooks": observe.list_webhooks(run_id=run_id)}
 
 
 @app.get("/runs/{run_id}/cases/{case_id}/webhooks")
 def case_webhooks(run_id: str, case_id: str, request: Request) -> dict[str, Any]:
-    _require_verifier(request)
+    _require_verifier(request, run_id=run_id)
     return {"webhooks": observe.list_webhooks(run_id=run_id, case_id=case_id)}
 
 
