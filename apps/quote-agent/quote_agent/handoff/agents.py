@@ -114,22 +114,28 @@ class BillingAgent(HandoffAgent):
 
     def act(self, ctx: StepContext) -> dict[str, Any]:
         q, run = ctx.quote, ctx.run_id
-        customer = self.stripe.find_customer(q.customer_email) or self.stripe.create_customer(
-            email=q.customer_email, name=q.company or q.customer_name, metadata={"quote_id": q.id},
-            idempotency_key=f"{run}:customer")
-        invoice = self._find_invoice(customer["id"], run) or self.stripe.create_invoice(
-            customer_id=customer["id"], metadata={"handoff_run": run, "quote_id": q.id},
-            days_until_due=self.days_until_due, idempotency_key=f"{run}:invoice")
+        created = {"customer_created": False, "invoice_created": False, "item_added": False}
+        customer = self.stripe.find_customer(q.customer_email)
+        if customer is None:
+            customer = self.stripe.create_customer(email=q.customer_email, name=q.company or q.customer_name,
+                                                   metadata={"quote_id": q.id}, idempotency_key=f"{run}:customer")
+            created["customer_created"] = True
+        invoice = self._find_invoice(customer["id"], run)
+        if invoice is None:
+            invoice = self.stripe.create_invoice(customer_id=customer["id"], metadata={"handoff_run": run, "quote_id": q.id},
+                                                 days_until_due=self.days_until_due, idempotency_key=f"{run}:invoice")
+            created["invoice_created"] = True
         if invoice.get("status") == "draft":
             lines = (invoice.get("lines") or {}).get("data") or []
             if not lines:
                 self.stripe.add_invoice_item(customer_id=customer["id"], invoice_id=invoice["id"],
                                              amount_cents=q.total_cents, currency=q.currency,
                                              description=self._description(q), idempotency_key=f"{run}:item")
+                created["item_added"] = True
             elif sum(int(l.get("amount", 0)) for l in lines) != q.total_cents:
                 raise BillingMismatch(f"draft invoice {invoice['id']} lines do not add up to {q.total_cents}")
             invoice = self.stripe.finalize_invoice(invoice["id"], idempotency_key=f"{run}:finalize")
-        return {"customer_id": customer["id"], "invoice_id": invoice["id"]}
+        return {"customer_id": customer["id"], "invoice_id": invoice["id"], **created}
 
     def verify(self, ctx: StepContext, effect: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         inv = self.stripe.get_invoice(effect["invoice_id"])

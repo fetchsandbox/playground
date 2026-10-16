@@ -8,13 +8,21 @@ import threading
 from types import SimpleNamespace
 
 import pytest
-from conftest import HANDOFF_TOKEN
+from conftest import ADMIN_TOKEN, HANDOFF_TOKEN, VERIFIER_TOKEN
 from test_workflow import CUSTOMER, email, send_initial_quote
 
 from quote_agent.handoff.research import ClaudeBriefWriter, ReadOnlyHubSpot
 from quote_agent.providers.hubspot import HubSpotError
 
-AUTH = {"Authorization": f"Bearer {HANDOFF_TOKEN}"}
+AUTH = {"Authorization": f"Bearer {HANDOFF_TOKEN}"}   # what an external agent / CRM automation holds
+OPS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}      # operators: contain, pause, retry, verify, export
+
+
+@pytest.fixture(autouse=True)
+def _operator_and_verifier_tokens(settings):
+    # Set before the app is built: the verifier routes exist only when their token is configured.
+    settings.admin_token = ADMIN_TOKEN
+    settings.verifier_token = VERIFIER_TOKEN
 
 
 def start(client, quote_id):
@@ -148,7 +156,7 @@ def test_billing_failure_holds_the_email_and_retry_reuses_the_draft(client, orch
     assert draft["status"] == "draft" and len(draft["lines"]["data"]) == 1
 
     fake.stripe_fail.clear()
-    run = client.post(f"/handoff/runs/{run['id']}/retry", headers=AUTH).json()
+    run = client.post(f"/handoff/runs/{run['id']}/retry", headers=OPS).json()
     assert run["status"] == "completed"
     [invoice] = fake.invoices_for(CUSTOMER)  # the same invoice, finalized; no second line, no second invoice
     assert invoice["id"] == draft["id"] and invoice["status"] == "open" and len(invoice["lines"]["data"]) == 1
@@ -175,7 +183,7 @@ def test_lost_email_response_is_resolved_without_a_second_email(client, orch, fa
     email_step = next(s for s in run["steps"] if s["name"] == "welcome_email")
     assert email_step["resolved_from_uncertain"] is True and email_step["attempts"] == 2
     assert [o for s, o in outcomes(orch, run["id"], "welcome_email")] == [
-        "allowed", "uncertain", "reconciling", "verified"]
+        "allowed", "uncertain", "reconciling", "reconciled", "verified"]
 
 
 @pytest.mark.parametrize("op", ["create_invoice", "create_item", "finalize", "create_customer"])
@@ -205,7 +213,7 @@ def test_uncertain_step_waits_for_verify_when_auto_reconcile_is_off(client, orch
     fake.resend_lose_response = True
     run = start(client, quote.id).json()
     assert run["status"] == "uncertain" and steps(run)["welcome_email"] == "uncertain"
-    run = client.post(f"/handoff/runs/{run['id']}/verify", headers=AUTH).json()
+    run = client.post(f"/handoff/runs/{run['id']}/verify", headers=OPS).json()
     assert run["status"] == "completed" and len(fake.resend_emails) == 1
 
 
@@ -217,7 +225,7 @@ def test_interrupted_step_is_marked_uncertain_then_verified(client, orch, fake):
     assert orch.handoff.reap_stale(-1) == [run["id"]]
     assert orch.handoff.handoffs.get_run(run["id"])["status"] == "uncertain"
     orch.handoff.enqueue = None
-    run = client.post(f"/handoff/runs/{run['id']}/verify", headers=AUTH).json()
+    run = client.post(f"/handoff/runs/{run['id']}/verify", headers=OPS).json()
     assert run["status"] == "completed" and len(fake.resend_emails) == 1
 
 
@@ -230,27 +238,42 @@ def test_pause_stops_new_steps_and_resume_continues(client, orch, fake):
     orch.handoff.enqueue = queued.append
     run, _ = orch.handoff.start(quote.id, "rep")
     orch.handoff.advance(queued.pop(0)["run_id"])  # CRM step runs
-    client.post(f"/handoff/runs/{run['id']}/pause", headers=AUTH)
+    client.post(f"/handoff/runs/{run['id']}/pause", headers=OPS)
     orch.handoff.advance(queued.pop(0)["run_id"])  # billing job arrives while paused: nothing happens
     paused = orch.handoff.handoffs.get_run(run["id"])
     assert paused["status"] == "paused" and steps(paused)["billing_invoice"] == "pending"
     assert fake.stripe_requests == []
 
     orch.handoff.enqueue = None
-    run = client.post(f"/handoff/runs/{run['id']}/resume", headers=AUTH).json()
+    run = client.post(f"/handoff/runs/{run['id']}/resume", headers=OPS).json()
     assert run["status"] == "completed" and len(fake.resend_emails) == 1
+
+
+def test_pause_holds_a_retried_run_until_resume(client, orch, fake):
+    quote = send_initial_quote(orch, fake)
+    client.post("/agents/billing/contain", headers=OPS)
+    run = start(client, quote.id).json()
+    assert run["status"] == "blocked"
+    client.post(f"/handoff/runs/{run['id']}/pause", headers=OPS)
+    client.post("/agents/billing/release", headers=OPS)
+    held = client.post(f"/handoff/runs/{run['id']}/retry", headers=OPS).json()
+    assert held["status"] == "paused" and steps(held)["billing_invoice"] == "pending"
+    assert fake.stripe_requests == [] and fake.resend_emails == {}
+    done = client.post(f"/handoff/runs/{run['id']}/resume", headers=OPS).json()
+    assert done["status"] == "completed" and len(fake.invoices_for(CUSTOMER)) == 1
+    assert client.post(f"/handoff/runs/{run['id']}/pause", headers=OPS).status_code == 409
 
 
 def test_contained_agent_is_blocked_and_release_lets_retry_finish(client, orch, fake):
     quote = send_initial_quote(orch, fake)
-    assert client.post("/agents/billing/contain", headers=AUTH).json()["contained"] is True
+    assert client.post("/agents/billing/contain", headers=OPS).json()["contained"] is True
     run = start(client, quote.id).json()
     assert run["status"] == "blocked" and steps(run)["billing_invoice"] == "failed"
     assert fake.stripe_requests == [] and fake.resend_emails == {}
     assert ("billing_invoice", "blocked") in outcomes(orch, run["id"])
 
-    client.post("/agents/billing/release", headers=AUTH)
-    run = client.post(f"/handoff/runs/{run['id']}/retry", headers=AUTH).json()
+    client.post("/agents/billing/release", headers=OPS)
+    run = client.post(f"/handoff/runs/{run['id']}/retry", headers=OPS).json()
     assert run["status"] == "completed"
 
 
@@ -318,5 +341,62 @@ def test_research_sends_only_allowlisted_fields_to_claude(client, orch, fake):
 
 
 def test_contained_research_agent_is_refused(client, orch, fake):
-    client.post("/agents/research/contain", headers=AUTH)
+    client.post("/agents/research/contain", headers=OPS)
     assert client.post("/research/briefs", json={"customer_email": CUSTOMER}, headers=AUTH).status_code == 403
+
+
+# ------------------------------------------------------ separation of duties
+
+
+def test_the_start_token_cannot_change_the_controls(client, orch, fake):
+    quote = send_initial_quote(orch, fake)
+    run = start(client, quote.id).json()
+    for path in ("/agents/billing/contain", "/agents/billing/release", f"/handoff/runs/{run['id']}/pause",
+                 f"/handoff/runs/{run['id']}/retry", f"/handoff/runs/{run['id']}/verify"):
+        assert client.post(path, headers=AUTH).status_code == 401, path
+    assert client.get("/actions", headers=AUTH).status_code == 401
+    assert client.get("/actions", headers=OPS).status_code == 200
+    assert not orch.handoff.gateway.is_contained("billing")
+
+
+# ------------------------------------------------------ per-agent workers
+
+
+def test_a_redelivered_job_is_sent_to_the_next_agents_queue(client, orch, fake):
+    quote = send_initial_quote(orch, fake)
+    queued = []
+    orch.handoff.enqueue = queued.append
+    run, _ = orch.handoff.start(quote.id, "rep")
+    assert queued[-1]["agent"] == "crm"
+    orch.handoff.advance(run["id"], "crm")
+    assert queued[-1]["agent"] == "billing"
+    # The CRM job is delivered again (SQS at-least-once) to the CRM worker after its step is done:
+    orch.handoff.advance(run["id"], "crm")
+    assert fake.stripe_requests == []  # the CRM worker did not run the billing step
+    assert queued[-1] == {"type": "handoff_advance", "run_id": run["id"], "agent": "billing"}
+    orch.handoff.advance(run["id"], "billing")
+    orch.handoff.advance(run["id"], "messaging")
+    assert orch.handoff.handoffs.get_run(run["id"])["status"] in {"running", "completed"}
+    orch.handoff.advance(run["id"], "handoff")
+    assert orch.handoff.handoffs.get_run(run["id"])["status"] == "completed"
+
+
+# ------------------------------------------------------ verifier observer
+
+
+def test_verifier_handoff_state_reports_saved_effects(client, orch, fake):
+    quote = client.post("/dev/quotes", json={"customer_email": "obs-1@example.com", "product": "starter",
+                                             "seats": 10}).json()
+    assert quote["status"] == "sent" and quote["total_cents"] == 240_000
+    fake.resend_lose_response = True
+    start(client, quote["id"])
+    V = {"Authorization": f"Bearer {VERIFIER_TOKEN}"}
+    assert client.get("/verifier/handoff/obs-1/state").status_code == 401
+    state = client.get("/verifier/handoff/obs-1/state", headers=V).json()
+    [run] = state["runs"]
+    assert run["status"] == "completed" and run["billing_invoices_created"] == 1 and len(run["invoice_ids"]) == 1
+    assert run["welcome_emails_sent"] == 1 and run["uncertain_events"] == 1 and run["first_failure"] is None
+    assert next(st for st in run["steps"] if st["name"] == "welcome_email")["resolved_from_uncertain"] is True
+    client.post("/research/briefs", json={"customer_email": "obs-1@example.com"}, headers=AUTH)
+    [brief] = client.get("/verifier/handoff/obs-1/state", headers=V).json()["research"]
+    assert brief["email_in_fields_read"] is False and brief["crm_writes_refused"] == 0

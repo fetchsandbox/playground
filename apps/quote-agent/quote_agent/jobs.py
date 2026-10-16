@@ -99,7 +99,7 @@ def run_job(orch: Orchestrator, s: Settings, job: dict[str, Any]) -> None:
     elif kind == "handoff_advance":
         if orch.handoff is None:
             raise RuntimeError("handoff job received but the handoff is not configured")
-        orch.handoff.advance(job["run_id"])
+        orch.handoff.advance(job["run_id"], job.get("agent"))
     else:
         log.error("dropping unknown job type %r", kind)
 

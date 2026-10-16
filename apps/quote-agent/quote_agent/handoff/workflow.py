@@ -13,7 +13,8 @@ Rules:
   * A step whose request was sent but whose response was lost is *uncertain*,
     never retried blindly. Resolving it acts again (each agent's act is safe to
     repeat, see agents.py) and verifies; the log keeps uncertain -> verified.
-  * Pause stops new steps. It does not undo a step that already ran.
+  * Pause stops new steps (also after a retry) until resume. It does not undo
+    a step that already ran.
   * Contain (per agent) blocks that agent's next action; a step of that agent
     that is running at that moment is marked uncertain, not assumed undone.
 
@@ -90,9 +91,11 @@ class HandoffWorkflow:
         return self.handoffs.get_run(run["id"]), True
 
     def pause(self, run_id: str, by: str) -> dict[str, Any]:
+        """Hold the run: no new step starts until resume, including after a retry. Allowed on a
+        failed or blocked run too, so an operator can fix the cause and retry without it running on."""
         run = self._run(run_id)
-        if run["status"] in TERMINAL:
-            raise HandoffError(409, f"run {run_id} is {run['status']}")
+        if run["status"] == "completed":
+            raise HandoffError(409, f"run {run_id} is already completed")
         self.handoffs.set_paused(run_id, True)
         if run["status"] == "running":
             self.handoffs.set_run_status(run_id, "paused")
@@ -167,8 +170,13 @@ class HandoffWorkflow:
     # Execution
     # ======================================================================
 
-    def advance(self, run_id: str) -> dict[str, Any] | None:
-        """Execute the next step of a run, if it may run now. Called by the handoff_advance job."""
+    def advance(self, run_id: str, agent: str | None = None) -> dict[str, Any] | None:
+        """Execute the next step of a run, if it may run now. Called by the handoff_advance job.
+
+        `agent` is the agent the job was queued for. With one worker service per agent, a job
+        redelivered after its step finished must not run the next agent's step here (this
+        worker lacks that agent's credential); it is sent on to that agent's queue instead.
+        """
         run = self.handoffs.get_run(run_id)
         if run is None:
             log.warning("handoff run %s not found", run_id)
@@ -182,6 +190,9 @@ class HandoffWorkflow:
             return self._run(run_id)
         if step["status"] != "pending":
             return run  # running elsewhere, uncertain or failed: nothing to start
+        if agent not in (None, "handoff", step["agent"]) and self.enqueue is not None:
+            self._schedule(run_id)  # belongs to another agent's worker
+            return run
         if not self.handoffs.claim_step(run_id, step["name"], ("pending",)):
             return run  # another worker claimed it
         if self._execute(run, step):
@@ -227,6 +238,7 @@ class HandoffWorkflow:
                             run["id"], step["name"])
         try:
             effect = agent.act(ctx)
+            self.gateway.record(agent.name, agent.action, payload, "reconciled", effect, run["id"], step["name"])
         except Exception as exc:  # still can't tell: stays uncertain until verified later
             self.handoffs.move_step(run["id"], step["name"], "running", "uncertain",
                                     {"error": f"reconcile failed: {type(exc).__name__}: {exc}"[:500]})

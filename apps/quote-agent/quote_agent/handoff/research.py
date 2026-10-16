@@ -28,9 +28,11 @@ class ReadOnlyHubSpot(HubSpotClient):
     """HubSpot client that can only read."""
 
     _READ_POSTS = ("/crm/v3/objects/contacts/search",)
+    refused_writes = 0
 
     def _request(self, method: str, path: str, **kw):
         if method != "GET" and not (method == "POST" and path in self._READ_POSTS):
+            self.refused_writes += 1
             raise HubSpotError(f"read-only research client refused {method} {path}")
         return super()._request(method, path, **kw)
 
@@ -127,5 +129,9 @@ class ResearchAgent:
             except Exception as exc:  # noqa: BLE001 — a model failure still returns the facts
                 log.warning("brief model call failed, using rules: %s", exc)
         brief = written or rule_brief(facts)
-        return {"customer_email": email, "requested_by": requested_by, "facts": facts,
-                "fields_shared_with_model": shared if written else [], **brief}
+        result = {"customer_email": email, "requested_by": requested_by, "facts": facts,
+                  "fields_shared_with_model": shared if written else [], **brief}
+        self.gateway.record(self.name, "research.brief", {"email": email}, "brief_written", {
+            "customer_email": email, "fields_read": sorted(contact), "fields_shared_with_model": result["fields_shared_with_model"],
+            "written_by": brief.get("written_by"), "crm_writes_refused": self.hubspot.refused_writes if self.hubspot else 0})
+        return result

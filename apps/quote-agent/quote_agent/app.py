@@ -200,6 +200,23 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
             """Run the workflow synchronously on a hand-made message."""
             return orch.handle_inbound(msg) or {"duplicate": True}
 
+        @app.post("/dev/quotes")
+        def dev_quote(body: dict):
+            """Test fixture: a sent quote priced from the catalog, without any provider call."""
+            from datetime import datetime, timedelta, timezone
+            from .models import Product, Quote, RequestedItem
+            from .pricing import price_items
+            priced = price_items([RequestedItem(product=Product(body.get("product", "starter")),
+                                                quantity=int(body.get("seats", 10)))])
+            now = datetime.now(timezone.utc)
+            quote = Quote(id=f"Q-{uuid.uuid4().hex[:8].upper()}", customer_email=body["customer_email"].lower(),
+                          customer_name=body.get("customer_name"), lines=priced.lines,
+                          subtotal_cents=priced.subtotal_cents, total_cents=priced.subtotal_cents, status="sent",
+                          created_at=now.isoformat(timespec="seconds"),
+                          valid_until=(now + timedelta(days=s.quote_valid_days)).date().isoformat())
+            orch.store.save_quote(quote)
+            return quote.model_dump()
+
         @app.post("/dev/approvals/{approval_id}/{decision}")
         def dev_decide(approval_id: str, decision: str, by: str = "dev"):
             try:

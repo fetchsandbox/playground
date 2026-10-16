@@ -133,5 +133,5 @@ class ActionGateway:
         except Exception as exc:
             self.record(agent, action, payload, "failed", {"error": f"{type(exc).__name__}: {exc}"[:500]}, run_id, step)
             raise
-        self.record(agent, action, payload, "executed", None, run_id, step)
+        self.record(agent, action, payload, "executed", result if isinstance(result, dict) else None, run_id, step)
         return result

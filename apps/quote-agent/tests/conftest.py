@@ -28,6 +28,8 @@ SIGNING_SECRET = "slack-signing-secret"
 MANAGER = "U_MANAGER"
 MANAGER_CHANNEL = "C_APPROVALS"
 HANDOFF_TOKEN = "handoff-token"
+ADMIN_TOKEN = "admin-token"
+VERIFIER_TOKEN = "verifier-token"
 
 
 @pytest.fixture
