@@ -34,11 +34,13 @@ def test_duplicate_slack_event_returns_same_workflow():
     assert first.workflow_id == second.workflow_id
     assert second.summary.get("duplicate_trigger") is True
     # Stripe/HubSpot/Gmail should not double-create on duplicate trigger
-    invoice_creates = [
-        c for c in orch.bus.calls if c.service == "stripe" and c.operation == "invoices.create"
+    pi_creates = [
+        c
+        for c in orch.bus.calls
+        if c.service == "stripe" and c.operation == "payment_intents.create"
     ]
     # Only the first run executes agents; second short-circuits before agents
-    assert len(invoice_creates) >= 1
+    assert len(pi_creates) >= 1
 
 
 def test_concurrent_claims_single_winner():

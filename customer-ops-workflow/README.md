@@ -42,6 +42,37 @@ Each Step Functions Task (and each local `run_with_scope`) **catches** failures 
 | Optimistic lock lost while saving agent output | reload + merge agent result |
 | Transient vendor errors | SFN Retry (3×, backoff) then Catch → soft-fail branch |
 
+## FetchSandbox twins + managed tunnel
+
+Service calls and webhooks are verified against **FetchSandbox provider twins**
+through the managed-tunnel relay (same pattern as `invoice-watch`).
+
+| Provider | Twin REST used by agents |
+|---|---|
+| Stripe | `POST /v1/customers`, `POST /v1/payment_intents` · webhook `POST /webhooks/stripe` |
+| HubSpot | `POST /crm/v3/objects/contacts`, `POST /crm/v3/objects/deals` |
+| Gmail | `POST /gmail/v1/users/me/messages/send` |
+| Slack | `POST …/chat.postMessage` · webhook `POST /webhooks/slack` (strict signature) |
+
+Observation selectors for `application_workflow_v1`:
+
+- `GET /runs/{run_id}/cases/{case_id}/workflows` → `{ "workflows": [...] }` (`workflows[*]`)
+- `GET /runs/{run_id}/cases/{case_id}/webhooks` → `{ "webhooks": [...] }` (`webhooks[*]`)
+- Action: `POST /process-workflow`
+
+```bash
+# Requires ~/.fetchsandbox/credentials.json or FETCHSANDBOX_API_KEY
+cd customer-ops-workflow
+node verify/run-proof-receipt.mjs
+# → writes verify/latest-receipt.txt and /tmp/fs-customer-ops-receipt-url.txt
+
+# Optional: smoke twins without the tunnel (env bases/keys required)
+node verify/twin-driver.mjs
+```
+
+When twin base URLs are injected (`STRIPE_API_BASE`, `HUBSPOT_API_BASE`, …),
+mocks auto-disable (`CUSTOMER_OPS_USE_MOCKS` defaults off).
+
 ## Quick start (local)
 
 ```bash
