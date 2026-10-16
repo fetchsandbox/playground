@@ -1,0 +1,17 @@
+From: billing@notion.so
+To: you@example.com
+Subject: Your Notion invoice for $29.00
+Date: Thu, 15 Oct 2026 09:12:00 +0000
+
+Hi,
+
+Thanks for using Notion. Here is your invoice.
+
+Invoice ID: INV-1001
+Amount: $29.00 USD
+Billing period: 2026-10-15 → 2026-11-15
+Next renewal: 2026-11-15
+
+You can cancel anytime before the next renewal from Settings → Billing.
+
+— Notion Billing
