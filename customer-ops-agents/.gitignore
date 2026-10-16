@@ -2,3 +2,4 @@ node_modules/
 cdk.out/
 .env
 *.log
+dist/

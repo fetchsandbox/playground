@@ -1,7 +1,7 @@
 import type { Deps } from "../deps";
 import { FatalError } from "../lib/errors";
-import { once } from "../lib/idempotency";
 import { untrusted } from "../lib/llm";
+import { notify } from "../workflow/notify";
 import { type IntakeState, IntakeSchema, type WorkflowInput } from "../types";
 
 const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
@@ -43,11 +43,7 @@ export async function runIntake(input: WorkflowInput, d: Deps): Promise<IntakeSt
 
   const t = intake.tasks;
   const agents = [t.research && "research", t.quote.needed && "quote", t.billing && "billing", t.survey && "survey"].filter(Boolean);
-  await once(d.store, `${input.runId}:slack:intake`, () =>
-    d.chat.post(input.slack.channel, `🧭 *${intake.summary}*\nCustomer: ${email} · urgency: ${intake.urgency}\nRunning in parallel: ${agents.join(", ") || "none"}`, {
-      threadTs: input.slack.threadTs,
-    }),
-  );
+  await notify(d, input, "intake", `🧭 *${intake.summary}*\nCustomer: ${email} · urgency: ${intake.urgency}\nRunning in parallel: ${agents.join(", ") || "none"}`);
 
   return { ...input, intake, crm: { contactId: contact.id, ownerId: contact.ownerId ?? d.config.defaultOwnerId } };
 }

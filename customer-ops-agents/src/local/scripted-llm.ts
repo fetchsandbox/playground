@@ -4,7 +4,7 @@
 import type { z } from "zod";
 import type { AgentRequest, Llm, StructuredRequest } from "../lib/llm";
 
-type Handler = (prompt: string) => unknown;
+type Handler = (prompt: string) => unknown | Promise<unknown>;
 
 const words = (s: string) => s.toLowerCase().match(/[a-z]+/g) ?? [];
 
@@ -68,7 +68,7 @@ export class ScriptedLlm implements Llm {
     await new Promise((r) => setImmediate(r));
     const h = this.script[req.task];
     if (!h) throw new Error(`ScriptedLlm has no handler for task ${req.task}`);
-    return req.schema.parse(h(req.prompt)); // same validation the real structured output gets
+    return req.schema.parse(await h(req.prompt)); // same validation the real structured output gets
   }
 
   async runAgent(req: AgentRequest): Promise<string> {

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { LeaseBusyError } from "./errors";
 import { sleep } from "./retry";
-import { type KvStore, ttlFromNow } from "./store";
+import { type KvStore, ttlFromNow, when } from "./store";
 
 export interface Lease {
   resource: string;
@@ -38,7 +38,7 @@ export async function withLease<T>(store: KvStore, resource: string, fn: (lease:
     const fence = (typeof prev?.fence === "number" ? prev.fence : 0) + 1;
     const acquired = await store.put(
       { pk, token, fence, expiresAt: now() + ttlMs, ttl: ttlFromNow(3600, now()) },
-      { kind: "notExistsOrExpired", now: now() },
+      when.notExistsOrExpired(now()),
     );
     if (acquired) {
       const lease: Lease = {
@@ -54,7 +54,7 @@ export async function withLease<T>(store: KvStore, resource: string, fn: (lease:
         return await fn(lease);
       } finally {
         // Only release our own lease — never one a successor acquired after ours expired.
-        await store.delete(pk, { kind: "equals", attrs: { token } });
+        await store.delete(pk, when.eq({ token }));
       }
     }
     if (now() >= deadline) throw new LeaseBusyError(`lease ${resource} is held by another worker`);

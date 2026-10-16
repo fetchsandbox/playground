@@ -1,48 +1,34 @@
 import type { Deps } from "../deps";
 import { once } from "../lib/idempotency";
-import type { DispatchState, HandoffState, WorkflowInput } from "../types";
-import { approvalKey } from "./approval";
+import type { SlackBlock } from "../providers/slack";
+import type { WorkflowInput } from "../types";
 
-export type NotifyEvent =
-  | { kind: "done"; state: DispatchState }
-  | { kind: "rejected"; state: HandoffState & { approval: { decidedBy: string } } }
-  | { kind: "expired"; state: HandoffState }
-  | { kind: "failed"; state: WorkflowInput & { error?: { Error?: string; Cause?: string } } };
+export const runKey = (runId: string) => `run#${runId}`;
 
-function causeText(cause: string | undefined) {
-  if (!cause) return "";
-  try {
-    const c = JSON.parse(cause) as { errorMessage?: string };
-    return c.errorMessage ?? cause;
-  } catch {
-    return cause;
-  }
+export interface RunEvent {
+  at: number;
+  key: string;
+  text: string;
 }
 
-/** Final word in the Slack thread for every terminal path of the state machine. */
-export async function runNotify(e: NotifyEvent, d: Deps): Promise<void> {
-  const s = e.state;
-  let text: string;
-  switch (e.kind) {
-    case "done": {
-      const icon = { done: "✅", skipped: "⏭️", failed: "❌" } as const;
-      text = `*Done.*\n${e.state.dispatch.map((o) => `${icon[o.status]} ${o.action}: ${o.detail}`).join("\n")}`;
-      break;
-    }
-    case "rejected":
-      text = `🛑 Rejected by <@${e.state.approval.decidedBy}>. Nothing was sent to the customer. Draft quote and CRM note were kept for reference.`;
-      break;
-    case "expired": {
-      text = "⌛ Approval window expired; nothing was sent. Re-run the request to start again.";
-      // Close the window in our own store too, and take the buttons off the message.
-      await d.store.update(approvalKey(s.runId), { status: "EXPIRED" }, { kind: "equals", attrs: { status: "PENDING" } });
-      const rec = await d.store.get(approvalKey(s.runId));
-      if (typeof rec?.messageTs === "string") await d.chat.update(s.slack.channel, rec.messageTs, "⌛ This approval expired.", []);
-      break;
-    }
-    case "failed":
-      text = `⚠️ Workflow stopped: ${causeText(e.state.error?.Cause) || e.state.error?.Error || "unknown error"}`;
-      break;
-  }
-  await once(d.store, `${s.runId}:slack:notify:${e.kind}`, () => d.chat.post(s.slack.channel, text, { threadTs: s.slack.threadTs }));
+/**
+ * Every message the workflow emits goes to the run's event log (what
+ * LoopLabs reads through `status`), and to the Slack thread too when a bot
+ * token and a thread are configured. At most once per `key`, across retries
+ * and resumed runs.
+ */
+export function notify(d: Deps, input: WorkflowInput, key: string, text: string, blocks?: SlackBlock[]): Promise<{ ts: string | null }> {
+  return once(d.store, `${input.runId}:notify:${key}`, async () => {
+    let ts: string | null = null;
+    if (d.chat && input.slack) ts = (await d.chat.post(input.slack.channel, text, { threadTs: input.slack.threadTs, blocks })).ts;
+    const event: RunEvent = { at: d.now(), key, text };
+    await d.store.append(runKey(input.runId), "events", [event]);
+    return { ts };
+  });
+}
+
+/** Replace an earlier Slack message (e.g. remove approval buttons). No-op without Slack. */
+export async function replaceMessage(d: Deps, input: WorkflowInput, ts: string | null | undefined, text: string) {
+  if (!d.chat || !input.slack || !ts) return;
+  await d.chat.update(input.slack.channel, ts, text, [{ type: "section", text: { type: "mrkdwn", text } }]);
 }

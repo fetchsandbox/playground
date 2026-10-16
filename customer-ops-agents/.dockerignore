@@ -1,0 +1,7 @@
+node_modules
+cdk.out
+dist
+test
+infra
+.env
+*.md

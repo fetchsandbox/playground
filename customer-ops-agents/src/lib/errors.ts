@@ -1,6 +1,5 @@
-// Error taxonomy. Step Functions matches Retry/Catch rules on `error.name`
-// (Lambda reports it as `errorType`), so these names are part of the
-// contract with infra/stack.ts — rename them in both places or neither.
+// Error taxonomy. The run engine retries a step on RetryableError (and its
+// subclasses) and fails the run on anything else.
 
 /** Transient: safe to retry the whole step (rate limit, 5xx, lock busy). */
 export class RetryableError extends Error {

@@ -25,7 +25,8 @@ export interface Deps {
   crm: Crm;
   billing: Billing;
   mail: Mail;
-  chat: Chat;
+  /** Present when a Slack bot token is configured; otherwise messages only go to the run's event log. */
+  chat?: Chat;
   config: AppConfig;
   log: Logger;
   now: () => number;
@@ -36,8 +37,8 @@ export interface Secrets {
   ANTHROPIC_API_KEY: string;
   STRIPE_SECRET_KEY: string;
   HUBSPOT_TOKEN: string;
-  SLACK_BOT_TOKEN: string;
-  SLACK_SIGNING_SECRET: string;
+  /** Optional. Without it the agent never posts to Slack; LoopLabs reads events via `status`. */
+  SLACK_BOT_TOKEN?: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REFRESH_TOKEN: string;
@@ -46,7 +47,7 @@ export interface Secrets {
 
 let secretsPromise: Promise<Secrets> | undefined;
 
-/** Cached per Lambda container; falls back to env vars when SECRET_ARN is unset (local dev). */
+/** Cached per container; falls back to env vars when SECRET_ARN is unset (local dev). */
 export function loadSecrets(): Promise<Secrets> {
   secretsPromise ??= (async () => {
     const arn = process.env.SECRET_ARN;
@@ -86,9 +87,9 @@ export function getDeps(): Promise<Deps> {
         refreshToken: s.GOOGLE_REFRESH_TOKEN,
         sender: s.GMAIL_SENDER,
       }),
-      chat: new SlackChat(s.SLACK_BOT_TOKEN),
+      chat: s.SLACK_BOT_TOKEN ? new SlackChat(s.SLACK_BOT_TOKEN) : undefined,
       config: configFromEnv(),
-      log: createLogger({ fn: process.env.AWS_LAMBDA_FUNCTION_NAME }),
+      log: createLogger({ service: "customer-ops-agents" }),
       now: Date.now,
     };
   })();

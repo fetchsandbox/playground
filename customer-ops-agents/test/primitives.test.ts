@@ -3,7 +3,6 @@ import { EffectInProgressError, LeaseBusyError, RetryableError } from "../src/li
 import { once } from "../src/lib/idempotency";
 import { withLease } from "../src/lib/lease";
 import { sleep } from "../src/lib/retry";
-import { signSlackBody, verifySlackSignature } from "../src/lib/slack-verify";
 import { MemoryStore } from "../src/lib/store";
 
 describe("once() — idempotent side effects", () => {
@@ -88,21 +87,5 @@ describe("withLease() — mutual exclusion", () => {
     }, { now, ttlMs: 30_000 });
     await slow;
     expect(fences).toEqual([1, 2]);
-  });
-});
-
-describe("Slack signature verification", () => {
-  const secret = "8f742231b10e8888abcd99yyyzzz85a5";
-  const body = "token=x&team_id=T1&text=hello";
-  const ts = 1_760_000_000;
-
-  it("accepts a valid signature", () => {
-    expect(verifySlackSignature({ signingSecret: secret, rawBody: body, timestamp: String(ts), signature: signSlackBody(secret, body, ts), nowSeconds: ts + 5 })).toBe(true);
-  });
-  it("rejects a tampered body", () => {
-    expect(verifySlackSignature({ signingSecret: secret, rawBody: `${body}&x=1`, timestamp: String(ts), signature: signSlackBody(secret, body, ts), nowSeconds: ts })).toBe(false);
-  });
-  it("rejects replays older than 5 minutes", () => {
-    expect(verifySlackSignature({ signingSecret: secret, rawBody: body, timestamp: String(ts), signature: signSlackBody(secret, body, ts), nowSeconds: ts + 301 })).toBe(false);
   });
 });

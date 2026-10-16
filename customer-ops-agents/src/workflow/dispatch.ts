@@ -2,20 +2,20 @@ import type { Deps } from "../deps";
 import { surveyKey } from "../agents/survey";
 import { FatalError, RetryableError, errorMessage, isRetryable } from "../lib/errors";
 import { once } from "../lib/idempotency";
-import { ttlFromNow } from "../lib/store";
-import { approvalKey } from "./approval";
+import { ttlFromNow, when } from "../lib/store";
+import { runKey } from "./notify";
 import { type ActionKind, type ActionOutcome, type ApprovedState, type DispatchState, type QuoteResult, type SurveyResult, agentData } from "../types";
 
 /**
  * Executes the approved actions. Every action is wrapped in `once()`, so when
- * one action fails transiently we throw, Step Functions re-runs the whole
+ * one action fails transiently we throw, the engine re-runs the whole
  * step, and the actions that already succeeded are replayed from the ledger
  * instead of being repeated (no second email, no second task).
  */
 export async function runDispatch(s: ApprovedState, d: Deps): Promise<DispatchState> {
-  // Defense in depth: the decision must exist in our own store, not just in the payload.
-  const rec = await d.store.get(approvalKey(s.runId));
-  if (rec?.status !== "APPROVED") throw new FatalError(`run ${s.runId} has no recorded approval (status ${rec?.status ?? "missing"})`);
+  // Defense in depth: the decision must be recorded on the run itself, not just passed in.
+  const rec = await d.store.get(runKey(s.runId));
+  if (rec?.phase !== "APPROVED") throw new FatalError(`run ${s.runId} is not approved (phase ${String(rec?.phase ?? "missing")})`);
 
   const quote = agentData<QuoteResult>(s, "quote");
   const survey = agentData<SurveyResult>(s, "survey");
@@ -63,7 +63,7 @@ export async function runDispatch(s: ApprovedState, d: Deps): Promise<DispatchSt
     const now = d.now();
     const reserved = await d.store.put(
       { pk: surveyKey(email), runId: s.runId, expiresAt: now + d.config.surveyCooldownDays * 86_400_000, ttl: ttlFromNow(d.config.surveyCooldownDays * 86_400, now) },
-      { kind: "notExistsOrExpired", now },
+      when.notExistsOrExpired(now),
     );
     const holder = reserved ? s.runId : (await d.store.get(surveyKey(email)))?.runId;
     if (holder !== s.runId) {
@@ -75,7 +75,7 @@ export async function runDispatch(s: ApprovedState, d: Deps): Promise<DispatchSt
         return `survey sent (${r.id})`;
       });
       const failed = outcomes.find((o) => o.action === "send_survey" && o.status === "failed");
-      if (failed && !transient) await d.store.delete(surveyKey(email), { kind: "equals", attrs: { runId: s.runId } });
+      if (failed && !transient) await d.store.delete(surveyKey(email), when.eq({ runId: s.runId }));
     }
   }
 

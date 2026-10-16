@@ -12,9 +12,9 @@ export interface RetryOptions {
 
 /**
  * In-process retry with full-jitter exponential backoff. Honours a provider's
- * Retry-After when the error carries one. Keep `retries` small: Step Functions
- * owns the long-horizon retries, this only smooths over blips inside one
- * Lambda invocation.
+ * Retry-After when the error carries one. Keep `retries` small: the run
+ * engine owns step-level retries, this only smooths over blips inside one
+ * provider call.
  */
 export async function withRetry<T>(fn: (attempt: number) => Promise<T>, opts: RetryOptions = {}): Promise<T> {
   const { retries = 3, baseMs = 250, maxMs = 8_000, shouldRetry = isRetryable } = opts;

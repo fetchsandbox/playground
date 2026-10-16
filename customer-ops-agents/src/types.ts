@@ -1,17 +1,17 @@
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
-// Workflow state. Everything here travels through Step Functions, whose
-// payload limit is 256 KB — keep agent outputs compact (summaries, ids),
-// never raw provider dumps.
+// Workflow state. It is checkpointed into one DynamoDB item per run (400 KB
+// limit) — keep agent outputs compact (summaries, ids), never raw dumps.
 // ---------------------------------------------------------------------------
 
 export interface WorkflowInput {
-  /** = Step Functions execution name. Deterministic per Slack event, so it doubles as the dedupe key. */
+  /** Caller-chosen idempotency key (e.g. the Slack event_id). Re-sending `start` with it is a no-op. */
   runId: string;
   requestText: string;
   requestedBy: { userId: string; userName?: string };
-  slack: { channel: string; threadTs: string };
+  /** Where to post progress. Optional: every message is also kept in the run's event log. */
+  slack?: { channel: string; threadTs: string };
   receivedAt: string;
 }
 
