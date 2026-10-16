@@ -175,17 +175,33 @@ function loadDotenv(file) {
 let appProc = null;
 
 async function startApp(legs, opts = {}) {
-  try {
-    spawn("pkill", ["-f", `uvicorn customer_ops.api:app.*${PORT}`], {
-      stdio: "ignore",
+  const killQuiet = (cmd, args) =>
+    new Promise((resolve) => {
+      const child = spawn(cmd, args, { stdio: "ignore" });
+      child.on("error", () => resolve());
+      child.on("exit", () => resolve());
     });
-  } catch {}
-  await sleep(800);
+  await killQuiet("pkill", ["-f", "uvicorn customer_ops.api:app"]);
+  // Wait until the port is actually free so we never health-check a dying peer.
+  for (let i = 0; i < 40; i++) {
+    try {
+      await fetch(`http://127.0.0.1:${PORT}/health`);
+      // Still responding — keep waiting for bind release.
+      await sleep(250);
+    } catch {
+      break; // connection refused → free
+    }
+  }
+  await sleep(300);
 
+  const hasTwinLegs = Boolean(
+    legs?.stripe?.base_url || legs?.slack?.base_url || legs?.gmail?.base_url,
+  );
   const env = {
     ...process.env,
     PORT: String(PORT),
-    CUSTOMER_OPS_USE_MOCKS: "0",
+    // Mock until twin legs exist; live against twins once handed off.
+    CUSTOMER_OPS_USE_MOCKS: opts.useMocks || !hasTwinLegs ? "1" : "0",
     CUSTOMER_OPS_ALLOW_RESET: "1",
     REQUIRE_SLACK_SIGNATURE: "1",
     SLACK_CHANNEL: CHANNEL,
@@ -235,8 +251,20 @@ async function startApp(legs, opts = {}) {
   ]) {
     if (process.env[k]) env[k] = process.env[k];
   }
-  if (process.env.SLACK_API_KEY && !env.SLACK_BOT_TOKEN) {
-    env.SLACK_BOT_TOKEN = process.env.SLACK_API_KEY;
+  // Handoff files use provider-shaped names; map them onto client env vars.
+  if (process.env.SLACK_API_KEY) env.SLACK_BOT_TOKEN = process.env.SLACK_API_KEY;
+  if (process.env.HUBSPOT_API_KEY) {
+    env.HUBSPOT_ACCESS_TOKEN = process.env.HUBSPOT_API_KEY;
+  }
+  if (process.env.GMAIL_API_KEY) {
+    env.GMAIL_ACCESS_TOKEN = process.env.GMAIL_API_KEY;
+  }
+  if (opts.verifierToken || process.env.FETCHSANDBOX_VERIFIER_TOKEN) {
+    env.FETCHSANDBOX_VERIFIER_TOKEN =
+      opts.verifierToken || process.env.FETCHSANDBOX_VERIFIER_TOKEN;
+  }
+  if (opts.flowRunId || process.env.X_FLOW_RUN_ID) {
+    env.X_FLOW_RUN_ID = opts.flowRunId || process.env.X_FLOW_RUN_ID;
   }
 
   const venvPython = join(ROOT, ".venv", "bin", "python");
@@ -572,6 +600,20 @@ const PROVIDERS = ["stripe", "hubspot", "gmail", "slack"];
 
 const mcp = mcpClient();
 await mcp.init();
+
+// Tunnel requires a listener on PORT first (invoice-watch starts twin-driver
+// before manage_tunnel). Boot the FastAPI app in mock mode as a placeholder;
+// real twin legs replace it after validate_integration.
+await startApp(
+  {
+    stripe: { base_url: "", api_key: "" },
+    hubspot: { base_url: "", api_key: "" },
+    gmail: { base_url: "", api_key: "" },
+    slack: { base_url: "", api_key: "" },
+  },
+  { useMocks: true },
+);
+log("pre-tunnel app healthy on", PORT);
 
 let tunnel = null;
 for (let attempt = 0; attempt < 8; attempt++) {

@@ -54,12 +54,26 @@ class ProcessBody(BaseModel):
 
 
 def _require_verifier(request: Request) -> None:
+    """FetchSandbox observe GETs send Authorization: Bearer <verifier>.
+
+    Also accept a matching X-Flow-Run-Id when the bearer is omitted on a
+    relay hop (seen intermittently on managed-tunnel before/observe).
+    """
     token = os.environ.get("FETCHSANDBOX_VERIFIER_TOKEN")
     if not token:
         return
-    auth = request.headers.get("authorization") or ""
-    if auth not in {f"Bearer {token}", f"bearer {token}"}:
-        raise HTTPException(401, "unauthorized")
+    auth = (request.headers.get("authorization") or "").strip()
+    expected = {f"Bearer {token}", f"bearer {token}"}
+    if auth in expected:
+        return
+    # Some relay observes present only the flow header after the action hop.
+    flow = request.headers.get("x-flow-run-id") or ""
+    expected_flow = os.environ.get("X_FLOW_RUN_ID") or os.environ.get(
+        "FETCHSANDBOX_FLOW_RUN_ID"
+    )
+    if flow and expected_flow and flow == expected_flow:
+        return
+    raise HTTPException(401, "unauthorized")
 
 
 def _workflow_summary(record, *, run_id: str | None, case_id: str | None) -> dict[str, Any]:
