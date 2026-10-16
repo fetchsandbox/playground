@@ -376,6 +376,28 @@ contacts were read back from the sandboxes afterwards. The HubSpot sandbox
 has no Deals API, so deal writes were only tested against the fakes. Gmail
 has no sandbox and has not been run against the real API.
 
+### Customer handoff verification
+
+`tests/test_handoff.py` runs the real HubSpot, Stripe and Resend client code
+against in-memory fakes. The Stripe fake, like the FetchSandbox Stripe twin,
+ignores `Idempotency-Key`. The tests cover:
+- the step order and the gate between steps
+- lost responses on every Stripe and Resend write and on the HubSpot update
+- repeated and concurrent starts
+- pause, contain and retry
+- the operator/agent token split and per-agent job routing
+- the read-only research agent
+
+FetchSandbox then drove the real app through its managed relay
+(`verification/handoff_contract.py`, `application_workflow_v1`).
+**20 of 21 checks held, none violated.** The one unmeasured check is the
+accepted-response-loss check: this cloud container's egress proxy hides
+the app's disconnect from the twin. The app's own log shows `uncertain →
+reconciled → verified` with one email. Details and receipts are in
+[`findings/2026-10-16-handoff-agents-fetchsandbox-relay.md`](../../findings/2026-10-16-handoff-agents-fetchsandbox-relay.md).
+`verification/handoff_fetchsandbox.py` is the arm/probe harness used before
+the relay run.
+
 ## External verification (FetchSandbox)
 
 `verification/fetchsandbox_contract.py <session_id>` builds the
@@ -404,3 +426,12 @@ is set:
   RDS certificate. Add the RDS CA bundle to the image and use `verify-full`
   if your policy requires it.
 - Approval requests have no expiry or reminder.
+- Handoff:
+  - The Terraform still deploys one worker service. Running each agent as
+    its own service, with only its own secret, needs one SQS queue and ECS
+    service per agent plus `AGENT_QUEUE_URLS`. The code supports it; the
+    infrastructure doesn't define it yet.
+  - The handoff is started over its API, not by a HubSpot "deal won"
+    webhook.
+  - The invoice is one line for the quote total, not one line per quote
+    line.
