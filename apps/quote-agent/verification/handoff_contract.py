@@ -151,8 +151,13 @@ checks = [
                           "r401", "resend", "auth_failure", "welcome_email", []),
     refusal_then_recovery("email_rate_limited", "Resend 429: email step fails visibly; retry completes with one email",
                           "r429", "resend", "rate_limited", "welcome_email", []),
-    refusal_then_recovery("email_server_error", "Resend 503: email step fails visibly; retry completes with one email",
-                          "r503", "resend", "recovery_server_error", "welcome_email", []),
+    # Resend sends are retried inside the client with the same Idempotency-Key, so a transient 503
+    # recovers without an operator: the run completes on its own with exactly one email.
+    check("email_server_error", "Resend 503 then recovery: retried with the same Idempotency-Key, one email, "
+          "no operator step", "r503",
+          [fixture_quote("r503"), start("{{step1.id}}")],
+          runs(1, eq("status", "completed"), eq("first_failure", None), eq("welcome_emails_sent", 1), *ALL_VERIFIED),
+          fault={"provider": "resend", "scenario": "recovery_server_error"}, deadline=60),
     check("contain_billing", "Contained billing agent is blocked before Stripe; release + retry completes once", "cont",
           [post("/agents/billing/contain"), fixture_quote("cont"), start("{{step2.id}}"),
            post("/agents/billing/release"), post("/handoff/runs/{{step3.id}}/retry")],
@@ -209,7 +214,7 @@ DIM = {
     "delayed_or_missing_events": ("not_applicable", "The handoff consumes no provider webhooks; every effect is read back synchronously.", []),
     "provider_auth_and_scopes": ("relevant", "Provider 401/403 fail the step visibly and stop later steps.",
                                  ["crm_auth_failure", "crm_scope_denied", "billing_auth_failure", "email_auth_failure"]),
-    "rate_limit_server_error_timeout": ("relevant", "429 retried per Retry-After then failed; 5xx failed (Stripe) or retried with the same key (Resend).",
+    "rate_limit_server_error_timeout": ("relevant", "429 retried per Retry-After then failed; Stripe 5xx fails the step; Resend 5xx is retried with the same key.",
                                         ["crm_rate_limited", "billing_rate_limited", "billing_server_error",
                                          "email_rate_limited", "email_server_error"]),
     "accepted_effect_response_loss": ("relevant", "Ambiguous transport errors -> step uncertain -> repeat the idempotent action -> verify.",
@@ -231,6 +236,6 @@ EV = ["quote_agent/handoff/workflow.py", "quote_agent/handoff/agents.py", "quote
       "quote_agent/verifier.py handoff observer"]
 scope = [{"check_id": c["id"], "classification": "in_scope", "reason": c["name"], "evidence": EV} for c in checks]
 assert len(checks) <= 30
-cfg = {"app_version": "quote-agent-handoff@1", "disposable_test_app": True, "require_verifier_token": True,
+cfg = {"app_version": "quote-agent-handoff@2", "disposable_test_app": True, "require_verifier_token": True,
        "observation_seconds": 1, "checks": checks, "coverage_review": coverage, "scope_review": scope}
 print(json.dumps({"session_id": SESSION, "suite": "application_workflow_v1", "application_config": cfg}))
