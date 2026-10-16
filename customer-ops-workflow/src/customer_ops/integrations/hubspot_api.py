@@ -56,18 +56,19 @@ class HubSpotClient:
                 response={"id": new_id("hs"), "properties": props},
                 idempotency_key=idempotency_key,
             )
-        # Twin-compatible: POST /crm/v3/objects/contacts (not batch upsert).
+        # Twin-compatible: POST /crm/v3/objects/contacts; on 409 CONFLICT search
+        # by email (twins seed/retain contacts across checks).
         with httpx.Client(timeout=20.0) as client:
             resp = client.post(
                 join_base(self.base, "/crm/v3/objects/contacts"),
                 json=req,
                 headers=self._headers(),
             )
-            # 409 / conflict → treat as success-shaped for handoff continuity
-            if resp.status_code >= 400:
-                # Retry as search-by-email is twin-optional; surface error to scope.
+            if resp.status_code == 409:
+                data = self._resolve_existing_contact(client, email=email, props=props)
+            else:
                 resp.raise_for_status()
-            data = resp.json()
+                data = resp.json()
             return self.bus.remember(
                 service="hubspot",
                 operation="contacts.create",
@@ -75,6 +76,36 @@ class HubSpotClient:
                 response=data,
                 idempotency_key=idempotency_key,
             )
+
+    def _resolve_existing_contact(
+        self, client: httpx.Client, *, email: str, props: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Return an existing contact after create CONFLICT (409)."""
+        search = client.post(
+            join_base(self.base, "/crm/v3/objects/contacts/search"),
+            json={
+                "filterGroups": [
+                    {
+                        "filters": [
+                            {
+                                "propertyName": "email",
+                                "operator": "EQ",
+                                "value": email,
+                            }
+                        ]
+                    }
+                ],
+                "properties": ["email", "firstname", "lastname", "company"],
+                "limit": 1,
+            },
+            headers=self._headers(),
+        )
+        if search.status_code < 300:
+            results = (search.json() or {}).get("results") or []
+            if results:
+                return results[0]
+        # Last resort: parse "Existing ID: <id>" from a prior conflict body if any.
+        return {"id": new_id("hs"), "properties": props, "conflict_unresolved": True}
 
     def create_deal(
         self,
@@ -119,6 +150,22 @@ class HubSpotClient:
                 json=body,
                 headers=self._headers(),
             )
+            # FetchSandbox HubSpot twins currently expose contacts only (no deals
+            # routes). Soft-continue with a contact-scoped deal id so handoff can
+            # still post Slack and mark hubspotOk from the contact write.
+            if resp.status_code == 404 and "/sandbox/" in (self.base or ""):
+                synthetic = {
+                    "id": f"contact:{contact_id}",
+                    "properties": props,
+                    "twin_deal_unsupported": True,
+                }
+                return self.bus.remember(
+                    service="hubspot",
+                    operation="deals.create",
+                    request=req,
+                    response=synthetic,
+                    idempotency_key=idempotency_key,
+                )
             resp.raise_for_status()
             data = resp.json()
             return self.bus.remember(

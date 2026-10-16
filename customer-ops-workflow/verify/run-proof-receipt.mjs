@@ -589,7 +589,7 @@ function scopeReview(checks) {
       "customer-ops-workflow POST /webhooks/stripe",
       "Stripe POST /v1/customers + /v1/payment_intents",
       "HubSpot POST /crm/v3/objects/contacts + /deals",
-      "Gmail POST /gmail/v1/users/me/messages/send",
+      "Gmail POST /gmail/v1/users/me/messages/send (twin fallback: messages.insert)",
       "Slack POST chat.postMessage",
     ],
   }));

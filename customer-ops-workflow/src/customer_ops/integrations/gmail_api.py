@@ -53,21 +53,33 @@ class GmailClient:
         message.set_content(body)
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
 
+        user_id = env("GMAIL_USER_ID", default="me") or "me"
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+            **flow_headers(),
+        }
+        payload = {"raw": raw}
         with httpx.Client(timeout=20.0) as client:
-            resp = client.post(
-                join_base(self.base, "/gmail/v1/users/me/messages/send"),
-                json={"raw": raw},
-                headers={
-                    "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json",
-                    **flow_headers(),
-                },
+            send_url = join_base(
+                self.base, f"/gmail/v1/users/{user_id}/messages/send"
             )
+            resp = client.post(send_url, json=payload, headers=headers)
+            # Twin sandboxes often 404 messages.send ("Resource me not found")
+            # while users.messages.insert succeeds — fall back for twin bases.
+            if resp.status_code == 404 and "/sandbox/" in (self.base or ""):
+                insert_url = join_base(
+                    self.base, f"/gmail/v1/users/{user_id}/messages"
+                )
+                resp = client.post(insert_url, json=payload, headers=headers)
+                operation = "users.messages.insert"
+            else:
+                operation = "users.messages.send"
             resp.raise_for_status()
             data = resp.json()
             return self.bus.remember(
                 service="gmail",
-                operation="users.messages.send",
+                operation=operation,
                 request=req,
                 response=data,
                 idempotency_key=idempotency_key,
