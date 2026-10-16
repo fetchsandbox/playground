@@ -114,23 +114,27 @@ def test_observe_accepts_bearer_verifier():
     assert resp.json() == {"workflows": []}
 
 
-def test_observe_accepts_flow_run_id_matching_path():
-    """Managed-tunnel observe often sends only X-Flow-Run-Id (see FS request_headers)."""
+def test_observe_rejects_flow_run_id_without_bearer():
+    """FS preflight missing-auth probe still sends X-Flow-Run-Id; must 401."""
     os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
+    os.environ["X_FLOW_RUN_ID"] = "vr_abc"
     client = TestClient(app)
     resp = client.get(
         "/runs/vr_abc/cases/baseline/workflows",
         headers={"X-Flow-Run-Id": "vr_abc"},
     )
-    assert resp.status_code == 200
-    assert resp.json() == {"workflows": []}
+    assert resp.status_code == 401
 
 
-def test_observe_rejects_mismatched_flow_run_id():
+def test_observe_accepts_bearer_even_with_flow_header():
     os.environ["FETCHSANDBOX_VERIFIER_TOKEN"] = "verif_secret"
     client = TestClient(app)
     resp = client.get(
         "/runs/vr_abc/cases/baseline/workflows",
-        headers={"X-Flow-Run-Id": "vr_OTHER"},
+        headers={
+            "Authorization": "Bearer verif_secret",
+            "X-Flow-Run-Id": "vr_abc",
+        },
     )
-    assert resp.status_code == 401
+    assert resp.status_code == 200
+    assert resp.json() == {"workflows": []}

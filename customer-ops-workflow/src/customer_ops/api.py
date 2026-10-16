@@ -63,36 +63,20 @@ def _bearer_token(authorization: str | None) -> str | None:
 
 
 def _require_verifier(request: Request, *, run_id: str | None = None) -> None:
-    """Authorize FetchSandbox observe GETs.
+    """Require FetchSandbox verifier Bearer on observe GETs.
 
-    Managed-tunnel config advertises ``request_headers: {X-Flow-Run-Id}``.
-    The relay usually also sends ``Authorization: Bearer <FETCHSANDBOX_VERIFIER_TOKEN>``,
-    but observe hops have been seen with only the flow header — which caused
-    intermittent 401s and baseline ``found 0``.
-
-    Accept (any one):
-    1. Bearer verifier token
-    2. ``X-Flow-Run-Id`` equal to the path ``run_id``
-    3. ``X-Flow-Run-Id`` equal to ``X_FLOW_RUN_ID`` env from handoff
+    Preflight probes ``authentication: missing`` and expects **401/403**.
+    ``X-Flow-Run-Id`` alone is NOT enough — the relay still sends that header
+    on the missing-auth probe, which previously made us return 200 and trip
+    ``adapter_auth_not_enforced``.
     """
+    del run_id  # path run_id is for callers; auth is bearer-only
     token = (os.environ.get("FETCHSANDBOX_VERIFIER_TOKEN") or "").strip()
     if not token:
         return
-
     presented = _bearer_token(request.headers.get("authorization"))
     if presented is not None and hmac.compare_digest(presented, token):
         return
-
-    flow = (request.headers.get("x-flow-run-id") or "").strip()
-    if flow and run_id and hmac.compare_digest(flow, run_id):
-        return
-
-    expected_flow = (
-        os.environ.get("X_FLOW_RUN_ID") or os.environ.get("FETCHSANDBOX_FLOW_RUN_ID") or ""
-    ).strip()
-    if flow and expected_flow and hmac.compare_digest(flow, expected_flow):
-        return
-
     raise HTTPException(401, "unauthorized")
 
 
