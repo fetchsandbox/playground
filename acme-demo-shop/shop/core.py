@@ -2,7 +2,7 @@
 import hashlib,hmac,json,re,secrets,time,uuid
 from decimal import Decimal
 
-VERSION='acme-shop-1.0.0'
+VERSION='acme-shop-1.0.1'
 class ShopError(Exception):
  def __init__(self,message,status=400):self.message,self.status=message,status
 
@@ -35,6 +35,9 @@ class Shop:
   if not self.db.consume(key):raise ShopError('This sign-in code has already been used.',401)
   token=secrets.token_urlsafe(32);self.db.put({'pk':'SESSION#'+self.hash(token),'email':r['email'],'owner':self.hash(r['email']),'ttl':int(self.now())+8*3600})
   return token
+ def logout(self,token):self.db.delete('SESSION#'+self.hash(token or ''))
+ def event(self,name,r):
+  print(json.dumps({'event':name,'order_id':r['pk'],'sku':r.get('sku'),'timestamp':int(self.now()),'version':VERSION}))
  def session(self,token):
   r=self.db.get('SESSION#'+self.hash(token or ''))
   if not r or r['ttl']<=self.now():raise ShopError('Sign in to view your orders.',401)
@@ -77,6 +80,7 @@ class Shop:
    r.update(state='PAID',payment_intent=pi['id'],stripe_customer=pi['customer']);self.db.save(r)
    # Merchant evidence is created only after independently reading a settled Stripe payment.
    self.repo.ensure_order(r)
+   self.event('shop_payment_verified',r)
    self.sync(r)
    return r
  def sync(self,r):
@@ -92,7 +96,7 @@ class Shop:
     response=self.p.mail(r['email'],'Acme demo purchase confirmed — '+r['product_name'],'Hi,\n\nYour test purchase is confirmed.\n\nProduct: '+r['product_name']+'\nAmount: '+money(r['amount_minor'])+'\nOrder: '+r['pk']+'\n\nThis is a synthetic Acme demo. No real money moved. Open My orders in the demo shop to simulate a return and request a refund.\n\nAcme Operations',r['pk']+':purchase')
     r['confirmation']='sent';r['confirmation_reference']=response['id']
    except Exception:r['confirmation']='uncertain'
-  r['due']=int(self.now())+60;self.db.save(r)
+  r['due']=int(self.now())+60;self.db.save(r);self.event('shop_order_'+r['sync_state'],r)
  def refresh(self,owner,oid):
   r=self.order(owner,oid)
   if r.get('checkout_id'):self.fulfill(oid)
@@ -110,7 +114,7 @@ class Shop:
   c=self.repo.catalog();product=next(x for x in c['products'] if x['sku']==r['sku'])
   if (scenario=='return_inspected')!=(product['type']=='hardware'):raise ShopError('This scenario does not apply to this product.')
   if product['type']=='service':raise ShopError('Completed calibration services remain non-refundable.')
-  self.repo.simulate(r,scenario)
+  self.repo.simulate(r,scenario);self.event('shop_synthetic_merchant_scenario',r)
   return self.public_order(r)
  def refund(self,session,oid,pct,request_id):
   r=self.order(session['owner'],oid)
@@ -124,7 +128,7 @@ class Shop:
    previous=self.p.refund_status(r['refund_case']) if r.get('refund_case') else None
    if previous and previous['phase'] in ['AWAITING_APPROVAL','REFUND_PENDING','REFUND_FAILED']:raise ShopError('A refund request already needs a decision or review. Follow its existing approval.',409)
    case='SHOP-'+self.hash(oid+request_id)[:24];r['refund_case']=case;self.db.save(r)
-   result=self.p.refund_start(case,r['email'],r['payment_intent'],str(v))
+   result=self.p.refund_start(case,r['email'],r['payment_intent'],str(v));self.event('shop_refund_requested',r)
    self.sync(r)
    return result
  def reconcile(self):

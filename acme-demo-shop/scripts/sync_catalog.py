@@ -8,7 +8,7 @@ def stripe(method,path,**kw):
 cat=json.loads(s3.get_object(Bucket=o['PolicyBucket'],Key='catalog.json')['Body'].read());mapping={'version':cat['version'],'products':{},'native_hubspot_product_catalog':'blocked_existing_credential_403','updated_at':int(time.time())}
 for p in cat['products']:
  key='acme-demo-'+p['sku'];products=stripe('GET','/v1/products',params={'limit':100})['data'];product=next((x for x in products if x.get('metadata',{}).get('acme_demo_shop')=='true' and x.get('metadata',{}).get('acme_sku')==p['sku']),None)
- data={'name':p['name'],'metadata[acme_demo_shop]':'true','metadata[acme_sku]':p['sku'],'metadata[policy_id]':p['policy_id'],'metadata[catalog_version]':cat['version']}
+ data={'name':p['name'],'description':p.get('description','Fictional Acme demonstration product; Stripe test mode only.'),'metadata[acme_demo_shop]':'true','metadata[acme_sku]':p['sku'],'metadata[policy_id]':p['policy_id'],'metadata[catalog_version]':cat['version']}
  if product:product=stripe('POST','/v1/products/'+product['id'],data=data)
  else:product=stripe('POST','/v1/products',data=data,headers={'Idempotency-Key':key})
  lookup=key+'-'+str(p['unit_amount_minor'])+'-'+p['currency'];prices=stripe('GET','/v1/prices',params={'lookup_keys[]':lookup})['data']

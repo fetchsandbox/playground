@@ -6,6 +6,7 @@ class Store:
  def __init__(self,table):self.t=table
  def get(self,key):return self.t.get_item(Key={'pk':key},ConsistentRead=True).get('Item')
  def put(self,r):self.t.put_item(Item=r)
+ def delete(self,key):self.t.delete_item(Key={'pk':key})
  def create(self,r):
   try:self.t.put_item(Item=r,ConditionExpression='attribute_not_exists(pk)')
   except ClientError as e:

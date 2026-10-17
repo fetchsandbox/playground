@@ -32,13 +32,17 @@ def handler(event,context):
    return response(200,{'received':True})
   host=event.get('requestContext',{}).get('domainName','')
   if method=='POST' and (headers.get('x-acme-shop')!='1' or (headers.get('origin') and headers['origin']!='https://'+host)):raise ShopError('Request origin is not allowed.',403)
-  body=json.loads(raw) if raw else {}
+  try:body=json.loads(raw) if raw else {}
+  except (ValueError,UnicodeDecodeError):raise ShopError('A JSON object is required.')
+  if not isinstance(body,dict):raise ShopError('A JSON object is required.')
+  cookies=SimpleCookie();cookies.load('; '.join(event.get('cookies',[])) or headers.get('cookie',''));token=cookies[SESSION].value if SESSION in cookies else ''
   if method=='GET' and path=='/api/catalog':return response(200,shop.catalog())
   if method=='POST' and path=='/api/auth/request':return response(200,shop.request_code(body.get('email',''),event.get('requestContext',{}).get('http',{}).get('sourceIp','unknown')))
   if method=='POST' and path=='/api/auth/verify':
    token=shop.verify(body.get('challenge',''),body.get('code',''));return response(200,{'signed_in':True},[SESSION+'='+token+'; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800'])
-  if method=='POST' and path=='/api/auth/logout':return response(200,{'signed_out':True},[SESSION+'=; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'])
-  cookies=SimpleCookie();cookies.load('; '.join(event.get('cookies',[])) or headers.get('cookie',''));session=shop.session(cookies[SESSION].value if SESSION in cookies else '')
+  if method=='POST' and path=='/api/auth/logout':
+   shop.logout(token);return response(200,{'signed_out':True},[SESSION+'=; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'])
+  session=shop.session(token)
   if method=='GET' and path=='/api/me':return response(200,{'email':session['email'],'version':VERSION})
   if method=='GET' and path=='/api/orders':return response(200,shop.orders(session))
   if method=='POST' and path=='/api/checkout':

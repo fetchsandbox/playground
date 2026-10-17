@@ -132,3 +132,33 @@ def test_webhook_requires_secret_signature_and_current_timestamp():
 
 def test_live_key_rejected():
  with pytest.raises(RuntimeError):Provider({'STRIPE_API_KEY':'sk_live_dummy'},Mock(),'arn')
+
+def test_logout_revokes_server_session(c):
+ s,p,repo,db,u=c;db.delete=lambda key:db.rows.pop(key,None);r=s.request_code('a@example.test','ip');code=re.search(r'\b\d{6}\b',p.mails[-1]['body'])[0];token=s.verify(r['challenge'],code);s.logout(token)
+ with pytest.raises(ShopError):s.session(token)
+
+def test_http_owner_boundary_and_csrf(c,monkeypatch):
+ from shop import handler
+ s,p,repo,db,u=c;monkeypatch.setattr(handler,'dependencies',lambda:(s,{}))
+ event={'rawPath':'/api/orders','requestContext':{'http':{'method':'GET','sourceIp':'ip'},'domainName':'demo.test'},'headers':{}}
+ assert handler.handler(event,Mock())['statusCode']==401
+ event.update(rawPath='/api/auth/request',body=json.dumps({'email':'a@example.test'}));event['requestContext']['http']['method']='POST';event['headers']={'x-acme-shop':'1','origin':'https://attacker.test'}
+ assert handler.handler(event,Mock())['statusCode']==403
+ event['headers']['origin']='https://demo.test';event['body']='[]';assert handler.handler(event,Mock())['statusCode']==400
+ event['body']='not-json';assert handler.handler(event,Mock())['statusCode']==400
+
+def test_crm_lost_create_response_recovers_without_second_create():
+ import httpx
+ provider=Provider({'STRIPE_API_KEY':'sk_test_dummy','HUBSPOT_ACCESS_TOKEN':'dummy'},Mock(),'arn');provider.save_intent=lambda r:None
+ calls=[];created=False
+ def handle(request):
+  nonlocal created
+  path=request.url.path;calls.append((request.method,path))
+  if path.endswith('contacts/search'):return httpx.Response(200,json={'results':[{'id':'contact1'}]})
+  if path.endswith('deals/search'):return httpx.Response(200,json={'results':[{'id':'deal1'}] if created else []})
+  if path.endswith('/deals') and request.method=='POST':created=True;raise httpx.ReadTimeout('lost response')
+  return httpx.Response(200,json={})
+ provider.http=httpx.Client(transport=httpx.MockTransport(handle));r={'pk':'ORD-DEADBEEF0123','email':'a@example.test','product_name':'Gateway','sku':'SKU','amount_minor':100000,'payment_intent':'pi_fake','catalog_version':'v1'}
+ with pytest.raises(httpx.ReadTimeout):provider.crm_sync(r)
+ provider.crm_sync(r)
+ assert r['hubspot_deal']=='deal1' and calls.count(('POST','/crm/v3/objects/deals'))==1

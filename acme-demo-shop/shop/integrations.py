@@ -95,7 +95,9 @@ class Provider:
   return self.safe_refund(r)
  def refund_status(self,case):
   try:return self.safe_refund(self.invoke({'action':'status','caseId':case}))
-  except self.agent.exceptions.ResourceNotFoundException:return None
+  except ClientError as exc:
+   if exc.response.get('ResponseMetadata',{}).get('HTTPStatusCode')==404:return None
+   raise
  def safe_refund(self,r):
   if 'phase' not in r:raise ShopError('Refund processing needs review.',503)
   return {'phase':r['phase'],'reference':r.get('refund_reference'),'amount_minor':r.get('assessment',{}).get('amount_minor'),'reason':r.get('hold_reason'),'assessment_reasons':r.get('assessment',{}).get('reasons',[]),'approval_expires_at':r.get('approval_expires_at')}
