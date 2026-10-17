@@ -1,0 +1,54 @@
+{
+  "workflow": "refund-operations",
+  "app_version": "acme-refund-1.0.4-463bad7",
+  "session_id": "vs_31d11038e6a3",
+  "run_id": "vr_f3209e6157464fd693a817b30f3e2374",
+  "receipt_url": "https://fetchsandbox.com/runs/6ddef79ce0?flow=vr_f3209e6157464fd693a817b30f3e2374",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approval_gate",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approved_refund",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "above_cap",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "product_exclusion",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_request",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "advanced_recovery",
+      "status": "unmeasured",
+      "explanation": "These cases have explicit unit tests, but the current twin adapter does not yet stage process death or response loss. They remain unmeasured here."
+    },
+    {
+      "id": "policy_drift",
+      "status": "unmeasured",
+      "explanation": "The narrow twin suite uses a frozen catalog; a policy replacement checkpoint is not wired. Unit reassessment tests are separate."
+    }
+  ],
+  "recorded_at": "2026-10-17T20:48:12.548Z"
+}
