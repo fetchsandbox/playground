@@ -34,7 +34,7 @@ per file.
 | [`security-questionnaire`](src/workflows/security-questionnaire.ts) | IT · it-security | Answer from the approved library, flag new questions to Security | Sending answers |
 | [`incident-comms`](src/workflows/incident-comms.ts) | IT · it-operations | PagerDuty incident → note, war-room post, affected customers | Customer notices |
 
-Design rules shared by all four:
+Design rules shared by all nineteen:
 
 - **Agents read; actions write.** Agents gather and judge in parallel. Every
   side effect is a planned, named action with a gate (`auto` or `approval`), a
@@ -139,13 +139,13 @@ declared as a **blocked** check with evidence, never dropped.
 
 ### Results
 
-All 19 runtimes are relay-proven: **251 executable checks held, 0 violated**, every check driven twice
-with identical saved state, each contract including a real process restart. 25 checks are declared
-blocked because the system they need has no faithful FetchSandbox twin (Zendesk, ERP, Salesforce,
-carriers, restricted-party screening, Okta/Google Admin, or twins that return sample data). Workflows
-without such gaps are *verified*; the others read *inconclusive* until those twins exist. The proofs
-caught real bugs (a duplicate subscription on a re-fired trigger, mixed-interval quotes, a reclaim
-safety check that blocked every reclaim, unbounded directory paging), all fixed and regression-tested.
+The original branch receipts reported 251 held checks and 25 unmeasured checks. Those historical
+results are not a claim about the current production service. The October 17 production revalidation
+has baseline failures where the Google Calendar twin returns `501 not_simulated` for `freeBusy`,
+as well as explicit unmeasured checks. Read the individual current receipts and their recorded
+versions; do not combine separate runs into one proof. A contract that includes unmeasured or
+violated checks is not fully verified. A relay test also does not establish native-provider or
+AgentCore end-to-end behavior.
 
 Per-check results, receipt links and the twin findings: run `node verify/results.mjs`, which renders
 `verify/RESULTS.md` from the receipts in `verify/receipts/` (one per workflow, committed with it).
@@ -153,9 +153,9 @@ Per-check results, receipt links and the twin findings: run `node verify/results
 ## Deploy (one AgentCore runtime per workflow)
 
 ```bash
-npx cdk deploy --all \
-  -c looplabsAccountId=111122223333 -c looplabsExternalId=<shared-secret> \
-  -c approvers:onboarding-kickoff=U_RVP -c approvers:revenue-reconciliation=U_CONTROLLER
+AWS_PROFILE=<deployment-profile> npx cdk deploy --all \
+  -c sourceCommit=$(git rev-parse HEAD) \
+  -c approverUserIds=<named-approver-user-id>
 # or one: npx cdk deploy AcmeOps-churn-risk-sweep   (19 stacks: AcmeOps-<workflow>)
 # JWT instead of IAM: -c jwtDiscoveryUrl=https://idp.example.com/.well-known/openid-configuration -c jwtAllowedClients=looplabs
 ```
@@ -166,11 +166,27 @@ Secrets Manager secret and X-Ray tracing. If you pass `looplabsAccountId`, it
 also creates a role LoopLabs assumes to call `InvokeAgentRuntime`. Put the
 provider keys from [`.env.example`](.env.example) into each stack's `SecretArn`.
 
+Do not pass `looplabsAccountId` for an observation-only installation. A newly created secret
+initially contains a generated string; replace it with the required provider JSON before invoking
+the runtime. Preserve existing workflow secrets and state tables during updates. Google and
+Zendesk support renewable OAuth credentials on their native hosts; custom/twin endpoints retain
+their own temporary credentials. Configure log retention explicitly.
+
+When the regional X-Ray policy quota is exhausted, first verify a shared policy already grants
+`delivery.logs.amazonaws.com` the required account/region-scoped AgentCore trace access. Only then
+deploy with `-c useExistingTraceDeliveryPolicy=true`. This retains trace delivery while omitting
+redundant per-stack policies; it does not create or widen the shared permission. Keep the default
+when no equivalent policy exists.
+
 ## Known gaps
 
-- **Zendesk twin**: FetchSandbox doesn't have one yet. The Zendesk client
-  ([`src/providers/zendesk.ts`](src/providers/zendesk.ts)) uses Zendesk's own
-  REST v2 paths, so it will run against the twin once it exists (set
-  `ZENDESK_BASE_URL`). Until then the Zendesk checks are declared blocked.
-- **Not yet deployed to a live AWS account.** Verified with tests, `cdk synth`
-  and the twin proofs. The Docker image wasn't built here.
+- **Zendesk coverage**: production MCP now discovers a bounded Zendesk twin. The original
+  contracts exclude Zendesk and retain historical "no twin" explanations. Those declarations do
+  not prove current discovery is broken, nor do they verify Search, user/organization provisioning,
+  or public replies. Reassess each required operation before refreshing the contracts.
+- **Google Calendar availability**: current production `freeBusy` is not simulated; baseline
+  failures and checks skipped after those failures remain explicit in their receipts.
+- **Deployment versus application verification**: AgentCore deployment, manifest checks,
+  relay contracts, and live provider actions are separate gates. Record the exact runtime version
+  and result for each. These runtimes expose IAM-authenticated `/invocations`; this package does
+  not itself install native Slack listeners, Gmail watches, or schedules.

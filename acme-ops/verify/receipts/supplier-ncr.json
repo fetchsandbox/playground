@@ -1,78 +1,78 @@
 {
   "workflow": "supplier-ncr",
-  "app_version": "acme-ops-supplier-ncr-1.0.0-df79afd",
-  "session_id": "vs_c64ef9a53dc0",
-  "run_id": "vr_cab530b56d13455182166ea403619f61",
-  "receipt_url": "https://fetchsandbox.com/runs/6479cad67b?flow=vr_cab530b56d13455182166ea403619f61",
+  "app_version": "acme-ops-supplier-ncr-1.0.0-2a347af",
+  "session_id": "vs_f77472105323",
+  "run_id": "vr_432cdc4487734de899eba23a3e5ca048",
+  "receipt_url": "https://fetchsandbox.com/runs/654fbe9698?flow=vr_432cdc4487734de899eba23a3e5ca048",
   "status": null,
-  "verdict": "inconclusive",
+  "verdict": "failing",
   "app_verified": false,
   "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "critical_hold_parked",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "high_reject_rate_hold",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_and_reconcile",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_by_stranger_refused",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "reject",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "duplicate_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "concurrent_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "held",
-      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "asana_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "calendar_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "gmail_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "restart_while_parked",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "repeat_supplier_escalation",
@@ -80,5 +80,5 @@
       "explanation": "The Asana twin's task listing returns generic sample tasks, so open CAPAs per supplier can't be counted; the rule is code (holdReasons) and is unit-level only."
     }
   ],
-  "recorded_at": "2026-10-17T16:05:29.356Z"
+  "recorded_at": "2026-10-17T18:54:32.372Z"
 }

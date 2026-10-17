@@ -1,83 +1,83 @@
 {
   "workflow": "field-service-dispatch",
-  "app_version": "acme-ops-field-service-dispatch-1.0.0-36fbb6e",
-  "session_id": "vs_b0b7d15d1db9",
-  "run_id": "vr_6fa5507329d94f57a25f1dcdd6f271b8",
-  "receipt_url": "https://fetchsandbox.com/runs/11328921ab?flow=vr_6fa5507329d94f57a25f1dcdd6f271b8",
+  "app_version": "acme-ops-field-service-dispatch-1.0.0-c4a5e14",
+  "session_id": "vs_3b2ee7648d5b",
+  "run_id": "vr_586fce3057124100b736f1ffcd33c811",
+  "receipt_url": "https://fetchsandbox.com/runs/437c2057c7?flow=vr_586fce3057124100b736f1ffcd33c811",
   "status": null,
-  "verdict": "inconclusive",
+  "verdict": "failing",
   "app_verified": false,
   "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "after_hours_needs_approval",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "billable_needs_approval",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_and_reconcile",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_by_stranger_refused",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "reject",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "duplicate_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "concurrent_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "held",
-      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "twilio_invalid_number",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "calendar_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "stripe_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "asana_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "restart_while_parked",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "parts_reservation",
@@ -90,5 +90,5 @@
       "explanation": "The Calendar twin returns 404 on events.get right after a successful insert, so the booking can't be read back."
     }
   ],
-  "recorded_at": "2026-10-17T16:20:53.469Z"
+  "recorded_at": "2026-10-17T18:59:56.851Z"
 }

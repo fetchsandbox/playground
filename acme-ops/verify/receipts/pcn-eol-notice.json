@@ -1,9 +1,9 @@
 {
   "workflow": "pcn-eol-notice",
-  "app_version": "acme-ops-pcn-eol-notice-1.0.0-7e9260e",
-  "session_id": "vs_d6b7f12687e1",
-  "run_id": "vr_851466eb937c45e282a501a9e2697d6c",
-  "receipt_url": "https://fetchsandbox.com/runs/f58e5f23dc?flow=vr_851466eb937c45e282a501a9e2697d6c",
+  "app_version": "acme-ops-pcn-eol-notice-1.0.0-2a347af",
+  "session_id": "vs_342d0f6554e4",
+  "run_id": "vr_5757601ad1f5497d85d60812687c8343",
+  "receipt_url": "https://fetchsandbox.com/runs/507b79e157?flow=vr_5757601ad1f5497d85d60812687c8343",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -75,5 +75,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-17T15:50:32.715Z"
+  "recorded_at": "2026-10-17T18:50:29.695Z"
 }

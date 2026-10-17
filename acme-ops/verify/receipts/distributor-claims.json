@@ -1,9 +1,9 @@
 {
   "workflow": "distributor-claims",
-  "app_version": "acme-ops-distributor-claims-1.0.0-7e9260e",
-  "session_id": "vs_7b38054ec1f4",
-  "run_id": "vr_7df15a9babc7455c852404002f0c1f29",
-  "receipt_url": "https://fetchsandbox.com/runs/229b5a3ee6?flow=vr_7df15a9babc7455c852404002f0c1f29",
+  "app_version": "acme-ops-distributor-claims-1.0.0-2a347af",
+  "session_id": "vs_b312c679a319",
+  "run_id": "vr_f08e62448f894fc89281c5bc1f7fbc6b",
+  "receipt_url": "https://fetchsandbox.com/runs/d1c6416037?flow=vr_f08e62448f894fc89281c5bc1f7fbc6b",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -75,5 +75,5 @@
       "explanation": "Stripe twin invoices carry no line items (GET /v1/invoices/{id} lines.data = [] and /lines returns []), so claims are only checked against the invoice's paid amount (invoiceCheck=amount_only)."
     }
   ],
-  "recorded_at": "2026-10-17T15:48:04.956Z"
+  "recorded_at": "2026-10-17T18:48:04.497Z"
 }

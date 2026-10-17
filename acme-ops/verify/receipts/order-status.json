@@ -1,9 +1,9 @@
 {
   "workflow": "order-status",
-  "app_version": "acme-ops-order-status-1.0.0-9e32d92",
-  "session_id": "vs_ab609a8d4092",
-  "run_id": "vr_be5a26e56b3848efb4526afebc5392a5",
-  "receipt_url": "https://fetchsandbox.com/runs/bff7380427?flow=vr_be5a26e56b3848efb4526afebc5392a5",
+  "app_version": "acme-ops-order-status-1.0.0-2a347af",
+  "session_id": "vs_616da16885af",
+  "run_id": "vr_0d112538fd5442829fa2a086d55aa10b",
+  "receipt_url": "https://fetchsandbox.com/runs/0894cec887?flow=vr_0d112538fd5442829fa2a086d55aa10b",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -90,5 +90,5 @@
       "explanation": "No ERP twin (SAP/Oracle/NetSuite); ACME's order is its Stripe invoice and the promise date its Asana task."
     }
   ],
-  "recorded_at": "2026-10-17T16:13:25.197Z"
+  "recorded_at": "2026-10-17T18:52:48.683Z"
 }
