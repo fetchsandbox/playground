@@ -1,0 +1,99 @@
+{
+  "workflow": "incident-comms",
+  "app_version": "acme-ops-incident-comms-1.0.0-df79afd",
+  "session_id": "vs_bbe246421499",
+  "run_id": "vr_76c83c422ebc495b89d551339b6b736c",
+  "receipt_url": "https://fetchsandbox.com/runs/dca8a1db6f?flow=vr_76c83c422ebc495b89d551339b6b736c",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "low_urgency_internal",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "resolution_notices",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_commander",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "pagerduty_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "status_page_update",
+      "status": "unmeasured",
+      "explanation": "There is no Statuspage (or equivalent) twin; the runtime does not write to a status page."
+    },
+    {
+      "id": "affected_by_product",
+      "status": "unmeasured",
+      "explanation": "Seeded Stripe twin subscription items carry no price/product, so a product-scoped incident matches nobody; service-wide incidents are proven instead."
+    },
+    {
+      "id": "pagerduty_note_readback",
+      "status": "unmeasured",
+      "explanation": "The PagerDuty twin's GET /incidents/{id}/notes returns sample notes rather than the note written."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:07:52.616Z"
+}
