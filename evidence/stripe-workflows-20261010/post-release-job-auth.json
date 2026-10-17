@@ -1,0 +1,18 @@
+{
+  "scope": "two disposable accounts, deliberately invalid archive; auth isolation only",
+  "passed": true,
+  "observations": [
+    {
+      "owner_status": "200",
+      "other_account_status": "403",
+      "job_status": "done",
+      "elapsed_s": null,
+      "job_kind": null
+    },
+    {
+      "owner_status": "200",
+      "other_account_status": "403",
+      "job_status": "done"
+    }
+  ]
+}

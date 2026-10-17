@@ -1,0 +1,17 @@
+{
+  "scope": "public hosted inventory only; no authenticated application acceptance",
+  "server": {
+    "name": "fetchsandbox",
+    "version": "0.7.12"
+  },
+  "tools": [
+    "coach",
+    "get_job",
+    "guide",
+    "quickrun",
+    "validate_integration",
+    "list_workflows",
+    "run_workflow",
+    "verify_behavior"
+  ]
+}

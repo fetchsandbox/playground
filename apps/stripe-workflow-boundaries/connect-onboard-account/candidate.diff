@@ -1,0 +1,11 @@
+--- a/main.py
++++ b/main.py
+@@ -35,7 +35,7 @@
+     _db.commit()
+     print("[app] persisted record " + record["id"], flush=True)
+ def derive_state(record, provider):
+-    return {OUTPUT_FIELD: bool(provider.get("details_submitted"))}
++    return {OUTPUT_FIELD: bool(provider.get("charges_enabled")) and bool(provider.get("payouts_enabled"))}
+ @app.post("/records", status_code=201)
+ def create_record(body: Create):
+     record = dict(body.model_dump(), id="record_" + uuid.uuid4().hex[:10])
