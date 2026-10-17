@@ -155,7 +155,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => ["PATH", "HOME", "TMPDIR", "TMP", "TEMP", "LANG", "TZ", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "all_proxy", "no_proxy"].includes(k) || k.startsWith("LC_")),
   );
   const env = {
     ...inherited,

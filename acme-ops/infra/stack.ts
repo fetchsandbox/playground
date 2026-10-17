@@ -33,7 +33,7 @@ export interface WorkflowStackProps extends StackProps {
 export class WorkflowStack extends Stack {
   constructor(scope: Construct, id: string, props: WorkflowStackProps) {
     super(scope, id, props);
-    for (const [key, value] of Object.entries({ organization: "Acme", company: "Acme Corporation", environment: "production", owner: "Raj", department: props.org, owner_team: props.team, oncall_status: "unassigned", source_commit: props.sourceCommit, deployment_version: props.deploymentVersion })) Tags.of(this).add(key, value);
+    for (const [key, value] of Object.entries({ organization: "Acme", company: "Acme Corporation", environment: "production", owner: "Raj", owner_organization: `Acme ${props.org} Operations`, department: props.org, owner_team: props.team, oncall_status: "unassigned", source_commit: props.sourceCommit, deployment_version: props.deploymentVersion })) Tags.of(this).add(key, value);
     Tags.of(this).add("acme:workflow", props.workflow);
     Tags.of(this).add("acme:org", props.org);
     Tags.of(this).add("acme:team", props.team);
