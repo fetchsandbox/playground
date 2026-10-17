@@ -1,0 +1,99 @@
+{
+  "workflow": "returns-warranty",
+  "app_version": "acme-ops-returns-warranty-1.0.0-df79afd",
+  "session_id": "vs_0a9e2a1cddd3",
+  "run_id": "vr_e0778cfd16fd4a1db57cf35861be60d9",
+  "receipt_url": "https://fetchsandbox.com/runs/d196fed8ac?flow=vr_e0778cfd16fd4a1db57cf35861be60d9",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_approver",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unpaid_invoice_no_credit",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "no_credit_requested",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "someone_elses_invoice_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "asana_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "carrier_return_label",
+      "status": "unmeasured",
+      "explanation": "No carrier twin (UPS/FedEx/EasyPost/Shippo) in FetchSandbox; the RMA asks the customer to ship to the returns address instead."
+    },
+    {
+      "id": "zendesk_ticket_link",
+      "status": "unmeasured",
+      "explanation": "FetchSandbox has no Zendesk twin yet; the ticket-history agent is skipped/not_configured."
+    },
+    {
+      "id": "credit_note_amount_readback",
+      "status": "unmeasured",
+      "explanation": "The Stripe twin's credit_notes create/get return sample amounts, not the amount sent, so the read-back reports drift on the twin."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:10:59.317Z"
+}
