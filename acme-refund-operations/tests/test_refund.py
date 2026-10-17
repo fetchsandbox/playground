@@ -48,7 +48,7 @@ def test_approval_then_customer_outcome_and_same_thread(setup):
     e,p,_,_=setup;r=e().start(request(20,slackChannel='D_DEMO',slackThread='123.456',channel='slack'))
     assert not p.writes and r['phase']=='AWAITING_APPROVAL'
     r=e().drive('CASE-1','approve','RAJ');assert r['phase']=='COMPLETED' and len(p.writes)==1
-    assert any('succeeded' in m[2] for m in p.emails);assert all(x[2]=='123.456' for x in p.posts)
+    assert any('refund of $200.00 USD' in m[2] and 'is complete' in m[2] for m in p.emails);assert all(x[2]=='123.456' for x in p.posts)
     assert set(r['agents'])=={'intake','purchase_research','product_inventory','policy_research','billing_policy','customer_handoff'}
 
 def test_reject_notifies_without_refund(setup):
@@ -110,7 +110,7 @@ def test_other_case_held_until_uncertain_action_resolved(setup):
     p.crash=False;r=e().start(request(10,'CASE-2'));assert r['phase']=='HELD' and len(p.writes)==1
 
 def test_pending_is_not_claimed_success(setup):
-    e,p,_,_=setup;p.pending=True;r=e().start(request());assert r['phase']=='REFUND_PENDING';assert 'not yet confirmed complete' in p.emails[-1][2]
+    e,p,_,_=setup;p.pending=True;r=e().start(request());assert r['phase']=='REFUND_PENDING';assert 'has not confirmed completion yet' in p.emails[-1][2]
     p.payment['refunds'][0]['status']='succeeded';r=e().drive('CASE-1');assert r['phase']=='COMPLETED' and len(p.writes)==1
 
 def test_notification_uncertainty_does_not_repeat_money_or_email(setup):
@@ -135,12 +135,12 @@ def test_approval_card_sent_to_manager_not_customer_channel(setup,monkeypatch):
     assert len(cards)==1 and cards[0][0]=='D_MANAGER' and cards[0][2] is None
     assert r['input']['slackThread']=='123.456' and not p.writes
     e().drive('CASE-1','approve','RAJ')
-    assert any(x[0]=='D_CUSTOMER' and x[2]=='123.456' and 'succeeded' in x[1] for x in p.posts)
+    assert any(x[0]=='D_CUSTOMER' and x[2]=='123.456' and 'Refund completed' in x[1] for x in p.posts)
 
 
 def test_final_outcome_replaces_approval_buttons_without_second_refund(setup):
     e,p,_,_=setup;e().start(request(20,slackChannel='D_DEMO',slackThread='123.456'))
-    e().drive('CASE-1','approve','RAJ');assert len(p.updates)==1 and 'approve by <@RAJ>' in p.updates[0][2]
+    e().drive('CASE-1','approve','RAJ');assert len(p.updates)==1 and 'Approved by <@RAJ>' in p.updates[0][2]
     e().drive('CASE-1');assert len(p.updates)==1 and len(p.writes)==1
 
 def test_unknown_case_does_not_create_an_orphan_lease(setup):

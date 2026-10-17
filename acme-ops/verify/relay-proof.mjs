@@ -41,7 +41,7 @@ const gitSha = (() => {
     return "local";
   }
 })();
-const APP_VERSION = workflow === "refund-operations" ? `acme-refund-1.0.3-${gitSha}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
+const APP_VERSION = workflow === "refund-operations" ? `acme-refund-1.0.4-${gitSha}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), { mode: 0o600 });

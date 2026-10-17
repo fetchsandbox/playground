@@ -90,3 +90,7 @@ The existing signature-verified Slack/Gmail ingress remains in place. `verify/sh
 - Separate deployed acceptance observed native Slack request/approval, a policy-cap decline, scheduled business-email intake, manager Slack approval, Stripe test-mode refund and a Gmail outcome in the original email thread. An unauthorized decision was rejected. Repeating a saved case and reading it through fresh AgentCore sessions did not repeat the measured refund.
 - Native evidence and real-provider references remain in the operator's private review folder, not this public repository. The customer mailbox test uses self-addressed aliases; external customer deliverability and forwarded-copy suppression are not certified.
 - The broader planned acceptance matrix is partial. External fault/concurrency/process-death and changed-policy checkpoint coverage remain open. No LoopLabs import/enforcement acceptance is claimed.
+
+### Customer communication
+
+Messages identify the product, refund amount, decision and next step, with a short stable refund reference. Canonical case, payment and provider identifiers remain in audit state and telemetry. Resuming an existing case can refresh its approval card without resending a previously sent email.

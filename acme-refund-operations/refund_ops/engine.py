@@ -2,7 +2,7 @@
 import copy, hashlib, json, os, re, time, uuid
 from decimal import Decimal, InvalidOperation
 from . import VERSION
-from . import observability
+from . import observability, presentation
 from .policy import assess, digest
 from .providers import ProviderFailure
 from .store import Busy
@@ -32,7 +32,7 @@ class Engine:
         r=self.store.get('CASE#'+case_id)
         if not r:raise KeyError('Case not found')
         # Only owner-authenticated API exposes this full case; logs remain redacted.
-        return {k:v for k,v in r.items() if k not in ['pk','lease_owner','lease_until']}
+        return {**{k:v for k,v in r.items() if k not in ['pk','lease_owner','lease_until']},'refund_reference':presentation.reference(r)}
     def start(self,request):
         request=copy.deepcopy(request)
         if request.get('requestText'):
@@ -93,6 +93,8 @@ class Engine:
             if not catalog.get('synthetic_demo') or catalog.get('organization')!='Acme Corporation':raise ValueError('Unapproved policy catalog')
             sku=payment.get('metadata',{}).get('acme_sku');product=next((p for p in catalog['products'] if p['sku']==sku),None)
             if not product:raise ValueError('Authoritative product policy mapping missing')
+            self.r['product']={'name':product['name'],'sku':product['sku']}
+            self.r['policy_display']={k:catalog['company'][k] for k in ['approval_from_pct','max_refund_pct','version']}
             order,order_source=self.policies.order(payment['id'])
             self.stage('product_inventory',lambda:{'sku':sku,'inventory_status':product['inventory_status'],'order_evidence':order_source})
             terms=next((t for t in catalog['product_policies'] if t['id']==product['policy_id']),None)
@@ -166,10 +168,11 @@ class Engine:
         channel=os.getenv('REFUND_MANAGER_CHANNEL') or self.r['input'].get('slackChannel')
         if not channel:return
         a=self.r['assessment'];self.r['approval_message']='intent';self.save()
-        text=f"Acme Refund Operations · Approval needed\nCase {self.r['case_id']} · {a['sku']}\nRefund {a['requested_pct']}%: {a['amount_minor']/100:.2f} {a['currency'].upper()}\nPurchase and product eligibility passed. Company policy C3 ({a['evidence'][0]['version']}) requires manager approval.\nApproval expires in 24 hours; evidence is checked again before execution."
+        product,company=self.presentation_sources()
+        text=presentation.approval(self.r,product,company)
         blocks=[{'type':'section','text':{'type':'mrkdwn','text':text}}, {'type':'actions','elements':[
             {'type':'button','text':{'type':'plain_text','text':'Approve refund'},'style':'primary','action_id':'acme_refund_approve','value':self.r['case_id']},
-            {'type':'button','text':{'type':'plain_text','text':'Reject refund'},'style':'danger','action_id':'acme_refund_reject','value':self.r['case_id']}]}]
+            {'type':'button','text':{'type':'plain_text','text':'Decline refund'},'style':'danger','action_id':'acme_refund_reject','value':self.r['case_id']}]}]
         thread=self.r['input'].get('slackThread') if channel==self.r['input'].get('slackChannel') else None
         r=self.p.slack(channel,text,thread,blocks);self.r['approval_message']=r['ts'];self.r['approval_channel']=channel
         if channel==self.r['input'].get('slackChannel') and not self.r['input'].get('slackThread'):self.r['input']['slackThread']=r['ts']
@@ -177,15 +180,7 @@ class Engine:
     def notify(self,outcome):
         self.p.agent='customer_handoff';self.event('agent_started',agent='customer_handoff')
         case_id=self.r['case_id'];a=self.r.get('assessment',{});op=self.r.get('refund',{})
-        bodies={'COMPLETED':f"Your refund of {int(op.get('amount_minor',0))/100:.2f} {op.get('currency','usd').upper()} succeeded to your original payment method. Refund reference: {op.get('provider_id')}. Your bank determines when it appears.",
-                'REFUND_PENDING':f"Your refund has been initiated and is pending. Reference: {op.get('provider_id')}. It is not yet confirmed complete.",
-                'REFUND_FAILED':'Your refund could not be completed. Acme Refund Operations is reviewing it; no successful refund is being claimed.',
-                'AWAITING_APPROVAL':'Your purchase meets the applicable refund eligibility rules. Your requested amount needs manager approval; no refund has been issued yet.',
-                'DECLINED':'We cannot approve this request under the applicable Acme policy: '+', '.join({'company_cumulative_refund_cap_exceeded':'total refunds would exceed the 70% company limit','requested_percentage_above_company_cap':'the requested percentage exceeds the 70% company limit','product_not_refundable':'this completed service is not refundable','outside_product_refund_window':'the product refund period has ended','payment_not_settled':'the payment has not settled','payment_disputed':'the payment is disputed','usage_exceeds_product_policy':'recorded product usage exceeds the policy limit','amount_exceeds_remaining_paid_balance':'the amount exceeds the remaining refundable balance'}.get(x,x.replace('_',' ')) for x in a.get('reasons',[]))+'. No refund has been issued.',
-                'REJECTED':'An Acme refund manager declined this request. No refund has been issued.',
-                'HELD':'Your request needs further purchase or policy evidence. No new refund is being claimed. Acme Refund Operations will review the case.',
-                'EXPIRED':'The approval window expired. No refund has been issued. Please contact Acme Refund Operations for review.'}
-        text=f"Acme Refund Operations\nCase: {case_id}\n\n{bodies[outcome]}"
+        product,company=self.presentation_sources();view=presentation.render(self.r,outcome,product,company)
         for destination in ['email','slack']:
             if destination=='slack' and not self.r['input'].get('slackChannel'):continue
             key=outcome+':'+destination;prev=self.r['notifications'].get(key)
@@ -193,27 +188,33 @@ class Engine:
             self.r['notifications'][key]={'state':'uncertain'};self.save();self.event('customer_output_prepared',agent='customer_handoff',channel=destination,outcome=outcome)
             try:
                 if destination=='email':
-                    ref=self.p.mail(self.r['input']['customerEmail'],'Acme refund '+case_id,text,case_id+':'+key,self.r['input'].get('gmailThread'),self.r['input'].get('gmailMessageId'))['id']
-                else:ref=self.p.slack(self.r['input']['slackChannel'],text,self.r['input'].get('slackThread'))['ts']
+                    ref=self.p.mail(self.r['input']['customerEmail'],view['subject'],view['email'],case_id+':'+key,self.r['input'].get('gmailThread'),self.r['input'].get('gmailMessageId'))['id']
+                else:ref=self.p.slack(self.r['input']['slackChannel'],presentation.render(self.r,outcome,product,company)['slack'],self.r['input'].get('slackThread'))['ts']
                 self.r['notifications'][key]={'state':'sent','provider_reference':ref};self.save();self.event('customer_output_sent',agent='customer_handoff',channel=destination,outcome=outcome,provider_reference=ref)
             except ProviderFailure as exc:
                 self.r['notifications'][key]={'state':'uncertain' if exc.uncertain else 'failed'};self.save();self.event('customer_output_withheld',agent='customer_handoff',channel=destination,outcome=outcome)
         # Updating a known Slack message is retry-safe; remove stale approval buttons.
         approval_ts=self.r.get('approval_message')
-        if outcome!='AWAITING_APPROVAL' and approval_ts and approval_ts!='intent' and self.r.get('approval_display_state')!=outcome:
-            decision=self.r.get('approval',{});actor=decision.get('actor')
-            display=f"Acme Refund Operations · {outcome.replace('_',' ').title()}\nCase {case_id}"
-            if actor:display+=f"\nManager decision: {decision['decision']} by <@{actor}>."
-            display+='\n'+bodies[outcome]
+        if outcome!='AWAITING_APPROVAL' and approval_ts and approval_ts!='intent' and (self.r.get('approval_display_state')!=outcome or self.r.get('approval_display_revision')!=presentation.REVISION):
+            display=presentation.resolved_card(self.r,outcome,product,company)
             try:
                 self.p.slack_update(self.r.get('approval_channel') or self.r['input']['slackChannel'],approval_ts,display)
-                self.r['approval_display_state']=outcome;self.save()
+                self.r['approval_display_state']=outcome;self.r['approval_display_revision']=presentation.REVISION;self.save()
             except ProviderFailure:self.event('approval_status_update_withheld',agent='customer_handoff',outcome=outcome)
         if 'customer_handoff' not in self.r['agents']:self.r['agents'].append('customer_handoff')
         self.event('agent_completed',agent='customer_handoff')
+    def presentation_sources(self):
+        product=self.r.get('product',{});company=self.r.get('policy_display',{})
+        if not product or not company:
+            try:
+                catalog,_=self.policies.catalog()
+                product=product or next((p for p in catalog['products'] if p['sku']==self.r.get('assessment',{}).get('sku')), {})
+                company=company or catalog['company']
+            except Exception:pass  # Presentation lookup must not invent a refund or block an existing outcome.
+        return product,company
     def save(self):
         self.r['updated_at']=int(self.now());self.store.save(self.key,self.r,self.owner)
     def event(self,event,**fields):
         item={'event':event,'event_id':str(uuid.uuid4()),'run_id':self.r['run_id'],'case_id':self.r['case_id'],'trace_id':self.r['trace_id'],
-              'span_id':observability.span_id(self.r['root_span_id']),'attempt':self.r['attempt'],'timestamp':int(self.now()*1000),'deployment_version':VERSION,**fields}
+              'refund_reference':presentation.reference(self.r),'span_id':observability.span_id(self.r['root_span_id']),'attempt':self.r['attempt'],'timestamp':int(self.now()*1000),'deployment_version':VERSION,**fields}
         self.r['events']=(self.r['events']+[item])[-180:];self.save();print(json.dumps(item,default=str),flush=True)
