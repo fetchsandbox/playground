@@ -21,3 +21,11 @@ From this directory: `python -m pytest -q tests` (requires pytest, boto3 and htt
 ## Deploy
 
 Run `scripts/sync_catalog.py --refund-outputs <private refund stack outputs>` with the configured `fetchsandbox` AWS profile. Then deploy `AcmeDemoShop` using `acme-ops/infra/shop-app.ts` and contexts `policyBucket`, `providerSecretArn`, `refundRuntimeArn`, and `sourceCommit`. It creates a separate Lambda/API Gateway shop; it does not redeploy or alter the existing refund runtime. Register Stripe TEST checkout webhook events to the resulting `/api/stripe/webhook` and store the returned signing secret privately in the shop's Auth secret. Never commit outputs, session cookies, OTPs or secrets.
+
+## Deployment checkpoint — 2026-10-17
+
+Public URL: https://shop.fetchsandbox.com. Application version `acme-shop-1.0.3`, source `4a66a27`; existing refund runtime remains `acme-refund-1.0.4`. The public catalog has four products with descriptions/features, while customer signup asks only for email. The native Stripe TEST checkout webhook is registered.
+
+Measured separately: 32 local shop tests and 62 existing refund tests passed. All four Stripe products/prices matched the shared catalog by independent provider readback. Public HTTP access checks rejected unauthenticated/forged sessions, cross-origin mutations and unsigned webhooks. A native DynamoDB component check rejected a second lease and stale writer and retained state across a fresh store instance. Email-code sign-in was observed in Chrome; its session survived a deployment update.
+
+**Acceptance remains partial:** the Mac locked before a hosted checkout completed. A fresh purchase, HubSpot deal readback, Slack approval, customer email and refund-balance synchronization have not yet been measured end to end for this shop. No whole-workflow green/verification claim is made. Advanced accepted-response-loss, process death, public load/abuse and all legacy workflow integration tests remain unmeasured. Native HubSpot product/line-item access is blocked by the existing 403 permissions; contact/deal integration is implemented but its new purchase path awaits native checkout validation. Provider records follow the provider account’s retention; application TTL does not delete Stripe, HubSpot or Gmail records.
