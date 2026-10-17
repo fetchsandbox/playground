@@ -143,6 +143,7 @@ export class Engine<I> {
     const wf = this.workflow;
     return {
       workflow: wf.id,
+      metadata: deploymentMetadata(),
       title: wf.title,
       org: wf.org,
       team: wf.team,
@@ -534,6 +535,7 @@ export class Engine<I> {
     return {
       runId: r.runId,
       workflow: r.workflow,
+      metadata: deploymentMetadata(),
       org: r.org,
       team: r.team,
       phase: r.phase,
@@ -598,4 +600,8 @@ function outcome(r: RunRecord): "ok" | "partial" | "failed" | "pending" {
   const anyOk = r.agents.some((a) => a.status === "ok") || r.actions.some((a) => a.status === "applied");
   if (!anyOk) return "failed";
   return agentFail || actFail ? "partial" : "ok";
+}
+
+function deploymentMetadata() {
+  return { organization: process.env.WORKFLOW_ORGANIZATION ?? "Acme", environment: process.env.WORKFLOW_ENVIRONMENT ?? "unconfigured", owner: process.env.WORKFLOW_OWNER ?? "unassigned", department: process.env.WORKFLOW_DEPARTMENT ?? "unassigned", ownerTeam: process.env.WORKFLOW_OWNER_TEAM ?? "unassigned", oncall: process.env.WORKFLOW_ONCALL_STATUS ?? "unassigned", version: process.env.WORKFLOW_DEPLOYMENT_VERSION ?? "unversioned", sourceCommit: process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded" };
 }

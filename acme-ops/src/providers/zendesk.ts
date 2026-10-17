@@ -1,3 +1,4 @@
+import { ProviderError } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 export interface ZendeskTicket {
@@ -10,6 +11,7 @@ export interface ZendeskTicket {
   requester_id?: number;
   organization_id?: number | null;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface ZendeskUser {
@@ -44,10 +46,24 @@ export class ZendeskClient {
   ): Promise<ZendeskTicket> {
     const ticket: Record<string, unknown> = {};
     if (update.priority) ticket.priority = update.priority;
-    if (update.tags) ticket.additional_tags = update.tags;
     if (update.comment) ticket.comment = update.comment;
-    const { body } = await this.http.request<{ ticket: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, { json: { ticket } });
-    return body.ticket;
+    for (let attempt = 0; ; attempt++) {
+      if (update.tags) {
+        const current = await this.getTicket(id);
+        if (!current.updated_at) throw new ProviderError("zendesk", 502, "missing_ticket_version", false, "Zendesk ticket has no update timestamp; refusing an unsafe tag replacement");
+        ticket.tags = [...new Set([...(current.tags ?? []), ...update.tags])];
+        ticket.safe_update = true;
+        ticket.updated_stamp = current.updated_at;
+      }
+      try {
+        const { body } = await this.http.request<{ ticket: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, { json: { ticket } });
+        return body.ticket;
+      } catch (err) {
+        // Zendesk rejected this conditional write before applying any effect.
+        // Re-read on a bounded conflict, preserving concurrently added tags.
+        if (!(update.tags && err instanceof ProviderError && err.status === 409 && attempt < 2)) throw err;
+      }
+    }
   }
 
   /** Search API (`type:ticket ...`), first `max` results. */

@@ -1,9 +1,9 @@
 {
   "workflow": "export-screening",
-  "app_version": "acme-ops-export-screening-1.0.0-7e9260e",
-  "session_id": "vs_9cdf2f2a28a4",
-  "run_id": "vr_0630f2bf77114f0faaed8f22ece14c8a",
-  "receipt_url": "https://fetchsandbox.com/runs/ae8c32ab75?flow=vr_0630f2bf77114f0faaed8f22ece14c8a",
+  "app_version": "acme-ops-export-screening-1.0.0-2a347af",
+  "session_id": "vs_4853b8c879ed",
+  "run_id": "vr_3ccc757878dd4543aa30340c9af27b89",
+  "receipt_url": "https://fetchsandbox.com/runs/a16f3105cf?flow=vr_3ccc757878dd4543aa30340c9af27b89",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -80,5 +80,5 @@
       "explanation": "No FetchSandbox twin for the Trade.gov Consolidated Screening List (or any screening provider); the runtime treats screening as unavailable and holds every order."
     }
   ],
-  "recorded_at": "2026-10-17T15:53:01.546Z"
+  "recorded_at": "2026-10-17T18:53:02.573Z"
 }

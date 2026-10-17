@@ -1,88 +1,88 @@
 {
   "workflow": "support-escalation",
-  "app_version": "acme-ops-support-escalation-1.0.0-dbab6f7",
-  "session_id": "vs_aea937a5ff24",
-  "run_id": "vr_560dd52d3f244aaba40f6d925ae8c5c7",
-  "receipt_url": "https://fetchsandbox.com/runs/a3e6951d42?flow=vr_560dd52d3f244aaba40f6d925ae8c5c7",
+  "app_version": "acme-ops-support-escalation-1.0.0-96b3151",
+  "session_id": "vs_d7de5147cac8",
+  "run_id": "vr_aec0a91bce0646dfb4c50fa02a504518",
+  "receipt_url": "https://fetchsandbox.com/runs/7e53650058?flow=vr_aec0a91bce0646dfb4c50fa02a504518",
   "status": null,
-  "verdict": "inconclusive",
+  "verdict": "failing",
   "app_verified": false,
   "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "approve_by_approver",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_by_stranger_refused",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "reject",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "duplicate_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "concurrent_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "held",
-      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "low_severity_not_escalated",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "slack_channel_not_found",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "slack_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "stripe_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "hubspot_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "calendar_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "gmail_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "restart_while_parked",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "zendesk_ticket_annotation",
@@ -90,5 +90,5 @@
       "explanation": "FetchSandbox has no Zendesk twin yet; the runtime records zendesk.* actions as skipped/not_configured."
     }
   ],
-  "recorded_at": "2026-10-17T06:18:38.850Z"
+  "recorded_at": "2026-10-17T18:39:24.443Z"
 }

@@ -1,79 +1,79 @@
 {
   "workflow": "service-renewals",
-  "app_version": "acme-ops-service-renewals-1.0.0-7e9260e",
-  "session_id": "vs_2209bf9a0c65",
-  "run_id": "vr_aa323bfd73a1418aad16a46b2a53675e",
-  "receipt_url": "https://fetchsandbox.com/runs/335177d131?flow=vr_aa323bfd73a1418aad16a46b2a53675e",
+  "app_version": "acme-ops-service-renewals-1.0.0-c4a5e14",
+  "session_id": "vs_e544355b4dd3",
+  "run_id": "vr_8d6d3a605419402b9102ad46a0fb10e4",
+  "receipt_url": "https://fetchsandbox.com/runs/0f93ca6e8b?flow=vr_8d6d3a605419402b9102ad46a0fb10e4",
   "status": null,
-  "verdict": "verified",
-  "app_verified": true,
-  "complete": true,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "uplift_within_policy_is_automatic",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "no_uplift_past_due",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_by_stranger_refused",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "reject",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "held",
-      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "duplicate_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "concurrent_start",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "stripe_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "asana_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "calendar_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "restart_while_parked",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     },
     {
       "id": "approve_and_reconcile",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
     }
   ],
-  "recorded_at": "2026-10-17T15:45:27.396Z"
+  "recorded_at": "2026-10-17T19:05:29.219Z"
 }

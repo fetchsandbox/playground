@@ -23,7 +23,7 @@ describe("support-escalation", () => {
 
   beforeEach(() => {
     addSub(w.state, "cus_alice", "price_pro_monthly", "active", 20);
-    w.state.zendesk.tickets.push({ id: 4242, subject: "Dashboard down for our whole team", description: "We get a 503 error since 9am.", priority: "normal", tags: [] });
+    w.state.zendesk.tickets.push({ id: 4242, subject: "Dashboard down for our whole team", description: "We get a 503 error since 9am.", priority: "normal", tags: ["existing"], updated_at: "2026-10-14T12:00:00Z" });
   });
 
   it("triages, escalates, drafts, and parks the public reply for approval", async () => {
@@ -35,6 +35,7 @@ describe("support-escalation", () => {
     for (const id of ["zendesk.annotate_ticket", "slack.post_escalation", "calendar.hold_callback", "gmail.draft_reply"]) expect(action(body, id).status).toBe("applied");
     expect(action(body, "zendesk.public_reply").status).toBe("pending_approval");
     expect(w.state.zendesk.comments).toEqual([expect.objectContaining({ public: false })]);
+    expect(w.state.zendesk.tickets[0].tags).toContain("existing");
     // The callback hold is internal: no attendees, no invitations.
     expect(w.state.calendar.events[0]).toMatchObject({ sendUpdates: "none" });
     expect(w.state.calendar.events[0].attendees).toBeUndefined();

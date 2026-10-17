@@ -1,9 +1,9 @@
 {
   "workflow": "collections-credit-hold",
-  "app_version": "acme-ops-collections-credit-hold-1.0.0-7e9260e",
-  "session_id": "vs_a098d81e0e80",
-  "run_id": "vr_1fa37c3665834dee8d573aa5ab82349e",
-  "receipt_url": "https://fetchsandbox.com/runs/05add583db?flow=vr_1fa37c3665834dee8d573aa5ab82349e",
+  "app_version": "acme-ops-collections-credit-hold-1.0.0-2a347af",
+  "session_id": "vs_28aeca9e164c",
+  "run_id": "vr_3189eb3eefb548b6971e0f0388bc4677",
+  "receipt_url": "https://fetchsandbox.com/runs/b6bdad9b8a?flow=vr_3189eb3eefb548b6971e0f0388bc4677",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -75,5 +75,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-17T15:55:51.257Z"
+  "recorded_at": "2026-10-17T18:47:48.609Z"
 }

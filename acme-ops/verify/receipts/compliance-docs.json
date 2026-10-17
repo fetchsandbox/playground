@@ -1,9 +1,9 @@
 {
   "workflow": "compliance-docs",
-  "app_version": "acme-ops-compliance-docs-1.0.0-0908aa5",
-  "session_id": "vs_cfa9dfa1fb62",
-  "run_id": "vr_89a3a67d17bd49e393bbd879dacefcce",
-  "receipt_url": "https://fetchsandbox.com/runs/793bb8daac?flow=vr_89a3a67d17bd49e393bbd879dacefcce",
+  "app_version": "acme-ops-compliance-docs-1.0.0-2a347af",
+  "session_id": "vs_c2c7bb439600",
+  "run_id": "vr_55b45ff32c8d4cbcbc7223b26ef54ff9",
+  "receipt_url": "https://fetchsandbox.com/runs/6536effa7a?flow=vr_55b45ff32c8d4cbcbc7223b26ef54ff9",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -65,5 +65,5 @@
       "explanation": "FetchSandbox has no Zendesk twin yet; replies are Gmail drafts."
     }
   ],
-  "recorded_at": "2026-10-17T16:18:19.714Z"
+  "recorded_at": "2026-10-17T18:58:20.042Z"
 }

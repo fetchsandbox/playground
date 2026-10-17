@@ -1,9 +1,9 @@
 {
   "workflow": "returns-warranty",
-  "app_version": "acme-ops-returns-warranty-1.0.0-df79afd",
-  "session_id": "vs_0a9e2a1cddd3",
-  "run_id": "vr_e0778cfd16fd4a1db57cf35861be60d9",
-  "receipt_url": "https://fetchsandbox.com/runs/d196fed8ac?flow=vr_e0778cfd16fd4a1db57cf35861be60d9",
+  "app_version": "acme-ops-returns-warranty-1.0.0-2a347af",
+  "session_id": "vs_ad6c3d715d7a",
+  "run_id": "vr_95aece181fdf4e33bd55f27e6490eea4",
+  "receipt_url": "https://fetchsandbox.com/runs/80f8ee890c?flow=vr_95aece181fdf4e33bd55f27e6490eea4",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -95,5 +95,5 @@
       "explanation": "The Stripe twin's credit_notes create/get return sample amounts, not the amount sent, so the read-back reports drift on the twin."
     }
   ],
-  "recorded_at": "2026-10-17T16:10:59.317Z"
+  "recorded_at": "2026-10-17T18:55:49.217Z"
 }

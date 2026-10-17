@@ -1,9 +1,9 @@
 {
   "workflow": "revenue-reconciliation",
-  "app_version": "acme-ops-revenue-reconciliation-1.0.0-dbab6f7",
-  "session_id": "vs_920a5e2ec151",
-  "run_id": "vr_deac92d8f5264a81bdfe6a17d17192ca",
-  "receipt_url": "https://fetchsandbox.com/runs/a630507692?flow=vr_deac92d8f5264a81bdfe6a17d17192ca",
+  "app_version": "acme-ops-revenue-reconciliation-1.0.0-96b3151",
+  "session_id": "vs_66890aaf64be",
+  "run_id": "vr_a6e43ac08b4542b390f5acd8a98e453d",
+  "receipt_url": "https://fetchsandbox.com/runs/b29c0a66a5?flow=vr_a6e43ac08b4542b390f5acd8a98e453d",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -75,5 +75,5 @@
       "explanation": "FetchSandbox has no Zendesk twin yet; refunds are reported as unverified (refundsUnverified) instead of approved."
     }
   ],
-  "recorded_at": "2026-10-17T06:21:26.417Z"
+  "recorded_at": "2026-10-17T18:43:40.505Z"
 }
