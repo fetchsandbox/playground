@@ -1,0 +1,69 @@
+{
+  "workflow": "compliance-docs",
+  "app_version": "acme-ops-compliance-docs-1.0.0-0908aa5",
+  "session_id": "vs_cfa9dfa1fb62",
+  "run_id": "vr_89a3a67d17bd49e393bbd879dacefcce",
+  "receipt_url": "https://fetchsandbox.com/runs/793bb8daac?flow=vr_89a3a67d17bd49e393bbd879dacefcce",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_part_no_reply",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "box_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "asana_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_then_redelivery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "box_document_share_gated",
+      "status": "unmeasured",
+      "explanation": "The Box twin has no seeded files and its search returns sample data, so the found-document path (gated box.share_document + gmail.draft_documents) is never reached; matchDoc() is covered by local reasoning only."
+    },
+    {
+      "id": "zendesk_ticket_reply",
+      "status": "unmeasured",
+      "explanation": "FetchSandbox has no Zendesk twin yet; replies are Gmail drafts."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:18:19.714Z"
+}
