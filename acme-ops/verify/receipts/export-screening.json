@@ -1,0 +1,84 @@
+{
+  "workflow": "export-screening",
+  "app_version": "acme-ops-export-screening-1.0.0-7e9260e",
+  "session_id": "vs_9cdf2f2a28a4",
+  "run_id": "vr_0630f2bf77114f0faaed8f22ece14c8a",
+  "receipt_url": "https://fetchsandbox.com/runs/ae8c32ab75?flow=vr_0630f2bf77114f0faaed8f22ece14c8a",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "embargoed_destination_cannot_be_released",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_customer_still_reviewed",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "asana_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_and_reconcile",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restricted_party_screening",
+      "status": "unmeasured",
+      "explanation": "No FetchSandbox twin for the Trade.gov Consolidated Screening List (or any screening provider); the runtime treats screening as unavailable and holds every order."
+    }
+  ],
+  "recorded_at": "2026-10-17T15:53:01.546Z"
+}
