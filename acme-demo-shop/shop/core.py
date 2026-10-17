@@ -2,7 +2,7 @@
 import hashlib,hmac,json,re,secrets,time,uuid
 from decimal import Decimal
 
-VERSION='acme-shop-1.0.2'
+VERSION='acme-shop-1.0.3'
 class ShopError(Exception):
  def __init__(self,message,status=400):self.message,self.status=message,status
 
