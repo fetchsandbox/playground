@@ -5,3 +5,9 @@ cdk.out
 verify
 test
 infra
+
+.env
+.env.*
+.fetchsandbox
+**/*.log
+.git

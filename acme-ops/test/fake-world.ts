@@ -193,9 +193,12 @@ export async function startWorld() {
       if (!t) return send(404, { error: "RecordNotFound" });
       if (req.method === "PUT") {
         const u = body.ticket;
+        if (u.safe_update && u.updated_stamp !== t.updated_at) return send(409, { error: "UpdateConflict" });
         if (u.priority) t.priority = u.priority;
+        if (u.tags) t.tags = [...u.tags];
         if (u.additional_tags) t.tags = [...new Set([...(t.tags ?? []), ...u.additional_tags])];
         if (u.comment) Z.comments.push({ ticketId: t.id, ...u.comment });
+        t.updated_at = new Date(Date.parse(t.updated_at ?? "2026-10-14T12:00:00Z") + 1000).toISOString();
       }
       return send(200, { ticket: t });
     }

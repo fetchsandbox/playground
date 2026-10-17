@@ -19,6 +19,8 @@ for (const wf of Object.values(WORKFLOWS)) {
   new WorkflowStack(app, `AcmeOps-${wf.id}`, {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     workflow: wf.id,
+    sourceCommit: ctx("sourceCommit") ?? process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded",
+    deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.0-19-workflows",
     org: wf.org,
     team: wf.team,
     description: wf.description,
