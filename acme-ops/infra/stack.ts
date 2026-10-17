@@ -69,6 +69,8 @@ export class WorkflowStack extends Stack {
         WORKFLOW_ENVIRONMENT: "production",
         WORKFLOW_OWNER: "Raj",
         WORKFLOW_DEPARTMENT: props.org,
+        GMAIL_FROM_IDENTITY: `Acme ${props.org} <${props.org === "Sales" ? "sales" : "operations"}@fetchsandbox.com>`,
+        GMAIL_REPLY_TO: `${props.org === "Sales" ? "sales" : "operations"}@fetchsandbox.com`,
         WORKFLOW_OWNER_TEAM: props.team,
         WORKFLOW_ONCALL_STATUS: "unassigned",
         WORKFLOW_DEPLOYMENT_VERSION: props.deploymentVersion,

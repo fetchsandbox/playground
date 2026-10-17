@@ -6,11 +6,11 @@ import type { ProviderHttp } from "../kit/http";
  * so the envelope is checked here and turned into a typed error.
  */
 export class SlackClient {
-  constructor(readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp, readonly department?: string) {}
 
   async postMessage(channel: string, text: string, blocks?: unknown[]): Promise<{ channel: string; ts: string }> {
     const { body } = await this.http.request<any>("POST", "/api/chat.postMessage", {
-      json: { channel, text, blocks, unfurl_links: false, unfurl_media: false },
+      json: { channel, text: this.department ? `*Acme ${this.department}*\n${text}` : text, blocks, unfurl_links: false, unfurl_media: false },
     });
     if (body?.ok !== true) {
       const code = String(body?.error ?? "not_ok");

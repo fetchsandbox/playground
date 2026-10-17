@@ -20,7 +20,7 @@ for (const wf of Object.values(WORKFLOWS)) {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     workflow: wf.id,
     sourceCommit: ctx("sourceCommit") ?? process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded",
-    deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.1-shared-trace-delivery",
+    deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.2-department-identities",
     manageDeliveryResourcePolicy: ctx("useExistingTraceDeliveryPolicy") === "true" ? false : undefined,
     org: wf.org,
     team: wf.team,

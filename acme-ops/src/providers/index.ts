@@ -137,9 +137,9 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
     return {
       stripe: h.stripe && new StripeClient(h.stripe),
       hubspot: h.hubspot && new HubSpotClient(h.hubspot),
-      gmail: h.gmail && new GmailClient(h.gmail),
+      gmail: h.gmail && new GmailClient(h.gmail, "me", env.GMAIL_FROM_IDENTITY, env.GMAIL_REPLY_TO),
       calendar: h.calendar && new CalendarClient(h.calendar),
-      slack: h.slack && new SlackClient(h.slack),
+      slack: h.slack && new SlackClient(h.slack, env.WORKFLOW_DEPARTMENT),
       zendesk: h.zendesk && new ZendeskClient(h.zendesk),
       asana: h.asana && new AsanaClient(h.asana),
       workos: h.workos && new WorkOSClient(h.workos),
