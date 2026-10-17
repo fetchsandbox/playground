@@ -1,0 +1,94 @@
+{
+  "workflow": "rfq-quote",
+  "app_version": "acme-ops-rfq-quote-1.0.0-7a70b69",
+  "session_id": "vs_bd18a65066e9",
+  "run_id": "vr_9d553a7d44fe4af4b760c3f63e937ffb",
+  "receipt_url": "https://fetchsandbox.com/runs/451bef1458?flow=vr_9d553a7d44fe4af4b760c3f63e937ffb",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approval_discount_parks",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_and_reconcile",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "discount_over_policy_declined",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_part_manual_pricing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "mixed_terms_manual_pricing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "discount_as_stripe_coupon",
+      "status": "unmeasured",
+      "explanation": "The Stripe twin rejects discounts on quotes (501 unsupported_checkout_option), so the discount is recorded in quote metadata and applied at invoicing; the coupon path is not exercised."
+    },
+    {
+      "id": "salesforce_cpq",
+      "status": "unmeasured",
+      "explanation": "No Salesforce twin in FetchSandbox; ACME's quote is a Stripe quote and the CRM is HubSpot."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:15:49.868Z"
+}
