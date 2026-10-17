@@ -1,6 +1,6 @@
 # Acme AgentCore release — 17 October 2026
 
-Account `342206308838`, region `us-west-2`. Recorded 2026-10-17T19:11:17.102426+00:00.
+Account `342206308838`, region `us-west-2`. Recorded 2026-10-17T19:14:10.017981+00:00.
 
 ## Measured scope
 
@@ -12,7 +12,7 @@ Account `342206308838`, region `us-west-2`. Recorded 2026-10-17T19:11:17.102426+
 - Fresh published-MCP contract results: 2 verified, 11 inconclusive, 6 failing; 169 held, 6 violated, 101 unmeasured checks. Each receipt is separate; these counts are an inventory, not a merged proof.
 - Local validation: 64 tests across 23 files passed; TypeScript and bundling passed. No workflow business definitions or declared contract assertions were changed. No bug was injected and no before/after application-fix proof is claimed.
 - Validation used production FetchSandbox through published MCP `0.7.28`. Disposable keys were used for all nineteen runs and exact-key revocation was confirmed. The application version in a relay receipt is declared, not remotely attested.
-- LoopLabs remains observation-only. No new cross-account invocation role was created. These workflow triggers are IAM-authenticated AgentCore API commands; this package does not install native Slack listeners, Gmail watches, or schedules.
+- LoopLabs remains observation-only. No new cross-account invocation role was created. LoopLabs sync/import/execution was not exercised. These workflow triggers are IAM-authenticated AgentCore API commands; this package does not install native Slack listeners, Gmail watches, or schedules. The MCP runs are scripted-contract tests, not fresh Cursor/Claude persona acceptance runs.
 
 ## Workflow matrix
 
