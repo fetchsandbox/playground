@@ -1,0 +1,94 @@
+{
+  "workflow": "order-status",
+  "app_version": "acme-ops-order-status-1.0.0-9e32d92",
+  "session_id": "vs_ab609a8d4092",
+  "run_id": "vr_be5a26e56b3848efb4526afebc5392a5",
+  "receipt_url": "https://fetchsandbox.com/runs/bff7380427?flow=vr_be5a26e56b3848efb4526afebc5392a5",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "on_time_order_reply_only",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "late_order_detected",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_approve_and_reconcile",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "after_new_date_on_time",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "someone_elses_order_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "asana_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "carrier_tracking",
+      "status": "unmeasured",
+      "explanation": "No carrier twin (UPS/FedEx/EasyPost/Shippo) in FetchSandbox; 'shipped' comes from the completed warehouse task only."
+    },
+    {
+      "id": "erp_order_lines",
+      "status": "unmeasured",
+      "explanation": "No ERP twin (SAP/Oracle/NetSuite); ACME's order is its Stripe invoice and the promise date its Asana task."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:13:25.197Z"
+}
