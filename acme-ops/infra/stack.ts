@@ -17,6 +17,8 @@ export interface WorkflowStackProps extends StackProps {
   description: string;
   sourceCommit: string;
   deploymentVersion: string;
+  /** Disable only after checking a regional shared delivery policy exists. */
+  manageDeliveryResourcePolicy?: boolean;
   /** Comma-separated user ids allowed to approve when a run doesn't name approvers. */
   approverUserIds?: string;
   approvalTtlHours?: number;
@@ -78,6 +80,10 @@ export class WorkflowStack extends Stack {
         APPROVAL_TTL_HOURS: String(props.approvalTtlHours ?? 24),
       },
       tracingEnabled: true,
+      // The deployment may reuse a verified regional policy to avoid consuming
+      // one account-level quota slot per workflow. Default CDK behavior is kept
+      // for accounts without that preconfigured delivery permission.
+      manageDeliveryResourcePolicy: props.manageDeliveryResourcePolicy,
     });
     table.grantReadWriteData(runtime.role);
     secret.grantRead(runtime.role);

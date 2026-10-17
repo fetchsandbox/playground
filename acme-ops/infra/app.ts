@@ -11,7 +11,7 @@ const ids = readdirSync(dir).filter((f) => f.endsWith(".ts") && f !== "shared.ts
 const WORKFLOWS = (await Promise.all(ids.map(loadWorkflow))).filter((w) => w !== undefined);
 
 // cdk deploy AcmeOps-support-escalation            → one workflow
-// cdk deploy --all                                  → all four, each independent
+// cdk deploy --all                                  → all nineteen, each independent
 const app = new App();
 const ctx = (k: string): string | undefined => app.node.tryGetContext(k);
 
@@ -20,7 +20,8 @@ for (const wf of Object.values(WORKFLOWS)) {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     workflow: wf.id,
     sourceCommit: ctx("sourceCommit") ?? process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded",
-    deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.0-19-workflows",
+    deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.1-shared-trace-delivery",
+    manageDeliveryResourcePolicy: ctx("useExistingTraceDeliveryPolicy") === "true" ? false : undefined,
     org: wf.org,
     team: wf.team,
     description: wf.description,
