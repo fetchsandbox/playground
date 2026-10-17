@@ -81,3 +81,12 @@ No automatic external policy/RMA ingestion, actual stock mutation, bank-settleme
 
 
 The existing signature-verified Slack/Gmail ingress remains in place. `verify/shared_ingress_worker.py` records the narrow deployed transport extension: refund messages/buttons go to this workflow’s separate delivery Lambda; Gmail sends a scoped polling nudge here and preserves the original quote delivery; other payloads are forwarded unchanged. The original worker ZIP/configuration is retained privately for rollback. This transport routing does not change the quote workflow’s discount rules or approval implementation.
+
+## Recorded validation — 2026-10-17
+
+- App `acme-refund-1.0.3`: 50 local tests passed. These use explicit provider doubles/mocked HTTP.
+- Existing `acme-ops` regression suite: 66 local tests passed; TypeScript checking passed.
+- Published `fetchsandbox-mcp@0.7.28`: six assertions held and two advanced checks remain unmeasured. The [MCP receipt is inconclusive](https://fetchsandbox.com/runs/f238d1d0ad?flow=vr_1dd79fb47cdd41fbb25d9adbac31fb57); `app_verified` is false. This is not full workflow certification or a native-agent persona run.
+- Separate deployed acceptance observed native Slack request/approval, a policy-cap decline, scheduled business-email intake, manager Slack approval, Stripe test-mode refund and a Gmail outcome in the original email thread. An unauthorized decision was rejected. Repeating a saved case and reading it through fresh AgentCore sessions did not repeat the measured refund.
+- Native evidence and real-provider references remain in the operator's private review folder, not this public repository. The customer mailbox test uses self-addressed aliases; external customer deliverability and forwarded-copy suppression are not certified.
+- The broader planned acceptance matrix is partial. External fault/concurrency/process-death and changed-policy checkpoint coverage remain open. No LoopLabs import/enforcement acceptance is claimed.

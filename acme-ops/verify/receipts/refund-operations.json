@@ -1,9 +1,9 @@
 {
   "workflow": "refund-operations",
-  "app_version": "acme-refund-1.0.2-feaf835",
-  "session_id": "vs_8ec60f3de458",
-  "run_id": "vr_6ce25c59540546819eb560bae378c359",
-  "receipt_url": "https://fetchsandbox.com/runs/f97d6da9d8?flow=vr_6ce25c59540546819eb560bae378c359",
+  "app_version": "acme-refund-1.0.3-3989bc4",
+  "session_id": "vs_6b4bf2e016a2",
+  "run_id": "vr_1dd79fb47cdd41fbb25d9adbac31fb57",
+  "receipt_url": "https://fetchsandbox.com/runs/f238d1d0ad?flow=vr_1dd79fb47cdd41fbb25d9adbac31fb57",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -50,5 +50,5 @@
       "explanation": "The narrow twin suite uses a frozen catalog; a policy replacement checkpoint is not wired. Unit reassessment tests are separate."
     }
   ],
-  "recorded_at": "2026-10-17T20:23:55.289Z"
+  "recorded_at": "2026-10-17T20:30:01.450Z"
 }
