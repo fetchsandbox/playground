@@ -147,3 +147,10 @@ def test_unknown_case_does_not_create_an_orphan_lease(setup):
     e,_,_,_=setup;engine=e()
     with pytest.raises(KeyError):engine.drive('UNKNOWN')
     assert engine.store.data=={}
+
+
+def test_customer_message_identity_is_unique_per_case_and_stable_on_resume(setup):
+    e,p,_,_=setup;e().start(request(15,'FIRST'));e().start(request(15,'SECOND'))
+    assert len(p.emails)==2 and p.emails[0][3]!=p.emails[1][3]
+    assert p.emails[0][3]=='FIRST:COMPLETED:email'
+    e().drive('FIRST');assert len(p.emails)==2

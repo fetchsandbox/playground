@@ -193,7 +193,7 @@ class Engine:
             self.r['notifications'][key]={'state':'uncertain'};self.save();self.event('customer_output_prepared',agent='customer_handoff',channel=destination,outcome=outcome)
             try:
                 if destination=='email':
-                    ref=self.p.mail(self.r['input']['customerEmail'],'Acme refund '+case_id,text,key,self.r['input'].get('gmailThread'),self.r['input'].get('gmailMessageId'))['id']
+                    ref=self.p.mail(self.r['input']['customerEmail'],'Acme refund '+case_id,text,case_id+':'+key,self.r['input'].get('gmailThread'),self.r['input'].get('gmailMessageId'))['id']
                 else:ref=self.p.slack(self.r['input']['slackChannel'],text,self.r['input'].get('slackThread'))['ts']
                 self.r['notifications'][key]={'state':'sent','provider_reference':ref};self.save();self.event('customer_output_sent',agent='customer_handoff',channel=destination,outcome=outcome,provider_reference=ref)
             except ProviderFailure as exc:
