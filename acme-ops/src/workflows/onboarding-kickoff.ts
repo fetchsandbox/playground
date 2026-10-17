@@ -76,7 +76,7 @@ export const onboardingKickoff: WorkflowDef<Input> = {
           const all = (await stripe.listCustomers()).filter((c) => c.email?.toLowerCase() === input.contact.email);
           dup = Math.max(0, all.length - 1);
           const subs = (await stripe.listSubscriptions(customer.id)).filter((s) => s.customer === customer.id && EXISTING_SUB_STATES.has(s.status));
-          existing = subs.find((s) => s.items.data.some((it) => it.price.id === price.id))?.id;
+          existing = subs.find((s) => s.items.data.some((it) => it.price?.id === price.id))?.id;
         }
         const data: BillingState = {
           customerId: customer?.id,
@@ -241,7 +241,7 @@ export const onboardingKickoff: WorkflowDef<Input> = {
           if (!customerId) throw new FatalError("no Stripe customer: stripe.ensure_customer did not apply");
           // The approval may come a day later; never double-subscribe.
           const live = (await providers.stripe!.listSubscriptions(customerId)).find(
-            (s) => s.customer === customerId && EXISTING_SUB_STATES.has(s.status) && s.items.data.some((it) => it.price.id === bill.price.id),
+            (s) => s.customer === customerId && EXISTING_SUB_STATES.has(s.status) && s.items.data.some((it) => it.price?.id === bill.price.id),
           );
           if (live) return { ref: live.id, detail: { created: false } };
           const sub = await providers.stripe!.createSubscription(customerId, bill.price.id, input.plan.quantity, { deal_id: input.dealId });
@@ -249,7 +249,7 @@ export const onboardingKickoff: WorkflowDef<Input> = {
         },
         async reconcile({ providers }, receipt) {
           const s = await providers.stripe!.getSubscription(receipt.ref);
-          const item = s.items?.data?.find((it) => it.price.id === bill.price.id);
+          const item = s.items?.data?.find((it) => it.price?.id === bill.price.id);
           if (!item) return { status: "drift", detail: "price no longer on the subscription" };
           if ((item.quantity ?? 1) !== input.plan.quantity) return { status: "drift", detail: `quantity ${item.quantity}, expected ${input.plan.quantity}` };
           return s.status === "canceled" ? { status: "missing", detail: "subscription canceled" } : { status: "match" };

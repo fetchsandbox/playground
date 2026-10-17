@@ -106,7 +106,7 @@ export const revenueReconciliation: WorkflowDef<Input> = {
         const data: StripeLedger = {
           customers: [...rows.values()].sort((a, b) => a.email.localeCompare(b.email)),
           refunds: refunds.filter((r) => r.status === "succeeded").map((r) => ({ id: r.id, charge: r.charge, amountMinor: r.amount, currency: r.currency })),
-          currency: subs[0]?.items.data[0]?.price.currency ?? "usd",
+          currency: subs[0]?.items.data[0]?.price?.currency ?? "usd",
         };
         return { summary: `${data.customers.length} customers, ${data.customers.filter((c) => c.liveSubs).length} paying, ${data.refunds.length} refunds`, data };
       },

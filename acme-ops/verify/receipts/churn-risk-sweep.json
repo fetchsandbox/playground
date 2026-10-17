@@ -1,9 +1,9 @@
 {
   "workflow": "churn-risk-sweep",
-  "app_version": "acme-ops-churn-risk-sweep-1.0.0-5f7dd7e",
-  "session_id": "vs_a7bc68d64ebb",
-  "run_id": "vr_4db186ee6a624194b450fede687f7e7c",
-  "receipt_url": "https://fetchsandbox.com/runs/b39299371f?flow=vr_4db186ee6a624194b450fede687f7e7c",
+  "app_version": "acme-ops-churn-risk-sweep-1.0.0-dbab6f7",
+  "session_id": "vs_6eacd16d5f63",
+  "run_id": "vr_4750363d6121468999f2717ee7fa0956",
+  "receipt_url": "https://fetchsandbox.com/runs/4c1386197c?flow=vr_4750363d6121468999f2717ee7fa0956",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -80,5 +80,5 @@
       "explanation": "FetchSandbox has no Zendesk twin yet; the support signal is reported in signalGaps."
     }
   ],
-  "recorded_at": "2026-10-17T06:10:01.595Z"
+  "recorded_at": "2026-10-17T06:23:51.264Z"
 }

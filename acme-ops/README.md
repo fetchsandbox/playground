@@ -119,7 +119,14 @@ declared as a **blocked** check with evidence, never dropped.
 
 ### Results
 
-See [`verify/RESULTS.md`](verify/RESULTS.md) and `verify/receipts/`.
+All four runtimes were proven at commit `dbab6f7`. **54 of 54 executable checks held**, each
+driven twice with identical saved state, and each including a real process restart. The one
+Zendesk check per workflow is declared blocked until a Zendesk twin exists, so FetchSandbox
+reports the overall verdict as *inconclusive* rather than *verified*. The proof also caught a
+real bug (a re-fired closed-won trigger could create a second subscription while the first was
+still `incomplete`), which is fixed and regression-tested.
+
+Per-check results, receipt links and the twin findings are in [`verify/RESULTS.md`](verify/RESULTS.md).
 
 ## Deploy (one AgentCore runtime per workflow)
 
@@ -143,7 +150,5 @@ provider keys from [`.env.example`](.env.example) into each stack's `SecretArn`.
   ([`src/providers/zendesk.ts`](src/providers/zendesk.ts)) uses Zendesk's own
   REST v2 paths, so it will run against the twin once it exists (set
   `ZENDESK_BASE_URL`). Until then the Zendesk checks are declared blocked.
-- **Restart through the relay** is not exercised there. It's covered by local
-  tests (`test/engine.test.ts`).
 - **Not yet deployed to a live AWS account.** Verified with tests, `cdk synth`
   and the twin proofs. The Docker image wasn't built here.

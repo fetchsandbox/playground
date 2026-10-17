@@ -1,11 +1,11 @@
 {
   "workflow": "onboarding-kickoff",
-  "app_version": "acme-ops-onboarding-kickoff-1.0.0-5f7dd7e",
-  "session_id": "vs_a196bb4f7fc6",
-  "run_id": "vr_32ebbd12dbdb4be99954cefada28f79a",
-  "receipt_url": "https://fetchsandbox.com/runs/07c4a6c372?flow=vr_32ebbd12dbdb4be99954cefada28f79a",
+  "app_version": "acme-ops-onboarding-kickoff-1.0.0-dbab6f7",
+  "session_id": "vs_fde1c445ef90",
+  "run_id": "vr_34dd8797cc094b728307d526149991eb",
+  "receipt_url": "https://fetchsandbox.com/runs/f4c3a36343?flow=vr_34dd8797cc094b728307d526149991eb",
   "status": null,
-  "verdict": "failing",
+  "verdict": "inconclusive",
   "app_verified": false,
   "complete": false,
   "checks": [
@@ -31,8 +31,8 @@
     },
     {
       "id": "refired_trigger_no_double_subscription",
-      "status": "violated",
-      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 0"
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "unknown_price_no_stripe_writes",
@@ -85,5 +85,5 @@
       "explanation": "FetchSandbox has no Zendesk twin yet; zendesk.provision_requester is recorded as skipped/not_configured."
     }
   ],
-  "recorded_at": "2026-10-17T06:12:27.732Z"
+  "recorded_at": "2026-10-17T06:15:59.710Z"
 }

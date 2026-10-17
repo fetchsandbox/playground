@@ -26,6 +26,7 @@ Clone, run, point your agent at it, see whether FetchSandbox catches the bug.
 | [apps/descope-onboarding](apps/descope-onboarding) | FastAPI + Descope (greenfield — auth is a placeholder) |
 | [apps/hubspot](apps/hubspot) | FastAPI + HubSpot CRM v3 |
 | [customer-ops-agents](customer-ops-agents) | TypeScript on Amazon Bedrock AgentCore: parallel Claude agents over Stripe, HubSpot, Gmail, Slack (greenfield) |
+| [acme-ops](acme-ops) | Four independent AgentCore runtimes for ACME (Support, Finance, Customer Success, Sales→CS): parallel agents over Zendesk, HubSpot, Gmail, Stripe, Calendar, Slack, proven through the FetchSandbox managed relay (greenfield) |
 
 Every app except `apps/descope-onboarding` is a brownfield integration with a
 planted bug — what the bug is, is for you (and your agent) to discover.

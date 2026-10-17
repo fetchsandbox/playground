@@ -18,7 +18,8 @@ export interface StripeSubscription {
   customer: string;
   status: string;
   cancel_at_period_end?: boolean;
-  items: { data: { price: StripePrice; quantity?: number }[] };
+  // `price` is always present on real Stripe items; FetchSandbox seed items omit it.
+  items: { data: { price?: StripePrice; quantity?: number }[] };
   metadata?: Record<string, string>;
 }
 export interface StripeInvoice {
@@ -118,9 +119,9 @@ export class StripeClient {
 /** Monthly recurring revenue of one subscription, in minor units. */
 export function subscriptionMrr(sub: StripeSubscription): number {
   return sub.items.data.reduce((sum, it) => {
-    const amount = it.price.unit_amount ?? 0;
+    const amount = it.price?.unit_amount ?? 0;
     const qty = it.quantity ?? 1;
-    const interval = it.price.recurring?.interval;
+    const interval = it.price?.recurring?.interval;
     const monthly = interval === "year" ? Math.round(amount / 12) : interval === "week" ? Math.round((amount * 52) / 12) : amount;
     return sum + monthly * qty;
   }, 0);
