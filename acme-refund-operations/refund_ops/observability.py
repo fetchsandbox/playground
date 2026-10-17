@@ -13,7 +13,7 @@ def tracer():
     from amazon.opentelemetry.distro.exporter.otlp.aws.traces.otlp_aws_span_exporter import OTLPAwsSpanExporter
     import botocore.session
     region=os.getenv('AWS_REGION','us-west-2')
-    provider=TracerProvider(resource=Resource.create({'service.name':'acme-refund-operations','service.version':'acme-refund-1.0.1'}))
+    provider=TracerProvider(resource=Resource.create({'service.name':'acme-refund-operations','service.version':'acme-refund-1.0.2'}))
     provider.add_span_processor(BatchSpanProcessor(OTLPAwsSpanExporter(aws_region=region,session=botocore.session.Session(),endpoint=f'https://xray.{region}.amazonaws.com/v1/traces',timeout=5),schedule_delay_millis=1000))
     atexit.register(provider.shutdown);_TRACER=provider.get_tracer('acme.refund.business');return _TRACER
 

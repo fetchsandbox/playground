@@ -15,7 +15,7 @@ class Policies:
     def order(self,pi):return copy.deepcopy(self.order_data),{'uri':'unit-double://orders/'+pi}
 class Providers:
     def __init__(self):
-        self.payment={'id':'pi_demo','customer':'cus_demo','amount_received':100000,'status':'succeeded','created':NOW-86400,'currency':'usd','metadata':{'acme_sku':'ACME-EDGE-100'},'livemode':False,'refunds':[],'refund_committed':0};self.writes=[];self.emails=[];self.posts=[];self.event=lambda *a,**k:None;self.agent='intake';self.crash=False;self.mail_failure=None;self.pending=False
+        self.payment={'id':'pi_demo','customer':'cus_demo','amount_received':100000,'status':'succeeded','created':NOW-86400,'currency':'usd','metadata':{'acme_sku':'ACME-EDGE-100'},'livemode':False,'refunds':[],'refund_committed':0};self.writes=[];self.emails=[];self.posts=[];self.updates=[];self.event=lambda *a,**k:None;self.agent='intake';self.crash=False;self.mail_failure=None;self.pending=False
     def purchase(self,pi,email):
         if email!='customer@example.test':raise ValueError('Purchase does not belong to the requesting customer')
         p=copy.deepcopy(self.payment);p['refund_committed']=sum(x['amount'] for x in p['refunds'] if x['status'] not in ['failed','canceled']);return p
@@ -31,6 +31,7 @@ class Providers:
         if self.mail_failure:raise self.mail_failure
         self.emails.append(args);return {'id':'mail_'+str(len(self.emails))}
     def slack(self,*args):self.posts.append(args);return {'ts':str(len(self.posts))}
+    def slack_update(self,*args):self.updates.append(args);return {'ts':args[1]}
 @pytest.fixture
 def setup():
     store=MemoryStore();p=Providers();pol=Policies();clock=[NOW]
@@ -120,7 +121,7 @@ def test_known_notification_failure_retries_only_notification(setup):
     e,p,_,_=setup;p.mail_failure=ProviderFailure('gmail',429);r=e().start(request());assert r['phase']=='COMPLETED'
     p.mail_failure=None;e().drive('CASE-1');assert len(p.writes)==1 and len(p.emails)==1
 
-@pytest.mark.parametrize('pct',[0,-1,101,'NaN','0.001'])
+@pytest.mark.parametrize('pct',[0,-1,101,'NaN','0.001','not-a-number','Infinity'])
 def test_invalid_percentage(setup,pct):
     e,p,_,_=setup
     with pytest.raises(ValueError):e().start(request(pct))
@@ -135,3 +136,14 @@ def test_approval_card_sent_to_manager_not_customer_channel(setup,monkeypatch):
     assert r['input']['slackThread']=='123.456' and not p.writes
     e().drive('CASE-1','approve','RAJ')
     assert any(x[0]=='D_CUSTOMER' and x[2]=='123.456' and 'succeeded' in x[1] for x in p.posts)
+
+
+def test_final_outcome_replaces_approval_buttons_without_second_refund(setup):
+    e,p,_,_=setup;e().start(request(20,slackChannel='D_DEMO',slackThread='123.456'))
+    e().drive('CASE-1','approve','RAJ');assert len(p.updates)==1 and 'approve by <@RAJ>' in p.updates[0][2]
+    e().drive('CASE-1');assert len(p.updates)==1 and len(p.writes)==1
+
+def test_unknown_case_does_not_create_an_orphan_lease(setup):
+    e,_,_,_=setup;engine=e()
+    with pytest.raises(KeyError):engine.drive('UNKNOWN')
+    assert engine.store.data=={}

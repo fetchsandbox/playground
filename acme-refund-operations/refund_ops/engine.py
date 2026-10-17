@@ -1,6 +1,6 @@
 """Six specialist roles, persistent evidence, approval, refund and customer resolution."""
 import copy, hashlib, json, os, re, time, uuid
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from . import VERSION
 from . import observability
 from .policy import assess, digest
@@ -44,7 +44,9 @@ class Engine:
         if not re.fullmatch(r'[\w.-]{1,120}',request['caseId']):raise ValueError('Invalid caseId')
         if not re.fullmatch(r'pi_[A-Za-z0-9]+',request['paymentIntent']):raise ValueError('Invalid payment reference')
         if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',request['customerEmail']):raise ValueError('Invalid customer email')
-        request['customerEmail']=request['customerEmail'].lower();pct=Decimal(str(request['requestedPct']))
+        request['customerEmail']=request['customerEmail'].lower()
+        try:pct=Decimal(str(request['requestedPct']))
+        except InvalidOperation:raise ValueError('Refund percentage must be a number') from None
         if not pct.is_finite() or pct<=0 or pct>100 or pct.as_tuple().exponent < -2:raise ValueError('Refund percentage must be greater than 0 and at most 100, with at most two decimals')
         request['requestedPct']=str(pct);request.pop('requestText',None)
         key='CASE#'+request['caseId'];identity={k:request[k] for k in ['customerEmail','paymentIntent','requestedPct']}
@@ -57,7 +59,9 @@ class Engine:
             return self.status(request['caseId'])
         return self.drive(request['caseId'])
     def drive(self,case_id,decision=None,user=None):
-        key='CASE#'+case_id;owner=uuid.uuid4().hex;self.store.lock(key,owner);self.r=self.store.get(key);self.key,self.owner=key,owner
+        key='CASE#'+case_id
+        if not self.store.get(key):raise KeyError('Case not found')
+        owner=uuid.uuid4().hex;self.store.lock(key,owner);self.r=self.store.get(key);self.key,self.owner=key,owner
         self.p.event=self.event;self.p.span=lambda name:observability.span(self.r,name);self.r['attempt']+=1
         payment_key=None
         try:
@@ -70,7 +74,7 @@ class Engine:
                     self.r['phase']='EXPIRED';self.event('approval_expired',agent='billing_policy');self.notify('EXPIRED');return self.status(case_id)
                 if decision not in ['approve','reject']:raise ValueError('Invalid approval decision')
                 self.r['approval']={'decision':decision,'actor':user,'at':int(self.now()),'snapshot_hash':self.r['assessment']['snapshot_hash']}
-                self.event('approval_approved' if decision=='approve' else 'approval_rejected',agent='billing_policy')
+                self.event('approval_approved' if decision=='approve' else 'approval_rejected',agent='billing_policy',actor_id=user)
                 if decision=='reject':self.r['phase']='REJECTED';self.notify('REJECTED');return self.status(case_id)
             elif self.r['phase']=='AWAITING_APPROVAL':return self.status(case_id)
             if not self.r.get('started'):
@@ -194,6 +198,17 @@ class Engine:
                 self.r['notifications'][key]={'state':'sent','provider_reference':ref};self.save();self.event('customer_output_sent',agent='customer_handoff',channel=destination,outcome=outcome,provider_reference=ref)
             except ProviderFailure as exc:
                 self.r['notifications'][key]={'state':'uncertain' if exc.uncertain else 'failed'};self.save();self.event('customer_output_withheld',agent='customer_handoff',channel=destination,outcome=outcome)
+        # Updating a known Slack message is retry-safe; remove stale approval buttons.
+        approval_ts=self.r.get('approval_message')
+        if outcome!='AWAITING_APPROVAL' and approval_ts and approval_ts!='intent' and self.r.get('approval_display_state')!=outcome:
+            decision=self.r.get('approval',{});actor=decision.get('actor')
+            display=f"Acme Refund Operations · {outcome.replace('_',' ').title()}\nCase {case_id}"
+            if actor:display+=f"\nManager decision: {decision['decision']} by <@{actor}>."
+            display+='\n'+bodies[outcome]
+            try:
+                self.p.slack_update(self.r.get('approval_channel') or self.r['input']['slackChannel'],approval_ts,display)
+                self.r['approval_display_state']=outcome;self.save()
+            except ProviderFailure:self.event('approval_status_update_withheld',agent='customer_handoff',outcome=outcome)
         if 'customer_handoff' not in self.r['agents']:self.r['agents'].append('customer_handoff')
         self.event('agent_completed',agent='customer_handoff')
     def save(self):

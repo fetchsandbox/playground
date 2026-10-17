@@ -89,6 +89,8 @@ class Providers:
     def refund_get(self,ref):return self.request('stripe','GET','/v1/refunds/'+ref)
     def slack(self,channel,text,thread=None,blocks=None):
         return self.request('slack','POST','/api/chat.postMessage',json={'channel':channel,'text':text,'thread_ts':thread,'blocks':blocks,'unfurl_links':False})
+    def slack_update(self,channel,ts,text):
+        return self.request('slack','POST','/api/chat.update',json={'channel':channel,'ts':ts,'text':text,'blocks':[{'type':'section','text':{'type':'mrkdwn','text':text}}]})
     def mail(self,recipient,subject,body,case_id,thread=None,in_reply_to=None):
         m=EmailMessage();m['From']='Acme Refund Operations <operations@fetchsandbox.com>';m['To']=recipient;m['Subject']=subject
         m['Reply-To']='operations@fetchsandbox.com';m['Message-ID']=f'<acme-refund-{digest(case_id)}@fetchsandbox.com>'

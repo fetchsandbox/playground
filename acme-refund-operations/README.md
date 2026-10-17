@@ -28,7 +28,7 @@ After the native delivery route is connected, in the **Acme Enterprise** Slack a
 Please refund pi_YOUR_TEST_PAYMENT 20%
 ```
 
-The test payment must belong to the email in your Slack profile. The workflow posts progress and, when eligible, approval buttons in that thread. Only configured manager `U0AHZ0RCM` may approve/reject; this demo permits Raj to request and approve. A 75% request is declined. Approval does not bypass product eligibility.
+The test payment must belong to the email in your Slack profile. The workflow posts progress in that thread and, when eligible, sends approval buttons to the configured manager. When the requester is Raj, the manager card appears in the same app DM/thread. Final outcome replaces the approval card’s buttons. Only configured manager `U0AHZ0RCM` may approve/reject; this demo permits Raj to request and approve. A 75% request is declined. Approval does not bypass product eligibility.
 
 Email: send to **operations@fetchsandbox.com**, with a subject containing **Acme refund**, and include `refund pi_YOUR_TEST_PAYMENT 20%` in the plain-text body. Only that recipient/subject scope is read by refund intake. Notifications reply through Gmail as Acme Refund Operations, using the existing business sender and original thread when available. Gmail self-forwarded messages may be deduplicated; use another mailbox for an external customer test.
 
@@ -75,6 +75,9 @@ cd acme-ops
 PROOF_PORT=8158 node verify/relay-proof.mjs refund-operations
 ```
 
-Its six executable checks use real twin HTTP calls and independent refund/email readback. Advanced crash/fault/concurrency and policy drift are explicitly unmeasured in that MCP contract; unit tests do not substitute for those receipts. Local-only fixture/observation routes require `ACME_LOCAL_VERIFY=true` and a verifier token; they are absent from the deployed runtime.
+The Python environment selected by `PROOF_PYTHON` (or `python3`) must have this app’s requirements installed. Its six executable checks use real twin HTTP calls and independent refund/email readback. Advanced crash/fault/concurrency and policy drift are explicitly unmeasured in that MCP contract; unit tests do not substitute for those receipts. Local-only fixture/observation routes require `ACME_LOCAL_VERIFY=true` and a verifier token; they are absent from the deployed runtime.
 
 No automatic external policy/RMA ingestion, actual stock mutation, bank-settlement guarantee, approval-expiry sweep or generic helpdesk ticket trigger is claimed. Eligibility return/usage records are explicit merchant fixtures, never fabricated as a customer claim. Deployment and native acceptance evidence are recorded separately from this source document.
+
+
+The existing signature-verified Slack/Gmail ingress remains in place. `verify/shared_ingress_worker.py` records the narrow deployed transport extension: refund messages/buttons go to this workflow’s separate delivery Lambda; Gmail sends a scoped polling nudge here and preserves the original quote delivery; other payloads are forwarded unchanged. The original worker ZIP/configuration is retained privately for rollback. This transport routing does not change the quote workflow’s discount rules or approval implementation.

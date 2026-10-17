@@ -14,7 +14,7 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 const app=new App();
 const stack=new Stack(app,'AcmeRefundOperations',{env:{account:process.env.CDK_DEFAULT_ACCOUNT,region:process.env.CDK_DEFAULT_REGION}});
-const version='acme-refund-1.0.1';
+const version='acme-refund-1.0.2';
 const commit=app.node.tryGetContext('sourceCommit')??'unrecorded';
 for(const [k,v] of Object.entries({organization:'Acme Corporation',department:'Customer Service and Revenue Operations',owner:'Raj',owner_team:'Refund Assurance',environment:'production',workflow:'refund-operations',deployment_version:version,source_commit:commit,policy_version:'2026-10-17.1',synthetic_demo:'true',oncall:'rnagulapalle'}))Tags.of(stack).add(k,v);
 const table=new dynamodb.Table(stack,'Cases',{partitionKey:{name:'pk',type:dynamodb.AttributeType.STRING},billingMode:dynamodb.BillingMode.PAY_PER_REQUEST,timeToLiveAttribute:'ttl',pointInTimeRecoverySpecification:{pointInTimeRecoveryEnabled:true},removalPolicy:RemovalPolicy.RETAIN});
