@@ -1,18 +1,33 @@
 # acme-ops
 
-Four ACME operations workflows, each a **standalone Amazon Bedrock AgentCore
+Nineteen ACME operations workflows across ten departments, each a **standalone Amazon Bedrock AgentCore
 runtime**. Each runtime runs several agents in parallel across Zendesk,
 HubSpot, Gmail, Stripe, Google Calendar and Slack. Each one speaks the
 AgentCore HTTP contract (`POST /invocations`, `GET /ping` on `:8080`), so a
 control plane such as LoopLabs can import it, start runs, approve gated
 actions, read every agent's output and action, and reconcile what was written.
 
-| Workflow | Org · team | Parallel agents | Auto actions | Needs approval |
-|---|---|---|---|---|
-| [`support-escalation`](src/workflows/support-escalation.ts) | Support · support-ops | ticket triage (Zendesk) ‖ account context (HubSpot) ‖ billing health (Stripe) ‖ callback availability (Calendar) → reply composer | Zendesk priority/tags/internal note, Slack escalation, Calendar callback hold (no attendees), Gmail reply **draft** | Public Zendesk reply |
-| [`revenue-reconciliation`](src/workflows/revenue-reconciliation.ts) | Finance · revops-finance | Stripe ledger ‖ HubSpot ledger ‖ Zendesk refund approvals → reconciler | Variance report to Finance Slack | HubSpot `lifecyclestage=customer` fixes |
-| [`churn-risk-sweep`](src/workflows/churn-risk-sweep.ts) | Customer Success · cs-ops | billing (Stripe) ‖ engagement (HubSpot) ‖ support (Zendesk) ‖ inbox (Gmail) ‖ CSM availability (Calendar) → risk scorer | CS digest in Slack, check-in **drafts** | QBR invites (send calendar invitations) |
-| [`onboarding-kickoff`](src/workflows/onboarding-kickoff.ts) | Sales · sales-ops | CRM check ‖ billing check ‖ support check ‖ kickoff scheduler → welcome composer | HubSpot customer, Stripe customer (no charge), Zendesk org/requester, welcome **draft**, Slack handoff | Stripe subscription (bills), kickoff invite |
+| Workflow | Org · team | What it automates | Needs approval |
+|---|---|---|---|
+| [`support-escalation`](src/workflows/support-escalation.ts) | Support · support-ops | Triage a ticket against CRM, billing and the support lead's calendar; escalate, hold a callback, draft the reply | Public Zendesk reply |
+| [`returns-warranty`](src/workflows/returns-warranty.ts) | Customer Experience · cx-service | Warranty check on the invoice, RMA task for the returns dock, RMA instructions draft | Credit / refund |
+| [`order-status`](src/workflows/order-status.ts) | Customer Experience · cx-service | Answer "where is my order" from the invoice and warehouse task; alert the owner on late orders | Promise-date change |
+| [`compliance-docs`](src/workflows/compliance-docs.ts) | Quality · quality-compliance | Find RoHS/REACH/CoC/calibration documents for a part, or route to Quality | External share link + reply |
+| [`field-service-dispatch`](src/workflows/field-service-dispatch.ts) | Service · field-service | Site alarm: technician availability, contract coverage, work order, SMS to the site | After-hours or billable booking |
+| [`rfq-quote`](src/workflows/rfq-quote.ts) | Sales · sales-ops | RFQ to priced Stripe quote under a discount policy; CRM and customer ensured | Discount above policy (finalize) |
+| [`onboarding-kickoff`](src/workflows/onboarding-kickoff.ts) | Sales · sales-ops | Closed-won: CRM customer, Stripe customer, Zendesk org, welcome draft, Slack handoff | Subscription, kickoff invite |
+| [`churn-risk-sweep`](src/workflows/churn-risk-sweep.ts) | Customer Success · cs-ops | Weekly risk score per account; digest, check-in drafts | QBR invites |
+| [`service-renewals`](src/workflows/service-renewals.ts) | Customer Success · cs-ops | 90/60/30-day renewal sweep of monitoring and calibration contracts; tasks and drafts | Price uplift above policy |
+| [`revenue-reconciliation`](src/workflows/revenue-reconciliation.ts) | Finance · revops-finance | Stripe payers vs HubSpot customers vs approved refunds; variance report | CRM fixes |
+| [`collections-credit-hold`](src/workflows/collections-credit-hold.ts) | Finance · ar-collections | Tiered reminders for past-due invoices; AR digest | Credit hold |
+| [`distributor-claims`](src/workflows/distributor-claims.ts) | Finance · channel-finance | Validate distributor claims against invoices, prices and agreement | Paying the credit |
+| [`pcn-eol-notice`](src/workflows/pcn-eol-notice.ts) | Engineering · product-engineering | Product change / EOL record → affected customers and owners | Customer notices |
+| [`export-screening`](src/workflows/export-screening.ts) | Trade Compliance · trade-compliance | Classification, embargo and restricted-party checks; hold the order when anything is unclear | Releasing a hold |
+| [`supplier-ncr`](src/workflows/supplier-ncr.ts) | Quality · supplier-quality | Failed inspection → CAPA task, 8D request draft, review hold | Supplier hold notice |
+| [`access-jml`](src/workflows/access-jml.ts) | IT · it-identity | Joiner/mover/leaver in the directory, IT ticket, manager notice | Privileged roles, leaver removal |
+| [`license-reclaim`](src/workflows/license-reclaim.ts) | IT · it-asset-mgmt | Find idle seats, warn, reclaim after grace | Reclaim |
+| [`security-questionnaire`](src/workflows/security-questionnaire.ts) | IT · it-security | Answer from the approved library, flag new questions to Security | Sending answers |
+| [`incident-comms`](src/workflows/incident-comms.ts) | IT · it-operations | PagerDuty incident → note, war-room post, affected customers | Customer notices |
 
 Design rules shared by all four:
 
@@ -119,14 +134,15 @@ declared as a **blocked** check with evidence, never dropped.
 
 ### Results
 
-All four runtimes were proven at commit `dbab6f7`. **54 of 54 executable checks held**, each
-driven twice with identical saved state, and each including a real process restart. The one
-Zendesk check per workflow is declared blocked until a Zendesk twin exists, so FetchSandbox
-reports the overall verdict as *inconclusive* rather than *verified*. The proof also caught a
-real bug (a re-fired closed-won trigger could create a second subscription while the first was
-still `incomplete`), which is fixed and regression-tested.
+All 19 runtimes are relay-proven: **251 executable checks held, 0 violated**, every check driven twice
+with identical saved state, each contract including a real process restart. 25 checks are declared
+blocked because the system they need has no faithful FetchSandbox twin (Zendesk, ERP, Salesforce,
+carriers, restricted-party screening, Okta/Google Admin, or twins that return sample data). Workflows
+without such gaps are *verified*; the others read *inconclusive* until those twins exist. The proofs
+caught real bugs (a duplicate subscription on a re-fired trigger, mixed-interval quotes, a reclaim
+safety check that blocked every reclaim, unbounded directory paging), all fixed and regression-tested.
 
-Per-check results, receipt links and the twin findings are in [`verify/RESULTS.md`](verify/RESULTS.md).
+Per-check results, receipt links and the twin findings: [`verify/RESULTS.md`](verify/RESULTS.md).
 
 ## Deploy (one AgentCore runtime per workflow)
 
@@ -134,7 +150,7 @@ Per-check results, receipt links and the twin findings are in [`verify/RESULTS.m
 npx cdk deploy --all \
   -c looplabsAccountId=111122223333 -c looplabsExternalId=<shared-secret> \
   -c approvers:onboarding-kickoff=U_RVP -c approvers:revenue-reconciliation=U_CONTROLLER
-# or one: npx cdk deploy AcmeOps-churn-risk-sweep
+# or one: npx cdk deploy AcmeOps-churn-risk-sweep   (19 stacks: AcmeOps-<workflow>)
 # JWT instead of IAM: -c jwtDiscoveryUrl=https://idp.example.com/.well-known/openid-configuration -c jwtAllowedClients=looplabs
 ```
 
