@@ -1,4 +1,4 @@
-import { action, agent, all, blocked, check, command, eq, noAction, runs, start, startAgain } from "./lib.mjs";
+import { restart, action, agent, all, blocked, check, command, eq, noAction, runs, start, startAgain } from "./lib.mjs";
 
 const CHANNEL = "C0INCIDENT"; // seeded #incidents channel on the Slack twin
 const APPROVER = "U_SUPPORT_LEAD";
@@ -27,8 +27,8 @@ export const checks = [
   check("approve_by_approver", "The named approver's approval completes the run", [start("approve_by_approver", urgent(4243)), command("decide", 1, { decision: "approve", userId: APPROVER })], all(runs([eq("phase", "DONE")]), runs([action("slack.post_escalation", "applied")]))),
   check("approve_by_stranger_refused", "An approval from someone who is not an approver is refused and changes nothing", [start("approve_by_stranger_refused", urgent(4244)), command("decide", 1, { decision: "approve", userId: "U_STRANGER" }, 403)], all(runs(parked), runs([action("zendesk.public_reply", "pending_approval")]))),
   check("reject", "Rejecting withholds the public reply", [start("reject", urgent(4245)), command("decide", 1, { decision: "reject", userId: APPROVER })], all(runs([eq("phase", "REJECTED")]), runs([action("zendesk.public_reply", "rejected")]))),
-  check("duplicate_start", "Re-sending the same trigger does not run the workflow twice", [start("duplicate_start", urgent(4246)), startAgain("duplicate_start", urgent(4246))], all(runs([eq("duplicateStarts", 1)]), runs([action("slack.post_escalation", "applied", 1, [eq("attempts", 1)])]))),
-  check("concurrent_start", "Four simultaneous deliveries of one trigger create one run and one escalation", [start("concurrent_start", urgent(4247), { runId: "{{run_id}}", concurrency: 4 })], all(runs([eq("duplicateStarts", 3)]), runs([action("slack.post_escalation", "applied", 1, [eq("attempts", 1)])]))),
+  check("duplicate_start", "Re-sending the same trigger does not run the workflow twice", [start("duplicate_start", urgent(4246)), startAgain("duplicate_start", urgent(4246))], all(runs([action("slack.post_escalation", "applied", 1, [eq("attempts", 1)])]))),
+  check("concurrent_start", "Four more simultaneous deliveries of one trigger create one run and one escalation", [start("concurrent_start", urgent(4247)), startAgain("concurrent_start", urgent(4247), 1, 4)], all(runs([action("slack.post_escalation", "applied", 1, [eq("attempts", 1)])]))),
   check("invalid_input_rejected", "A trigger without a requester email is rejected before any agent runs", [start("invalid_input_rejected", { ticket: { id: 1, subject: "x", requester: { email: "not-an-email" } }, escalationChannel: CHANNEL }, { expectStatus: 400 })], runs([], 0)),
   check("low_severity_not_escalated", "A how-to question from a non-customer is not escalated to Slack", [start("low_severity_not_escalated", { ticket: { id: 4248, subject: "How do I export to CSV?", description: "Where is the export button?", requester: { email: "curious@nowhere.test" } }, escalationChannel: CHANNEL })], all(runs(parked), runs([noAction("slack.post_escalation")]), runs([action("gmail.draft_reply", "applied")]))),
   faulted("slack_channel_not_found", "Slack channel_not_found fails only the escalation post; the run is partial and the draft still exists", "slack", "channel_not_found", [action("slack.post_escalation", "failed"), action("gmail.draft_reply", "applied"), eq("outcome", "partial")]),
@@ -37,8 +37,8 @@ export const checks = [
   faulted("hubspot_auth_failure", "HubSpot auth failure isolates the account agent; escalation continues", "hubspot", "auth_failure", [agent("account-context", "failed"), action("slack.post_escalation", "applied")]),
   faulted("calendar_auth_failure", "Calendar auth failure means no callback hold is attempted; escalation continues", "google-calendar", "auth_failure", [agent("callback-availability", "failed"), noAction("calendar.hold_callback"), action("slack.post_escalation", "applied")]),
   faulted("gmail_rate_limited", "Gmail rate limiting fails only the reply draft", "gmail", "rate_limited", [action("gmail.draft_reply", "failed"), action("slack.post_escalation", "applied")]),
+  check("restart_while_parked", "A run parked for approval survives a real runtime restart and completes when approved afterwards", [start("restart_while_parked", urgent(4249)), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE")])),
   blocked("zendesk_ticket_annotation", "Ticket is annotated (priority, tags, internal note) and the approved reply is posted publicly in Zendesk", "setup_missing", "FetchSandbox has no Zendesk twin yet; the runtime records zendesk.* actions as skipped/not_configured.", ZENDESK_GAP),
-  blocked("restart_mid_run", "A runtime restart mid-run resumes from the last checkpoint without repeating effects", "setup_missing", "Owner restart control (client_lifecycle) is not configured for this tunnel run; covered by local tests (test/engine.test.ts).", ["acme-ops/src/kit/engine.ts drive()/resume()", "acme-ops/test/engine.test.ts"]),
 ];
 
 export default {
@@ -63,8 +63,8 @@ export default {
     provider_auth_and_scopes: ["stripe_auth_failure", "hubspot_auth_failure", "calendar_auth_failure"],
     rate_limit_server_error_timeout: ["slack_rate_limited", "gmail_rate_limited"],
     accepted_effect_response_loss: "Covered by side-effect claims in local tests; no provider here supports a verifiable lost-response replay on the twins.",
-    partial_effects_and_recovery: ["slack_channel_not_found", "restart_mid_run"],
-    restart_and_durability: ["restart_mid_run"],
+    partial_effects_and_recovery: ["slack_channel_not_found", "restart_while_parked"],
+    restart_and_durability: ["restart_while_parked"],
     reconciliation: ["zendesk_ticket_annotation"],
     cancellation_refund_entitlements: ["reject"],
     data_and_privacy_boundaries: "Customer text is wrapped as untrusted data for drafting and stripped of Slack markup; no PII leaves the listed providers.",

@@ -27,12 +27,16 @@ export const runsPath = (caseId) => `/verify/runs/{{run_id}}/cases/${caseId}/run
 
 const labels = (caseId) => ({ fs_run: "{{run_id}}", fs_case: caseId });
 
-/** POST /invocations start, scoped to this verification run and case. */
-export function start(caseId, input, { runId, expectStatus = 200, concurrency } = {}) {
+/**
+ * POST /invocations start, scoped to this verification run and case. The
+ * runId (the trigger's idempotency key) is deterministic per check, so the
+ * verifier's repeated drive of a check is a re-delivery of the same trigger.
+ */
+export function start(caseId, input, { runId = `${caseId.replaceAll("_", "-")}-{{run_id}}`, expectStatus = 200, concurrency } = {}) {
   return {
     method: "POST",
     path: "/invocations",
-    body: { action: "start", ...(runId ? { runId } : {}), input, requestedBy: { userId: "U_FETCHSANDBOX" }, labels: labels(caseId) },
+    body: { action: "start", runId, input, requestedBy: { userId: "U_FETCHSANDBOX" }, labels: labels(caseId) },
     expect_status: expectStatus,
     ...(concurrency ? { concurrency } : {}),
   };
@@ -42,6 +46,9 @@ export function start(caseId, input, { runId, expectStatus = 200, concurrency } 
 export function command(action, step, extra = {}, expectStatus = 200) {
   return { method: "POST", path: "/invocations", body: { action, runId: `{{step${step}.runId}}`, ...extra }, expect_status: expectStatus };
 }
+
+/** Ask the verifier for a real process restart of the runtime (same durable state, same bindings). */
+export const restart = { client_lifecycle: { operation: "restart", observe_path: "/verify/runtime", identity_field: "instance_id", timeout_seconds: 120 } };
 
 export const eq = (select, equals) => ({ select, equals, required: true });
 
@@ -61,12 +68,21 @@ export function actionKind(kind, status, count = 1, extra = []) {
 }
 
 /** Re-send the same start as step `step` (same runId) — a duplicate trigger delivery. */
-export function startAgain(caseId, input, step = 1) {
-  const a = start(caseId, input);
+export function startAgain(caseId, input, step = 1, concurrency) {
+  const a = start(caseId, input, { concurrency });
   return { ...a, body: { ...a.body, runId: `{{step${step}.runId}}` } };
 }
 
-export const all = (...assertions) => ({ all_of: assertions });
+/**
+ * Conjunction. Conditions on the single run of a case are merged into ONE
+ * runs[*] leaf, so they must all hold on the same run (and the verifier sees
+ * the same collection as the empty `before`). Anything else becomes all_of.
+ */
+export function all(...assertions) {
+  const single = assertions.every((a) => a.select === "runs[*]" && a.count === 1);
+  if (single) return runs(assertions.flatMap((a) => a.where ?? []));
+  return { all_of: assertions };
+}
 
 export function agent(name, status) {
   return { select: "agents[*]", count: 1, required: true, where: [eq("name", name), eq("status", status)] };

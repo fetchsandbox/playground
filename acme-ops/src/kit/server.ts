@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { type IncomingMessage, type Server, createServer } from "node:http";
 import { CommandSchema, type Engine } from "./engine";
 import { errorMessage } from "./errors";
@@ -47,6 +47,9 @@ export interface ServerOptions {
 export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: ServerOptions = {}): Server {
   let lastStatus = "Healthy";
   let lastChange = Math.floor(Date.now() / 1000);
+  // Changes on every process start; lets a verifier prove a real restart happened.
+  const instanceId = randomUUID();
+  const startedAt = new Date().toISOString();
 
   return createServer(async (req, res) => {
     const send = (status: number, body: unknown) => {
@@ -90,6 +93,7 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
       // labels the run was started with. Path segments only (no query strings).
       if (req.method === "GET" && opts.verifierToken && path.startsWith("/verify/")) {
         if (!bearerOk(req, opts.verifierToken)) return send(401, { error: "unauthorized" });
+        if (path === "/verify/runtime") return send(200, { instance_id: instanceId, workflow: engine.workflow.id, startedAt });
         const m = /^\/verify\/runs\/([^/]+)\/cases\/([^/]+)\/runs$/.exec(path);
         if (m) {
           const runs = await engine.findByLabels({ fs_run: decodeURIComponent(m[1]!), fs_case: decodeURIComponent(m[2]!) });

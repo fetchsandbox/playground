@@ -129,9 +129,13 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     app.kill("SIGKILL");
     await sleep(300);
   }
+  // Inherit the host environment (proxy, CA bundle), but never any provider or
+  // FetchSandbox credential: the runtime only gets the twins and the handoff file.
+  const inherited = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+  );
   const env = {
-    PATH: process.env.PATH,
-    HOME: process.env.HOME,
+    ...inherited,
     WORKFLOW: workflow,
     PORT: String(PORT),
     HOST: "127.0.0.1",
@@ -226,7 +230,9 @@ if (!credentialFile) {
   await finish(5);
 }
 log("credential handoff installed:", (creds.variable_names ?? []).join(", "));
-await startApp({ legs: session.legs, credentialFile, flowRunId: cfg.request_headers?.["X-Flow-Run-Id"] ?? runId });
+const appArgs = { legs: session.legs, credentialFile, flowRunId: cfg.request_headers?.["X-Flow-Run-Id"] ?? runId };
+await startApp(appArgs);
+const restarted = new Set();
 
 let pre = await settle(mcp, await mcp.call("validate_integration", { session_id: sid, run_id: runId, preflight: true }), "preflight");
 save("preflight", pre);
@@ -249,10 +255,18 @@ let final = exe;
 let settledPolls = 0;
 const TERMINAL = ["passed", "failed", "failing", "completed", "error", "done", "inconclusive", "verified", "partially_verified"];
 for (let i = 0; i < 120; i++) {
-  await sleep(Math.max(10_000, (final.retry_after_seconds ?? 10) * 1000));
+  await sleep(final.client_checkpoint ? 2_000 : Math.max(10_000, (final.retry_after_seconds ?? 10) * 1000));
   const st = await settle(mcp, await mcp.call("validate_integration", { session_id: sid }), `status-${i}`);
   final = st;
   save("status", st);
+  // The verifier asked for a real restart: same state file, same bindings, new process.
+  const checkpoint = st.client_checkpoint;
+  if (checkpoint && !restarted.has(JSON.stringify(checkpoint))) {
+    restarted.add(JSON.stringify(checkpoint));
+    log("client_checkpoint → restarting runtime", JSON.stringify(checkpoint).slice(0, 200));
+    await startApp(appArgs);
+    continue;
+  }
   const checks = st.checks ?? [];
   const tally = checks.reduce((t, c) => ((t[c.status] = (t[c.status] ?? 0) + 1), t), {});
   const verdict = typeof st.verdict === "string" ? st.verdict : (st.verdict?.overall ?? st.verdict?.state);

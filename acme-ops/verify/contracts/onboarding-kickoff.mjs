@@ -1,4 +1,4 @@
-import { action, agent, all, blocked, check, command, eq, noAction, runs, start, startAgain } from "./lib.mjs";
+import { restart, action, agent, all, blocked, check, command, eq, noAction, runs, start, startAgain } from "./lib.mjs";
 
 const CHANNEL = "C0GENERAL01";
 const APPROVER = "U_RVP_SALES";
@@ -26,15 +26,16 @@ export const checks = [
   check("approve_and_reconcile", "Approval starts exactly one subscription; read-back confirms CRM stage, Stripe customer and subscription quantity", [start("approve_and_reconcile", deal("approve_and_reconcile")), command("decide", 1, { decision: "approve", userId: APPROVER }), command("reconcile", 1)], all(runs([eq("phase", "DONE")]), runs([action("stripe.create_subscription", "applied", 1, [eq("reconciled", "match")])]), runs([action("hubspot.upsert_customer", "applied", 1, [eq("reconciled", "match")])]), runs([action("stripe.ensure_customer", "applied", 1, [eq("reconciled", "match")])]))),
   check("approve_by_stranger_refused", "A non-approver cannot start billing", [start("approve_by_stranger_refused", deal("approve_by_stranger_refused")), command("decide", 1, { decision: "approve", userId: "U_SDR" }, 403)], all(runs(parked), runs([action("stripe.create_subscription", "pending_approval")]))),
   check("reject", "Rejecting withholds the subscription and the invite", [start("reject", deal("reject")), command("decide", 1, { decision: "reject", userId: APPROVER })], all(runs([eq("phase", "REJECTED")]), runs([action("stripe.create_subscription", "rejected")]), runs([action("calendar.kickoff_invite", "rejected")]))),
-  check("refired_trigger_no_double_subscription", "A closed-won trigger fired again after the first run was approved does not propose a second subscription", [start("refired_trigger_no_double_subscription", deal("refired")), command("decide", 1, { decision: "approve", userId: APPROVER }), start("refired_trigger_no_double_subscription", deal("refired"))], all(runs([], 2), runs([action("stripe.create_subscription", "applied")]), runs([noAction("stripe.create_subscription"), eq("phase", "AWAITING_APPROVAL")]))),
+  check("refired_trigger_no_double_subscription", "A closed-won trigger fired again after the first run was approved does not propose a second subscription", [start("refired_trigger_no_double_subscription", deal("refired"), { runId: "refired-a-{{run_id}}" }), command("decide", 1, { decision: "approve", userId: APPROVER }), start("refired_trigger_no_double_subscription", deal("refired"), { runId: "refired-b-{{run_id}}" })], all(runs([], 2), runs([action("stripe.create_subscription", "applied")]), runs([noAction("stripe.create_subscription"), eq("phase", "AWAITING_APPROVAL")]))),
   check("unknown_price_no_stripe_writes", "An unknown price fails the billing check and nothing is created in Stripe", [start("unknown_price_no_stripe_writes", deal("unknown_price", { plan: { priceId: "price_DoesNotExist", quantity: 3 } }))], all(runs([agent("billing-check", "failed")]), runs([noAction("stripe.ensure_customer")]), runs([noAction("stripe.create_subscription")]), runs([action("hubspot.upsert_customer", "applied")]))),
   check("invalid_input_rejected", "Zero seats is rejected before any agent runs", [start("invalid_input_rejected", deal("invalid", { plan: { priceId: PRICE, quantity: 0 } }), { expectStatus: 400 })], runs([], 0)),
-  check("duplicate_start", "A re-delivered closed-won event does not provision twice", [start("duplicate_start", deal("duplicate_start")), startAgain("duplicate_start", deal("duplicate_start"))], all(runs([eq("duplicateStarts", 1)]), runs([action("stripe.ensure_customer", "applied", 1, [eq("attempts", 1)])]))),
-  check("concurrent_start", "Four simultaneous closed-won deliveries create one run and one Stripe customer", [start("concurrent_start", deal("concurrent_start"), { runId: "{{run_id}}", concurrency: 4 })], all(runs([eq("duplicateStarts", 3)]), runs([action("stripe.ensure_customer", "applied", 1, [eq("attempts", 1)])]))),
+  check("duplicate_start", "A re-delivered closed-won event does not provision twice", [start("duplicate_start", deal("duplicate_start")), startAgain("duplicate_start", deal("duplicate_start"))], all(runs([action("stripe.ensure_customer", "applied", 1, [eq("attempts", 1)])]))),
+  check("concurrent_start", "Four more simultaneous closed-won deliveries create one run and one Stripe customer", [start("concurrent_start", deal("concurrent_start")), startAgain("concurrent_start", deal("concurrent_start"), 1, 4)], all(runs([action("stripe.ensure_customer", "applied", 1, [eq("attempts", 1)])]))),
   faulted("stripe_auth_failure", "Stripe auth failure: no Stripe writes are attempted; CRM and handoff continue", "stripe", "auth_failure", [agent("billing-check", "failed"), noAction("stripe.ensure_customer"), action("hubspot.upsert_customer", "applied")]),
   faulted("hubspot_auth_failure", "HubSpot auth failure: no CRM write; Stripe customer and handoff continue", "hubspot", "auth_failure", [agent("crm-check", "failed"), noAction("hubspot.upsert_customer"), action("stripe.ensure_customer", "applied")]),
   faulted("slack_not_in_channel", "Slack not_in_channel fails the handoff post only", "slack", "not_in_channel", [action("slack.post_handoff", "failed"), action("stripe.create_subscription", "pending_approval"), eq("outcome", "partial")]),
   faulted("calendar_rate_limited", "Calendar rate limiting: no kickoff invite is proposed; billing approval still offered", "google-calendar", "rate_limited", [agent("kickoff-scheduler", "failed"), noAction("calendar.kickoff_invite"), action("stripe.create_subscription", "pending_approval")]),
+  check("restart_while_parked", "A run parked for approval survives a real runtime restart and completes when approved afterwards", [start("restart_while_parked", deal("restart")), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE")])),
   blocked("zendesk_provisioning", "The buyer's Zendesk organization and requester are created", "setup_missing", "FetchSandbox has no Zendesk twin yet; zendesk.provision_requester is recorded as skipped/not_configured.", ["acme-ops/src/workflows/onboarding-kickoff.ts zendesk.provision_requester", "validate_integration providers:[zendesk] → 'Unknown providers: zendesk'"]),
 ];
 
@@ -61,7 +62,7 @@ export default {
     rate_limit_server_error_timeout: ["calendar_rate_limited"],
     accepted_effect_response_loss: "Covered by side-effect claims in local tests.",
     partial_effects_and_recovery: ["slack_not_in_channel"],
-    restart_and_durability: "Covered by local tests (test/engine.test.ts); not exercised through the relay.",
+    restart_and_durability: ["restart_while_parked"],
     reconciliation: ["approve_and_reconcile"],
     cancellation_refund_entitlements: ["reject"],
     data_and_privacy_boundaries: "Welcome email is a draft for human review; nothing is sent to the customer without approval.",

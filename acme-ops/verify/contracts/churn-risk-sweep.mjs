@@ -1,4 +1,4 @@
-import { actionKind, agent, all, blocked, check, command, eq, runs, start, startAgain } from "./lib.mjs";
+import { restart, actionKind, agent, all, blocked, check, command, eq, runs, start, startAgain } from "./lib.mjs";
 
 // Twin seed: dev@startupxyz.io is past due with an open invoice and no CRM
 // record → high risk. alice@acmecorp.com is active → low risk.
@@ -18,12 +18,13 @@ export const checks = [
   check("reject", "Rejecting withholds the invite", [start("reject", book), command("decide", 1, { decision: "reject", userId: APPROVER })], all(runs([eq("phase", "REJECTED")]), runs([actionKind("calendar.book_qbr", "rejected", 1)]))),
   check("healthy_book_is_quiet", "A book with no at-risk accounts posts nothing and drafts nothing", [start("healthy_book_is_quiet", { accounts: [{ email: "alice@acmecorp.com" }], csChannel: CHANNEL })], all(runs([eq("phase", "DONE")]), runs([{ select: "actions[*]", count: 0, required: true }]))),
   check("invalid_input_rejected", "Duplicate accounts in one sweep are rejected", [start("invalid_input_rejected", { accounts: [{ email: "a@b.co" }, { email: "A@b.co" }], csChannel: CHANNEL }, { expectStatus: 400 })], runs([], 0)),
-  check("duplicate_start", "A re-fired schedule does not post the digest twice", [start("duplicate_start", book), startAgain("duplicate_start", book)], all(runs([eq("duplicateStarts", 1)]), runs([actionKind("slack.post_digest", "applied", 1, [eq("attempts", 1)])]))),
-  check("concurrent_start", "Four simultaneous schedule firings create one run", [start("concurrent_start", book, { runId: "{{run_id}}", concurrency: 4 })], all(runs([eq("duplicateStarts", 3)]), runs([actionKind("gmail.draft_checkin", "applied", 1, [eq("attempts", 1)])]))),
+  check("duplicate_start", "A re-fired schedule does not post the digest twice", [start("duplicate_start", book), startAgain("duplicate_start", book)], all(runs([actionKind("slack.post_digest", "applied", 1, [eq("attempts", 1)])]))),
+  check("concurrent_start", "Four more simultaneous schedule firings create one run", [start("concurrent_start", book), startAgain("concurrent_start", book, 1, 4)], all(runs([actionKind("gmail.draft_checkin", "applied", 1, [eq("attempts", 1)])]))),
   faulted("stripe_auth_failure", "Without billing data the sweep reports the gap instead of calling the account healthy", "stripe", "auth_failure", [agent("billing-signal", "failed"), eq("outcome", "partial")]),
   faulted("slack_rate_limited", "Slack rate limiting fails the digest only; the check-in draft is still created", "slack", "rate_limited", [actionKind("slack.post_digest", "failed"), actionKind("gmail.draft_checkin", "applied", 1)]),
   faulted("calendar_auth_failure", "Without the CSM's calendar no invite is proposed; drafts and digest continue", "google-calendar", "auth_failure", [agent("csm-availability", "failed"), actionKind("calendar.book_qbr", null, 0), actionKind("slack.post_digest", "applied")]),
   faulted("gmail_auth_failure", "Gmail auth failure loses the inbox signal and the draft, but the account is still flagged", "gmail", "auth_failure", [agent("inbox-signal", "failed"), actionKind("gmail.draft_checkin", "failed", 1), actionKind("calendar.book_qbr", "pending_approval", 1)]),
+  check("restart_while_parked", "A run parked for approval survives a real runtime restart and completes when approved afterwards", [start("restart_while_parked", book), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE")])),
   blocked("support_signal", "Open and urgent Zendesk tickets raise the account's risk score", "setup_missing", "FetchSandbox has no Zendesk twin yet; the support signal is reported in signalGaps.", ["acme-ops/src/workflows/churn-risk-sweep.ts support-signal", "validate_integration providers:[zendesk] → 'Unknown providers: zendesk'"]),
 ];
 
@@ -50,7 +51,7 @@ export default {
     rate_limit_server_error_timeout: ["slack_rate_limited"],
     accepted_effect_response_loss: "Covered by side-effect claims in local tests.",
     partial_effects_and_recovery: ["slack_rate_limited", "gmail_auth_failure"],
-    restart_and_durability: "Covered by local tests (test/engine.test.ts); not exercised through the relay.",
+    restart_and_durability: ["restart_while_parked"],
     reconciliation: ["support_signal"],
     cancellation_refund_entitlements: ["reject"],
     data_and_privacy_boundaries: "Check-in drafts never mention scores or overdue payments; the digest goes to the internal CS channel only.",

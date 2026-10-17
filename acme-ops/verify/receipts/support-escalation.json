@@ -1,0 +1,94 @@
+{
+  "workflow": "support-escalation",
+  "app_version": "acme-ops-support-escalation-0-local",
+  "session_id": "vs_254c1c699328",
+  "run_id": "vr_34915e30149a4aa088387d72ea204ae2",
+  "receipt_url": "https://fetchsandbox.com/runs/53a8203162?flow=vr_34915e30149a4aa088387d72ea204ae2",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_approver",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "low_severity_not_escalated",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+    },
+    {
+      "id": "zendesk_ticket_annotation",
+      "status": "unmeasured",
+      "explanation": "FetchSandbox has no Zendesk twin yet; the runtime records zendesk.* actions as skipped/not_configured."
+    },
+    {
+      "id": "restart_mid_run",
+      "status": "unmeasured",
+      "explanation": "Owner restart control (client_lifecycle) is not configured for this tunnel run; covered by local tests (test/engine.test.ts)."
+    }
+  ],
+  "recorded_at": "2026-10-17T06:01:25.609Z"
+}
