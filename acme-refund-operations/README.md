@@ -30,7 +30,7 @@ Please refund pi_YOUR_TEST_PAYMENT 20%
 
 The test payment must belong to the email in your Slack profile. The workflow posts progress in that thread and, when eligible, sends approval buttons to the configured manager. When the requester is Raj, the manager card appears in the same app DM/thread. Final outcome replaces the approval card’s buttons. Only configured manager `U0AHZ0RCM` may approve/reject; this demo permits Raj to request and approve. A 75% request is declined. Approval does not bypass product eligibility.
 
-Email: send to **operations@fetchsandbox.com**, with a subject containing **Acme refund**, and include `refund pi_YOUR_TEST_PAYMENT 20%` in the plain-text body. Only that recipient/subject scope is read by refund intake. Notifications reply through Gmail as Acme Refund Operations, using the existing business sender and original thread when available. Gmail self-forwarded messages may be deduplicated; use another mailbox for an external customer test.
+Email is scanned once per minute by this workflow’s own EventBridge schedule (not dependent on the quote app’s Gmail push). Send to **operations@fetchsandbox.com**, with a subject containing **Acme refund**, and include `refund pi_YOUR_TEST_PAYMENT 20%` in the plain-text body. Only that recipient/subject scope is read by refund intake. Notifications reply through Gmail as Acme Refund Operations, using the existing business sender and original thread when available. Gmail self-forwarded messages may be deduplicated; use another mailbox for an external customer test.
 
 IAM-authenticated AgentCore `/invocations` commands:
 

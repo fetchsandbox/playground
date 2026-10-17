@@ -8,6 +8,8 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as destinations from 'aws-cdk-lib/aws-lambda-destinations';
 import { Duration } from 'aws-cdk-lib';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
@@ -36,7 +38,10 @@ new CfnOutput(stack,'SecretArn',{value:secret.secretArn});new CfnOutput(stack,'T
 
 const failures=new sqs.Queue(stack,'DeliveryFailures',{retentionPeriod:Duration.days(14),enforceSSL:true});
 const delivery=new lambda.Function(stack,'Delivery',{runtime:lambda.Runtime.PYTHON_3_12,handler:'delivery_worker.handler',code:lambda.Code.fromAsset(path.join(path.dirname(fileURLToPath(import.meta.url)),'../../acme-refund-operations/verify')),
- timeout:Duration.seconds(180),memorySize:256,logRetention:logs.RetentionDays.TWO_WEEKS,environment:{REFUND_RUNTIME_ARN:runtime.agentRuntimeArn},retryAttempts:2,onFailure:new destinations.SqsDestination(failures)});
+ timeout:Duration.seconds(180),memorySize:256,logRetention:logs.RetentionDays.TWO_WEEKS,environment:{REFUND_RUNTIME_ARN:runtime.agentRuntimeArn,REFUND_DEPLOYMENT_VERSION:version},retryAttempts:2,onFailure:new destinations.SqsDestination(failures)});
 delivery.addToRolePolicy(new iam.PolicyStatement({actions:['bedrock-agentcore:InvokeAgentRuntime'],resources:[runtime.agentRuntimeArn,runtime.agentRuntimeArn+'/runtime-endpoint/DEFAULT']}));
 new CfnOutput(stack,'DeliveryFunction',{value:delivery.functionName});new CfnOutput(stack,'DeliveryFunctionArn',{value:delivery.functionArn});
 new CfnOutput(stack,'DeliveryFailureQueue',{value:failures.queueUrl});
+
+// This workflow owns its mailbox intake; it does not depend on the quote app's Google push configuration.
+new events.Rule(stack,'ScopedEmailIntake',{description:'Acme Refund Operations: scan only operations@fetchsandbox.com / Acme refund mail each minute',schedule:events.Schedule.rate(Duration.minutes(1)),targets:[new targets.LambdaFunction(delivery,{event:events.RuleTargetInput.fromObject({action:'poll_email'}),retryAttempts:2,maxEventAge:Duration.hours(1)})]});
