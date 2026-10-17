@@ -34,7 +34,7 @@ export function rfc822(mail: DraftEmail, from = "me"): string {
  */
 export class GmailClient {
   constructor(
-    private readonly http: ProviderHttp,
+    readonly http: ProviderHttp,
     private readonly userId = "me",
   ) {}
 
@@ -67,7 +67,7 @@ export interface CalendarEvent {
 
 /** Google Calendar API v3. */
 export class CalendarClient {
-  constructor(private readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp) {}
 
   async busy(calendarId: string, timeMin: string, timeMax: string): Promise<Slot[]> {
     const { body } = await this.http.request<any>("POST", "/calendar/v3/freeBusy", { json: { timeMin, timeMax, items: [{ id: calendarId }] } });

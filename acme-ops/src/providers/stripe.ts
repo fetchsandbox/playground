@@ -29,6 +29,29 @@ export interface StripeInvoice {
   amount_due: number;
   amount_remaining: number;
   currency: string;
+  /** Epoch seconds on real Stripe; some backends send ISO strings. */
+  due_date?: number | string | null;
+  created?: number | string;
+  charge?: string | null;
+  number?: string | null;
+  lines?: { data: { price?: { id: string; product?: string } | null; quantity?: number; description?: string | null }[] };
+  metadata?: Record<string, string>;
+}
+export interface StripeProduct {
+  id: string;
+  name: string;
+  active: boolean;
+  description?: string | null;
+  default_price?: string | null;
+  metadata?: Record<string, string>;
+}
+export interface StripeQuote {
+  id: string;
+  status: string;
+  customer: string;
+  amount_total?: number;
+  currency?: string;
+  metadata?: Record<string, string>;
 }
 export interface StripeRefund {
   id: string;
@@ -46,7 +69,7 @@ interface List<T> {
 
 /** Stripe REST v1 (form-encoded writes, cursor pagination). */
 export class StripeClient {
-  constructor(private readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp) {}
 
   /** Walks `starting_after` pages up to `max` items. */
   private async listAll<T extends { id: string }>(path: string, query: Record<string, string | number | undefined> = {}, max = 1000): Promise<T[]> {
@@ -114,6 +137,83 @@ export class StripeClient {
   listRefunds() {
     return this.listAll<StripeRefund>("/v1/refunds");
   }
+
+  async getInvoice(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("GET", `/v1/invoices/${encodeURIComponent(id)}`)).body;
+  }
+
+  listProducts() {
+    return this.listAll<StripeProduct>("/v1/products", { active: "true" });
+  }
+
+  async getProduct(id: string): Promise<StripeProduct> {
+    return (await this.http.request<StripeProduct>("GET", `/v1/products/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Active prices, optionally for one product. */
+  listPrices(product?: string) {
+    return this.listAll<StripePrice & { product: string }>("/v1/prices", { product, active: "true" });
+  }
+
+  async updateCustomerMetadata(id: string, metadata: Record<string, string>): Promise<StripeCustomer> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeCustomer>("POST", `/v1/customers/${encodeURIComponent(id)}`, { form })).body;
+  }
+
+  async createQuote(customer: string, lines: { price: string; quantity: number }[], metadata: Record<string, string>, idempotencyKey: string): Promise<StripeQuote> {
+    const form: Record<string, string | number> = { customer };
+    lines.forEach((l, i) => {
+      form[`line_items[${i}][price]`] = l.price;
+      form[`line_items[${i}][quantity]`] = l.quantity;
+    });
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeQuote>("POST", "/v1/quotes", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async getQuote(id: string): Promise<StripeQuote> {
+    return (await this.http.request<StripeQuote>("GET", `/v1/quotes/${encodeURIComponent(id)}`)).body;
+  }
+
+  async finalizeQuote(id: string): Promise<StripeQuote> {
+    return (await this.http.request<StripeQuote>("POST", `/v1/quotes/${encodeURIComponent(id)}/finalize`, { form: {} })).body;
+  }
+
+  async createRefund(charge: string, amount: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeRefund> {
+    const form: Record<string, string | number> = { charge, amount };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeRefund>("POST", "/v1/refunds", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async getRefund(id: string): Promise<StripeRefund> {
+    return (await this.http.request<StripeRefund>("GET", `/v1/refunds/${encodeURIComponent(id)}`)).body;
+  }
+
+  async createCreditNote(invoice: string, amount: number, reason: string, memo: string): Promise<{ id: string; amount: number }> {
+    return (await this.http.request<any>("POST", "/v1/credit_notes", { form: { invoice, amount, reason, memo } })).body;
+  }
+
+  /** Negative amount = credit the customer can apply to future invoices. */
+  async creditBalance(customer: string, amount: number, currency: string, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {
+    return (
+      await this.http.request<any>("POST", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions`, {
+        form: { amount: -Math.abs(amount), currency, description },
+        headers: { "Idempotency-Key": idempotencyKey },
+      })
+    ).body;
+  }
+
+  async listBalanceTransactions(customer: string) {
+    return (await this.http.request<any>("GET", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions`, { query: { limit: 100 } })).body?.data ?? [];
+  }
+}
+
+/** Stripe sends epoch seconds; tolerate ISO strings too. */
+export function stripeTime(v: number | string | null | undefined): number | undefined {
+  if (v == null) return undefined;
+  if (typeof v === "number") return v * 1000;
+  const t = Date.parse(v);
+  return Number.isFinite(t) ? t : undefined;
 }
 
 /** Monthly recurring revenue of one subscription, in minor units. */

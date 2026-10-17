@@ -16,7 +16,7 @@ const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "h
 
 /** HubSpot CRM v3 contacts. Email is the unique key; a 409 on create names the existing id. */
 export class HubSpotClient {
-  constructor(private readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp) {}
 
   async findByEmail(email: string): Promise<HubSpotContact | undefined> {
     const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", {

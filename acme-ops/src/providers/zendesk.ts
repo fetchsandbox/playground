@@ -25,7 +25,7 @@ export interface ZendeskUser {
  * https://<subdomain>.zendesk.com and a FetchSandbox Zendesk twin.
  */
 export class ZendeskClient {
-  constructor(private readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp) {}
 
   async getTicket(id: number | string): Promise<ZendeskTicket> {
     const { body } = await this.http.request<{ ticket: ZendeskTicket }>("GET", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`);

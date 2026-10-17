@@ -3,10 +3,25 @@ import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
 import { StripeClient } from "./stripe";
+import { AsanaClient, BoxClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
 
-export type ProviderName = "stripe" | "hubspot" | "gmail" | "calendar" | "slack" | "zendesk";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk"];
+export type ProviderName =
+  | "stripe"
+  | "hubspot"
+  | "gmail"
+  | "calendar"
+  | "slack"
+  | "zendesk"
+  | "asana"
+  | "workos"
+  | "github"
+  | "twilio"
+  | "pagerduty"
+  | "notion"
+  | "box"
+  | "screening";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -16,6 +31,15 @@ export interface Providers {
   calendar?: CalendarClient;
   slack?: SlackClient;
   zendesk?: ZendeskClient;
+  asana?: AsanaClient;
+  workos?: WorkOSClient;
+  github?: GitHubClient;
+  twilio?: TwilioClient;
+  pagerduty?: PagerDutyClient;
+  notion?: NotionClient;
+  box?: BoxClient;
+  /** Restricted-party screening (Trade.gov Consolidated Screening List). */
+  screening?: ScreeningClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -25,6 +49,14 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   calendar: "https://www.googleapis.com",
   slack: "https://slack.com",
   zendesk: undefined, // https://<subdomain>.zendesk.com — set ZENDESK_BASE_URL or ZENDESK_SUBDOMAIN
+  asana: "https://app.asana.com/api/1.0",
+  workos: "https://api.workos.com",
+  github: "https://api.github.com",
+  twilio: "https://api.twilio.com",
+  pagerduty: "https://api.pagerduty.com",
+  notion: "https://api.notion.com",
+  box: "https://api.box.com/2.0",
+  screening: "https://data.trade.gov",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -35,6 +67,14 @@ const PREFIX: Record<ProviderName, string[]> = {
   calendar: ["GCAL", "GOOGLE_CALENDAR"],
   slack: ["SLACK"],
   zendesk: ["ZENDESK"],
+  asana: ["ASANA"],
+  workos: ["WORKOS"],
+  github: ["GITHUB"],
+  twilio: ["TWILIO"],
+  pagerduty: ["PAGERDUTY"],
+  notion: ["NOTION"],
+  box: ["BOX"],
+  screening: ["TRADE_GOV", "SCREENING"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -60,6 +100,11 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
     if (p === "zendesk" && env.ZENDESK_EMAIL) {
       endpoint.authorization = `Basic ${Buffer.from(`${env.ZENDESK_EMAIL}/token:${token}`).toString("base64")}`;
     }
+    // Vendor auth dialects, applied only against the vendor's own host (twins take Bearer).
+    if (p === "twilio" && baseUrl === DEFAULT_BASE.twilio) {
+      endpoint.authorization = `Basic ${Buffer.from(`${env.TWILIO_ACCOUNT_SID ?? ""}:${token}`).toString("base64")}`;
+    }
+    if (p === "pagerduty" && baseUrl === DEFAULT_BASE.pagerduty) endpoint.authorization = `Token token=${token}`;
     out[p] = endpoint;
   }
   return out;
@@ -67,10 +112,16 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
 
 export type ProviderFactory = (headers: Record<string, string>) => Providers;
 
+/** Headers some vendors require on every call. */
+const VENDOR_HEADERS: Partial<Record<ProviderName, Record<string, string>>> = {
+  notion: { "Notion-Version": "2022-06-28" },
+  github: { "X-GitHub-Api-Version": "2022-11-28" },
+};
+
 /** Builds per-run clients that stamp `headers` (e.g. X-Flow-Run-Id) on every provider request. */
-export function providerFactory(endpoints: Partial<Record<ProviderName, ProviderEndpoint>>): ProviderFactory {
+export function providerFactory(endpoints: Partial<Record<ProviderName, ProviderEndpoint>>, env: NodeJS.ProcessEnv = process.env): ProviderFactory {
   return (headers) => {
-    const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, headers) : undefined);
+    const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, { ...VENDOR_HEADERS[p], ...headers }) : undefined);
     const h = Object.fromEntries(PROVIDERS.map((p) => [p, http(p)])) as Record<ProviderName, ProviderHttp | undefined>;
     return {
       stripe: h.stripe && new StripeClient(h.stripe),
@@ -79,6 +130,14 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       calendar: h.calendar && new CalendarClient(h.calendar),
       slack: h.slack && new SlackClient(h.slack),
       zendesk: h.zendesk && new ZendeskClient(h.zendesk),
+      asana: h.asana && new AsanaClient(h.asana),
+      workos: h.workos && new WorkOSClient(h.workos),
+      github: h.github && new GitHubClient(h.github),
+      twilio: h.twilio && new TwilioClient(h.twilio, env.TWILIO_ACCOUNT_SID ?? "AC_ACME_DEMO"),
+      pagerduty: h.pagerduty && new PagerDutyClient(h.pagerduty, env.PAGERDUTY_FROM_EMAIL ?? "ops-bot@acme.example"),
+      notion: h.notion && new NotionClient(h.notion),
+      box: h.box && new BoxClient(h.box),
+      screening: h.screening && new ScreeningClient(h.screening),
     };
   };
 }

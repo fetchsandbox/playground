@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // Renders verify/RESULTS.md from verify/receipts/*.json and the contracts.
 //   node verify/results.mjs
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const WORKFLOWS = ["support-escalation", "revenue-reconciliation", "churn-risk-sweep", "onboarding-kickoff"];
+const { WORKFLOW_ORDER } = await import("./contracts/order.mjs");
+const WORKFLOWS = [...WORKFLOW_ORDER, ...readdirSync(join(HERE, "contracts")).map((f) => f.replace(/\.mjs$/, "")).filter((w) => !["lib", "order"].includes(w) && !WORKFLOW_ORDER.includes(w)).sort()];
 const ICON = { held: "✅ held", violated: "❌ violated", unmeasured: "⏸ unmeasured" };
 
 const out = [

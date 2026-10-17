@@ -32,6 +32,8 @@ if (!workflow) {
 }
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
+// PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.
+const BUNDLE = process.env.PROOF_BUNDLE ? join(ROOT, process.env.PROOF_BUNDLE) : join(ROOT, "dist", "main.mjs");
 const gitSha = (() => {
   try {
     return execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: ROOT }).toString().trim();
@@ -122,7 +124,21 @@ const stateFile = join(OUT_DIR, "state.json");
 
 function twinEnv(legs) {
   const env = {};
-  const map = { stripe: "STRIPE", hubspot: "HUBSPOT", gmail: "GMAIL", "google-calendar": "GOOGLE_CALENDAR", slack: "SLACK", zendesk: "ZENDESK" };
+  const map = {
+    stripe: "STRIPE",
+    hubspot: "HUBSPOT",
+    gmail: "GMAIL",
+    "google-calendar": "GOOGLE_CALENDAR",
+    slack: "SLACK",
+    zendesk: "ZENDESK",
+    asana: "ASANA",
+    workos: "WORKOS",
+    github: "GITHUB",
+    twilio: "TWILIO",
+    pagerduty: "PAGERDUTY",
+    notion: "NOTION",
+    box: "BOX",
+  };
   for (const [p, leg] of Object.entries(legs ?? {})) {
     if (!map[p]) continue;
     env[`${map[p]}_BASE_URL`] = leg.base_url;
@@ -139,7 +155,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
   );
   const env = {
     ...inherited,
@@ -151,7 +167,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     ...twinEnv(legs),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
-  const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), join(ROOT, "dist", "main.mjs")];
+  const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
   app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit"] });
   app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
   for (let i = 0; i < 100; i++) {
@@ -166,7 +182,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
 // ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
-if (!existsSync(join(ROOT, "dist", "main.mjs"))) throw new Error("run `npm run bundle` first");
+if (!existsSync(BUNDLE)) throw new Error(`no bundle at ${BUNDLE}: run \`npm run bundle\` first`);
 rmSync(stateFile, { force: true });
 await startApp();
 
