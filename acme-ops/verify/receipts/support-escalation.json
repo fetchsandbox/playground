@@ -1,11 +1,11 @@
 {
   "workflow": "support-escalation",
   "app_version": "acme-ops-support-escalation-0-local",
-  "session_id": "vs_254c1c699328",
-  "run_id": "vr_34915e30149a4aa088387d72ea204ae2",
-  "receipt_url": "https://fetchsandbox.com/runs/53a8203162?flow=vr_34915e30149a4aa088387d72ea204ae2",
+  "session_id": "vs_6a65faa113e7",
+  "run_id": "vr_50db8e6b3d6f4cd7b36b26afe98118e9",
+  "receipt_url": "https://fetchsandbox.com/runs/6c677a8cf8?flow=vr_50db8e6b3d6f4cd7b36b26afe98118e9",
   "status": null,
-  "verdict": "failing",
+  "verdict": "inconclusive",
   "app_verified": false,
   "complete": false,
   "checks": [
@@ -21,8 +21,8 @@
     },
     {
       "id": "approve_by_stranger_refused",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "reject",
@@ -31,13 +31,13 @@
     },
     {
       "id": "duplicate_start",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "concurrent_start",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "invalid_input_rejected",
@@ -46,49 +46,49 @@
     },
     {
       "id": "low_severity_not_escalated",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "slack_channel_not_found",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "slack_rate_limited",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "stripe_auth_failure",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "hubspot_auth_failure",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "calendar_auth_failure",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "gmail_rate_limited",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 2 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "zendesk_ticket_annotation",
       "status": "unmeasured",
       "explanation": "FetchSandbox has no Zendesk twin yet; the runtime records zendesk.* actions as skipped/not_configured."
-    },
-    {
-      "id": "restart_mid_run",
-      "status": "unmeasured",
-      "explanation": "Owner restart control (client_lifecycle) is not configured for this tunnel run; covered by local tests (test/engine.test.ts)."
     }
   ],
-  "recorded_at": "2026-10-17T06:01:25.609Z"
+  "recorded_at": "2026-10-17T06:04:48.440Z"
 }

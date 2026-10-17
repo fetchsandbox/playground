@@ -15,7 +15,7 @@
  * Needs ~/.fetchsandbox/credentials.json (FetchSandbox device auth) and Node 22.
  * Writes verify/receipts/<workflow>.json and prints the receipt URL.
  */
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -32,7 +32,14 @@ if (!workflow) {
 }
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
-const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version ?? "0"}-${process.env.GIT_SHA ?? "local"}`;
+const gitSha = (() => {
+  try {
+    return execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: ROOT }).toString().trim();
+  } catch {
+    return "local";
+  }
+})();
+const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2));

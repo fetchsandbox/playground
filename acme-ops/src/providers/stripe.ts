@@ -128,3 +128,10 @@ export function subscriptionMrr(sub: StripeSubscription): number {
 
 /** Subscription states that still represent a paying (or owing) customer. */
 export const LIVE_SUB_STATES = new Set(["active", "trialing", "past_due", "unpaid"]);
+
+/**
+ * States in which a subscription already exists for duplicate-prevention
+ * purposes. `incomplete` is what Stripe returns while the first payment is
+ * pending (e.g. no payment method yet); creating another one would double-bill.
+ */
+export const EXISTING_SUB_STATES = new Set([...LIVE_SUB_STATES, "incomplete"]);

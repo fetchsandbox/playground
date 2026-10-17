@@ -1,6 +1,7 @@
 {
   "name": "acme-ops",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "description": "ACME cross-org ops workflows (support, finance, customer success, sales→CS) as independent Amazon Bedrock AgentCore runtimes",
   "scripts": {

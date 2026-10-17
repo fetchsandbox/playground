@@ -251,6 +251,28 @@ describe("onboarding-kickoff", () => {
     expect(w.state.stripe.subscriptions).toHaveLength(1);
   });
 
+  it("a subscription still awaiting its first payment (incomplete) also blocks a duplicate", async () => {
+    w.setNewSubscriptionStatus("incomplete");
+    const e = w.engine(onboardingKickoff, { now: () => NOW });
+    await e.handle({ action: "start", runId: "inc-a", input: deal(), requestedBy: user });
+    await e.handle({ action: "decide", runId: "inc-a", decision: "approve", userId: "U_RVP" });
+    expect(w.state.stripe.subscriptions.map((s) => s.status)).toEqual(["incomplete"]);
+    const { body } = await e.handle({ action: "start", runId: "inc-b", input: deal(), requestedBy: user });
+    expect(body.output.alreadySubscribed).toBe(true);
+    expect(action(body, "stripe.create_subscription")).toBeUndefined();
+  });
+
+  it("approving two parked runs for the same deal creates one subscription", async () => {
+    w.setNewSubscriptionStatus("incomplete");
+    const e = w.engine(onboardingKickoff, { now: () => NOW });
+    await e.handle({ action: "start", runId: "par-a", input: deal(), requestedBy: user });
+    await e.handle({ action: "start", runId: "par-b", input: deal(), requestedBy: user });
+    await e.handle({ action: "decide", runId: "par-a", decision: "approve", userId: "U_RVP" });
+    const b = await e.handle({ action: "decide", runId: "par-b", decision: "approve", userId: "U_RVP" });
+    expect(action(b.body, "stripe.create_subscription")).toMatchObject({ status: "applied", detail: { created: false } });
+    expect(w.state.stripe.subscriptions).toHaveLength(1);
+  });
+
   it("refuses an inactive price: no Stripe writes at all", async () => {
     const e = w.engine(onboardingKickoff, { now: () => NOW });
     const { body } = await e.handle({ action: "start", runId: "hs-bad-price", input: deal({ plan: { priceId: "price_retired", quantity: 3 } }), requestedBy: user });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { firstFreeSlot, type Slot } from "../providers/google";
-import { LIVE_SUB_STATES } from "../providers/stripe";
+import { EXISTING_SUB_STATES } from "../providers/stripe";
 import { FatalError } from "../kit/errors";
 import type { PlannedAction, WorkflowDef } from "../kit/types";
 import { Approvers, ChannelId, Email, messageId, money, out, plain } from "./shared";
@@ -27,7 +27,7 @@ interface BillingState {
   customerId?: string;
   duplicateCustomers: number;
   price: { id: string; currency: string; unitAmountMinor: number; interval: string };
-  /** A live subscription to this price already exists (e.g. a re-fired trigger). */
+  /** A subscription to this price already exists, live or awaiting first payment (e.g. a re-fired trigger). */
   existingSubscriptionId?: string;
 }
 interface SupportState {
@@ -75,7 +75,7 @@ export const onboardingKickoff: WorkflowDef<Input> = {
         if (customer) {
           const all = (await stripe.listCustomers()).filter((c) => c.email?.toLowerCase() === input.contact.email);
           dup = Math.max(0, all.length - 1);
-          const subs = (await stripe.listSubscriptions(customer.id)).filter((s) => s.customer === customer.id && LIVE_SUB_STATES.has(s.status));
+          const subs = (await stripe.listSubscriptions(customer.id)).filter((s) => s.customer === customer.id && EXISTING_SUB_STATES.has(s.status));
           existing = subs.find((s) => s.items.data.some((it) => it.price.id === price.id))?.id;
         }
         const data: BillingState = {
@@ -241,7 +241,7 @@ export const onboardingKickoff: WorkflowDef<Input> = {
           if (!customerId) throw new FatalError("no Stripe customer: stripe.ensure_customer did not apply");
           // The approval may come a day later; never double-subscribe.
           const live = (await providers.stripe!.listSubscriptions(customerId)).find(
-            (s) => s.customer === customerId && LIVE_SUB_STATES.has(s.status) && s.items.data.some((it) => it.price.id === bill.price.id),
+            (s) => s.customer === customerId && EXISTING_SUB_STATES.has(s.status) && s.items.data.some((it) => it.price.id === bill.price.id),
           );
           if (live) return { ref: live.id, detail: { created: false } };
           const sub = await providers.stripe!.createSubscription(customerId, bill.price.id, input.plan.quantity, { deal_id: input.dealId });

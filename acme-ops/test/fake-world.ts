@@ -65,6 +65,8 @@ export async function startWorld() {
   const state = seedState();
   const faults: Fault[] = [];
   const requests: Recorded[] = [];
+  // Stripe returns `incomplete` until the first invoice is paid (no payment method yet).
+  let newSubStatus = "active";
 
   const server: Server = createServer(async (req, res) => {
     const chunks: Buffer[] = [];
@@ -118,7 +120,7 @@ export async function startWorld() {
       return send(200, { data: S.subscriptions.filter((s) => (!cus || s.customer === cus) && keep(s)), has_more: false });
     }
     if (req.method === "POST" && path === "/v1/subscriptions") {
-      return send(200, addSub(state, body.customer, body["items[0][price]"], "active", Number(body["items[0][quantity]"])));
+      return send(200, addSub(state, body.customer, body["items[0][price]"], newSubStatus, Number(body["items[0][quantity]"])));
     }
     if (req.method === "GET" && (r = m(/^\/v1\/subscriptions\/([^/]+)$/))) {
       const s = S.subscriptions.find((x) => x.id === r![1]);
@@ -226,6 +228,9 @@ export async function startWorld() {
   return {
     state,
     faults,
+    setNewSubscriptionStatus(status: string) {
+      newSubStatus = status;
+    },
     requests,
     base,
     endpoints(only: ProviderName[] = all) {
