@@ -1,0 +1,33 @@
+{
+  "name": "acme-ops",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ACME cross-org ops workflows (support, finance, customer success, sales→CS) as independent Amazon Bedrock AgentCore runtimes",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "bundle": "esbuild src/main.ts --bundle --platform=node --target=node22 --format=esm --sourcemap --outfile=dist/main.mjs --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "serve": "npm run bundle && node dist/main.mjs",
+    "proof": "node verify/relay-proof.mjs",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "@aws-sdk/client-dynamodb": "^3.1152.0",
+    "@aws-sdk/client-secrets-manager": "^3.1152.0",
+    "@aws-sdk/lib-dynamodb": "^3.1152.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "aws-cdk": "^2.1145.0",
+    "aws-cdk-lib": "^2.273.0",
+    "constructs": "^10.8.1",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
+  }
+}
