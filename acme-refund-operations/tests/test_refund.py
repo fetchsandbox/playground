@@ -125,3 +125,13 @@ def test_invalid_percentage(setup,pct):
     e,p,_,_=setup
     with pytest.raises(ValueError):e().start(request(pct))
     assert not p.writes
+
+
+def test_approval_card_sent_to_manager_not_customer_channel(setup,monkeypatch):
+    e,p,_,_=setup;monkeypatch.setenv('REFUND_MANAGER_CHANNEL','D_MANAGER')
+    r=e().start(request(20,slackChannel='D_CUSTOMER',slackThread='123.456'))
+    cards=[x for x in p.posts if len(x)>3 and x[3]]
+    assert len(cards)==1 and cards[0][0]=='D_MANAGER' and cards[0][2] is None
+    assert r['input']['slackThread']=='123.456' and not p.writes
+    e().drive('CASE-1','approve','RAJ')
+    assert any(x[0]=='D_CUSTOMER' and x[2]=='123.456' and 'succeeded' in x[1] for x in p.posts)

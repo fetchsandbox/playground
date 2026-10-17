@@ -41,7 +41,7 @@ const gitSha = (() => {
     return "local";
   }
 })();
-const APP_VERSION = workflow === "refund-operations" ? `acme-refund-1.0.0-${gitSha}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
+const APP_VERSION = workflow === "refund-operations" ? `acme-refund-1.0.1-${gitSha}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), { mode: 0o600 });
@@ -164,6 +164,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     ...inherited,
     WORKFLOW: workflow,
     PORT: String(PORT),
+    ...(process.env.PROOF_PYTHON ? { PROOF_PYTHON:process.env.PROOF_PYTHON } : {}),
     HOST: "127.0.0.1",
     STATE_FILE: stateFile,
     PROVIDER_RETRIES: "2",

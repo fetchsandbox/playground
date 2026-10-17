@@ -1,5 +1,5 @@
 """Six specialist roles, persistent evidence, approval, refund and customer resolution."""
-import copy, hashlib, json, re, time, uuid
+import copy, hashlib, json, os, re, time, uuid
 from decimal import Decimal
 from . import VERSION
 from . import observability
@@ -159,15 +159,16 @@ class Engine:
         self.event('agent_completed',agent=name);return value
     def approval_card(self):
         if self.r.get('approval_message'):return
-        channel=self.r['input'].get('slackChannel')
+        channel=os.getenv('REFUND_MANAGER_CHANNEL') or self.r['input'].get('slackChannel')
         if not channel:return
         a=self.r['assessment'];self.r['approval_message']='intent';self.save()
-        text=f"Acme Refund Operations · Approval needed\nCase {self.r['case_id']} · {a['sku']}\nRefund {a['requested_pct']}%: {a['amount_minor']/100:.2f} {a['currency'].upper()}\nEligibility passed. Company C3 requires manager approval."
+        text=f"Acme Refund Operations · Approval needed\nCase {self.r['case_id']} · {a['sku']}\nRefund {a['requested_pct']}%: {a['amount_minor']/100:.2f} {a['currency'].upper()}\nPurchase and product eligibility passed. Company policy C3 ({a['evidence'][0]['version']}) requires manager approval.\nApproval expires in 24 hours; evidence is checked again before execution."
         blocks=[{'type':'section','text':{'type':'mrkdwn','text':text}}, {'type':'actions','elements':[
             {'type':'button','text':{'type':'plain_text','text':'Approve refund'},'style':'primary','action_id':'acme_refund_approve','value':self.r['case_id']},
             {'type':'button','text':{'type':'plain_text','text':'Reject refund'},'style':'danger','action_id':'acme_refund_reject','value':self.r['case_id']}]}]
-        r=self.p.slack(channel,text,self.r['input'].get('slackThread'),blocks);self.r['approval_message']=r['ts']
-        if not self.r['input'].get('slackThread'):self.r['input']['slackThread']=r['ts']
+        thread=self.r['input'].get('slackThread') if channel==self.r['input'].get('slackChannel') else None
+        r=self.p.slack(channel,text,thread,blocks);self.r['approval_message']=r['ts'];self.r['approval_channel']=channel
+        if channel==self.r['input'].get('slackChannel') and not self.r['input'].get('slackThread'):self.r['input']['slackThread']=r['ts']
         self.save()
     def notify(self,outcome):
         self.p.agent='customer_handoff';self.event('agent_started',agent='customer_handoff')
@@ -176,7 +177,7 @@ class Engine:
                 'REFUND_PENDING':f"Your refund has been initiated and is pending. Reference: {op.get('provider_id')}. It is not yet confirmed complete.",
                 'REFUND_FAILED':'Your refund could not be completed. Acme Refund Operations is reviewing it; no successful refund is being claimed.',
                 'AWAITING_APPROVAL':'Your purchase meets the applicable refund eligibility rules. Your requested amount needs manager approval; no refund has been issued yet.',
-                'DECLINED':'We cannot approve this request under the applicable Acme policy: '+', '.join(a.get('reasons',[]))+'. No refund has been issued.',
+                'DECLINED':'We cannot approve this request under the applicable Acme policy: '+', '.join({'company_cumulative_refund_cap_exceeded':'total refunds would exceed the 70% company limit','requested_percentage_above_company_cap':'the requested percentage exceeds the 70% company limit','product_not_refundable':'this completed service is not refundable','outside_product_refund_window':'the product refund period has ended','payment_not_settled':'the payment has not settled','payment_disputed':'the payment is disputed','usage_exceeds_product_policy':'recorded product usage exceeds the policy limit','amount_exceeds_remaining_paid_balance':'the amount exceeds the remaining refundable balance'}.get(x,x.replace('_',' ')) for x in a.get('reasons',[]))+'. No refund has been issued.',
                 'REJECTED':'An Acme refund manager declined this request. No refund has been issued.',
                 'HELD':'Your request needs further purchase or policy evidence. No new refund is being claimed. Acme Refund Operations will review the case.',
                 'EXPIRED':'The approval window expired. No refund has been issued. Please contact Acme Refund Operations for review.'}
