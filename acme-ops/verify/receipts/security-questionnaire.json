@@ -1,0 +1,74 @@
+{
+  "workflow": "security-questionnaire",
+  "app_version": "acme-ops-security-questionnaire-1.0.0-df79afd",
+  "session_id": "vs_8d5fd0e0e9e6",
+  "run_id": "vr_e1ca4d13d678473b9992cd1751db6cdf",
+  "receipt_url": "https://fetchsandbox.com/runs/ecc2c079f7?flow=vr_e1ca4d13d678473b9992cd1751db6cdf",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_and_reconcile",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "notion_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "asana_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "answers_from_library",
+      "status": "unmeasured",
+      "explanation": "The Notion twin's database query returns generic sample pages without Question/Answer properties, so no question can match the library; the matcher itself is deterministic code (similarity ≥ 0.5)."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:03:05.125Z"
+}
