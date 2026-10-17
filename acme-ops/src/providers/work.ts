@@ -65,13 +65,17 @@ export class WorkOSClient {
   async listUsers(max = 500): Promise<WorkOSUser[]> {
     const out: WorkOSUser[] = [];
     let after: string | undefined;
+    const seen = new Set<string>();
     while (out.length < max) {
       const { body } = await this.http.request<any>("GET", "/user_management/users", { query: { limit: 100, after } });
-      out.push(...(body?.data ?? []));
+      // Stop when a page adds nothing new: some servers hand back a cursor forever.
+      const fresh = ((body?.data ?? []) as WorkOSUser[]).filter((u) => !seen.has(u.id));
+      fresh.forEach((u) => seen.add(u.id));
+      out.push(...fresh);
       after = body?.list_metadata?.after ?? undefined;
-      if (!after || !body?.data?.length) break;
+      if (!after || !fresh.length) break;
     }
-    return out;
+    return out.slice(0, max);
   }
 
   async getUser(id: string): Promise<WorkOSUser> {
