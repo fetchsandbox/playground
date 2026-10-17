@@ -1,0 +1,6 @@
+fastapi>=0.110
+uvicorn>=0.27
+httpx>=0.27
+boto3>=1.34
+anthropic>=1.14
+aws-opentelemetry-distro==0.21.0

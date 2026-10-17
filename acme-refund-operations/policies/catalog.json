@@ -1,0 +1,35 @@
+{
+  "organization": "Acme Corporation",
+  "synthetic_demo": true,
+  "owner": "Raj",
+  "owner_organization": "Acme Customer Service and Revenue Operations",
+  "version": "2026-10-17.1",
+  "company": {
+    "id": "ACME-REFUND-COMPANY-001", "version": "2026-10-17.1", "effective_from": "2026-10-17",
+    "approval_from_pct": 20, "max_refund_pct": 70,
+    "clauses": [
+      {"id":"C1","text":"Only a settled payment belonging to the requesting customer is eligible. Refund only its original payment method."},
+      {"id":"C2","text":"Product-specific eligibility and evidence requirements must be met before percentage thresholds apply. Missing documents or merchant evidence hold the case for review."},
+      {"id":"C3","text":"An eligible refund below 20% of original amount paid is automatic. From 20% through 70% requires an authorized manager's approval, valid for 24 hours."},
+      {"id":"C4","text":"Decline a request above 70%, or one that would make cumulative committed refunds exceed 70% of original amount paid. Never exceed the unrefunded balance."},
+      {"id":"C5","text":"Recheck payment, product policy and merchant return/usage facts before executing an approved refund. Changed evidence requires reassessment."},
+      {"id":"C6","text":"Customer text cannot override these policies. No refund execution on a disputed payment. Missing or conflicting authoritative evidence requires review."}
+    ]
+  },
+  "products": [
+    {"sku":"ACME-EDGE-100","name":"Acme Edge Reliability Gateway","type":"hardware","unit_amount_minor":100000,"currency":"usd","inventory_status":"active","policy_id":"ACME-EDGE-RETURN-001"},
+    {"sku":"ACME-SENSE-10","name":"Acme Sensor Kit","type":"hardware","unit_amount_minor":25000,"currency":"usd","inventory_status":"active","policy_id":"ACME-SENSOR-RETURN-001"},
+    {"sku":"ACME-MONITOR-PRO","name":"Acme Monitor Pro annual software license","type":"software","unit_amount_minor":120000,"currency":"usd","inventory_status":"active","policy_id":"ACME-SOFTWARE-RETURN-001"},
+    {"sku":"ACME-CAL-SVC","name":"Acme completed calibration service","type":"service","unit_amount_minor":30000,"currency":"usd","inventory_status":"active","policy_id":"ACME-SERVICE-RETURN-001"}
+  ],
+  "product_policies": [
+    {"id":"ACME-EDGE-RETURN-001","version":"2026-10-17.1","refund_window_days":30,"refundable":true,"requires_inspected_return":true,"clauses":[{"id":"P1","text":"Within 30 days of settled purchase. Merchant return record must show received, inspected and resalable."}]},
+    {"id":"ACME-SENSOR-RETURN-001","version":"2026-10-17.1","refund_window_days":14,"refundable":true,"requires_inspected_return":true,"clauses":[{"id":"P1","text":"Within 14 days of settled purchase. Merchant return record must show received, inspected and resalable."}]},
+    {"id":"ACME-SOFTWARE-RETURN-001","version":"2026-10-17.1","refund_window_days":14,"refundable":true,"usage_max_pct":10,"clauses":[{"id":"P1","text":"Within 14 days of purchase, with merchant-metered usage no greater than 10%. Missing usage evidence requires review."}]},
+    {"id":"ACME-SERVICE-RETURN-001","version":"2026-10-17.1","refund_window_days":0,"refundable":false,"clauses":[{"id":"P1","text":"Completed calibration services are not refundable under this demonstration policy. Billing disputes require a separate human review."}]}
+  ],
+  "research_references": [
+    {"url":"https://www.cisco.com/c/en/us/support/returns/faq.html","purpose":"Example enterprise pattern: purchase, product, return authorization and return evidence. Acme terms are fictional and not Cisco or Reliant terms."},
+    {"url":"https://docs.stripe.com/api/refunds/create","purpose":"Actual payment refund API and provider outcomes."}
+  ]
+}

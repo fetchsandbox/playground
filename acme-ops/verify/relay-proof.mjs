@@ -33,7 +33,7 @@ if (!workflow) {
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
 // PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.
-const BUNDLE = process.env.PROOF_BUNDLE ? join(ROOT, process.env.PROOF_BUNDLE) : join(ROOT, "dist", "main.mjs");
+const BUNDLE = workflow === "refund-operations" ? join(ROOT,"../acme-refund-operations/verify/runtime-wrapper.mjs") : process.env.PROOF_BUNDLE ? join(ROOT, process.env.PROOF_BUNDLE) : join(ROOT, "dist", "main.mjs");
 const gitSha = (() => {
   try {
     return execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: ROOT }).toString().trim();
@@ -41,7 +41,7 @@ const gitSha = (() => {
     return "local";
   }
 })();
-const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
+const APP_VERSION = workflow === "refund-operations" ? `acme-refund-1.0.0-${gitSha}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), { mode: 0o600 });
@@ -147,11 +147,14 @@ function twinEnv(legs) {
   return env;
 }
 
+async function stopApp() {
+  if (!app || app.exitCode !== null) return;
+  app.kill(workflow === "refund-operations" ? "SIGTERM" : "SIGKILL");
+  for (let i=0;i<50 && app.exitCode===null;i++) await sleep(100);
+  if (app.exitCode===null) throw new Error("runtime did not stop; refusing overlapping app processes");
+}
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
-  if (app) {
-    app.kill("SIGKILL");
-    await sleep(300);
-  }
+  await stopApp();
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
@@ -194,7 +197,7 @@ const finish = async (code) => {
     await mcp.call("manage_tunnel", { action: "close" });
   } catch {}
   if (credentialFile) rmSync(dirname(credentialFile), { recursive: true, force: true });
-  app?.kill("SIGKILL");
+  await stopApp();
   mcp.child.kill();
   process.exit(code);
 };
