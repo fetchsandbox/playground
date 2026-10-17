@@ -76,6 +76,7 @@ class Engine:
                 self.r['approval']={'decision':decision,'actor':user,'at':int(self.now()),'snapshot_hash':self.r['assessment']['snapshot_hash']}
                 self.event('approval_approved' if decision=='approve' else 'approval_rejected',agent='billing_policy',actor_id=user)
                 if decision=='reject':self.r['phase']='REJECTED';self.notify('REJECTED');return self.status(case_id)
+                self.approval_processing()
             elif self.r['phase']=='AWAITING_APPROVAL':return self.status(case_id)
             if not self.r.get('started'):
                 self.r['started']=True;self.event('workflow_started',agent='intake',trigger_channel=self.r['input'].get('channel','api'))
@@ -163,6 +164,18 @@ class Engine:
             self.event('agent_started',agent=name);value=fn()
         if name not in self.r['agents']:self.r['agents'].append(name)
         self.event('agent_completed',agent=name);return value
+    def approval_processing(self):
+        # Only after manager/expiry validation and the durable approval event.
+        # A presentation failure must neither authorize nor block the financial action.
+        ts=self.r.get('approval_message');channel=self.r.get('approval_channel')
+        if not ts or ts=='intent' or not channel:return
+        try:
+            self.p.slack_update(channel,ts,presentation.processing_card(self.r))
+            self.r['approval_display_state']='PROCESSING';self.save()
+            self.event('approval_processing_displayed',agent='billing_policy')
+        except ProviderFailure:
+            self.event('approval_status_update_withheld',agent='billing_policy',outcome='PROCESSING')
+
     def approval_card(self):
         if self.r.get('approval_message'):return
         channel=os.getenv('REFUND_MANAGER_CHANNEL') or self.r['input'].get('slackChannel')

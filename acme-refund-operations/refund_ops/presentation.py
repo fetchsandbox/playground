@@ -77,3 +77,10 @@ def resolved_card(case,outcome,product=None,company=None):
     text=view['slack']
     if actor:text+='\nManager decision: '+{'approve':'Approved','reject':'Declined'}.get(decision['decision'],'Reviewed')+' by <@'+actor+'>.'
     return text
+
+def processing_card(case):
+    view=render(case,'AWAITING_APPROVAL');actor=case['approval']['actor']
+    return (f"*Processing refund*\n*Product:* {view['product']}\n*Requested refund:* {view['amount']} ({view['pct']}%)"
+            f"\n\nApproval received from <@{actor}>. We’re checking the purchase, current balance and product policy again before submitting the refund."
+            "\nPlease wait — you don’t need to click again. This message will update with the confirmed outcome."
+            f"\n\n*Refund reference:* {view['reference']}")
