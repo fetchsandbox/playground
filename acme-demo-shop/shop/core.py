@@ -2,7 +2,7 @@
 import hashlib,hmac,json,re,secrets,time,uuid
 from decimal import Decimal
 
-VERSION='acme-shop-1.0.1'
+VERSION='acme-shop-1.0.2'
 class ShopError(Exception):
  def __init__(self,message,status=400):self.message,self.status=message,status
 
@@ -125,9 +125,11 @@ class Shop:
   if not v.is_finite() or v<=0 or v>100 or v.as_tuple().exponent < -2:raise ShopError('Enter a refund percentage from 0.01 to 100, with at most two decimals.')
   self.rate('refund-owner:'+session['owner'],15)
   with self.db.lease(oid) as r:
+   case='SHOP-'+self.hash(oid+request_id)[:24]
    previous=self.p.refund_status(r['refund_case']) if r.get('refund_case') else None
+   if previous and r.get('refund_case')==case:return previous
    if previous and previous['phase'] in ['AWAITING_APPROVAL','REFUND_PENDING','REFUND_FAILED']:raise ShopError('A refund request already needs a decision or review. Follow its existing approval.',409)
-   case='SHOP-'+self.hash(oid+request_id)[:24];r['refund_case']=case;self.db.save(r)
+   r['refund_case']=case;self.db.save(r)
    result=self.p.refund_start(case,r['email'],r['payment_intent'],str(v));self.event('shop_refund_requested',r)
    self.sync(r)
    return result

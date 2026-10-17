@@ -162,3 +162,15 @@ def test_crm_lost_create_response_recovers_without_second_create():
  with pytest.raises(httpx.ReadTimeout):provider.crm_sync(r)
  provider.crm_sync(r)
  assert r['hubspot_deal']=='deal1' and calls.count(('POST','/crm/v3/objects/deals'))==1
+
+def test_same_refund_request_after_lost_response_returns_existing_case(c):
+ oid=paid(c);s,p,repo,db,u=c;original=p.refund_start
+ def lost(*args):original(*args);raise TimeoutError('response lost after runtime accepted')
+ p.refund_start=lost
+ with pytest.raises(TimeoutError):s.refund(u,oid,'20','a-refund-request-key')
+ p.refund_start=original
+ assert s.refund(u,oid,'20','a-refund-request-key')['phase']=='AWAITING_APPROVAL'
+ assert len(p.refund_calls)==1
+ p.case={'phase':'COMPLETED','reference':'RF-TEST'}
+ assert s.refund(u,oid,'20','a-refund-request-key')['phase']=='COMPLETED'
+ assert len(p.refund_calls)==1
