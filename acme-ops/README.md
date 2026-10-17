@@ -7,6 +7,11 @@ AgentCore HTTP contract (`POST /invocations`, `GET /ping` on `:8080`), so a
 control plane such as LoopLabs can import it, start runs, approve gated
 actions, read every agent's output and action, and reconcile what was written.
 
+This package is the shared kit (engine, AgentCore server, provider clients, deploy infra, proof runner).
+Each workflow is one file in `src/workflows/` plus its contract, receipt and tests, and ships in its own
+PR; there is no central registry, so `WORKFLOW=<file name>` selects it at runtime and `cdk` adds one stack
+per file.
+
 | Workflow | Org · team | What it automates | Needs approval |
 |---|---|---|---|
 | [`support-escalation`](src/workflows/support-escalation.ts) | Support · support-ops | Triage a ticket against CRM, billing and the support lead's calendar; escalate, hold a callback, draft the reply | Public Zendesk reply |
@@ -142,7 +147,8 @@ without such gaps are *verified*; the others read *inconclusive* until those twi
 caught real bugs (a duplicate subscription on a re-fired trigger, mixed-interval quotes, a reclaim
 safety check that blocked every reclaim, unbounded directory paging), all fixed and regression-tested.
 
-Per-check results, receipt links and the twin findings: [`verify/RESULTS.md`](verify/RESULTS.md).
+Per-check results, receipt links and the twin findings: run `node verify/results.mjs`, which renders
+`verify/RESULTS.md` from the receipts in `verify/receipts/` (one per workflow, committed with it).
 
 ## Deploy (one AgentCore runtime per workflow)
 

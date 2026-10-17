@@ -10,13 +10,13 @@ import { Engine } from "./kit/engine";
 import { createLogger } from "./kit/log";
 import { createAgentServer } from "./kit/server";
 import { DynamoStore, FileStore, type KvStore, MemoryStore } from "./kit/store";
+import { loadWorkflow } from "./kit/load";
 import { endpointsFromEnv, providerFactory } from "./providers";
-import { WORKFLOWS } from "./workflows";
 
 const workflowId = process.env.WORKFLOW ?? "";
-const workflow = WORKFLOWS[workflowId];
+const workflow = await loadWorkflow(workflowId);
 if (!workflow) {
-  console.error(`WORKFLOW must be one of: ${Object.keys(WORKFLOWS).join(", ")} (got "${workflowId}")`);
+  console.error(`WORKFLOW must name a file in src/workflows/ (got "${workflowId}")`);
   process.exit(2);
 }
 

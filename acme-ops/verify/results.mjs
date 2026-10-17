@@ -6,8 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const { WORKFLOW_ORDER } = await import("./contracts/order.mjs");
-const WORKFLOWS = [...WORKFLOW_ORDER, ...readdirSync(join(HERE, "contracts")).map((f) => f.replace(/\.mjs$/, "")).filter((w) => !["lib", "order"].includes(w) && !WORKFLOW_ORDER.includes(w)).sort()];
+// Every workflow that has a receipt; RESULTS.md is generated locally, not committed.
+const WORKFLOWS = readdirSync(join(HERE, "receipts")).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -5)).sort();
 const ICON = { held: "✅ held", violated: "❌ violated", unmeasured: "⏸ unmeasured" };
 
 const out = [

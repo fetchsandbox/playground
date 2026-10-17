@@ -1,6 +1,14 @@
+import { readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { App } from "aws-cdk-lib";
-import { WORKFLOWS } from "../src/workflows";
+import { loadWorkflow } from "../src/kit/load";
 import { WorkflowStack } from "./stack";
+
+// One stack per workflow file in src/workflows/ (shared.ts is helpers, not a workflow).
+const dir = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "workflows");
+const ids = readdirSync(dir).filter((f) => f.endsWith(".ts") && f !== "shared.ts").map((f) => f.slice(0, -3)).sort();
+const WORKFLOWS = (await Promise.all(ids.map(loadWorkflow))).filter((w) => w !== undefined);
 
 // cdk deploy AcmeOps-support-escalation            → one workflow
 // cdk deploy --all                                  → all four, each independent

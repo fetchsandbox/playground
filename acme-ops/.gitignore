@@ -3,3 +3,4 @@ dist
 cdk.out
 .state
 .env
+verify/RESULTS.md
