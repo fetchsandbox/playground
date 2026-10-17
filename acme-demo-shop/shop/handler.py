@@ -22,7 +22,7 @@ def handler(event,context):
   headers={k.lower():v for k,v in event.get('headers',{}).items()};method=event.get('requestContext',{}).get('http',{}).get('method','GET');path=event.get('rawPath','/')
   if method=='GET' and path in ['/','/app.js','/style.css']:
    file={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}[path];r=response(200,(Path(__file__).parent.parent/'public'/file).read_text(),html=True);r['headers']['content-type']={'/':'text/html; charset=utf-8','/app.js':'application/javascript','/style.css':'text/css'}[path];return r
-  shop,auth=dependencies();raw=event.get('body','').encode();raw=base64.b64decode(raw) if event.get('isBase64Encoded') else raw
+  shop,auth=dependencies();raw=(event.get('body') or '').encode();raw=base64.b64decode(raw) if event.get('isBase64Encoded') else raw
   if len(raw)>16000:raise ShopError('Request is too large.',413)
   if method=='POST' and path=='/api/stripe/webhook':
    data=shop.p.webhook(raw,headers.get('stripe-signature',''),auth.get('stripe_webhook_secret',''))

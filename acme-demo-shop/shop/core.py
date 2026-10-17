@@ -57,7 +57,7 @@ class Shop:
   if existing and existing['sku']!=sku:raise ShopError('This purchase request already belongs to another product.',409)
   if not existing:
    self.rate('checkout-owner:'+session['owner'],6);self.rate('checkout-global',100)
-   self.db.create({'pk':oid,'owner':session['owner'],'email':session['email'],'sku':sku,'product_name':p['name'],'amount_minor':p['unit_amount_minor'],'currency':p['currency'],'catalog_version':c['version'],'price_id':mapping['price_id'],'created_at':int(self.now()),'ttl':int(self.now())+30*86400,'state':'CHECKOUT_PENDING','sync_state':'not_paid','syncpk':'SYNC','due':int(self.now())+60})
+   self.db.create({'pk':oid,'owner':session['owner'],'email':session['email'],'sku':sku,'product_name':p['name'],'amount_minor':p['unit_amount_minor'],'currency':p['currency'],'catalog_version':c['version'],'price_id':mapping['price_id'],'shop_url':base,'created_at':int(self.now()),'ttl':int(self.now())+30*86400,'state':'CHECKOUT_PENDING','sync_state':'not_paid','syncpk':'SYNC','due':int(self.now())+60})
   with self.db.lease(oid) as r:
    if r.get('checkout_url'):return {'order_id':oid,'url':r['checkout_url']}
    customer=self.p.customer(session['email'],session['owner'])
@@ -93,7 +93,7 @@ class Shop:
   if not r.get('confirmation'):
    r['confirmation']='uncertain';self.db.save(r)
    try:
-    response=self.p.mail(r['email'],'Acme demo purchase confirmed — '+r['product_name'],'Hi,\n\nYour test purchase is confirmed.\n\nProduct: '+r['product_name']+'\nAmount: '+money(r['amount_minor'])+'\nOrder: '+r['pk']+'\n\nThis is a synthetic Acme demo. No real money moved. Open My orders in the demo shop to simulate a return and request a refund.\n\nAcme Operations',r['pk']+':purchase')
+    response=self.p.mail(r['email'],'Acme demo purchase confirmed — '+r['product_name'],'Hi,\n\nYour test purchase is confirmed.\n\nProduct: '+r['product_name']+'\nAmount: '+money(r['amount_minor'])+'\nOrder: '+r['pk']+'\n\nThis is a synthetic Acme demo. No real money moved.\n\nView your order: '+r.get('shop_url','')+'/?order='+r['pk']+'\nSign in with this email address to simulate a return and request a refund.\n\nAcme Operations',r['pk']+':purchase')
     r['confirmation']='sent';r['confirmation_reference']=response['id']
    except Exception:r['confirmation']='uncertain'
   r['due']=int(self.now())+60;self.db.save(r);self.event('shop_order_'+r['sync_state'],r)
