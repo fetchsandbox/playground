@@ -1,0 +1,84 @@
+{
+  "workflow": "supplier-ncr",
+  "app_version": "acme-ops-supplier-ncr-1.0.0-df79afd",
+  "session_id": "vs_c64ef9a53dc0",
+  "run_id": "vr_cab530b56d13455182166ea403619f61",
+  "receipt_url": "https://fetchsandbox.com/runs/6479cad67b?flow=vr_cab530b56d13455182166ea403619f61",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "critical_hold_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "high_reject_rate_hold",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_and_reconcile",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "reject",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "asana_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "repeat_supplier_escalation",
+      "status": "unmeasured",
+      "explanation": "The Asana twin's task listing returns generic sample tasks, so open CAPAs per supplier can't be counted; the rule is code (holdReasons) and is unit-level only."
+    }
+  ],
+  "recorded_at": "2026-10-17T16:05:29.356Z"
+}
