@@ -84,9 +84,9 @@ The existing signature-verified Slack/Gmail ingress remains in place. `verify/sh
 
 ## Recorded validation — 2026-10-17
 
-- App `acme-refund-1.0.3`: 50 local tests passed. These use explicit provider doubles/mocked HTTP.
+- App `acme-refund-1.0.4`: 62 local tests passed. These use explicit provider doubles/mocked HTTP.
 - Existing `acme-ops` regression suite: 66 local tests passed; TypeScript checking passed.
-- Published `fetchsandbox-mcp@0.7.28`: six assertions held and two advanced checks remain unmeasured. The [MCP receipt is inconclusive](https://fetchsandbox.com/runs/f238d1d0ad?flow=vr_1dd79fb47cdd41fbb25d9adbac31fb57); `app_verified` is false. This is not full workflow certification or a native-agent persona run.
+- Published `fetchsandbox-mcp@0.7.28`: six assertions held and two advanced checks remain unmeasured. The [MCP receipt is inconclusive](https://fetchsandbox.com/runs/6ddef79ce0?flow=vr_f3209e6157464fd693a817b30f3e2374); `app_verified` is false. This is not full workflow certification or a native-agent persona run.
 - Separate deployed acceptance observed native Slack request/approval, a policy-cap decline, scheduled business-email intake, manager Slack approval, Stripe test-mode refund and a Gmail outcome in the original email thread. An unauthorized decision was rejected. Repeating a saved case and reading it through fresh AgentCore sessions did not repeat the measured refund.
 - Native evidence and real-provider references remain in the operator's private review folder, not this public repository. The customer mailbox test uses self-addressed aliases; external customer deliverability and forwarded-copy suppression are not certified.
 - The broader planned acceptance matrix is partial. External fault/concurrency/process-death and changed-policy checkpoint coverage remain open. No LoopLabs import/enforcement acceptance is claimed.
@@ -94,3 +94,5 @@ The existing signature-verified Slack/Gmail ingress remains in place. `verify/sh
 ### Customer communication
 
 Messages identify the product, refund amount, decision and next step, with a short stable refund reference. Canonical case, payment and provider identifiers remain in audit state and telemetry. Resuming an existing case can refresh its approval card without resending a previously sent email.
+
+Version 1.0.4 native acceptance: a real business-alias email produced a Slack manager approval, zero test refunds before approval, then one $200 test refund and a readable Gmail outcome in the original thread. A repeated resume produced no additional refund or email. The message body contained the product, amount and short refund reference without case/run/payment/provider IDs. Historical emails were not resent. This validates the self-addressed demo path, not external customer deliverability.
