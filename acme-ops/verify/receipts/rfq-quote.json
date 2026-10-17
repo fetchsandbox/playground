@@ -1,9 +1,9 @@
 {
   "workflow": "rfq-quote",
-  "app_version": "acme-ops-rfq-quote-1.0.0-7a70b69",
-  "session_id": "vs_bd18a65066e9",
-  "run_id": "vr_9d553a7d44fe4af4b760c3f63e937ffb",
-  "receipt_url": "https://fetchsandbox.com/runs/451bef1458?flow=vr_9d553a7d44fe4af4b760c3f63e937ffb",
+  "app_version": "acme-ops-rfq-quote-1.0.0-2a347af",
+  "session_id": "vs_d05f3d29dcb9",
+  "run_id": "vr_8aca9d37a07749d4bbc2790ebcf3f582",
+  "receipt_url": "https://fetchsandbox.com/runs/711bc49078?flow=vr_8aca9d37a07749d4bbc2790ebcf3f582",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -90,5 +90,5 @@
       "explanation": "No Salesforce twin in FetchSandbox; ACME's quote is a Stripe quote and the CRM is HubSpot."
     }
   ],
-  "recorded_at": "2026-10-17T16:15:49.868Z"
+  "recorded_at": "2026-10-17T18:50:16.075Z"
 }

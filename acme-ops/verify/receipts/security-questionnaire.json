@@ -1,9 +1,9 @@
 {
   "workflow": "security-questionnaire",
-  "app_version": "acme-ops-security-questionnaire-1.0.0-df79afd",
-  "session_id": "vs_8d5fd0e0e9e6",
-  "run_id": "vr_e1ca4d13d678473b9992cd1751db6cdf",
-  "receipt_url": "https://fetchsandbox.com/runs/ecc2c079f7?flow=vr_e1ca4d13d678473b9992cd1751db6cdf",
+  "app_version": "acme-ops-security-questionnaire-1.0.0-c4a5e14",
+  "session_id": "vs_c12418029091",
+  "run_id": "vr_ac51b2947ccc412c90eec4f6956c89f9",
+  "receipt_url": "https://fetchsandbox.com/runs/43a56200eb?flow=vr_ac51b2947ccc412c90eec4f6956c89f9",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -70,5 +70,5 @@
       "explanation": "The Notion twin's database query returns generic sample pages without Question/Answer properties, so no question can match the library; the matcher itself is deterministic code (similarity ≥ 0.5)."
     }
   ],
-  "recorded_at": "2026-10-17T16:03:05.125Z"
+  "recorded_at": "2026-10-17T19:02:16.458Z"
 }

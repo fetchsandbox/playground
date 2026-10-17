@@ -1,9 +1,9 @@
 {
   "workflow": "license-reclaim",
-  "app_version": "acme-ops-license-reclaim-1.0.0-df79afd",
-  "session_id": "vs_9d309a978293",
-  "run_id": "vr_b6cd213a86a14632978339bb9525293e",
-  "receipt_url": "https://fetchsandbox.com/runs/d9d39ca07c?flow=vr_b6cd213a86a14632978339bb9525293e",
+  "app_version": "acme-ops-license-reclaim-1.0.0-c4a5e14",
+  "session_id": "vs_04003d85760f",
+  "run_id": "vr_1e6bed2f16c94b93a30e536aa13a2bdf",
+  "receipt_url": "https://fetchsandbox.com/runs/4feb7241b7?flow=vr_1e6bed2f16c94b93a30e536aa13a2bdf",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -85,5 +85,5 @@
       "explanation": "No license-cost or contract system is connected (and no twin exists); the run reports seat counts only."
     }
   ],
-  "recorded_at": "2026-10-17T16:00:32.613Z"
+  "recorded_at": "2026-10-17T18:59:43.906Z"
 }

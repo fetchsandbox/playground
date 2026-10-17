@@ -1,3 +1,5 @@
+import { googleAuthorization } from "./google-oauth";
+import { zendeskAuthorization } from "./zendesk-oauth";
 import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
@@ -95,9 +97,18 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
     const token = pick(env, PREFIX[p].flatMap((x) => [`${x}_API_KEY`, `${x}_TOKEN`]));
     let baseUrl = pick(env, PREFIX[p].map((x) => `${x}_BASE_URL`)) ?? DEFAULT_BASE[p];
     if (p === "zendesk" && !baseUrl && env.ZENDESK_SUBDOMAIN) baseUrl = `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com`;
-    if (!token || !baseUrl) continue;
-    const endpoint: ProviderEndpoint = { provider: p, baseUrl, token };
-    if (p === "zendesk" && env.ZENDESK_EMAIL) {
+    const googlePrefix = p === "gmail" ? "GMAIL" : "GOOGLE_CALENDAR";
+    const clientId = env[`${googlePrefix}_CLIENT_ID`] ?? env.GOOGLE_CLIENT_ID;
+    const clientSecret = env[`${googlePrefix}_CLIENT_SECRET`] ?? env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = env[`${googlePrefix}_REFRESH_TOKEN`] ?? env.GOOGLE_REFRESH_TOKEN;
+    // Explicit twin/custom endpoints continue to use their own credentials.
+    const oauth = (p === "gmail" || p === "calendar") && baseUrl === DEFAULT_BASE[p] && clientId && clientSecret && refreshToken;
+    const zendeskOauth = p === "zendesk" && baseUrl === `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com` && env.ZENDESK_SUBDOMAIN && env.ZENDESK_CLIENT_ID && env.ZENDESK_CLIENT_SECRET && env.ZENDESK_SCOPES;
+    if ((!token && !oauth && !zendeskOauth) || !baseUrl) continue;
+    const endpoint: ProviderEndpoint = { provider: p, baseUrl, token: token ?? "" };
+    if (oauth) endpoint.getAuthorization = googleAuthorization(p, clientId!, clientSecret!, refreshToken!);
+    if (zendeskOauth) endpoint.getAuthorization = zendeskAuthorization(baseUrl, env.ZENDESK_CLIENT_ID!, env.ZENDESK_CLIENT_SECRET!, env.ZENDESK_SCOPES!);
+    if (!zendeskOauth && p === "zendesk" && env.ZENDESK_EMAIL) {
       endpoint.authorization = `Basic ${Buffer.from(`${env.ZENDESK_EMAIL}/token:${token}`).toString("base64")}`;
     }
     // Vendor auth dialects, applied only against the vendor's own host (twins take Bearer).
@@ -126,9 +137,9 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
     return {
       stripe: h.stripe && new StripeClient(h.stripe),
       hubspot: h.hubspot && new HubSpotClient(h.hubspot),
-      gmail: h.gmail && new GmailClient(h.gmail),
+      gmail: h.gmail && new GmailClient(h.gmail, "me", env.GMAIL_FROM_IDENTITY, env.GMAIL_REPLY_TO),
       calendar: h.calendar && new CalendarClient(h.calendar),
-      slack: h.slack && new SlackClient(h.slack),
+      slack: h.slack && new SlackClient(h.slack, env.WORKFLOW_DEPARTMENT),
       zendesk: h.zendesk && new ZendeskClient(h.zendesk),
       asana: h.asana && new AsanaClient(h.asana),
       workos: h.workos && new WorkOSClient(h.workos),

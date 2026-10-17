@@ -14,9 +14,10 @@ function header(value: string): string {
   return /^[\x20-\x7e]*$/.test(clean) ? clean : `=?UTF-8?B?${Buffer.from(clean, "utf8").toString("base64")}?=`;
 }
 
-export function rfc822(mail: DraftEmail, from = "me"): string {
+export function rfc822(mail: DraftEmail, from = "me", replyTo?: string): string {
   return [
     `From: ${header(from)}`,
+    ...(replyTo ? [`Reply-To: ${header(replyTo)}`] : []),
     `To: ${header(mail.to)}`,
     `Subject: ${header(mail.subject)}`,
     `Message-ID: ${mail.messageId}`,
@@ -36,6 +37,8 @@ export class GmailClient {
   constructor(
     readonly http: ProviderHttp,
     private readonly userId = "me",
+    private readonly from = "me",
+    private readonly replyTo?: string,
   ) {}
 
   async countMessages(q: string): Promise<number> {
@@ -46,7 +49,7 @@ export class GmailClient {
   }
 
   async createDraft(mail: DraftEmail): Promise<{ id: string }> {
-    const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
+    const raw = Buffer.from(rfc822(mail, this.from, this.replyTo), "utf8").toString("base64url");
     const { body } = await this.http.request<{ id: string }>("POST", `/gmail/v1/users/${this.userId}/drafts`, { json: { message: { raw } } });
     return { id: body.id };
   }

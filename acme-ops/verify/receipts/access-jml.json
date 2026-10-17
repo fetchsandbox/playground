@@ -1,9 +1,9 @@
 {
   "workflow": "access-jml",
-  "app_version": "acme-ops-access-jml-1.0.0-7e9260e",
-  "session_id": "vs_d889fe365fc8",
-  "run_id": "vr_8d2160fd4bd847979c0d3ead96024d41",
-  "receipt_url": "https://fetchsandbox.com/runs/84e946ba3d?flow=vr_8d2160fd4bd847979c0d3ead96024d41",
+  "app_version": "acme-ops-access-jml-1.0.0-2a347af",
+  "session_id": "vs_598938346c72",
+  "run_id": "vr_8f424980f3264bb186ddedec1a3fcaf5",
+  "receipt_url": "https://fetchsandbox.com/runs/7a9c003323?flow=vr_8f424980f3264bb186ddedec1a3fcaf5",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -100,5 +100,5 @@
       "explanation": "The WorkOS twin's GET /user_management/organization_memberships?user_id= returns a generic object, so existing memberships can't be found and revoke fails closed."
     }
   ],
-  "recorded_at": "2026-10-17T15:58:02.587Z"
+  "recorded_at": "2026-10-17T18:57:17.685Z"
 }
