@@ -192,7 +192,7 @@ async function seed(legs, log, context) {
   const result=await context.mcp.call("validate_integration",{session_id:context.sessionId,fixtures:{id:"cancellation-aged-purchase-45-days",steps:[{spec:"stripe",method:"POST",path:"/__fetchsandbox/fixtures/time",body:{resource:"payment_intents",id:aged.paymentIntent,field:"created",value:stamp}},{spec:"stripe",method:"GET",path:`/v1/payment_intents/${aged.paymentIntent}`,assertion:{select:"created",equals:String(stamp),count:1,required:true}}]}});
   if(!result.fixture?.ready)throw new Error(`Aged purchase setup not ready: ${JSON.stringify(result).slice(0,500)}`);
   log("aged purchase fixture", result.fixture.flow_run_id);
-  log("seed", Object.keys(out).length, "customers with a paid subscription");
+  log("seed", Object.keys(out).length, "customers, each with a subscription and a succeeded payment intent");
   return out;
 }
 
