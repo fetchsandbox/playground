@@ -72,7 +72,7 @@ new_config = json.dumps(config, separators=(",", ":")).encode()
 
 def upload(data):
     sha = "sha256:" + hashlib.sha256(data).hexdigest()
-    if ecr.batch_check_layer_availability(repositoryName=repository, layerDigests=[sha]).get("layers"):
+    if any(item.get("layerAvailability") == "AVAILABLE" for item in ecr.batch_check_layer_availability(repositoryName=repository, layerDigests=[sha]).get("layers", [])):
         return sha
     uid = ecr.initiate_layer_upload(repositoryName=repository)["uploadId"]
     for offset in range(0, len(data), 5 * 1024 * 1024):
