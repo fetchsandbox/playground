@@ -19,8 +19,8 @@ for (const wf of Object.values(WORKFLOWS)) {
   new WorkflowStack(app, `AcmeOps-${wf.id}`, {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     workflow: wf.id,
-    containerRepository: ctx("containerRepository"),
-    containerTag: ctx("containerTag"),
+    containerRepository: ctx("containerWorkflow") === wf.id ? ctx("containerRepository") : undefined,
+    containerTag: ctx("containerWorkflow") === wf.id ? ctx("containerTag") : undefined,
     sourceCommit: ctx("sourceCommit") ?? process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded",
     deploymentVersion: ctx("deploymentVersion") ?? "acme-ops-2.0.2-department-identities",
     manageDeliveryResourcePolicy: ctx("useExistingTraceDeliveryPolicy") === "true" ? false : undefined,
