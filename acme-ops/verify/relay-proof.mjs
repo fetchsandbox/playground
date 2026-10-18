@@ -225,7 +225,7 @@ log("session", sid, Object.keys(session.legs ?? {}).join(","));
 // Optional per-contract fixtures written straight to the session's twins (e.g. one
 // Stripe customer per check, so checks never share provider state).
 if (contract.seed) {
-  const seeded = await contract.seed(session.legs, log);
+  const seeded = await contract.seed(session.legs, log, {mcp, sessionId:sid});
   save("seed", seeded);
   log("seeded", Object.keys(seeded ?? {}).length, "fixture(s)");
 }
