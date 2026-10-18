@@ -242,7 +242,7 @@ const application_config = {
   disposable_test_app: true,
   require_verifier_token: true,
   coverage_review: coverage(contract.coverage, contract.checks),
-  scope_review: scope(contract.checks, contract.evidence),
+  scope_review: contract.scope_review ?? scope(contract.checks, contract.evidence),
   checks: contract.checks,
 };
 save("application_config", application_config);

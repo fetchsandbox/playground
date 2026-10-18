@@ -205,6 +205,7 @@ export default {
     state_store: "Run records exposed read-only at GET /verify/runs/{run_id}/cases/{check_id}/runs → {runs:[...]}, bearer-protected.",
   },
   checks,
+  scope_review: checks.map(c => ({check_id:c.id,classification:"in_scope",reason:"Cancellation runtime behavior.",evidence:["acme-ops/src/workflows/product-cancellation.ts"]})),
   coverage: {
     baseline: ["baseline"],
     identity_and_access: ["approve_by_stranger_refused", "unknown_customer_not_cancelled"],
