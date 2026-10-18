@@ -61,7 +61,10 @@ def process(message,cfg,zd,invoke,ledger=None):
     key=str(message.get("event_id", ""))
     previous=ledger.get_item(Key={"event_id":key},ConsistentRead=True).get("Item") if ledger is not None else None
     if previous:
-        return deliver(previous["command"],invoke)
+        command=previous["command"]
+        # DynamoDB deserializes JSON numbers as Decimal; restore the API integer.
+        command["input"]["ticketId"]=int(command["input"]["ticketId"])
+        return deliver(command,invoke)
     tid=int(message['ticket_id']);ticket=zd.get(f'/api/v2/tickets/{tid}.json')['ticket'];reply=select_reply(ticket,zd.comments(tid))
     if reply is None:return {'ticket_id':tid,'outcome':'ignored_non_requester_or_closed_offer'}
     user=zd.get(f"/api/v2/users/{ticket['requester_id']}.json")['user']

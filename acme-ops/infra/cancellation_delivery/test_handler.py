@@ -1,6 +1,7 @@
 import unittest,datetime,base64,hmac,hashlib,json
 from unittest.mock import patch
 import handler
+from decimal import Decimal
 NOW=1770000000
 TS=datetime.datetime.fromtimestamp(NOW,datetime.timezone.utc).isoformat()
 class TestDelivery(unittest.TestCase):
@@ -46,14 +47,15 @@ class TestDelivery(unittest.TestCase):
   class Ledger:
    item=None
    def get_item(self,**kw):return {'Item':self.item} if self.item else {}
-   def put_item(self,**kw):self.item=kw['Item']
+   def put_item(self,**kw):
+    self.item=kw['Item'];self.item['command']['input']['ticketId']=Decimal(self.item['command']['input']['ticketId'])
   ledger=Ledger();cfg={'ops_channel':'D','approvers':['U']};msg={'ticket_id':11,'event_id':'evt-1'}
   def lost_response(body):raise RuntimeError('connection lost after commit')
   with self.assertRaises(RuntimeError):handler.process(msg,cfg,self.fixture(),lost_response,ledger)
   class ChangedTicket:
    def get(self,path):raise AssertionError('Must replay the saved command before rereading later bot comments')
   calls=[]
-  def delivered(body):calls.append(body);return {'phase':'DONE','outcome':'ok'}
+  def delivered(body):json.dumps(body);calls.append(body);return {'phase':'DONE','outcome':'ok'}
   handler.process(msg,cfg,ChangedTicket(),delivered,ledger)
   self.assertEqual(calls[0]['runId'],'zd-11-reply-123')
 if __name__=='__main__':unittest.main()
