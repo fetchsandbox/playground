@@ -103,5 +103,85 @@
       "No forced process restart test performed in this Square test"
     ],
     "source_code_changed": false
+  },
+  "native_email_continuation": {
+    "checked_at": "2026-10-18T17:07:19.954848+00:00",
+    "business_runtime_version": "2",
+    "business_deployment_version": "acme-cancellation-1.0.0-908bf7e-square1",
+    "delivery_version": "acme-cancellation-delivery-1.0.1",
+    "worker_code_sha256": "alK03C1eQtpA2jDLKMlB1aOiuZUiSUl/mBRBywTywWY=",
+    "webhook_id": "01M57ZACM5B7R38TXHAYSJCE0M",
+    "trigger_id": "56539742237075",
+    "ticket_id": 14,
+    "case_ref": "CXL-140256B7",
+    "run_id": "zd-14-reply-56539747250579",
+    "native_customer_reply": "Gmail browser reply 3; requester email observed on Zendesk",
+    "native_email_comment_id": "56539747250579",
+    "native_webhook_event_id": "01M57ZJNYJZP3CE7W9WDNVSAS0",
+    "workflow_start_from_email": "automatic webhook \u2192 FIFO \u2192 worker \u2192 AgentCore",
+    "manual_refund_choice_start_sent": false,
+    "final_phase": "DONE",
+    "final_outcome": "ok",
+    "method": "gift_card",
+    "amount_minor": 500,
+    "currency": "USD",
+    "square_sandbox": true,
+    "gift_card_id": "gftc:c64c6db09420446f97034ec3722f41fd",
+    "gift_card_state": "ACTIVE",
+    "gift_card_balance_minor": 500,
+    "activation_count_after_replayed_delivery": 1,
+    "duplicate_starts_after_delivery_replay": 1,
+    "reconcile": "match",
+    "public_customer_completion_comments": 1,
+    "public_gift_card_number_comments": 1,
+    "delivery_replay": "Direct invocation of the deployed SQS worker with original event ID after bot output; same durable command/run ID reused",
+    "queue_approximate_counts": {
+      "ApproximateNumberOfMessages": "0",
+      "ApproximateNumberOfMessagesNotVisible": "0"
+    },
+    "dlq_approximate_counts": {
+      "ApproximateNumberOfMessages": "0"
+    },
+    "customer_inbox_outcome_verified": true,
+    "initial_cancellation_setup": "Prepared initial cancellation and offer through AgentCore API; this proves automatic continuation only, not brand-new email cancellation intake",
+    "live_checks_not_performed": [
+      "Forced process crash",
+      "Automatic Slack intake",
+      "Full 27-case twin suite"
+    ],
+    "customer_inbox_evidence": "native-email-completed.png",
+    "local_bridge_tests_passed": 11,
+    "existing_workflow_tests_passed": 33,
+    "live_security_checks": [
+      {
+        "case": "unsigned",
+        "http_status": 401,
+        "expected": 401
+      },
+      {
+        "case": "forged_signature",
+        "http_status": 401,
+        "expected": 401
+      },
+      {
+        "case": "expired_valid_signature",
+        "http_status": 401,
+        "expected": 401
+      },
+      {
+        "case": "tampered_signed_body",
+        "http_status": 401,
+        "expected": 401
+      },
+      {
+        "case": "signed_invalid_ticket_id",
+        "http_status": 400,
+        "expected": 400
+      }
+    ],
+    "bridge_source_commit": "47bd40a",
+    "fixture_setup_failure": "Two setup attempts did not establish purchase ownership because of existing app customer lookup among duplicate email customers; fixture then reused existing selected test customer. Neither failed setup counted as acceptance.",
+    "workflow_business_code_changed": false,
+    "stack_status": "UPDATE_COMPLETE"
   }
 }
