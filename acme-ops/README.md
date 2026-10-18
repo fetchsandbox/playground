@@ -202,6 +202,14 @@ tagged `cxl_refund_offer` → `{stage:"refund_choice", ticketId, customer, opsCh
 (add `choice` when it comes from a ticket field). Use the ticket id in the `runId` (e.g. `zd-<id>-request`,
 `zd-<id>-reply-<comment id>`) so re-delivered webhooks are deduplicated.
 
+Relay proof (`node verify/relay-proof.mjs product-cancellation`, Stripe + Zendesk + Square + Slack twins,
+one seeded Stripe customer per check): **21 executable checks held, 0 violated**, including all three refund
+paths end to end, a refused second refund, exception approve/reject/stranger, the $500 approval gate,
+duplicate and 4× concurrent triggers, four provider faults and a real restart. Six checks are declared
+blocked where the twins can't exercise the behaviour yet (ticket creation and requester replies on the
+Zendesk twin, backdated payments, store-credit and gift-card balance read-backs, Zendesk email delivery);
+all but email delivery are covered by `test/product-cancellation.test.ts`.
+
 ## Deploy (one AgentCore runtime per workflow)
 
 ```bash

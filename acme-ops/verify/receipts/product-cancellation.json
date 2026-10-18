@@ -1,11 +1,11 @@
 {
   "workflow": "product-cancellation",
-  "app_version": "acme-ops-product-cancellation-1.0.0-1ea1a28",
-  "session_id": "vs_22425e489121",
-  "run_id": "vr_3958baa40dc945408689327e96b9c058",
-  "receipt_url": "https://fetchsandbox.com/runs/006700ffe4?flow=vr_3958baa40dc945408689327e96b9c058",
+  "app_version": "acme-ops-product-cancellation-1.0.0-4f1894b",
+  "session_id": "vs_91741859c61e",
+  "run_id": "vr_f8571d4179e047e784d4be7687432230",
+  "receipt_url": "https://fetchsandbox.com/runs/3cada5c65b?flow=vr_f8571d4179e047e784d4be7687432230",
   "status": null,
-  "verdict": "failing",
+  "verdict": "inconclusive",
   "app_verified": false,
   "complete": false,
   "checks": [
@@ -16,8 +16,8 @@
     },
     {
       "id": "store_credit_end_to_end",
-      "status": "violated",
-      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "original_payment_end_to_end",
@@ -145,5 +145,5 @@
       "explanation": "Zendesk's notification email is not simulated by the twin; the runtime's part (a public comment) is proven by the checks above."
     }
   ],
-  "recorded_at": "2026-10-18T05:01:18.271Z"
+  "recorded_at": "2026-10-18T05:06:49.508Z"
 }
