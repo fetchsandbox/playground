@@ -1,0 +1,37 @@
+import * as path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {App,Stack,Duration,RemovalPolicy,CfnOutput,Tags} from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as sm from 'aws-cdk-lib/aws-secretsmanager';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import * as apigw from 'aws-cdk-lib/aws-apigatewayv2';
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as destinations from 'aws-cdk-lib/aws-lambda-destinations';
+const app=new App();const stack=new Stack(app,'AcmeDemoShop',{env:{account:process.env.CDK_DEFAULT_ACCOUNT,region:process.env.CDK_DEFAULT_REGION}});
+const bucket=s3.Bucket.fromBucketName(stack,'Policy',app.node.getContext('policyBucket'));
+const providers=sm.Secret.fromSecretCompleteArn(stack,'Providers',app.node.getContext('providerSecretArn'));
+const arn=app.node.getContext('refundRuntimeArn');
+const secret=new sm.Secret(stack,'Auth',{description:'Acme public demo shop auth pepper and Stripe TEST webhook signature',generateSecretString:{secretStringTemplate:'{}',generateStringKey:'pepper',passwordLength:48,excludePunctuation:true}});
+const table=new dynamodb.Table(stack,'Orders',{partitionKey:{name:'pk',type:dynamodb.AttributeType.STRING},billingMode:dynamodb.BillingMode.PAY_PER_REQUEST,timeToLiveAttribute:'ttl',pointInTimeRecoverySpecification:{pointInTimeRecoveryEnabled:true},removalPolicy:RemovalPolicy.RETAIN});
+table.addGlobalSecondaryIndex({indexName:'owner-created',partitionKey:{name:'owner',type:dynamodb.AttributeType.STRING},sortKey:{name:'created_at',type:dynamodb.AttributeType.NUMBER}});
+table.addGlobalSecondaryIndex({indexName:'sync-due',partitionKey:{name:'syncpk',type:dynamodb.AttributeType.STRING},sortKey:{name:'due',type:dynamodb.AttributeType.NUMBER}});
+const dlq=new sqs.Queue(stack,'Failures',{retentionPeriod:Duration.days(14),enforceSSL:true});
+const fn=new lambda.DockerImageFunction(stack,'Shop',{code:lambda.DockerImageCode.fromImageAsset(path.join(path.dirname(fileURLToPath(import.meta.url)),'../../acme-demo-shop')),
+ architecture:lambda.Architecture.ARM_64,timeout:Duration.seconds(120),memorySize:512,reservedConcurrentExecutions:8,logRetention:logs.RetentionDays.TWO_WEEKS,retryAttempts:2,onFailure:new destinations.SqsDestination(dlq),environment:{SHOP_TABLE:table.tableName,POLICY_BUCKET:bucket.bucketName,PROVIDER_SECRET_ARN:providers.secretArn,AUTH_SECRET_ARN:secret.secretArn,REFUND_RUNTIME_ARN:arn,MANAGER_CHANNEL:'D0C9D1N6S5B',APP_VERSION:'acme-shop-1.0.3',SOURCE_COMMIT:app.node.tryGetContext('sourceCommit')??'unrecorded'}});
+table.grantReadWriteData(fn);bucket.grantRead(fn);bucket.grantPut(fn,'orders/*');secret.grantRead(fn);providers.grantRead(fn);
+fn.addToRolePolicy(new iam.PolicyStatement({actions:['bedrock-agentcore:InvokeAgentRuntime'],resources:[arn,arn+'/runtime-endpoint/DEFAULT']}));
+const api=new apigw.HttpApi(stack,'PublicShop',{apiName:'Acme public demo shop',defaultIntegration:new integrations.HttpLambdaIntegration('ShopHandler',fn)});
+const stage=api.defaultStage!.node.defaultChild as apigw.CfnStage;stage.defaultRouteSettings={throttlingBurstLimit:20,throttlingRateLimit:10};
+const certificateArn=app.node.tryGetContext('certificateArn');
+if(certificateArn){const domain=new apigw.DomainName(stack,'ShopDomain',{domainName:'shop.fetchsandbox.com',certificate:acm.Certificate.fromCertificateArn(stack,'Certificate',certificateArn)});new apigw.ApiMapping(stack,'ShopDomainMapping',{api,domainName:domain,stage:api.defaultStage!});new CfnOutput(stack,'PublicDomainUrl',{value:'https://shop.fetchsandbox.com'});new CfnOutput(stack,'PublicDomainTarget',{value:domain.regionalDomainName});}
+
+new events.Rule(stack,'Sync',{schedule:events.Schedule.rate(Duration.minutes(1)),targets:[new targets.LambdaFunction(fn,{event:events.RuleTargetInput.fromObject({action:'reconcile'}),retryAttempts:2,maxEventAge:Duration.hours(1)})]});
+for(const[k,v]of Object.entries({organization:'Acme Corporation',department:'Commerce and Customer Operations',owner:'Raj',environment:'production',synthetic_demo:'true',deployment_version:'acme-shop-1.0.3'}))Tags.of(stack).add(k,v);
+new CfnOutput(stack,'ShopUrl',{value:api.apiEndpoint});new CfnOutput(stack,'FunctionName',{value:fn.functionName});new CfnOutput(stack,'AuthSecretArn',{value:secret.secretArn});new CfnOutput(stack,'TableName',{value:table.tableName});

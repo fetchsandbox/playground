@@ -114,11 +114,11 @@ def test_pending_is_not_claimed_success(setup):
     p.payment['refunds'][0]['status']='succeeded';r=e().drive('CASE-1');assert r['phase']=='COMPLETED' and len(p.writes)==1
 
 def test_notification_uncertainty_does_not_repeat_money_or_email(setup):
-    e,p,_,_=setup;p.mail_failure=ProviderFailure('gmail',uncertain=True);r=e().start(request());assert r['phase']=='COMPLETED'
+    e,p,_,_=setup;p.mail_failure=ProviderFailure('sendgrid',uncertain=True);r=e().start(request());assert r['phase']=='COMPLETED'
     assert r['notifications']['COMPLETED:email']['state']=='uncertain';p.mail_failure=None;e().drive('CASE-1');assert len(p.writes)==1 and not p.emails
 
 def test_known_notification_failure_retries_only_notification(setup):
-    e,p,_,_=setup;p.mail_failure=ProviderFailure('gmail',429);r=e().start(request());assert r['phase']=='COMPLETED'
+    e,p,_,_=setup;p.mail_failure=ProviderFailure('sendgrid',429);r=e().start(request());assert r['phase']=='COMPLETED'
     p.mail_failure=None;e().drive('CASE-1');assert len(p.writes)==1 and len(p.emails)==1
 
 @pytest.mark.parametrize('pct',[0,-1,101,'NaN','0.001','not-a-number','Infinity'])
@@ -140,8 +140,8 @@ def test_approval_card_sent_to_manager_not_customer_channel(setup,monkeypatch):
 
 def test_final_outcome_replaces_approval_buttons_without_second_refund(setup):
     e,p,_,_=setup;e().start(request(20,slackChannel='D_DEMO',slackThread='123.456'))
-    e().drive('CASE-1','approve','RAJ');assert len(p.updates)==1 and 'Approved by <@RAJ>' in p.updates[0][2]
-    e().drive('CASE-1');assert len(p.updates)==1 and len(p.writes)==1
+    e().drive('CASE-1','approve','RAJ');assert len(p.updates)==2 and 'Processing refund' in p.updates[0][2] and 'Approved by <@RAJ>' in p.updates[1][2]
+    e().drive('CASE-1');assert len(p.updates)==2 and len(p.writes)==1
 
 def test_unknown_case_does_not_create_an_orphan_lease(setup):
     e,_,_,_=setup;engine=e()
@@ -154,3 +154,31 @@ def test_customer_message_identity_is_unique_per_case_and_stable_on_resume(setup
     assert len(p.emails)==2 and p.emails[0][3]!=p.emails[1][3]
     assert p.emails[0][3]=='FIRST:COMPLETED:email'
     e().drive('FIRST');assert len(p.emails)==2
+
+def test_processing_card_precedes_revalidation_and_provider_effect(setup):
+    e,p,_,_=setup;e().start(request(20,slackChannel='D_DEMO'))
+    purchase=p.purchase
+    def checking(pi,email):
+        assert p.updates and 'Processing refund' in p.updates[0][2]
+        assert 'confirmed outcome' in p.updates[0][2]
+        return purchase(pi,email)
+    p.purchase=checking
+    r=e().drive('CASE-1','approve','RAJ')
+    assert r['phase']=='COMPLETED' and len(p.writes)==1
+    assert 'Refund completed' in p.updates[-1][2]
+
+def test_untrusted_or_expired_decision_never_displays_processing(setup):
+    e,p,_,clock=setup;e().start(request(20,slackChannel='D_DEMO'))
+    with pytest.raises(PermissionError):e().drive('CASE-1','approve','OTHER')
+    assert not p.updates
+    clock[0]+=86401;e().drive('CASE-1','approve','RAJ')
+    assert not any('Processing refund' in x[2] for x in p.updates) and not p.writes
+
+def test_processing_display_failure_does_not_repeat_or_block_refund(setup):
+    e,p,_,_=setup;e().start(request(20,slackChannel='D_DEMO'));update=p.slack_update
+    def failing(*args):
+        if 'Processing refund' in args[2]:raise ProviderFailure('slack unavailable')
+        return update(*args)
+    p.slack_update=failing
+    r=e().drive('CASE-1','approve','RAJ');assert r['phase']=='COMPLETED' and len(p.writes)==1
+    e().drive('CASE-1');assert len(p.writes)==1

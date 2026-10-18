@@ -58,7 +58,8 @@ if os.getenv('ACME_LOCAL_VERIFY')=='true':
                 payment=evidence_payment(value['input']['paymentIntent']);row['provider_refund_count']=len(payment['refunds']);row['provider_refunded_minor']=sum(int(r['amount']) for r in payment['refunds'] if r['status']=='succeeded')
                 sent=value.get('notifications',{}).get('COMPLETED:email',{}).get('provider_reference')
                 row['customer_email_provider_seen']=False
-                if sent:
+                row['email_transport']=os.getenv('REFUND_EMAIL_TRANSPORT','sendgrid')
+                if sent and row['email_transport']=='gmail':
                     mail=Providers().request('gmail','GET','/gmail/v1/users/me/messages/'+sent,params={'format':'metadata'})
                     row['customer_email_provider_seen']=mail.get('id')==sent and 'SENT' in mail.get('labelIds',[])
                 rows.append(row)
