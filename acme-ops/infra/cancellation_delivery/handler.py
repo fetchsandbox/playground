@@ -75,22 +75,28 @@ def process(message,cfg,zd,invoke,ledger=None):
         ledger.put_item(Item={"event_id":key,"command":body,"expires_at":int(time.time())+7*86400},ConditionExpression="attribute_not_exists(event_id)")
     return deliver(body,invoke)
 
-def deliver(body,invoke):
-    rid=body["runId"];tid=body["input"]["ticketId"];comment_id=body["labels"]["zendesk_comment_id"]
+def deliver(body,invoke,allow_attention=False):
+    rid=body["runId"];tid=body["input"].get("ticketId");comment_id=body["labels"].get("zendesk_comment_id")
     result=invoke(body)
     # A request lost after commit is delivered with the same run id. Resume a
     # parked recoverable run; never mint a new id to disguise an earlier failure.
     if result.get('phase') in ['RUNNING','APPROVED'] or (result.get('phase') in ['DONE','AWAITING_APPROVAL'] and any(a.get('status')=='failed' for a in result.get('actions',[]))):
         result=invoke({'action':'resume','runId':rid,'wait':True})
-    if result.get('phase') not in ['DONE','AWAITING_APPROVAL','REJECTED','EXPIRED','CANCELLED'] or (result.get('outcome') not in [None,'ok'] and result.get('phase')=='DONE'):
+    attention=allow_attention and result.get('phase')=='DONE' and result.get('output',{}).get('decision') in ['unverified','clarify','blocked']
+    if not attention and (result.get('phase') not in ['DONE','AWAITING_APPROVAL','REJECTED','EXPIRED','CANCELLED'] or (result.get('outcome') not in [None,'ok'] and result.get('phase')=='DONE')):
         raise RuntimeError('runtime did not reach an acceptable checkpoint')
-    return {'ticket_id':tid,'comment_id':int(comment_id),'run_id':rid,'phase':result['phase'],'outcome':result.get('outcome'),'decision':result.get('output',{}).get('decision')}
+    return {'ticket_id':tid or next((a.get('ref') for a in result.get('actions',[]) if a['id']=='zendesk.create_ticket'),None),'comment_id':int(comment_id) if comment_id else None,'run_id':rid,'phase':result['phase'],'outcome':result.get('outcome'),'decision':result.get('output',{}).get('decision'),'case_ref':result.get('output',{}).get('caseRef')}
 
 def worker(event,context):
-    cfg=config();zd=Zendesk(cfg);client=boto3.client('bedrock-agentcore',config=Config(read_timeout=180,retries={'max_attempts':1}))
+    cfg=config();client=boto3.client('bedrock-agentcore',config=Config(read_timeout=180,retries={'max_attempts':1}))
     def invoke(body):
         r=client.invoke_agent_runtime(agentRuntimeArn=os.environ['RUNTIME_ARN'],qualifier='DEFAULT',runtimeSessionId='cancellation-zendesk-'+str(uuid.uuid4()),contentType='application/json',payload=json.dumps(body).encode())
         return json.loads(r['response'].read())
     for record in event['Records']:
-        result=process(json.loads(record['body']),cfg,zd,invoke,boto3.resource('dynamodb').Table(os.environ['LEDGER_TABLE']))
+        message=json.loads(record['body']);ledger=boto3.resource('dynamodb').Table(os.environ['LEDGER_TABLE'])
+        if message.get('kind')=='slack_cancellation':
+            from slack_handler import process_slack,Slack
+            slack_cfg=json.loads(boto3.client('secretsmanager').get_secret_value(SecretId=os.environ['SLACK_CONFIG_SECRET_ARN'])['SecretString'])
+            result=process_slack(message,cfg,slack_cfg,invoke,ledger,Slack(slack_cfg['SLACK_API_KEY']))
+        else:result=process(message,cfg,Zendesk(cfg),invoke,ledger)
         print(json.dumps({'event':'cancellation_reply_delivered','delivery_version':os.environ['DELIVERY_VERSION'],**result}))

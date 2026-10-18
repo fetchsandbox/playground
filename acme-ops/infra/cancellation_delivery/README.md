@@ -1,7 +1,8 @@
 # Zendesk cancellation reply bridge
 
-This stack continues **existing** `cxl_refund_offer` tickets. It does not implement
-new email cancellation intake or Slack commands, change refund policy, or grant
+This stack continues **existing** `cxl_refund_offer` tickets. It also accepts explicit `cancel subscription sub_…` Slack DM/mention commands
+through the existing signature-verified Acme Slack queue. It does not implement
+new email cancellation intake, change refund policy, or grant
 LoopLabs execution permissions. The business runtime remains independently deployed.
 
 Flow: Zendesk public-comment trigger → HMAC-verified HTTP endpoint → encrypted SQS
@@ -51,3 +52,13 @@ Focused tests: run `python -m unittest discover -s infra/cancellation_delivery` 
 an environment with boto3. They are bridge tests; they do not establish native
 email delivery or full workflow acceptance. See the saved deployment receipts for
 exact measured scope, blocked checks and live versions.
+
+Slack routing checks the configured workspace, reads requester email from Slack,
+and binds each event to a durable command. Typed email addresses are not trusted.
+A processing reply is updated in the originating thread after completion. Quote
+and refund events retain their previous routing. A separate Slack-token secret is
+readable by the delivery worker only; the existing shared worker receives only
+SendMessage permission to this queue. The runtime accepts an honest Slack channel
+value and optional thread timestamp. Subscription owner email is checked against
+the actual Stripe customer; ticket-specific offers are resolved across same-email
+customer records rather than selecting an arbitrary one.

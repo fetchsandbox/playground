@@ -12,15 +12,20 @@ import { fileURLToPath } from 'node:url';
 const app=new App(); const runtimeArn=app.node.tryGetContext('runtimeArn');
 if(!runtimeArn)throw new Error('runtimeArn is required');
 const stack=new Stack(app,'AcmeCancellationDelivery',{env:{account:process.env.CDK_DEFAULT_ACCOUNT,region:process.env.CDK_DEFAULT_REGION}});
-for(const [k,v] of Object.entries({company:'Acme Corporation',department:'Customer Experience',owner:'Raj',owner_team:'cx-retention',environment:'production',deployment_version:'acme-cancellation-delivery-1.0.1'}))Tags.of(stack).add(k,v);
+for(const [k,v] of Object.entries({company:'Acme Corporation',department:'Customer Experience',owner:'Raj',owner_team:'cx-retention',environment:'production',deployment_version:'acme-cancellation-delivery-1.1.0'}))Tags.of(stack).add(k,v);
 const secret=new secrets.Secret(stack,'Config',{description:'Zendesk cancellation reply delivery: scoped Zendesk auth and webhook signing secret'});
+const sharedRoleArn=app.node.tryGetContext('sharedSlackRoleArn');
+const slackSecret=new secrets.Secret(stack,'SlackConfig',{description:'Acme Slack cancellation identity lookup and thread replies'});
 const dlq=new sqs.Queue(stack,'DeadLetters',{fifo:true,encryption:sqs.QueueEncryption.SQS_MANAGED,retentionPeriod:Duration.days(14)});
 const queue=new sqs.Queue(stack,'Replies',{fifo:true,encryption:sqs.QueueEncryption.SQS_MANAGED,visibilityTimeout:Duration.minutes(24),retentionPeriod:Duration.days(14),deadLetterQueue:{queue:dlq,maxReceiveCount:5}});
+if(sharedRoleArn)queue.grantSendMessages(iam.Role.fromRoleArn(stack,'ExistingSlackWorkerRole',sharedRoleArn,{mutable:true}));
 const ledger=new dynamo.Table(stack,'DeliveryLedger',{partitionKey:{name:'event_id',type:dynamo.AttributeType.STRING},billingMode:dynamo.BillingMode.PAY_PER_REQUEST,timeToLiveAttribute:'expires_at',pointInTimeRecoverySpecification:{pointInTimeRecoveryEnabled:true},removalPolicy:RemovalPolicy.RETAIN});
 const code=lambda.Code.fromAsset(fileURLToPath(new URL('./cancellation_delivery',import.meta.url)),{exclude:['__pycache__','test_*']});
-function fn(id:string,handler:string,timeout:number){return new lambda.Function(stack,id,{runtime:lambda.Runtime.PYTHON_3_13,handler,code,timeout:Duration.seconds(timeout),memorySize:256,reservedConcurrentExecutions:1,environment:{CONFIG_SECRET_ARN:secret.secretArn,DELIVERY_VERSION:'acme-cancellation-delivery-1.0.1',RUNTIME_ARN:runtimeArn,QUEUE_URL:queue.queueUrl,LEDGER_TABLE:ledger.tableName},logGroup:new logs.LogGroup(stack,id+'Logs',{retention:logs.RetentionDays.TWO_WEEKS,removalPolicy:RemovalPolicy.RETAIN})});}
+function fn(id:string,handler:string,timeout:number){return new lambda.Function(stack,id,{runtime:lambda.Runtime.PYTHON_3_13,handler,code,timeout:Duration.seconds(timeout),memorySize:256,reservedConcurrentExecutions:1,environment:{CONFIG_SECRET_ARN:secret.secretArn,DELIVERY_VERSION:'acme-cancellation-delivery-1.1.0',RUNTIME_ARN:runtimeArn,QUEUE_URL:queue.queueUrl,LEDGER_TABLE:ledger.tableName,SLACK_CONFIG_SECRET_ARN:slackSecret.secretArn},logGroup:new logs.LogGroup(stack,id+'Logs',{retention:logs.RetentionDays.TWO_WEEKS,removalPolicy:RemovalPolicy.RETAIN})});}
 const ingress=fn('Ingress','handler.ingress',20); const worker=fn('Worker','handler.worker',240);
-ledger.grantReadWriteData(worker);secret.grantRead(ingress); secret.grantRead(worker); queue.grantSendMessages(ingress);worker.addToRolePolicy(new iam.PolicyStatement({actions:['bedrock-agentcore:InvokeAgentRuntime'],resources:[runtimeArn,runtimeArn+'/runtime-endpoint/DEFAULT']}));
+slackSecret.grantRead(worker);ledger.grantReadWriteData(worker);secret.grantRead(ingress); secret.grantRead(worker); queue.grantSendMessages(ingress);worker.addToRolePolicy(new iam.PolicyStatement({actions:['bedrock-agentcore:InvokeAgentRuntime'],resources:[runtimeArn,runtimeArn+'/runtime-endpoint/DEFAULT']}));
 worker.addEventSource(new SqsEventSource(queue,{batchSize:1}));
 const api=new apigw.HttpApi(stack,'Webhook',{apiName:'Acme Zendesk cancellation replies',createDefaultStage:true});api.addRoutes({path:'/zendesk/cancellation-reply',methods:[apigw.HttpMethod.POST],integration:new HttpLambdaIntegration('IngressIntegration',ingress)});
 new CfnOutput(stack,'WebhookUrl',{value:api.apiEndpoint+'/zendesk/cancellation-reply'});new CfnOutput(stack,'ConfigSecretArn',{value:secret.secretArn});new CfnOutput(stack,'WorkerName',{value:worker.functionName});new CfnOutput(stack,'IngressName',{value:ingress.functionName});new CfnOutput(stack,'QueueUrl',{value:queue.queueUrl});new CfnOutput(stack,'DeadLetterQueueUrl',{value:dlq.queueUrl});
+
+new CfnOutput(stack,'SlackConfigSecretArn',{value:slackSecret.secretArn});new CfnOutput(stack,'QueueArn',{value:queue.queueArn});
