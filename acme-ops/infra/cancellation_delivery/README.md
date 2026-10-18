@@ -62,3 +62,18 @@ SendMessage permission to this queue. The runtime accepts an honest Slack channe
 value and optional thread timestamp. Subscription owner email is checked against
 the actual Stripe customer; ticket-specific offers are resolved across same-email
 customer records rather than selecting an arbitrary one.
+
+For this first Slack release, DM **Acme Enterprise** with
+`cancel subscription sub_YOUR_REFERENCE`. One subscription reference is required;
+missing/multiple references receive a clarification without a workflow start.
+Questions and negated commands are not treated as cancellation commands. The
+measured native acceptance is Raj's DM; public-channel mentions and other users
+remain unmeasured, even where the parser accepts a mention.
+
+The shared queue dispatcher is installed with `deploy_shared_slack.py` after the
+runtime and bridge deployments. Provide `sharedSlackRoleArn` to the CDK stack to
+grant the existing queue worker SendMessage access to only the cancellation FIFO.
+The installer requires a reviewed snapshot, checks its code hash and the unchanged
+refund router, saves the previous ZIP for rollback, and preserves all preexisting
+environment keys. It adds `CANCELLATION_QUEUE_URL` only after code update succeeds.
+This modifies the queue dispatcher, not the quote/refund workflow applications.
