@@ -52,7 +52,7 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 // ---------------------------------------------------------------------------
 function mcpClient() {
   const apiKey = JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
-  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.28"]];
+  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", `fetchsandbox-mcp@${process.env.FETCHSANDBOX_MCP_VERSION ?? "0.7.28"}`]];
   const child = spawn(cmd[0], cmd[1], {
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, FETCHSANDBOX_BASE_URL: "https://fetchsandbox.com", FETCHSANDBOX_API_KEY: apiKey },
@@ -88,8 +88,9 @@ function mcpClient() {
   return {
     child,
     async init() {
-      await send("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "acme-ops-proof", version: "1.0.0" } });
+      const initialized = await send("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "acme-ops-proof", version: "1.0.0" } });
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
+      return initialized.serverInfo;
     },
     async call(name, args) {
       const result = await send("tools/call", { name, arguments: args });
@@ -188,7 +189,8 @@ rmSync(stateFile, { force: true });
 await startApp();
 
 const mcp = mcpClient();
-await mcp.init();
+const mcpInfo = await mcp.init();
+log("MCP observed", mcpInfo?.version ?? "unknown");
 let credentialFile;
 const finish = async (code) => {
   try {
@@ -316,6 +318,7 @@ const shareRaw = final.share_url ?? final.receipt_url ?? final.verdict?.share_ur
 const share = shareRaw ? (shareRaw.startsWith("http") ? shareRaw : `https://fetchsandbox.com${shareRaw.startsWith("/") ? "" : "/"}${shareRaw}`) : "";
 const receipt = {
   workflow,
+  mcp_observed: mcpInfo,
   app_version: APP_VERSION,
   session_id: sid,
   run_id: runId,
@@ -331,4 +334,4 @@ mkdirSync(join(HERE, "receipts"), { recursive: true });
 writeFileSync(join(HERE, "receipts", `${workflow}.json`), JSON.stringify(receipt, null, 2) + "\n");
 log("RECEIPT", share || "(none)");
 for (const c of receipt.checks) log("check", c.id, c.status, String(c.explanation ?? "").slice(0, 160));
-await finish(0);
+await finish(receipt.app_verified === true && receipt.checks.length === contract.checks.length && receipt.checks.every(c=>c.status==="held") ? 0 : 1);
