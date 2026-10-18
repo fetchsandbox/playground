@@ -60,5 +60,48 @@
     "customer_mailbox_delivery_checked": false,
     "fixture_model": "Trialing subscription plus a separate succeeded PaymentIntent linked by metadata; not a subscription-invoice billing test.",
     "checked_at": "2026-10-18T16:23:35.156064+00:00"
+  },
+  "square_sandbox_followup": {
+    "deployment": {
+      "runtime_id": "acme_product_cancellation-OXtwF22hKd",
+      "runtime_version": "2",
+      "status": "READY",
+      "deployment_version": "acme-cancellation-1.0.0-908bf7e-square1",
+      "checked_at": "2026-10-18T16:39:00.107080+00:00"
+    },
+    "square_result": {
+      "sandbox": true,
+      "runtime_version": "2",
+      "deployment_version": "acme-cancellation-1.0.0-908bf7e-square1",
+      "request_run_id": "acme-square-20261018163853",
+      "gift_run_id": "acme-square-20261018163853-gift",
+      "zendesk_ticket_id": 11,
+      "gift_card_id": "gftc:c750934bb2cd49de95e14a97ba4bec84",
+      "gift_card_state": "ACTIVE",
+      "balance_minor": 500,
+      "currency": "USD",
+      "activation_count_after_duplicate": 1,
+      "reconcile": "match",
+      "zendesk_confirmation_count": 1,
+      "requester_choice_read_from_ticket": true,
+      "customer_mailbox_delivery_checked": false,
+      "fixture_model": "Trial subscription plus separate successful Stripe test PaymentIntent linked by metadata; not subscription invoice billing. Requester comment inserted via authorized Zendesk API.",
+      "checked_at": "2026-10-18T16:39:15.312734+00:00"
+    },
+    "earlier_attempt": {
+      "outcome": "failed gift-card acceptance check due to stale runtime credentials",
+      "issued_card": false,
+      "observation": "gift-card-desk not configured; requester choice withheld because gift_card was not offered",
+      "recovery": "CDK redeployed the same image with configuration version square1; tested a fresh case"
+    },
+    "limits": [
+      "Square sandbox only; no production Square credential installed",
+      "Requester reply inserted via authorized Zendesk API; not customer email intake",
+      "Actual customer mailbox delivery untested",
+      "Automatic Slack/email intake not added",
+      "Full 27-case twin suite not rerun in this deployment",
+      "No forced process restart test performed in this Square test"
+    ],
+    "source_code_changed": false
   }
 }
