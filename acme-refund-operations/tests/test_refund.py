@@ -114,11 +114,11 @@ def test_pending_is_not_claimed_success(setup):
     p.payment['refunds'][0]['status']='succeeded';r=e().drive('CASE-1');assert r['phase']=='COMPLETED' and len(p.writes)==1
 
 def test_notification_uncertainty_does_not_repeat_money_or_email(setup):
-    e,p,_,_=setup;p.mail_failure=ProviderFailure('gmail',uncertain=True);r=e().start(request());assert r['phase']=='COMPLETED'
+    e,p,_,_=setup;p.mail_failure=ProviderFailure('sendgrid',uncertain=True);r=e().start(request());assert r['phase']=='COMPLETED'
     assert r['notifications']['COMPLETED:email']['state']=='uncertain';p.mail_failure=None;e().drive('CASE-1');assert len(p.writes)==1 and not p.emails
 
 def test_known_notification_failure_retries_only_notification(setup):
-    e,p,_,_=setup;p.mail_failure=ProviderFailure('gmail',429);r=e().start(request());assert r['phase']=='COMPLETED'
+    e,p,_,_=setup;p.mail_failure=ProviderFailure('sendgrid',429);r=e().start(request());assert r['phase']=='COMPLETED'
     p.mail_failure=None;e().drive('CASE-1');assert len(p.writes)==1 and len(p.emails)==1
 
 @pytest.mark.parametrize('pct',[0,-1,101,'NaN','0.001','not-a-number','Infinity'])

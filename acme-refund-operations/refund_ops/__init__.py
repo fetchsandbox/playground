@@ -1,2 +1,2 @@
 """Acme Refund Operations. Business policies are synthetic demo documents."""
-VERSION = 'acme-refund-1.0.5'
+VERSION = 'acme-refund-1.0.6'

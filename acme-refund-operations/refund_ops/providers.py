@@ -17,8 +17,9 @@ class Providers:
         self.env=env or os.environ; self.http=http or httpx.Client(timeout=25,trust_env=False); self.event=lambda *a,**k:None
         self.agent='intake';self.google_token=None;self.span=lambda name:nullcontext()
     def request(self, provider, method, path, **kwargs):
-        bases={'stripe':'https://api.stripe.com','hubspot':'https://api.hubapi.com','slack':'https://slack.com','gmail':'https://gmail.googleapis.com'}
-        key={'stripe':'STRIPE_API_KEY','hubspot':'HUBSPOT_ACCESS_TOKEN','slack':'SLACK_BOT_TOKEN'}
+        bases={'stripe':'https://api.stripe.com','hubspot':'https://api.hubapi.com','slack':'https://slack.com','gmail':'https://gmail.googleapis.com','sendgrid':'https://api.sendgrid.com'}
+        key={'stripe':'STRIPE_API_KEY','hubspot':'HUBSPOT_ACCESS_TOKEN','slack':'SLACK_BOT_TOKEN','sendgrid':'SENDGRID_API_KEY'}
+        if provider=='sendgrid' and not self.env.get('SENDGRID_API_KEY'):raise ProviderFailure('sendgrid')
         token=self.google_auth() if provider=='gmail' else self.env[key[provider]]
         headers={'Authorization':'Bearer '+token,**({'X-Flow-Run-Id':self.env['X_FLOW_RUN_ID']} if self.env.get('X_FLOW_RUN_ID') else {}),**kwargs.pop('headers',{})}
         # Log operation and argument digest; never raw customer text, query or credentials.
@@ -33,7 +34,13 @@ class Providers:
         if r.status_code>=300:
             self.event('tool_action_failed',agent=self.agent,http_status=r.status_code,**safe)
             raise ProviderFailure(provider,r.status_code,uncertain=method!='GET' and r.status_code>=500)
-        body=r.json()
+        if provider=='sendgrid':
+            ref=r.headers.get('X-Message-Id')
+            if r.status_code!=202 or not ref:
+                self.event('tool_action_uncertain',agent=self.agent,http_status=r.status_code,**safe)
+                raise ProviderFailure(provider,r.status_code,uncertain=True)
+            body={'id':ref,'transport':'sendgrid','delivery_status':'accepted'}
+        else:body=r.json()
         if provider=='slack' and body.get('ok') is False:
             self.event('tool_action_failed',agent=self.agent,http_status=200,**safe)
             raise ProviderFailure(provider,200)
@@ -92,6 +99,19 @@ class Providers:
     def slack_update(self,channel,ts,text):
         return self.request('slack','POST','/api/chat.update',json={'channel':channel,'ts':ts,'text':text,'blocks':[{'type':'section','text':{'type':'mrkdwn','text':text}}]})
     def mail(self,recipient,subject,body,case_id,thread=None,in_reply_to=None):
+        transport=self.env.get('REFUND_EMAIL_TRANSPORT','sendgrid')
+        if transport=='sendgrid':
+            headers={'Message-ID':f'<acme-refund-{digest(case_id)}@fetchsandbox.com>'}
+            if in_reply_to:headers.update({'In-Reply-To':in_reply_to,'References':in_reply_to})
+            return self.request('sendgrid','POST','/v3/mail/send',json={
+                'personalizations':[{'to':[{'email':recipient}]}],
+                'from':{'email':'operations@fetchsandbox.com','name':'Acme Refund Operations'},
+                'reply_to':{'email':'operations@fetchsandbox.com','name':'Acme Refund Operations'},
+                'subject':subject,'content':[{'type':'text/plain','value':body}],
+                'headers':headers,'custom_args':{'notification_key':digest(case_id)}})
+        if transport!='gmail':raise ProviderFailure('email_configuration')
+        # Explicit legacy/twin binding only; never fall back here after an
+        # uncertain SendGrid submission, which could send the message twice.
         m=EmailMessage();m['From']='Acme Refund Operations <operations@fetchsandbox.com>';m['To']=recipient;m['Subject']=subject
         m['Reply-To']='operations@fetchsandbox.com';m['Message-ID']=f'<acme-refund-{digest(case_id)}@fetchsandbox.com>'
         if in_reply_to:m['In-Reply-To']=in_reply_to;m['References']=in_reply_to

@@ -16,7 +16,7 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 const app=new App();
 const stack=new Stack(app,'AcmeRefundOperations',{env:{account:process.env.CDK_DEFAULT_ACCOUNT,region:process.env.CDK_DEFAULT_REGION}});
-const version='acme-refund-1.0.5';
+const version='acme-refund-1.0.6';
 const commit=app.node.tryGetContext('sourceCommit')??'unrecorded';
 for(const [k,v] of Object.entries({organization:'Acme Corporation',department:'Customer Service and Revenue Operations',owner:'Raj',owner_team:'Refund Assurance',environment:'production',workflow:'refund-operations',deployment_version:version,source_commit:commit,policy_version:'2026-10-17.1',synthetic_demo:'true',oncall:'rnagulapalle'}))Tags.of(stack).add(k,v);
 const table=new dynamodb.Table(stack,'Cases',{partitionKey:{name:'pk',type:dynamodb.AttributeType.STRING},billingMode:dynamodb.BillingMode.PAY_PER_REQUEST,timeToLiveAttribute:'ttl',pointInTimeRecoverySpecification:{pointInTimeRecoveryEnabled:true},removalPolicy:RemovalPolicy.RETAIN});
@@ -28,7 +28,7 @@ const runtime=new agentcore.Runtime(stack,'Runtime',{
  agentRuntimeArtifact:agentcore.AgentRuntimeArtifact.fromAsset(path.join(path.dirname(fileURLToPath(import.meta.url)),'../../acme-refund-operations'),{platform:Platform.LINUX_ARM64}),
  protocolConfiguration:agentcore.ProtocolType.HTTP,
  authorizerConfiguration:agentcore.RuntimeAuthorizerConfiguration.usingIAM(),
- environmentVariables:{DYNAMODB_TABLE:table.tableName,POLICY_BUCKET:bucket.bucketName,CONFIG_SECRET_ARN:secret.secretArn,APPROVER_USER_IDS:'U0AHZ0RCM',REFUND_MANAGER_CHANNEL:'D0C9D1N6S5B',ADOT_ENABLED:'true',WORKFLOW_ORGANIZATION:'Acme Corporation',WORKFLOW_OWNER:'Raj',WORKFLOW_OWNER_ORGANIZATION:'Acme Customer Service and Revenue Operations',WORKFLOW_OWNER_TEAM:'Refund Assurance',WORKFLOW_DEPARTMENT:'Customer Service and Revenue Operations',WORKFLOW_ENVIRONMENT:'production',WORKFLOW_DEPLOYMENT_VERSION:version,WORKFLOW_SOURCE_COMMIT:commit,WORKFLOW_POLICY_VERSION:'2026-10-17.1',WORKFLOW_POLICY_CATALOG:'s3://'+bucket.bucketName+'/catalog.json',WORKFLOW_ONCALL:'rnagulapalle'},
+ environmentVariables:{REFUND_EMAIL_TRANSPORT:'sendgrid',DYNAMODB_TABLE:table.tableName,POLICY_BUCKET:bucket.bucketName,CONFIG_SECRET_ARN:secret.secretArn,APPROVER_USER_IDS:'U0AHZ0RCM',REFUND_MANAGER_CHANNEL:'D0C9D1N6S5B',ADOT_ENABLED:'true',WORKFLOW_ORGANIZATION:'Acme Corporation',WORKFLOW_OWNER:'Raj',WORKFLOW_OWNER_ORGANIZATION:'Acme Customer Service and Revenue Operations',WORKFLOW_OWNER_TEAM:'Refund Assurance',WORKFLOW_DEPARTMENT:'Customer Service and Revenue Operations',WORKFLOW_ENVIRONMENT:'production',WORKFLOW_DEPLOYMENT_VERSION:version,WORKFLOW_SOURCE_COMMIT:commit,WORKFLOW_POLICY_VERSION:'2026-10-17.1',WORKFLOW_POLICY_CATALOG:'s3://'+bucket.bucketName+'/catalog.json',WORKFLOW_ONCALL:'rnagulapalle'},
  tracingEnabled:true,manageDeliveryResourcePolicy:false,
 });
 table.grantReadWriteData(runtime);bucket.grantRead(runtime);secret.grantRead(runtime);
