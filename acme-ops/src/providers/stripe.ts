@@ -21,6 +21,10 @@ export interface StripeSubscription {
   // `price` is always present on real Stripe items; FetchSandbox seed items omit it.
   items: { data: { price?: StripePrice; quantity?: number }[] };
   metadata?: Record<string, string>;
+  latest_invoice?: string | null;
+  start_date?: number | string;
+  created?: number | string;
+  canceled_at?: number | string | null;
 }
 export interface StripeInvoice {
   id: string;
@@ -33,6 +37,8 @@ export interface StripeInvoice {
   due_date?: number | string | null;
   created?: number | string;
   charge?: string | null;
+  payment_intent?: string | null;
+  amount_paid?: number;
   number?: string | null;
   lines?: { data: { price?: { id: string; product?: string } | null; quantity?: number; description?: string | null }[] };
   metadata?: Record<string, string>;
@@ -60,6 +66,19 @@ export interface StripeRefund {
   charge: string | null;
   status: string;
   reason?: string | null;
+  payment_intent?: string | null;
+  metadata?: Record<string, string>;
+}
+export interface StripePaymentIntent {
+  id: string;
+  amount: number;
+  amount_received?: number;
+  currency: string;
+  status: string;
+  customer?: string | null;
+  latest_charge?: string | null;
+  created?: number | string;
+  metadata?: Record<string, string>;
 }
 
 interface List<T> {
@@ -189,15 +208,53 @@ export class StripeClient {
     return (await this.http.request<StripeRefund>("GET", `/v1/refunds/${encodeURIComponent(id)}`)).body;
   }
 
+  /** Metadata keys are merged; Stripe keeps the ones not sent. */
+  async updateSubscriptionMetadata(id: string, metadata: Record<string, string>): Promise<StripeSubscription> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeSubscription>("POST", `/v1/subscriptions/${encodeURIComponent(id)}`, { form })).body;
+  }
+
+  /** Cancels now: no proration invoice (refunds follow the cancellation policy instead). */
+  async cancelSubscription(id: string): Promise<StripeSubscription> {
+    return (await this.http.request<StripeSubscription>("DELETE", `/v1/subscriptions/${encodeURIComponent(id)}`, { form: { invoice_now: "false", prorate: "false" } })).body;
+  }
+
+  listPaymentIntents(customer: string) {
+    return this.listAll<StripePaymentIntent>("/v1/payment_intents", { customer }, 300);
+  }
+
+  async getPaymentIntent(id: string): Promise<StripePaymentIntent> {
+    return (await this.http.request<StripePaymentIntent>("GET", `/v1/payment_intents/${encodeURIComponent(id)}`)).body;
+  }
+
+  async listRefundsForPaymentIntent(paymentIntent: string): Promise<StripeRefund[]> {
+    const refunds = await this.listAll<StripeRefund>("/v1/refunds", { payment_intent: paymentIntent });
+    // Some backends ignore the filter; never count another payment's refunds.
+    return refunds.filter((r) => r.payment_intent === paymentIntent);
+  }
+
+  async refundPaymentIntent(paymentIntent: string, amount: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeRefund> {
+    const form: Record<string, string | number> = { payment_intent: paymentIntent, amount, reason: "requested_by_customer" };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeRefund>("POST", "/v1/refunds", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async getBalanceTransaction(customer: string, id: string): Promise<{ id: string; amount: number; currency: string; metadata?: Record<string, string> | null }> {
+    return (await this.http.request<any>("GET", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions/${encodeURIComponent(id)}`)).body;
+  }
+
   async createCreditNote(invoice: string, amount: number, reason: string, memo: string): Promise<{ id: string; amount: number }> {
     return (await this.http.request<any>("POST", "/v1/credit_notes", { form: { invoice, amount, reason, memo } })).body;
   }
 
   /** Negative amount = credit the customer can apply to future invoices. */
-  async creditBalance(customer: string, amount: number, currency: string, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {
+  async creditBalance(customer: string, amount: number, currency: string, description: string, idempotencyKey: string, metadata: Record<string, string> = {}): Promise<{ id: string; amount: number }> {
+    const form: Record<string, string | number> = { amount: -Math.abs(amount), currency, description };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
     return (
       await this.http.request<any>("POST", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions`, {
-        form: { amount: -Math.abs(amount), currency, description },
+        form,
         headers: { "Idempotency-Key": idempotencyKey },
       })
     ).body;

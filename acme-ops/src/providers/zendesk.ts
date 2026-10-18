@@ -10,6 +10,16 @@ export interface ZendeskTicket {
   requester_id?: number;
   organization_id?: number | null;
   created_at?: string;
+  updated_at?: string;
+  external_id?: string | null;
+}
+
+export interface ZendeskComment {
+  id: number;
+  body?: string;
+  public?: boolean;
+  author_id?: number;
+  created_at?: string;
 }
 
 export interface ZendeskUser {
@@ -48,6 +58,50 @@ export class ZendeskClient {
     if (update.comment) ticket.comment = update.comment;
     const { body } = await this.http.request<{ ticket: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, { json: { ticket } });
     return body.ticket;
+  }
+
+  /** New ticket for a request that arrived outside Zendesk (e.g. a phone call logged by the IVR). */
+  async createTicket(t: { subject: string; body: string; requester: { email: string; name?: string }; tags: string[]; externalId: string }): Promise<ZendeskTicket> {
+    const { body } = await this.http.request<{ ticket: ZendeskTicket }>("POST", "/api/v2/tickets.json", {
+      json: { ticket: { subject: t.subject, comment: { body: t.body, public: false }, requester: t.requester, tags: t.tags, external_id: t.externalId } },
+    });
+    return body.ticket;
+  }
+
+  async findTicketsByExternalId(externalId: string): Promise<ZendeskTicket[]> {
+    const { body } = await this.http.request<{ tickets?: ZendeskTicket[] }>("GET", "/api/v2/tickets.json", { query: { external_id: externalId } });
+    return body?.tickets ?? [];
+  }
+
+  async listComments(id: number | string): Promise<ZendeskComment[]> {
+    const { body } = await this.http.request<{ comments?: ZendeskComment[] }>("GET", `/api/v2/tickets/${encodeURIComponent(String(id))}/comments.json`);
+    return body?.comments ?? [];
+  }
+
+  /** One comment (public ones are emailed to the requester), optionally moving the ticket's status. */
+  async addComment(id: number | string, comment: { body: string; public: boolean }, status?: "open" | "pending" | "solved"): Promise<ZendeskTicket> {
+    const { body } = await this.http.request<{ ticket: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, {
+      json: { ticket: { comment, ...(status ? { status } : {}) } },
+    });
+    return body.ticket;
+  }
+
+  /**
+   * Adds tags by read-modify-write under Zendesk's safe update, so a tag an
+   * agent added in between is never overwritten (a stale stamp is a 409 and
+   * is retried against the fresh ticket).
+   */
+  async addTags(id: number | string, tags: string[]): Promise<ZendeskTicket> {
+    for (let attempt = 0; ; attempt++) {
+      const cur = await this.getTicket(id);
+      const merged = [...new Set([...(cur.tags ?? []), ...tags])];
+      if (merged.length === (cur.tags ?? []).length) return cur;
+      const res = await this.http.request<{ ticket?: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, {
+        json: { ticket: { tags: merged, safe_update: true, updated_stamp: cur.updated_at } },
+        allow: attempt < 2 ? [409] : [],
+      });
+      if (res.status !== 409) return res.body?.ticket ?? cur;
+    }
   }
 
   /** Search API (`type:ticket ...`), first `max` results. */

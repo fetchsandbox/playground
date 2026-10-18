@@ -2,6 +2,7 @@ import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
+import { SquareClient } from "./square";
 import { StripeClient } from "./stripe";
 import { AsanaClient, BoxClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
@@ -20,8 +21,9 @@ export type ProviderName =
   | "pagerduty"
   | "notion"
   | "box"
-  | "screening";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening"];
+  | "screening"
+  | "square";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -40,6 +42,8 @@ export interface Providers {
   box?: BoxClient;
   /** Restricted-party screening (Trade.gov Consolidated Screening List). */
   screening?: ScreeningClient;
+  /** Gift cards (Square Gift Cards API). */
+  square?: SquareClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -57,6 +61,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   notion: "https://api.notion.com",
   box: "https://api.box.com/2.0",
   screening: "https://data.trade.gov",
+  square: "https://connect.squareup.com",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -75,6 +80,7 @@ const PREFIX: Record<ProviderName, string[]> = {
   notion: ["NOTION"],
   box: ["BOX"],
   screening: ["TRADE_GOV", "SCREENING"],
+  square: ["SQUARE"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -116,6 +122,7 @@ export type ProviderFactory = (headers: Record<string, string>) => Providers;
 const VENDOR_HEADERS: Partial<Record<ProviderName, Record<string, string>>> = {
   notion: { "Notion-Version": "2022-06-28" },
   github: { "X-GitHub-Api-Version": "2022-11-28" },
+  square: { "Square-Version": "2025-01-23" },
 };
 
 /** Builds per-run clients that stamp `headers` (e.g. X-Flow-Run-Id) on every provider request. */
@@ -138,6 +145,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       notion: h.notion && new NotionClient(h.notion),
       box: h.box && new BoxClient(h.box),
       screening: h.screening && new ScreeningClient(h.screening),
+      square: h.square && new SquareClient(h.square),
     };
   };
 }
