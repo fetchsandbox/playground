@@ -14,6 +14,7 @@ import pathlib
 import subprocess
 import tarfile
 import urllib.request
+import urllib.parse
 
 import boto3
 
@@ -38,7 +39,14 @@ manifest = json.loads(base["imageManifest"])
 assert manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json"
 token = ecr.get_authorization_token()["authorizationData"][0]["authorizationToken"]
 request = urllib.request.Request(f"https://{host}/v2/{repository}/blobs/{manifest['config']['digest']}", headers={"Authorization": "Basic " + token})
-with urllib.request.urlopen(request, timeout=60) as response:
+class RegistryRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected and urllib.parse.urlsplit(req.full_url).hostname != urllib.parse.urlsplit(newurl).hostname:
+            redirected.remove_header("Authorization")
+        return redirected
+
+with urllib.request.build_opener(RegistryRedirect()).open(request, timeout=60) as response:
     config_bytes = response.read()
 assert "sha256:" + hashlib.sha256(config_bytes).hexdigest() == manifest["config"]["digest"]
 config = json.loads(config_bytes)
