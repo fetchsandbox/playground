@@ -234,3 +234,41 @@ provider keys from [`.env.example`](.env.example) into each stack's `SecretArn`.
   `ZENDESK_BASE_URL`). Until then the Zendesk checks are declared blocked.
 - **Not yet deployed to a live AWS account.** Verified with tests, `cdk synth`
   and the twin proofs. The Docker image wasn't built here.
+
+### New email cancellation intake (delivery bridge 1.2.0)
+
+The separate Zendesk trigger **Acme cancellation — start new email request** routes
+only newly created email tickets received at the configured support address. For
+this narrow command-based intake, send a new email to
+`support@fetchsandboxhelp.zendesk.com` with subject:
+
+```
+Cancel subscription sub_YOUR_SUBSCRIPTION_ID
+```
+
+The subject must contain one explicit subscription reference; ordinary prose,
+reply subjects (`Re:`), questions and ambiguous commands do not start a new run.
+The body may explain the request but is not used to select the subscription.
+This route does not read a personal Gmail Inbox or start from arbitrary email.
+
+The trigger uses the existing signed webhook with body
+`{"ticket_id":"{{ticket.id}}","kind":"email_cancellation_request"}`.
+Its ALL conditions are Ticket Created, Channel Email, Received at the support
+address, Subject contains `subscription sub_`, and Subject contains `cancel`.
+The worker independently re-reads the canonical ticket, first public email
+comment and requester. It checks the allowed recipient, exact command, sender
+address matching the requester, and absence of prior cancellation markers. It
+starts stage `request` on the original ticket, with stable run ID
+`zd-{ticketId}-request-{firstCommentId}`. The existing runtime still verifies the
+subscription's actual Stripe customer against that requester's email and applies
+its existing cancellation/refund policy. The webhook supplies no customer email,
+subscription, policy decision or body to trust.
+
+The delivery ledger saves the command before invocation. Redelivery after a lost
+response reuses the same command/run even after bot comments change the ticket.
+The existing `cxl_refund_offer` reply trigger remains a separate `refund_choice`
+route. Acknowledgment, offer, policy holds and outcomes remain public Zendesk
+comments emailed to the requester; operator updates go to the configured Acme
+Slack conversation. No policy constants, approval thresholds or AgentCore image
+are changed by this bridge release. Failed, held and unverified results are not
+customer success claims.

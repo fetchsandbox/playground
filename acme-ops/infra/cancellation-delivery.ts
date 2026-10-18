@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const app=new App(); const runtimeArn=app.node.tryGetContext('runtimeArn');
 if(!runtimeArn)throw new Error('runtimeArn is required');
 const stack=new Stack(app,'AcmeCancellationDelivery',{env:{account:process.env.CDK_DEFAULT_ACCOUNT,region:process.env.CDK_DEFAULT_REGION}});
-for(const [k,v] of Object.entries({company:'Acme Corporation',department:'Customer Experience',owner:'Raj',owner_team:'cx-retention',environment:'production',deployment_version:'acme-cancellation-delivery-1.1.0'}))Tags.of(stack).add(k,v);
+for(const [k,v] of Object.entries({company:'Acme Corporation',department:'Customer Experience',owner:'Raj',owner_team:'cx-retention',environment:'production',deployment_version:'acme-cancellation-delivery-1.2.0'}))Tags.of(stack).add(k,v);
 const secret=new secrets.Secret(stack,'Config',{description:'Zendesk cancellation reply delivery: scoped Zendesk auth and webhook signing secret'});
 const sharedRoleArn=app.node.tryGetContext('sharedSlackRoleArn');
 const slackSecret=new secrets.Secret(stack,'SlackConfig',{description:'Acme Slack cancellation identity lookup and thread replies'});
@@ -21,7 +21,7 @@ const queue=new sqs.Queue(stack,'Replies',{fifo:true,encryption:sqs.QueueEncrypt
 if(sharedRoleArn)queue.grantSendMessages(iam.Role.fromRoleArn(stack,'ExistingSlackWorkerRole',sharedRoleArn,{mutable:true}));
 const ledger=new dynamo.Table(stack,'DeliveryLedger',{partitionKey:{name:'event_id',type:dynamo.AttributeType.STRING},billingMode:dynamo.BillingMode.PAY_PER_REQUEST,timeToLiveAttribute:'expires_at',pointInTimeRecoverySpecification:{pointInTimeRecoveryEnabled:true},removalPolicy:RemovalPolicy.RETAIN});
 const code=lambda.Code.fromAsset(fileURLToPath(new URL('./cancellation_delivery',import.meta.url)),{exclude:['__pycache__','test_*']});
-function fn(id:string,handler:string,timeout:number){return new lambda.Function(stack,id,{runtime:lambda.Runtime.PYTHON_3_13,handler,code,timeout:Duration.seconds(timeout),memorySize:256,reservedConcurrentExecutions:1,environment:{CONFIG_SECRET_ARN:secret.secretArn,DELIVERY_VERSION:'acme-cancellation-delivery-1.1.0',RUNTIME_ARN:runtimeArn,QUEUE_URL:queue.queueUrl,LEDGER_TABLE:ledger.tableName,SLACK_CONFIG_SECRET_ARN:slackSecret.secretArn},logGroup:new logs.LogGroup(stack,id+'Logs',{retention:logs.RetentionDays.TWO_WEEKS,removalPolicy:RemovalPolicy.RETAIN})});}
+function fn(id:string,handler:string,timeout:number){return new lambda.Function(stack,id,{runtime:lambda.Runtime.PYTHON_3_13,handler,code,timeout:Duration.seconds(timeout),memorySize:256,reservedConcurrentExecutions:1,environment:{CONFIG_SECRET_ARN:secret.secretArn,DELIVERY_VERSION:'acme-cancellation-delivery-1.2.0',RUNTIME_ARN:runtimeArn,QUEUE_URL:queue.queueUrl,LEDGER_TABLE:ledger.tableName,SLACK_CONFIG_SECRET_ARN:slackSecret.secretArn},logGroup:new logs.LogGroup(stack,id+'Logs',{retention:logs.RetentionDays.TWO_WEEKS,removalPolicy:RemovalPolicy.RETAIN})});}
 const ingress=fn('Ingress','handler.ingress',20); const worker=fn('Worker','handler.worker',240);
 slackSecret.grantRead(worker);ledger.grantReadWriteData(worker);secret.grantRead(ingress); secret.grantRead(worker); queue.grantSendMessages(ingress);worker.addToRolePolicy(new iam.PolicyStatement({actions:['bedrock-agentcore:InvokeAgentRuntime'],resources:[runtimeArn,runtimeArn+'/runtime-endpoint/DEFAULT']}));
 worker.addEventSource(new SqsEventSource(queue,{batchSize:1}));

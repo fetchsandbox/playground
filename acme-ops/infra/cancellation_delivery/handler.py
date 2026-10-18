@@ -1,5 +1,5 @@
 """Zendesk-only continuation bridge. Never trust ticket/customer text in a webhook."""
-import base64,datetime,hashlib,hmac,json,os,time,urllib.request,uuid
+import base64,datetime,hashlib,hmac,json,os,re,time,urllib.request,uuid
 import boto3
 from botocore.config import Config
 
@@ -21,11 +21,13 @@ def ingress(event,context):
     cfg=config();headers={k.lower():v for k,v in event.get('headers',{}).items()}
     if not signature_ok(headers,raw,cfg.get('webhook_signing_secret','')):return {'statusCode':401,'body':'invalid signature'}
     try:
-        ticket_id=int(json.loads(raw)['ticket_id'])
+        payload=json.loads(raw);ticket_id=int(payload['ticket_id'])
+        kind=payload.get('kind','zendesk_reply')
+        if kind not in ['zendesk_reply','email_cancellation_request']:raise ValueError()
         if ticket_id<1:raise ValueError()
     except (ValueError,KeyError,TypeError,json.JSONDecodeError):return {'statusCode':400,'body':'invalid ticket id'}
     event_id=headers.get('x-zendesk-webhook-invocation-id') or hashlib.sha256(raw+headers['x-zendesk-webhook-signature-timestamp'].encode()).hexdigest()
-    boto3.client('sqs').send_message(QueueUrl=os.environ['QUEUE_URL'],MessageBody=json.dumps({'ticket_id':ticket_id,'event_id':event_id}),MessageGroupId=str(ticket_id),MessageDeduplicationId=hashlib.sha256(event_id.encode()).hexdigest())
+    boto3.client('sqs').send_message(QueueUrl=os.environ['QUEUE_URL'],MessageBody=json.dumps({'ticket_id':ticket_id,'event_id':event_id,'kind':kind}),MessageGroupId=str(ticket_id),MessageDeduplicationId=hashlib.sha256(event_id.encode()).hexdigest())
     print(json.dumps({'event':'cancellation_reply_queued','ticket_id':ticket_id,'event_id':event_id}))
     return {'statusCode':202,'body':'queued'}
 
@@ -75,6 +77,43 @@ def process(message,cfg,zd,invoke,ledger=None):
         ledger.put_item(Item={"event_id":key,"command":body,"expires_at":int(time.time())+7*86400},ConditionExpression="attribute_not_exists(event_id)")
     return deliver(body,invoke)
 
+def select_request(ticket,comments,cfg):
+    """A dedicated command on a new email ticket, never a reply or arbitrary Inbox mail."""
+    if ticket.get('via',{}).get('channel')!='email' or ticket.get('status') in ['solved','closed']:return None
+    if set(ticket.get('tags',[])) & {'cxl_acknowledged','cxl_refund_offer','cxl_cancelled','cxl_refunded'}:return None
+    recipient=(ticket.get('recipient') or '').lower()
+    if recipient not in [x.lower() for x in cfg.get('request_addresses',[])]:return None
+    match=re.fullmatch(r'\s*(?:please\s+)?cancel\s+(?:my\s+)?subscription\s+(sub_[A-Za-z0-9]+)\s*[.!]?\s*',ticket.get('subject',''),re.I)
+    if not match:return None
+    public=[c for c in comments if c.get('public')]
+    if not public:return None
+    first=min(public,key=lambda c:int(c['id']))
+    if first.get('author_id')!=ticket.get('requester_id') or first.get('via',{}).get('channel')!='email':return None
+    return first,match.group(1)
+
+def process_request(message,cfg,zd,invoke,ledger):
+    key=str(message['event_id'])
+    previous=ledger.get_item(Key={'event_id':key},ConsistentRead=True).get('Item')
+    if previous:
+        command=previous['command'];command['input']['ticketId']=int(command['input']['ticketId'])
+        return deliver(command,invoke,allow_attention=True)
+    tid=int(message['ticket_id']);ticket=zd.get(f'/api/v2/tickets/{tid}.json')['ticket']
+    selected=select_request(ticket,zd.comments(tid),cfg)
+    if not selected:return {'ticket_id':tid,'outcome':'ignored_non_cancellation_request'}
+    first,sub=selected
+    user=zd.get(f"/api/v2/users/{ticket['requester_id']}.json")['user']
+    sender=first.get('via',{}).get('source',{}).get('from',{}).get('address','')
+    if not user.get('email') or sender.lower()!=user['email'].lower():return {'ticket_id':tid,'outcome':'ignored_non_customer_requester'}
+    body={'action':'start','runId':f"zd-{tid}-request-{first['id']}",'wait':True,
+      'requestedBy':{'userId':f"zendesk:{user['id']}"},
+      'labels':{'trigger':'zendesk_new_cancellation_email','zendesk_ticket_id':str(tid),'zendesk_comment_id':str(first['id']),'delivery_version':os.environ.get('DELIVERY_VERSION','unknown')},
+      'input':{'stage':'request','channel':'email','ticketId':tid,'subscriptionId':sub,
+        'message':ticket['subject'],'customer':{'email':user['email'],'name':user.get('name','Customer')},
+        'opsChannel':cfg['ops_channel'],'approvers':cfg['approvers'],
+        **({'giftCardLocationId':cfg['gift_card_location_id']} if cfg.get('gift_card_location_id') else {})}}
+    ledger.put_item(Item={'event_id':key,'command':body,'expires_at':int(time.time())+7*86400},ConditionExpression='attribute_not_exists(event_id)')
+    return deliver(body,invoke,allow_attention=True)
+
 def deliver(body,invoke,allow_attention=False):
     rid=body["runId"];tid=body["input"].get("ticketId");comment_id=body["labels"].get("zendesk_comment_id")
     result=invoke(body)
@@ -98,5 +137,6 @@ def worker(event,context):
             from slack_handler import process_slack,Slack
             slack_cfg=json.loads(boto3.client('secretsmanager').get_secret_value(SecretId=os.environ['SLACK_CONFIG_SECRET_ARN'])['SecretString'])
             result=process_slack(message,cfg,slack_cfg,invoke,ledger,Slack(slack_cfg['SLACK_API_KEY']))
+        elif message.get('kind')=='email_cancellation_request':result=process_request(message,cfg,Zendesk(cfg),invoke,ledger)
         else:result=process(message,cfg,Zendesk(cfg),invoke,ledger)
         print(json.dumps({'event':'cancellation_reply_delivered','delivery_version':os.environ['DELIVERY_VERSION'],**result}))
