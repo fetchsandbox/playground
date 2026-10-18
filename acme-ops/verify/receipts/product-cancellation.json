@@ -1,0 +1,149 @@
+{
+  "workflow": "product-cancellation",
+  "app_version": "acme-ops-product-cancellation-1.0.0-4f1894b",
+  "session_id": "vs_91741859c61e",
+  "run_id": "vr_f8571d4179e047e784d4be7687432230",
+  "receipt_url": "https://fetchsandbox.com/runs/3cada5c65b?flow=vr_f8571d4179e047e784d4be7687432230",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "store_credit_end_to_end",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "original_payment_end_to_end",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gift_card_end_to_end",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "second_refund_refused",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0; runs[*]: expected exactly 3, found 3"
+    },
+    {
+      "id": "method_not_offered_clarified",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0"
+    },
+    {
+      "id": "contract_exception_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "exception_approved",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "exception_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "no_refund_due",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_refund_needs_approval",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_customer_not_cancelled",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "zendesk_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "square_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "phone_request_opens_ticket",
+      "status": "unmeasured",
+      "explanation": "The Zendesk twin simulates only its seeded ticket: POST /api/v2/tickets(.json) and GET /api/v2/tickets?external_id are not simulated. Covered by local tests."
+    },
+    {
+      "id": "choice_read_from_customer_reply",
+      "status": "unmeasured",
+      "explanation": "Every comment on the Zendesk twin is authored by the API user, so a requester reply can't be simulated; the contract passes the choice as the ticket-field value instead. Covered by local tests."
+    },
+    {
+      "id": "prorated_credit_tier",
+      "status": "unmeasured",
+      "explanation": "Twin payment intents are stamped with the current time and can't be backdated, so the 31-90 day tier is unreachable. Covered by local tests."
+    },
+    {
+      "id": "store_credit_readback",
+      "status": "unmeasured",
+      "explanation": "GET /v1/customers/{id}/balance_transactions/{id} returns resource_missing on the twin for a transaction it just created."
+    },
+    {
+      "id": "gift_card_balance_readback",
+      "status": "unmeasured",
+      "explanation": "The Square twin's gift cards report no balance_money after activation, so the read-back is unverifiable."
+    },
+    {
+      "id": "customer_email_delivery",
+      "status": "unmeasured",
+      "explanation": "Zendesk's notification email is not simulated by the twin; the runtime's part (a public comment) is proven by the checks above."
+    }
+  ],
+  "recorded_at": "2026-10-18T05:06:49.508Z"
+}

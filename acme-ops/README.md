@@ -1,6 +1,6 @@
 # acme-ops
 
-Nineteen ACME operations workflows across ten departments, each a **standalone Amazon Bedrock AgentCore
+Twenty ACME operations workflows across ten departments, each a **standalone Amazon Bedrock AgentCore
 runtime**. Each runtime runs several agents in parallel across Zendesk,
 HubSpot, Gmail, Stripe, Google Calendar and Slack. Each one speaks the
 AgentCore HTTP contract (`POST /invocations`, `GET /ping` on `:8080`), so a
@@ -16,6 +16,7 @@ per file.
 |---|---|---|---|
 | [`support-escalation`](src/workflows/support-escalation.ts) | Support · support-ops | Triage a ticket against CRM, billing and the support lead's calendar; escalate, hold a callback, draft the reply | Public Zendesk reply |
 | [`returns-warranty`](src/workflows/returns-warranty.ts) | Customer Experience · cx-service | Warranty check on the invoice, RMA task for the returns dock, RMA instructions draft | Credit / refund |
+| [`product-cancellation`](src/workflows/product-cancellation.ts) | Customer Experience · cx-retention | Email/phone cancellation → Zendesk ticket and acknowledgement, policy research, cancel in policy, refund offer; the customer's choice → Stripe refund, store credit or Square gift card, confirmed on the ticket | Cancelling outside policy; refunds above $500 |
 | [`order-status`](src/workflows/order-status.ts) | Customer Experience · cx-service | Answer "where is my order" from the invoice and warehouse task; alert the owner on late orders | Promise-date change |
 | [`compliance-docs`](src/workflows/compliance-docs.ts) | Quality · quality-compliance | Find RoHS/REACH/CoC/calibration documents for a part, or route to Quality | External share link + reply |
 | [`field-service-dispatch`](src/workflows/field-service-dispatch.ts) | Service · field-service | Site alarm: technician availability, contract coverage, work order, SMS to the site | After-hours or billable booking |
@@ -150,13 +151,72 @@ safety check that blocked every reclaim, unbounded directory paging), all fixed 
 Per-check results, receipt links and the twin findings: run `node verify/results.mjs`, which renders
 `verify/RESULTS.md` from the receipts in `verify/receipts/` (one per workflow, committed with it).
 
+## Product cancellation and refunds
+
+[`product-cancellation`](src/workflows/product-cancellation.ts) is one runtime with two entry stages, because the
+customer answers in between:
+
+```
+stage "request"  (Zendesk trigger: ticket created from an email or call; or a phone event without a ticket)
+  agents ∥ ticket-context (Zendesk) · policy-research (Stripe subscription, product terms, last payment, prior refunds)
+         · gift-card-desk (Square location)
+  → zendesk.create_ticket (phone, no ticket) → zendesk.acknowledge (public reply: how cancellation works)
+  → zendesk.policy_note (internal: research + decision + policy version)
+  → stripe.cancel_subscription        auto when the policy allows it, APPROVAL for an exception (commitment term)
+  → zendesk.refund_offer              "reply 1 / 2 / 3", only the methods the policy allows; tags cxl_refund_offer
+    or zendesk.cancellation_confirmed (no refund due; solves the ticket)
+  → slack.post_case
+
+stage "refund_choice"  (Zendesk trigger: the requester replies on a cxl_refund_offer ticket, or sets the refund field)
+  agents ∥ ticket-context (requester's reply → choice) · policy-research (re-reads the offer recorded on the
+         Stripe subscription, re-checks what is still refundable) · gift-card-desk
+  → stripe.refund_original_payment | stripe.issue_store_credit | square.issue_gift_card
+                                      auto up to $500, APPROVAL above
+  → zendesk.refund_confirmation (+ zendesk.gift_card_number) → slack.post_refund
+  unclear or not-offered choice → zendesk.clarify_choice; already refunded / expired / wrong requester → note + Slack
+```
+
+The policy (`POLICY` in the workflow file, versioned and reviewed like code) is: cancel any live
+subscription unless the Stripe product says `acme_cancellation=contract` (inside `acme_min_term_months`,
+default 12) or `not_cancellable`, which need an approver; refund the last payment in full within 30 days to
+any method, the unused share of the period as store credit or gift card within 90 days, nothing after that;
+`acme_refundable=false` and `acme_refund_methods` on the product narrow it. Decisions and amounts are
+computed in code; every customer-facing reply is a code-written template (it is posted without review), and
+Zendesk emails public replies to the requester, so the whole conversation stays on the ticket.
+
+What makes it safe to run unattended:
+
+- The offer (methods, amount, payment, requester, policy version) is written to the Stripe subscription's
+  metadata when it is cancelled. The refund stage trusts that record, not the trigger payload, and refuses
+  a reply from anyone but the original requester, an expired offer or a method that wasn't offered.
+- One refund per cancellation across runs: `acme_cxl_refund=pending:<run>` is written before money moves,
+  `<method>:<ref>` after; a second reply or re-fired trigger gets "already refunded".
+- Ticket comments carry a `ref CXL-…` marker and are looked up before posting, so a retry or a lost
+  response never double-posts. Tags are added under Zendesk's `safe_update`.
+- The full gift card number goes to the customer on the ticket only; run state keeps the last four digits.
+
+Wire it up with two Zendesk triggers (webhook → your control plane → `POST /invocations start`):
+ticket created with tag `cancellation` (or your cancellation form/IVR) → `{stage:"request", ticketId,
+channel, customer, message, opsChannel, giftCardLocationId, approvers}`; requester comment on a ticket
+tagged `cxl_refund_offer` → `{stage:"refund_choice", ticketId, customer, opsChannel, giftCardLocationId}`
+(add `choice` when it comes from a ticket field). Use the ticket id in the `runId` (e.g. `zd-<id>-request`,
+`zd-<id>-reply-<comment id>`) so re-delivered webhooks are deduplicated.
+
+Relay proof (`node verify/relay-proof.mjs product-cancellation`, Stripe + Zendesk + Square + Slack twins,
+one seeded Stripe customer per check): **21 executable checks held, 0 violated**, including all three refund
+paths end to end, a refused second refund, exception approve/reject/stranger, the $500 approval gate,
+duplicate and 4× concurrent triggers, four provider faults and a real restart. Six checks are declared
+blocked where the twins can't exercise the behaviour yet (ticket creation and requester replies on the
+Zendesk twin, backdated payments, store-credit and gift-card balance read-backs, Zendesk email delivery);
+all but email delivery are covered by `test/product-cancellation.test.ts`.
+
 ## Deploy (one AgentCore runtime per workflow)
 
 ```bash
 npx cdk deploy --all \
   -c looplabsAccountId=111122223333 -c looplabsExternalId=<shared-secret> \
   -c approvers:onboarding-kickoff=U_RVP -c approvers:revenue-reconciliation=U_CONTROLLER
-# or one: npx cdk deploy AcmeOps-churn-risk-sweep   (19 stacks: AcmeOps-<workflow>)
+# or one: npx cdk deploy AcmeOps-churn-risk-sweep   (one stack per workflow: AcmeOps-<workflow>)
 # JWT instead of IAM: -c jwtDiscoveryUrl=https://idp.example.com/.well-known/openid-configuration -c jwtAllowedClients=looplabs
 ```
 

@@ -1,5 +1,5 @@
 // One in-process HTTP server that speaks just enough of Stripe, HubSpot,
-// Gmail, Calendar, Slack and Zendesk for the workflows, with state, request
+// Gmail, Calendar, Slack, Zendesk and Square for the workflows, with state, request
 // recording and fault injection. Tests run the real provider clients against it.
 import { type AddressInfo } from "node:net";
 import { createServer, type Server } from "node:http";
@@ -43,12 +43,16 @@ export function seedState() {
       subscriptions: [] as any[],
       invoices: [{ id: "in_dev_open", customer: "cus_dev", status: "open", amount_due: 4900, amount_remaining: 4900, currency: "usd" }] as any[],
       refunds: [{ id: "re_1", amount: 4900, currency: "usd", charge: "ch_alice_1", status: "succeeded" }] as any[],
+      products: [] as any[],
+      paymentIntents: [] as any[],
+      balanceTxns: [] as any[],
     },
     hubspot: { contacts: [] as any[] },
     gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
+    square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
   };
 }
 
@@ -104,6 +108,25 @@ export async function startWorld() {
       S.customers.push(c);
       return send(200, c);
     }
+    const meta = () => Object.fromEntries(Object.entries(body).filter(([k]) => k.startsWith("metadata[")).map(([k, v]) => [k.slice(9, -1), v]));
+    if (req.method === "POST" && (r = m(/^\/v1\/customers\/([^/]+)$/))) {
+      const c = S.customers.find((x) => x.id === r![1]);
+      if (!c) return send(404, { error: { code: "resource_missing" } });
+      c.metadata = { ...c.metadata, ...meta() };
+      return send(200, c);
+    }
+    if ((r = m(/^\/v1\/customers\/([^/]+)\/balance_transactions(?:\/([^/]+))?$/))) {
+      if (req.method === "POST") {
+        const tx = { id: id("cbtxn"), customer: r[1], amount: Number(body.amount), currency: body.currency, description: body.description, metadata: meta() };
+        S.balanceTxns.push(tx);
+        return send(200, tx);
+      }
+      if (r[2]) {
+        const tx = S.balanceTxns.find((x) => x.id === r![2] && x.customer === r![1]);
+        return tx ? send(200, tx) : send(404, { error: { code: "resource_missing" } });
+      }
+      return send(200, { data: S.balanceTxns.filter((x) => x.customer === r![1]), has_more: false });
+    }
     if (req.method === "GET" && (r = m(/^\/v1\/customers\/([^/]+)$/))) {
       const c = S.customers.find((x) => x.id === r![1]);
       return c ? send(200, c) : send(404, { error: { code: "resource_missing" } });
@@ -122,9 +145,44 @@ export async function startWorld() {
     if (req.method === "POST" && path === "/v1/subscriptions") {
       return send(200, addSub(state, body.customer, body["items[0][price]"], newSubStatus, Number(body["items[0][quantity]"])));
     }
-    if (req.method === "GET" && (r = m(/^\/v1\/subscriptions\/([^/]+)$/))) {
+    if ((r = m(/^\/v1\/subscriptions\/([^/]+)$/))) {
       const s = S.subscriptions.find((x) => x.id === r![1]);
-      return s ? send(200, s) : send(404, { error: { code: "resource_missing" } });
+      if (!s) return send(404, { error: { code: "resource_missing" } });
+      if (req.method === "POST") s.metadata = { ...s.metadata, ...meta() };
+      if (req.method === "DELETE") {
+        if (s.status === "canceled") return send(400, { error: { code: "resource_missing", message: "already canceled" } });
+        s.status = s.status === "incomplete" ? "incomplete_expired" : "canceled";
+        s.canceled_at = Math.floor(Date.now() / 1000);
+      }
+      return send(200, s);
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/products\/([^/]+)$/))) {
+      const p = S.products.find((x) => x.id === r![1]);
+      return p ? send(200, p) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/invoices\/([^/]+)$/))) {
+      const i = S.invoices.find((x) => x.id === r![1]);
+      return i ? send(200, i) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "GET" && path === "/v1/payment_intents") {
+      return send(200, { data: S.paymentIntents.filter((p) => !q.get("customer") || p.customer === q.get("customer")), has_more: false });
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/payment_intents\/([^/]+)$/))) {
+      const p = S.paymentIntents.find((x) => x.id === r![1]);
+      return p ? send(200, p) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "POST" && path === "/v1/refunds") {
+      const pi = S.paymentIntents.find((x) => x.id === body.payment_intent);
+      if (!pi?.latest_charge) return send(400, { error: { code: "resource_missing", message: "No such charge" } });
+      const done = S.refunds.filter((x) => x.payment_intent === pi.id).reduce((t, x) => t + x.amount, 0);
+      if (done + Number(body.amount) > pi.amount_received) return send(400, { error: { code: "charge_already_refunded" } });
+      const rf = { id: id("re"), amount: Number(body.amount), currency: pi.currency, charge: pi.latest_charge, payment_intent: pi.id, status: "succeeded", metadata: meta() };
+      S.refunds.push(rf);
+      return send(200, rf);
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {
+      const rf = S.refunds.find((x) => x.id === r![1]);
+      return rf ? send(200, rf) : send(404, { error: { code: "resource_missing" } });
     }
     if (req.method === "GET" && path === "/v1/invoices") {
       return send(200, { data: S.invoices.filter((i) => (!q.get("customer") || i.customer === q.get("customer")) && (!q.get("status") || i.status === q.get("status"))), has_more: false });
@@ -188,14 +246,31 @@ export async function startWorld() {
 
     // ---- Zendesk
     const Z = state.zendesk;
+    if (req.method === "POST" && path === "/api/v2/tickets.json") {
+      const u = body.ticket;
+      const t = { id: ++seq, subject: u.subject, status: "new", tags: u.tags ?? [], external_id: u.external_id, requester_id: ++seq, requester_email: u.requester?.email, updated_at: new Date().toISOString() };
+      Z.tickets.push(t);
+      if (u.comment) Z.comments.push({ id: ++seq, ticketId: t.id, author_id: t.requester_id, ...u.comment });
+      return send(201, { ticket: t });
+    }
+    if (req.method === "GET" && path === "/api/v2/tickets.json") {
+      return send(200, { tickets: Z.tickets.filter((t) => !q.get("external_id") || t.external_id === q.get("external_id")) });
+    }
+    if (req.method === "GET" && (r = m(/^\/api\/v2\/tickets\/(\d+)\/comments\.json$/))) {
+      return send(200, { comments: Z.comments.filter((c) => String(c.ticketId) === r![1]) });
+    }
     if ((r = m(/^\/api\/v2\/tickets\/(\d+)\.json$/))) {
       const t = Z.tickets.find((x) => String(x.id) === r![1]);
       if (!t) return send(404, { error: "RecordNotFound" });
       if (req.method === "PUT") {
         const u = body.ticket;
+        if (u.safe_update && u.updated_stamp !== t.updated_at) return send(409, { error: "UpdateConflict" });
         if (u.priority) t.priority = u.priority;
         if (u.additional_tags) t.tags = [...new Set([...(t.tags ?? []), ...u.additional_tags])];
-        if (u.comment) Z.comments.push({ ticketId: t.id, ...u.comment });
+        if (u.tags) t.tags = u.tags;
+        if (u.status) t.status = u.status;
+        if (u.comment) Z.comments.push({ id: ++seq, ticketId: t.id, author_id: 9001, ...u.comment });
+        t.updated_at = new Date(Date.now() + ++seq).toISOString();
       }
       return send(200, { ticket: t });
     }
@@ -218,12 +293,40 @@ export async function startWorld() {
       return send(200, { user: u });
     }
 
+    // ---- Square
+    const Q = state.square;
+    if (req.method === "GET" && (r = m(/^\/v2\/locations\/([^/]+)$/))) {
+      const l = Q.locations.find((x) => x.id === r![1]);
+      return l ? send(200, { location: l }) : send(404, { errors: [{ code: "NOT_FOUND" }] });
+    }
+    if (req.method === "POST" && path === "/v2/gift-cards") {
+      let g = Q.giftCards.find((x) => x.idempotency_key === body.idempotency_key);
+      if (!g) Q.giftCards.push((g = { id: id("gftc"), type: "DIGITAL", state: "PENDING", gan: `7783${String(++seq).padStart(12, "0")}`, idempotency_key: body.idempotency_key, location_id: body.location_id }));
+      return send(200, { gift_card: g });
+    }
+    if (req.method === "POST" && path === "/v2/gift-cards/activities") {
+      const a = body.gift_card_activity;
+      const g = Q.giftCards.find((x) => x.id === a.gift_card_id);
+      if (!g) return send(404, { errors: [{ code: "NOT_FOUND" }] });
+      let act = Q.activities.find((x) => x.idempotency_key === body.idempotency_key);
+      if (!act) {
+        g.state = "ACTIVE";
+        g.balance_money = a.activate_activity_details.amount_money;
+        Q.activities.push((act = { id: id("gcact"), type: a.type, gift_card_id: g.id, idempotency_key: body.idempotency_key, gift_card_balance_money: g.balance_money }));
+      }
+      return send(200, { gift_card_activity: act });
+    }
+    if (req.method === "GET" && (r = m(/^\/v2\/gift-cards\/([^/]+)$/))) {
+      const g = Q.giftCards.find((x) => x.id === r![1]);
+      return g ? send(200, { gift_card: g }) : send(404, { errors: [{ code: "NOT_FOUND" }] });
+    }
+
     send(404, { error: "no_route", path });
   });
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square"];
 
   return {
     state,

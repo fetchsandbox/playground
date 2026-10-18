@@ -138,6 +138,7 @@ function twinEnv(legs) {
     pagerduty: "PAGERDUTY",
     notion: "NOTION",
     box: "BOX",
+    square: "SQUARE",
   };
   for (const [p, leg] of Object.entries(legs ?? {})) {
     if (!map[p]) continue;
@@ -155,7 +156,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
   );
   const env = {
     ...inherited,
@@ -221,6 +222,13 @@ if (!sid) {
   await finish(3);
 }
 log("session", sid, Object.keys(session.legs ?? {}).join(","));
+// Optional per-contract fixtures written straight to the session's twins (e.g. one
+// Stripe customer per check, so checks never share provider state).
+if (contract.seed) {
+  const seeded = await contract.seed(session.legs, log);
+  save("seed", seeded);
+  log("seeded", Object.keys(seeded ?? {}).length, "fixture(s)");
+}
 await startApp({ legs: session.legs });
 
 const ctx = await settle(mcp, await mcp.call("validate_integration", { session_id: sid, application_context: { ...contract.context, app_version: APP_VERSION } }), "context");
