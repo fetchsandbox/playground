@@ -60,7 +60,8 @@ export const checks = [
     "store_credit_end_to_end",
     "The customer's store-credit choice credits their Stripe balance once and confirms on the ticket",
     [req("store_credit_end_to_end"), pick("store_credit_end_to_end", "store_credit")],
-    all(runs([action("stripe.cancel_subscription", "applied")]), runs([eq("phase", "DONE"), action("stripe.issue_store_credit", "applied", 1, [eq("attempts", 1)]), action("zendesk.refund_confirmation", "applied")])),
+    // Two runs (request, choice): the run count keeps all() from merging the conditions into one run.
+    all(runs([], 2), runs([action("stripe.cancel_subscription", "applied")]), runs([eq("phase", "DONE"), action("stripe.issue_store_credit", "applied", 1, [eq("attempts", 1)]), action("zendesk.refund_confirmation", "applied")])),
   ),
   check(
     "original_payment_end_to_end",
