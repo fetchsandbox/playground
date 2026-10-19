@@ -1,5 +1,7 @@
 # acme-ops
 
+[Business guides for every workflow](../docs/WORKFLOWS.md) · [Coding-agent verification loop](../AGENTS.md) · [Proof scope and limits](../docs/VERIFICATION.md)
+
 Twenty ACME operations workflows across ten departments, each a **standalone Amazon Bedrock AgentCore
 runtime**. Each runtime runs several agents in parallel across Zendesk,
 HubSpot, Gmail, Stripe, Google Calendar and Slack. Each one speaks the
@@ -35,7 +37,7 @@ per file.
 | [`security-questionnaire`](src/workflows/security-questionnaire.ts) | IT · it-security | Answer from the approved library, flag new questions to Security | Sending answers |
 | [`incident-comms`](src/workflows/incident-comms.ts) | IT · it-operations | PagerDuty incident → note, war-room post, affected customers | Customer notices |
 
-Design rules shared by all four:
+Design rules shared by the Acme workflows:
 
 - **Agents read; actions write.** Agents gather and judge in parallel. Every
   side effect is a planned, named action with a gate (`auto` or `approval`), a

@@ -1,5 +1,7 @@
 # customer-ops-agents
 
+[Business guide and verification gaps](../docs/workflows/customer-operations.md) · [Coding-agent verification loop](../AGENTS.md)
+
 Parallel Claude agents for customer operations, packaged as **one agent on
 Amazon Bedrock AgentCore Runtime** and controlled through a small JSON command
 API, so an external control plane such as LoopLabs can start runs, approve

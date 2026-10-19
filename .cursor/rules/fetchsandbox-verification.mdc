@@ -1,0 +1,11 @@
+---
+description: Business scope and FetchSandbox proof for every Playground workflow change
+alwaysApply: true
+---
+Read AGENTS.md and docs/VERIFICATION.md before integration or workflow changes.
+Find the workflow's business guide through docs/WORKFLOWS.md. Establish its
+app-owned contract, use discovered FetchSandbox MCP schemas and isolated twins,
+measure the actual saved business effects, fix narrowly and rerun. Preserve
+failed/blocked/unmeasured checks; report receipt, version and remaining limits.
+Missing MCP/auth/relay access is a blocker, not a pass. Documentation-only edits
+use docs checks. These are coding-agent instructions, not runtime-agent logic.

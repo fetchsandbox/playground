@@ -1,0 +1,33 @@
+name: Workflow documentation
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'TESTING.md'
+      - 'docs/**'
+      - 'scripts/**'
+      - '.cursor/rules/**'
+      - '.github/**'
+      - 'acme-ops/**'
+      - 'customer-ops-agents/README.md'
+  push:
+    branches: [main]
+    paths: ['docs/**', 'scripts/**', 'acme-ops/**', 'README.md', 'AGENTS.md', 'CLAUDE.md', '.github/**']
+jobs:
+  business-guides:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: acme-ops/package-lock.json
+      - run: npm ci
+        working-directory: acme-ops
+      - run: python3 scripts/workflow_docs.py --check
+      - run: python3 scripts/check_doc_links.py
