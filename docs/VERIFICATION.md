@@ -8,7 +8,7 @@ effect. A model-generated summary or HTTP 200 is not that proof.
 
 Use the current [FetchSandbox MCP installation instructions](https://fetchsandbox.com/mcp)
 for your client and authenticate with your own FetchSandbox account when required.
-Root `.mcp.json` and `.cursor/mcp.json` declare the same key-free server, pinned to `0.7.29` for reproducibility, matching the Acme runner. Your client may ask you to trust/enable the workspace server. Node/npm and `npx` must be on the client process PATH; if not, follow the published platform-specific install instructions and use your local executable path in an uncommitted user configuration. Never commit a machine-specific absolute path. Authentication uses your private environment or FetchSandbox credential store.
+Root `.mcp.json` and `.cursor/mcp.json` declare the same key-free server, pinned to `0.7.30` for reproducibility, matching the Acme runner. Your client may ask you to trust/enable the workspace server. Node/npm and `npx` must be on the client process PATH; if not, follow the published platform-specific install instructions and use your local executable path in an uncommitted user configuration. Never commit a machine-specific absolute path. Authentication uses your private environment or FetchSandbox credential store.
 
 Confirm the server connects and inspect its tool list. Repository instructions
 are not a connector installation or permission grant. Do not paste keys in a PR,
