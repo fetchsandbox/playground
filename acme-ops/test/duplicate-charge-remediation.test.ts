@@ -160,6 +160,19 @@ describe("duplicate-charge-remediation runs", () => {
     expect(w.state.stripe.refunds.filter((x) => x.payment_intent === dup.id)).toHaveLength(1);
   });
 
+  it("without a window, scans the 72 hours before the run", async () => {
+    pay("cus_alice", -70 * 60);
+    const dup = pay("cus_alice", -70 * 60 + 2);
+    pay("cus_dev", -80 * 60);
+    pay("cus_dev", -80 * 60 + 2); // older than 72 hours: out of scope
+    const e = w.engine(duplicateChargeRemediation, { now: () => NOW });
+    const { window: _omit, ...noWindow } = input();
+    const r = await e.handle({ action: "start", runId: "inc", input: noWindow, requestedBy: user });
+    expect(r.body.output).toMatchObject({ mode: "refund", refunds: 1 });
+    expect(action(r.body, `stripe.refund_duplicate:${dup.id}`).status).toBe("applied");
+    expect(w.state.asana.tasks[0].notes).toContain("default: 72h before the run");
+  });
+
   it("rejects a window longer than the policy allows", async () => {
     const e = w.engine(duplicateChargeRemediation, { now: () => NOW });
     const r = await e.handle({ action: "start", input: input({ window: { from: "2026-09-01T00:00:00Z", to: "2026-10-01T00:00:00Z" } }), requestedBy: user });

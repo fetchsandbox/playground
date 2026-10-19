@@ -21,13 +21,16 @@ export const POLICY = {
   hardMaxRefunds: 100,
   hardMaxTotalMinor: 2_500_000,
   maxWindowDays: 7,
+  /** Window scanned when the trigger names none: the hours before the run starts. */
+  defaultWindowHours: 72,
 } as const;
 
 const Input = z
   .object({
     incidentId: z.string().regex(/^[\w.-]{3,64}$/, "incident id like INC-2026-1018"),
     description: z.string().min(1).max(2000),
-    window: z.object({ from: z.iso.datetime(), to: z.iso.datetime() }),
+    /** The incident's time range; defaults to the `defaultWindowHours` before the run. */
+    window: z.object({ from: z.iso.datetime(), to: z.iso.datetime() }).optional(),
     /** Customers the incident may have touched (from the incident query). Never "everyone". */
     customers: z.array(Email).min(1).max(200),
     financeChannel: ChannelId,
@@ -35,8 +38,8 @@ const Input = z
     financeWorkspace: z.string().min(1).default("acme-finance"),
     approvers: Approvers,
   })
-  .refine((i) => Date.parse(i.window.to) > Date.parse(i.window.from), { message: "window.to must be after window.from", path: ["window"] })
-  .refine((i) => Date.parse(i.window.to) - Date.parse(i.window.from) <= POLICY.maxWindowDays * 86_400_000, { message: `window longer than ${POLICY.maxWindowDays} days`, path: ["window"] });
+  .refine((i) => !i.window || Date.parse(i.window.to) > Date.parse(i.window.from), { message: "window.to must be after window.from", path: ["window"] })
+  .refine((i) => !i.window || Date.parse(i.window.to) - Date.parse(i.window.from) <= POLICY.maxWindowDays * 86_400_000, { message: `window longer than ${POLICY.maxWindowDays} days`, path: ["window"] });
 type Input = z.infer<typeof Input>;
 
 export interface Charge {
@@ -149,6 +152,11 @@ async function pool<T, R>(items: T[], size: number, fn: (t: T) => Promise<R>): P
   return out;
 }
 
+/** The window actually scanned, fixed by the run's start time so resume and approval see the same one. */
+export function windowOf(input: Pick<Input, "window">, startedAt: Date): { from: string; to: string } {
+  return input.window ?? { from: new Date(startedAt.getTime() - POLICY.defaultWindowHours * 3_600_000).toISOString(), to: startedAt.toISOString() };
+}
+
 const hash = (email: string) => shortHash("customer", email).slice(0, 10);
 
 export const duplicateChargeRemediation: WorkflowDef<Input> = {
@@ -163,10 +171,11 @@ export const duplicateChargeRemediation: WorkflowDef<Input> = {
     {
       name: "charge-scan",
       needs: ["stripe"],
-      async run({ input, providers }) {
+      async run({ input, providers, startedAt }) {
         const stripe = providers.stripe!;
-        const from = Date.parse(input.window.from);
-        const to = Date.parse(input.window.to);
+        const w = windowOf(input, startedAt);
+        const from = Date.parse(w.from);
+        const to = Date.parse(w.to);
         const customers = await pool([...new Set(input.customers)], 5, async (email): Promise<CustomerScan> => {
           const cus = await stripe.findCustomerByEmail(email);
           if (!cus) return { email, customerId: null, duplicates: [], ambiguous: [], alreadyRefunded: [] };
@@ -229,8 +238,9 @@ export const duplicateChargeRemediation: WorkflowDef<Input> = {
     },
   },
 
-  plan({ input }, results) {
+  plan({ input, startedAt }, results) {
     const p = out<Plan>(results, "remediation-plan");
+    const scanned = windowOf(input, startedAt);
     if (!p) return [];
     const accounts = out<Accounts>(results, "account-context")?.byEmail ?? {};
     const actions: PlannedAction<Input>[] = [];
@@ -291,7 +301,7 @@ export const duplicateChargeRemediation: WorkflowDef<Input> = {
     const t = p.totals;
     const lines = [
       `Incident ${input.incidentId}: ${plain(input.description, 300)}`,
-      `Window ${input.window.from} to ${input.window.to}; ${input.customers.length} customer(s) scanned.`,
+      `Window ${scanned.from} to ${scanned.to}${input.window ? "" : ` (default: ${POLICY.defaultWindowHours}h before the run)`}; ${input.customers.length} customer(s) scanned.`,
       `Decision: ${p.mode} (${p.reason}).`,
       `Refunds: ${t.count} for ${money(t.amountMinor, t.currency)} (${money(t.autoMinor, t.currency)} automatic, ${money(t.approvalMinor, t.currency)} awaiting approval).`,
       ...p.refunds.map((r) => `- ${r.paymentIntent} (duplicate of ${r.original}) ${money(r.amountMinor, r.currency)} ${r.gate}: ${r.why}${accounts[r.email]?.owner ? `; account owner ${accounts[r.email]!.owner}` : ""}`),

@@ -2,17 +2,15 @@ import { action, actionKind, agent, all, blocked, check, command, eq, restart, r
 
 // Stripe fixtures are seeded per check by seed(): customer dup-<check>@billing.test
 // with payment intents confirmed on the twin (real charges, stamped "now"), so
-// no two checks share payments. The incident window brackets the proof run.
+// no two checks share payments. No window is given, so the runtime scans the
+// 72 hours before each run, which brackets the payments seeded just before.
 const CHANNEL = "C0BILLING01";
 const APPROVER = "U_CONTROLLER";
-const DAY = 86_400_000;
-const WINDOW = { from: new Date(Date.now() - DAY).toISOString(), to: new Date(Date.now() + DAY).toISOString() };
 
 const email = (caseId, n = 1) => `dup-${caseId.replaceAll("_", "-")}${n > 1 ? `-${n}` : ""}@billing.test`;
 const incident = (caseId, over = {}) => ({
   incidentId: `INC-${caseId.replaceAll("_", "-")}`.slice(0, 64),
   description: "Payment retry job ran twice and charged customers a second time.",
-  window: WINDOW,
   customers: [email(caseId)],
   financeChannel: CHANNEL,
   approvers: [APPROVER],

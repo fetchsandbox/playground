@@ -5,7 +5,7 @@ import { action, agent, all, blocked, check, command, eq, noAction, restart, run
 // them, or add a live subscription), so no two checks share a data subject.
 const CHANNEL = "C0BILLING01";
 const DPO = "U_DPO";
-const RECEIVED = new Date(Date.now() - 5 * 86_400_000).toISOString();
+const RECEIVED = "2026-10-15T09:00:00Z";
 
 const email = (caseId) => `dsr-${caseId.replaceAll("_", "-")}@privacy.test`;
 const request = (caseId, over = {}) => ({
