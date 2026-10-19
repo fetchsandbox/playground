@@ -28,6 +28,9 @@ function faulted(id, name, provider, scenario, assertions) {
 /** Which records each check's data subject has. */
 const ALL = { hubspot: true, stripe: true, workos: true };
 const FIXTURES = {
+  crm_erasure_readback: ALL,
+  privileged_account_flagged: ALL,
+  hold_rechecked_at_write: ALL,
   baseline: ALL,
   approve_erases: ALL,
   rejected: ALL,
@@ -66,10 +69,19 @@ export const checks = [
   faulted("stripe_auth_failure", "With billing unreachable nothing billing-related is changed", "stripe", "auth_failure", [agent("billing-records", "failed"), noAction("stripe.anonymize_customer"), noAction("gmail.draft_completion")]),
   faulted("slack_rate_limited", "Slack rate limiting fails the channel post only", "slack", "rate_limited", [action("slack.post_dsr", "failed"), action("asana.dsar_record", "applied")]),
   check("restart_while_parked", "Erasures parked for approval survive a real runtime restart and run once when approved", [start("restart_while_parked", request("restart_while_parked")), restart, command("decide", 1, { decision: "approve", userId: DPO })], runs([eq("phase", "DONE"), action("workos.delete_user", "applied", 1, [eq("attempts", 1)]), action("stripe.anonymize_customer", "applied", 1, [eq("attempts", 1)])])),
-  blocked("crm_erasure_readback", "Reconcile confirms the HubSpot contact is gone after the GDPR delete", "observation_missing", "The HubSpot twin accepts POST /crm/v3/objects/contacts/gdpr-delete but keeps the contact, so the read-back reports drift on the twin.", ["acme-ops/src/workflows/privacy-erasure.ts hubspot.erase_contact reconcile", "GET /crm/v3/objects/contacts/{id} after gdpr-delete → 200 on the twin"]),
-  blocked("privileged_account_flagged", "An account holding admin roles is flagged for security sign-off", "setup_missing", "The WorkOS twin doesn't list a user's memberships (GET /user_management/organization_memberships?user_id returns a sample object) or keep role slugs. Covered by local tests.", ["acme-ops/src/workflows/privacy-erasure.ts identity-records", "GET /user_management/organization_memberships?user_id=… on the twin"]),
-  blocked("hold_rechecked_at_write", "A subscription started after discovery blocks anonymization and the response", "setup_missing", "Needs a write to the twin between start and approval of one run. Covered by local tests.", ["acme-ops/src/workflows/privacy-erasure.ts stripe.anonymize_customer execute"]),
+  check("crm_erasure_readback", "Reconcile independently confirms the HubSpot contact is gone after GDPR deletion", [start("crm_erasure_readback", request("crm_erasure_readback")), command("decide", 1, { decision: "approve", userId: DPO }), command("reconcile", 1)], runs([eq("phase", "DONE"), action("hubspot.erase_contact", "applied", 1, [eq("reconciled", "match")])])),
+  check("privileged_account_flagged", "A real stored admin membership is detected and erasure waits for approval", [start("privileged_account_flagged", request("privileged_account_flagged"))], runs([eq("phase", "AWAITING_APPROVAL"), action("workos.delete_user", "pending_approval"), {select:"agents[*]",count:1,required:true,where:[eq("name","identity-records"),eq("status","ok"),eq("summary","SEEDED_ADMIN_SUMMARY")]}])),
+  check("hold_rechecked_at_write", "A subscription created by an independent operator after discovery prevents billing erasure and the completion draft", [start("hold_rechecked_at_write", request("hold_rechecked_at_write")), {provider_input:{actor:"external_operator",provider:"stripe",method:"POST",path:"/v1/subscriptions",body:{customer:"SEEDED_CUSTOMER",items:[{price:"price_1Pro_Monthly_USD"}],trial_period_days:30}}}, command("decide", 1, {decision:"approve",userId:DPO})], runs([eq("outcome","partial"),action("stripe.anonymize_customer","failed",1,[eq("errorCode","fatal")]),action("gmail.draft_completion","failed",1,[eq("errorCode","fatal")])])),
 ];
+
+// This check introduces one independent operator action. Replay approval
+// explicitly, without issuing the external mutation a second time.
+{
+  const c = checks.find(c => c.id === "hold_rechecked_at_write");
+  c.assertion.repeat = 1;
+  c.assertion.stable_under_repeat = false;
+  c.actions.push(structuredClone(c.actions[c.actions.length - 1]));
+}
 
 /** A data subject per check across HubSpot, Stripe and WorkOS. */
 async function seed(legs, log) {
@@ -93,6 +105,16 @@ async function seed(legs, log) {
       if (has.subscription) rec.subscription = (await post(legs.stripe, "/v1/subscriptions", { form: { customer: rec.stripe, "items[0][price]": "price_1Pro_Monthly_USD" } })).id;
     }
     if (has.workos) rec.workos = (await post(legs.workos, "/user_management/users", { json: { email: e, first_name: "Erin" } })).id;
+    if (caseId === "privileged_account_flagged") {
+      const org = await post(legs.workos, "/organizations", {json:{name:"Synthetic Privacy Test"}});
+      rec.membership = (await post(legs.workos, "/user_management/organization_memberships", {json:{user_id:rec.workos,organization_id:org.id,role_slug:"admin"}})).id;
+      checks.find(c=>c.id===caseId).assertion.where.find(a=>a.select==="agents[*]").where.find(a=>a.select==="summary").equals = `WorkOS user ${rec.workos} (admin)`;
+    }
+    if (caseId === "hold_rechecked_at_write") {
+      checks.find(c=>c.id===caseId).actions[1].provider_input.body.customer = rec.stripe;
+      checks.find(c=>c.id===caseId).provider_assertions = [{provider:"stripe",collection:"customers",assertion:{select:"records[*]",count:1,required:true,where:[eq("id",rec.stripe),eq("email",e)]}}];
+    }
+    if (caseId === "crm_erasure_readback") checks.find(c=>c.id===caseId).provider_assertions = [{provider:"hubspot",collection:"contacts",assertion:{select:"records[*]",count:0,required:true,where:[eq("id",rec.hubspot)]}}];
     out[caseId] = rec;
   }
   log("seed", Object.keys(out).length, "data subjects");

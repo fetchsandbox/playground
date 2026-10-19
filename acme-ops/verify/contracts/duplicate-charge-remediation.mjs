@@ -27,6 +27,9 @@ function faulted(id, name, provider, scenario, assertions) {
 const PAIR = [{ amount: 4900, ref: "in_oct" }, { amount: 4900, ref: "in_oct" }];
 const LARGE = [{ amount: 120000, ref: "in_annual" }, { amount: 120000, ref: "in_annual" }];
 const FIXTURES = {
+  disputed_charge_excluded: [PAIR],
+  dispute_outage_fails_closed: [PAIR],
+  manual_refund_race: [LARGE],
   baseline: [PAIR],
   refund_reconciled: [PAIR],
   large_refund_parked: [LARGE],
@@ -73,10 +76,19 @@ export const checks = [
   faulted("gmail_auth_failure", "A mailbox failure fails the notice draft only", "gmail", "auth_failure", [actionKind("gmail.draft_notice", "failed"), refund("applied")]),
   faulted("slack_rate_limited", "Slack rate limiting fails the digest only", "slack", "rate_limited", [action("slack.post_digest", "failed"), refund("applied")]),
   check("restart_while_parked", "A refund parked for approval survives a real runtime restart and is issued once when approved", [start("restart_while_parked", incident("restart_while_parked")), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE"), refund("applied", 1, [eq("attempts", 1)])])),
-  blocked("disputed_charge_excluded", "A duplicate whose charge is disputed is excluded from refunds", "setup_missing", "The Stripe twin can't open a dispute on a charge created in the session (pm_card_createDispute is not simulated; seeded disputes reference charges that don't exist). Covered by local tests.", ["acme-ops/src/workflows/duplicate-charge-remediation.ts planFrom", "POST /v1/payment_intents payment_method=pm_card_createDispute → resource_missing on the twin"]),
-  blocked("dispute_outage_fails_closed", "If the dispute list can't be read, nothing is refunded", "setup_missing", "Twin faults apply to the whole Stripe twin, so the dispute read can't fail on its own while the payment scan succeeds. Covered by local tests.", ["acme-ops/src/workflows/duplicate-charge-remediation.ts dispute-check", "set_scenario arms a provider, not an endpoint"]),
-  blocked("manual_refund_race", "A duplicate refunded by hand between scan and refund is not refunded again", "setup_missing", "Needs a write to the twin between two steps of one run. Covered by local tests (the refund re-checks the refundable amount at write time).", ["acme-ops/src/workflows/duplicate-charge-remediation.ts stripe.refund_duplicate execute"]),
+  check("disputed_charge_excluded", "A duplicate with a linked dispute is excluded and no refund notice is drafted", [start("disputed_charge_excluded",incident("disputed_charge_excluded"))], runs([eq("phase","DONE"),noRefund,actionKind("gmail.draft_notice",null,0)])),
+  faulted("dispute_outage_fails_closed", "Payment scan succeeds but a targeted dispute-read outage prevents every refund", "stripe", "dispute_read_unavailable", [agent("charge-scan","ok"),agent("dispute-check","failed"),noRefund,actionKind("gmail.draft_notice",null,0)]),
+  check("manual_refund_race", "An independent full refund while approval is parked prevents another refund and notice", [start("manual_refund_race",incident("manual_refund_race")),{provider_input:{actor:"external_operator",provider:"stripe",method:"POST",path:"/v1/refunds",body:{charge:"SEEDED_CHARGE"}}},command("decide",1,{decision:"approve",userId:APPROVER})],runs([eq("outcome","partial"),refund("failed",1,[eq("errorCode","fatal")]),actionKind("gmail.draft_notice","failed",1,[eq("errorCode","fatal")])])),
 ];
+
+// This check introduces one independent operator action. Replay approval
+// explicitly, without issuing the external mutation a second time.
+{
+  const c = checks.find(c => c.id === "manual_refund_race");
+  c.assertion.repeat = 1;
+  c.assertion.stable_under_repeat = false;
+  c.actions.push(structuredClone(c.actions[c.actions.length - 1]));
+}
 
 /** One Stripe customer per check (two for two_customers), each with its payments. */
 async function seed(legs, log) {
@@ -93,9 +105,17 @@ async function seed(legs, log) {
     for (const [i, payments] of customers.entries()) {
       const cus = await call("/v1/customers", { email: email(caseId, i + 1), name: "Sam Billing" });
       for (const p of payments) {
-        const pi = await call("/v1/payment_intents", { amount: String(p.amount), currency: "usd", customer: cus.id, confirm: "true", payment_method: "pm_card_visa", ...(p.ref ? { "metadata[invoice]": p.ref } : {}) });
+        // The policy orders by provider creation seconds, then ID. A real
+        // bounded gap makes the disputed/manual target the later duplicate.
+        if (["disputed_charge_excluded", "manual_refund_race"].includes(caseId) && out[caseId].length === 1) await new Promise(resolve => setTimeout(resolve, 1100));
+        const pi = await call("/v1/payment_intents", { amount: String(p.amount), currency: "usd", customer: cus.id, confirm: "true", payment_method: caseId === "disputed_charge_excluded" && out[caseId].length === 1 ? "pm_card_createDispute" : "pm_card_visa", ...(p.ref ? { "metadata[invoice]": p.ref } : {}) });
         if (pi.status !== "succeeded" || !pi.latest_charge) throw new Error(`seed payment for ${caseId} is ${pi.status}`);
         out[caseId].push(pi.id);
+        if(caseId === "manual_refund_race" && out[caseId].length === 2) {
+          const c=checks.find(c=>c.id===caseId);c.actions[1].provider_input.body.charge=pi.latest_charge;
+          c.provider_assertions=[{provider:"stripe",collection:"refunds",assertion:{select:"records[*]",count:1,required:true,where:[eq("payment_intent",pi.id),eq("amount",p.amount)]}}];
+        }
+        if(caseId === "disputed_charge_excluded" && out[caseId].length === 2) checks.find(c=>c.id===caseId).provider_assertions=[{provider:"stripe",collection:"refunds",assertion:{select:"records[*]",count:0,required:true,where:[eq("payment_intent",pi.id)]}}];
       }
     }
   }
