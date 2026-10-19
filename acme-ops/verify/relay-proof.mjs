@@ -51,7 +51,7 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 // FetchSandbox MCP over stdio
 // ---------------------------------------------------------------------------
 function mcpClient() {
-  const apiKey = JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
+  const apiKey = process.env.FETCHSANDBOX_API_KEY ?? JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
   const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.30"]];
   const child = spawn(cmd[0], cmd[1], {
     stdio: ["pipe", "pipe", "pipe"],
