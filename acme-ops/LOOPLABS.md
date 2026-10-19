@@ -7,8 +7,9 @@ administrator configures `LOOPLABS_CONTROL_CONFIG` and a signing key in the
 existing private secret. The configuration binds the tenant, AWS connection,
 runtime ARN, deployment version, epoch and an explicit email-to-native-reviewer
 mapping. Missing configuration leaves this adapter disabled. Raw messages,
-customer inputs and provider results are not copied into these events. General
-runtime logs remain unsupported records in the same CloudWatch source.
+customer inputs and provider results are not copied into these events. The optional version-scoped CloudWatch forwarder separates typed events from
+general diagnostics. It turns malformed business records into redacted coverage
+gaps instead of hiding them. General logs stay in their original source.
 
 New adapter-enrolled runs save their events and exact approval snapshot with the
 native DynamoDB state. The signed bridge exposes only those runs from the exact
@@ -35,3 +36,10 @@ selection continues through the requester-authenticated Zendesk email reply.
 Focused adapter tests: `npm test -- --run test/looplabs-control.test.ts`.
 Fresh native, browser and provider acceptance must be recorded separately; this
 section describes the contract and does not certify a deployed connection.
+
+The forwarder accepts only the exact source account/log group and writes to its
+derived `-business-vN` group. It preserves event IDs for observer deduplication,
+uses one write attempt, and has no runtime invoke or provider permissions. Its
+subscription matches the reported deployment version; it does not convert
+ordinary diagnostic text into workflow evidence. Native delivery, reader access
+and the selected source must be verified separately.
