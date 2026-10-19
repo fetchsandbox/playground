@@ -29,3 +29,11 @@ class Tests(unittest.TestCase):
    self.assertEqual(c.rows,[])
  def test_redelivery_keeps_original_ids_for_observer_deduplication(self):
   c=Logs();call(event(),c);call(event(),c);self.assertEqual(c.rows[0],c.rows[1])
+
+ def test_named_approval_endpoint_joins_the_same_version_source(self):
+  source=SOURCE.removesuffix('-DEFAULT')+'-looplabs_cancel_v4';c=Logs();r=forward(event({'event_name':'approval.approved'},logGroup=source),c,source=source,destination=DEST,owner='342206308838',version='4');self.assertEqual(r,{'forwarded':1,'coverageGaps':0});self.assertEqual(json.loads(c.rows[0]['message'])['event_name'],'approval.approved');self.assertEqual(c.stream['logGroupName'],DEST)
+ def test_named_endpoint_cannot_cross_runtime_or_version(self):
+  for source in [SOURCE.removesuffix('-DEFAULT')+'-looplabs_cancel_v5',SOURCE.removesuffix('-DEFAULT')+'-other',SOURCE.replace('acme_product_cancellation','foreign')]:
+   c=Logs()
+   with self.assertRaises(AssertionError):forward(event(logGroup=source),c,source=source,destination=DEST,owner='342206308838',version='4')
+   self.assertEqual(c.rows,[])
