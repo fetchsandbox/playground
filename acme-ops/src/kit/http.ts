@@ -8,6 +8,7 @@ export interface ProviderEndpoint {
   /** Sent as `Authorization: Bearer <token>` unless `authorization` overrides it. */
   token: string;
   authorization?: string;
+  getAuthorization?: () => Promise<string>;
 }
 
 export interface RequestOptions {
@@ -88,7 +89,7 @@ export class ProviderHttp {
 
   private async once<T>(method: string, path: string, opts: RequestOptions): Promise<HttpResult<T>> {
     const headers: Record<string, string> = {
-      authorization: this.endpoint.authorization ?? `Bearer ${this.endpoint.token}`,
+      authorization: this.endpoint.getAuthorization ? await this.endpoint.getAuthorization() : this.endpoint.authorization ?? `Bearer ${this.endpoint.token}`,
       accept: "application/json",
       ...this.headers,
       ...opts.headers,

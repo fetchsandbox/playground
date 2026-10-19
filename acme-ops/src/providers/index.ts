@@ -1,3 +1,4 @@
+import { zendeskAuthorization } from "./zendesk-oauth";
 import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
@@ -101,9 +102,11 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
     const token = pick(env, PREFIX[p].flatMap((x) => [`${x}_API_KEY`, `${x}_TOKEN`]));
     let baseUrl = pick(env, PREFIX[p].map((x) => `${x}_BASE_URL`)) ?? DEFAULT_BASE[p];
     if (p === "zendesk" && !baseUrl && env.ZENDESK_SUBDOMAIN) baseUrl = `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com`;
-    if (!token || !baseUrl) continue;
-    const endpoint: ProviderEndpoint = { provider: p, baseUrl, token };
-    if (p === "zendesk" && env.ZENDESK_EMAIL) {
+    const zendeskOauth = p === "zendesk" && baseUrl === `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com` && env.ZENDESK_SUBDOMAIN && env.ZENDESK_CLIENT_ID && env.ZENDESK_CLIENT_SECRET && env.ZENDESK_SCOPES;
+    if ((!token && !zendeskOauth) || !baseUrl) continue;
+    const endpoint: ProviderEndpoint = { provider: p, baseUrl, token: token ?? "" };
+    if (zendeskOauth) endpoint.getAuthorization = zendeskAuthorization(baseUrl, env.ZENDESK_CLIENT_ID!, env.ZENDESK_CLIENT_SECRET!, env.ZENDESK_SCOPES!);
+    if (!zendeskOauth && p === "zendesk" && env.ZENDESK_EMAIL) {
       endpoint.authorization = `Basic ${Buffer.from(`${env.ZENDESK_EMAIL}/token:${token}`).toString("base64")}`;
     }
     // Vendor auth dialects, applied only against the vendor's own host (twins take Bearer).
