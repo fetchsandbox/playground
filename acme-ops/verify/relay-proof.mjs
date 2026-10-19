@@ -21,6 +21,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import {requireFreePort,waitForOwnListener} from "./runtime-start.mjs";
 import { coverage, scope } from "./contracts/lib.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -122,6 +123,7 @@ async function settle(mcp, res, label) {
 // The runtime under test
 // ---------------------------------------------------------------------------
 let app;
+process.once("exit",()=>{app?.kill("SIGKILL");});
 const stateFile = join(OUT_DIR, "state.json");
 
 function twinEnv(legs) {
@@ -152,8 +154,9 @@ function twinEnv(legs) {
 
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
   if (app) {
+    const stopped=new Promise(resolve=>app.once("exit",resolve));
     app.kill("SIGKILL");
-    await sleep(300);
+    await stopped;
   }
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
@@ -171,8 +174,11 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
   const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
+  await requireFreePort(PORT);
   app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit"] });
+  const listening=waitForOwnListener(app,PORT,workflow);
   app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
+  await listening;
   for (let i = 0; i < 100; i++) {
     try {
       if ((await fetch(`http://127.0.0.1:${PORT}/ping`)).ok) return;
