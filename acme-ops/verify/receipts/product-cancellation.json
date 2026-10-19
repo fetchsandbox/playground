@@ -2,13 +2,13 @@
   "workflow": "product-cancellation",
   "mcp_observed": {
     "name": "fetchsandbox",
-    "version": "0.7.29"
+    "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-product-cancellation-1.0.0-400bc3c",
-  "session_id": "vs_bb471cf3266e",
-  "run_id": "vr_750a50af079849668b6b40d4085c41ef",
-  "receipt_url": "https://fetchsandbox.com/runs/70cabf96ee?flow=vr_750a50af079849668b6b40d4085c41ef",
+  "app_version": "acme-ops-product-cancellation-1.0.0-269e897",
+  "session_id": "vs_d1a523bacec9",
+  "run_id": "vr_1a9b707387024c149ff1ef377b55630a",
+  "receipt_url": "https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -150,5 +150,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-18T15:35:33.850Z"
+  "recorded_at": "2026-10-19T20:24:23.055Z"
 }
