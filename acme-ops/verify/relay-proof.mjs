@@ -43,8 +43,8 @@ const gitSha = (() => {
 })();
 const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
-mkdirSync(OUT_DIR, { recursive: true });
-const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2));
+mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
+const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 // ---------------------------------------------------------------------------
