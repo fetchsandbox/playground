@@ -43,16 +43,16 @@ const gitSha = (() => {
 })();
 const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
 const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
-mkdirSync(OUT_DIR, { recursive: true });
-const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2));
+mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
+const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 // ---------------------------------------------------------------------------
 // FetchSandbox MCP over stdio
 // ---------------------------------------------------------------------------
 function mcpClient() {
-  const apiKey = JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
-  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.29"]];
+  const apiKey = process.env.FETCHSANDBOX_API_KEY ?? JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
+  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.30"]];
   const child = spawn(cmd[0], cmd[1], {
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, FETCHSANDBOX_BASE_URL: "https://fetchsandbox.com", FETCHSANDBOX_API_KEY: apiKey },

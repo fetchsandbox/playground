@@ -61,4 +61,9 @@ export class HubSpotClient {
     if (!id) throw new Error(`hubspot 409 without an existing id for ${email}`);
     return { contact: await this.update(id, properties), created: false };
   }
+
+  /** Permanent GDPR deletion (not the recoverable archive). */
+  async gdprDelete(id: string): Promise<void> {
+    await this.http.request("POST", "/crm/v3/objects/contacts/gdpr-delete", { json: { objectId: id } });
+  }
 }

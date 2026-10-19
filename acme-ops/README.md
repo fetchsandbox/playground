@@ -2,7 +2,7 @@
 
 [Business guides for every workflow](../docs/WORKFLOWS.md) · [Coding-agent verification loop](../AGENTS.md) · [Proof scope and limits](../docs/VERIFICATION.md)
 
-Twenty ACME operations workflows across ten departments, each a **standalone Amazon Bedrock AgentCore
+Twenty-two ACME operations workflows across eleven departments, each a **standalone Amazon Bedrock AgentCore
 runtime**. Each runtime runs several agents in parallel across Zendesk,
 HubSpot, Gmail, Stripe, Google Calendar and Slack. Each one speaks the
 AgentCore HTTP contract (`POST /invocations`, `GET /ping` on `:8080`), so a
@@ -27,6 +27,7 @@ per file.
 | [`churn-risk-sweep`](src/workflows/churn-risk-sweep.ts) | Customer Success · cs-ops | Weekly risk score per account; digest, check-in drafts | QBR invites |
 | [`service-renewals`](src/workflows/service-renewals.ts) | Customer Success · cs-ops | 90/60/30-day renewal sweep of monitoring and calibration contracts; tasks and drafts | Price uplift above policy |
 | [`revenue-reconciliation`](src/workflows/revenue-reconciliation.ts) | Finance · revops-finance | Stripe payers vs HubSpot customers vs approved refunds; variance report | CRM fixes |
+| [`duplicate-charge-remediation`](src/workflows/duplicate-charge-remediation.ts) | Finance · billing-ops | Billing incident → scan affected customers' payments, refund purchases charged twice under hard limits, notices, record | Refunds above $500 or past the $2,000 batch; above the ceiling nothing is refunded |
 | [`collections-credit-hold`](src/workflows/collections-credit-hold.ts) | Finance · ar-collections | Tiered reminders for past-due invoices; AR digest | Credit hold |
 | [`distributor-claims`](src/workflows/distributor-claims.ts) | Finance · channel-finance | Validate distributor claims against invoices, prices and agreement | Paying the credit |
 | [`pcn-eol-notice`](src/workflows/pcn-eol-notice.ts) | Engineering · product-engineering | Product change / EOL record → affected customers and owners | Customer notices |
@@ -34,6 +35,7 @@ per file.
 | [`supplier-ncr`](src/workflows/supplier-ncr.ts) | Quality · supplier-quality | Failed inspection → CAPA task, 8D request draft, review hold | Supplier hold notice |
 | [`access-jml`](src/workflows/access-jml.ts) | IT · it-identity | Joiner/mover/leaver in the directory, IT ticket, manager notice | Privileged roles, leaver removal |
 | [`license-reclaim`](src/workflows/license-reclaim.ts) | IT · it-asset-mgmt | Find idle seats, warn, reclaim after grace | Reclaim |
+| [`privacy-erasure`](src/workflows/privacy-erasure.ts) | Legal · privacy-ops | GDPR/CCPA erasure: find the subject in HubSpot, Stripe, WorkOS; erase, anonymize or hold; deadline record; response draft | Every deletion and the response |
 | [`security-questionnaire`](src/workflows/security-questionnaire.ts) | IT · it-security | Answer from the approved library, flag new questions to Security | Sending answers |
 | [`incident-comms`](src/workflows/incident-comms.ts) | IT · it-operations | PagerDuty incident → note, war-room post, affected customers | Customer notices |
 
@@ -211,6 +213,45 @@ duplicate and 4× concurrent triggers, four provider faults and a real restart. 
 blocked where the twins can't exercise the behaviour yet (ticket creation and requester replies on the
 Zendesk twin, backdated payments, store-credit and gift-card balance read-backs, Zendesk email delivery);
 all but email delivery are covered by `test/product-cancellation.test.ts`.
+
+## High-risk workflows: bulk refunds and erasure
+
+Two runtimes are built around effects that are expensive to get wrong, so the control plane (LoopLabs) has
+something real to enforce and watch:
+
+| | [`duplicate-charge-remediation`](src/workflows/duplicate-charge-remediation.ts) | [`privacy-erasure`](src/workflows/privacy-erasure.ts) |
+|---|---|---|
+| Risk | Money out, in bulk, after an incident | Irreversible deletion across systems, with a legal deadline |
+| Parallel agents | `charge-scan` (Stripe, 5 customers at a time) · `dispute-check` (Stripe) · `account-context` (HubSpot) | `crm-records` (HubSpot) · `billing-records` (Stripe) · `identity-records` (WorkOS) |
+| Decided in code | Same purchase (amount + invoice/subscription/order reference) charged again within 15 min; anything without a reference is left to a person | Per system: erase, anonymize (Stripe keeps invoices for tax), retain (active subscription, unpaid invoice), unknown |
+| Limits a trigger can't change | Auto up to $500 per refund and $2,000 per batch; beyond 100 refunds or $25,000 nothing is refunded | Unverified requests erase nothing; every deletion needs approval |
+| Fails closed | Dispute list unreadable → no refunds; refunded by hand since the scan → refused at write time | Any system unreadable → request stays open, no response drafted; new subscription since discovery → anonymization refused |
+| Never claims what didn't happen | A customer's notice is drafted only after all of that customer's refunds went out | The response is drafted only after every erasure in it was applied |
+| Read-back (`reconcile`) | Refund amount and status in Stripe | HubSpot contact gone, Stripe customer anonymized, WorkOS user gone |
+| Privacy | Slack and run summaries carry a customer hash | Asana and Slack carry a subject hash and the deadline, never the address |
+
+Every gated action shows up in the run view as `pending_approval` with its summary (amount, payment, why it
+was gated), approvals are restricted to the named approvers (`403` for anyone else), and `reconcile`
+re-reads what was written; that is the surface LoopLabs uses to enforce and monitor these agents.
+
+Relay proofs on October 19, 2026 (isolated per-check twin fixtures):
+
+| Workflow | Passed | Failed | Not checked | Receipt |
+|---|---:|---:|---:|---|
+| Duplicate-charge remediation | 23 | 0 | 0 | [Recorded proof](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437) |
+| Privacy erasure | 19 | 0 | 0 | [Recorded proof](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed) |
+
+The six formerly blocked check IDs now execute: linked disputed-charge exclusion,
+targeted dispute-read outage, an independent refund while approval is parked,
+HubSpot purge read-back, stored WorkOS admin-membership detection, and a subscription
+created between discovery and approval. The 20 and 16 earlier executable checks
+remain unchanged. Both runs include actual local process restarts and independent
+provider observations. Application source matches PR head `375ed65`; the recorded
+verification version is `639dac1`. FetchSandbox backend: `b72ebb49`; MCP: `0.7.30`.
+
+These are separate local-runtime proofs through production FetchSandbox twins;
+no live provider, fresh native-Claude run, or AWS application deployment is established.
+See [the scoped verification report](../docs/evidence/risk-workflow-proof-20261019.md).
 
 ## Deploy (one AgentCore runtime per workflow)
 

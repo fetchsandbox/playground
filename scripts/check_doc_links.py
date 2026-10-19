@@ -20,6 +20,6 @@ for f in ['AGENTS.md','CLAUDE.md','.cursor/rules/fetchsandbox-verification.mdc',
  if not (ROOT/f).exists():raise SystemExit('Agent/contributor discovery file missing: '+f)
 root_mcp=json.loads((ROOT/'.mcp.json').read_text())
 assert root_mcp==json.loads((ROOT/'.cursor/mcp.json').read_text()), 'MCP client configuration drift'
-assert root_mcp['mcpServers']['fetchsandbox']['args']==['-y','fetchsandbox-mcp@0.7.29']
-assert 'fetchsandbox-mcp@0.7.29' in (ROOT/'acme-ops/verify/relay-proof.mjs').read_text()
+assert root_mcp['mcpServers']['fetchsandbox']['args']==['-y','fetchsandbox-mcp@0.7.30']
+assert 'fetchsandbox-mcp@0.7.30' in (ROOT/'acme-ops/verify/relay-proof.mjs').read_text()
 print(f'Checked {checked} local link targets across {len(files)} files and Acme catalog/discovery coverage. External URLs and fragment anchors are not validated.')

@@ -46,12 +46,15 @@ export function seedState() {
       products: [] as any[],
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
+      disputes: [] as any[],
     },
     hubspot: { contacts: [] as any[] },
     gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
+    workos: { users: [] as any[], memberships: [] as any[] },
+    asana: { tasks: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
   };
 }
@@ -113,6 +116,7 @@ export async function startWorld() {
       const c = S.customers.find((x) => x.id === r![1]);
       if (!c) return send(404, { error: { code: "resource_missing" } });
       c.metadata = { ...c.metadata, ...meta() };
+      for (const k of ["email", "name", "phone", "description"]) if (k in body) c[k] = body[k];
       return send(200, c);
     }
     if ((r = m(/^\/v1\/customers\/([^/]+)\/balance_transactions(?:\/([^/]+))?$/))) {
@@ -180,6 +184,7 @@ export async function startWorld() {
       S.refunds.push(rf);
       return send(200, rf);
     }
+    if (req.method === "GET" && path === "/v1/disputes") return send(200, { data: S.disputes, has_more: false });
     if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {
       const rf = S.refunds.find((x) => x.id === r![1]);
       return rf ? send(200, rf) : send(404, { error: { code: "resource_missing" } });
@@ -202,6 +207,10 @@ export async function startWorld() {
       const c = { id: String(++seq), properties: { ...body.properties }, archived: false };
       H.contacts.push(c);
       return send(201, c);
+    }
+    if (req.method === "POST" && path === "/crm/v3/objects/contacts/gdpr-delete") {
+      H.contacts = H.contacts.filter((c) => c.id !== String(body.objectId));
+      return send(204, {});
     }
     if ((r = m(/^\/crm\/v3\/objects\/contacts\/(\d+)$/))) {
       const c = H.contacts.find((x) => x.id === r![1]);
@@ -293,6 +302,36 @@ export async function startWorld() {
       return send(200, { user: u });
     }
 
+    // ---- WorkOS
+    const W = state.workos;
+    if (req.method === "GET" && path === "/user_management/users") {
+      return send(200, { data: W.users.filter((u) => !q.get("email") || u.email === q.get("email")), list_metadata: {} });
+    }
+    if ((r = m(/^\/user_management\/users\/([^/]+)$/))) {
+      const u = W.users.find((x) => x.id === r![1]);
+      if (!u) return send(404, { code: "entity_not_found" });
+      if (req.method === "DELETE") {
+        W.users = W.users.filter((x) => x.id !== u.id);
+        W.memberships = W.memberships.filter((x) => x.user_id !== u.id);
+        return send(204, {});
+      }
+      return send(200, u);
+    }
+    if (req.method === "GET" && path === "/user_management/organization_memberships") {
+      return send(200, { data: W.memberships.filter((x) => x.user_id === q.get("user_id")), list_metadata: {} });
+    }
+
+    // ---- Asana
+    if (req.method === "POST" && path === "/tasks") {
+      const t = { gid: String(++seq), ...body.data };
+      state.asana.tasks.push(t);
+      return send(201, { data: t });
+    }
+    if (req.method === "GET" && (r = m(/^\/tasks\/(\d+)$/))) {
+      const t = state.asana.tasks.find((x) => x.gid === r![1]);
+      return t ? send(200, { data: t }) : send(404, { errors: [{ message: "Not found" }] });
+    }
+
     // ---- Square
     const Q = state.square;
     if (req.method === "GET" && (r = m(/^\/v2\/locations\/([^/]+)$/))) {
@@ -326,7 +365,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana"];
 
   return {
     state,

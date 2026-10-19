@@ -15,6 +15,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
 | Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
+| Duplicate charge remediation | Finance / `billing-ops` | 4 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) |
 | Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |
 | Field service dispatch | Service / `field-service` | 4 | [field-service-dispatch](workflows/field-service-dispatch.md) |
 | Incident communications | IT / `it-operations` | 2 | [incident-comms](workflows/incident-comms.md) |
@@ -22,6 +23,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
 | Product change and end-of-life notices | Engineering / `product-engineering` | 3 | [pcn-eol-notice](workflows/pcn-eol-notice.md) |
+| Privacy erasure request (GDPR / CCPA) | Legal / `privacy-ops` | 4 | [privacy-erasure](workflows/privacy-erasure.md) |
 | Product cancellation and refund | Customer Experience / `cx-retention` | 4 | [product-cancellation](workflows/product-cancellation.md) |
 | Returns and warranty (RMA) | Customer Experience / `cx-service` | 4 | [returns-warranty](workflows/returns-warranty.md) |
 | Revenue reconciliation | Finance / `revops-finance` | 3 | [revenue-reconciliation](workflows/revenue-reconciliation.md) |
