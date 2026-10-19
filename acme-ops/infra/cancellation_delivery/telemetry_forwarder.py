@@ -36,8 +36,10 @@ def projection(raw,version):
         return '{"schema_version":"unsupported","coverage_reason":"malformed-business-event"}',True
 
 def forward(event,client,*,source,destination,owner,version):
-    assert source != destination and source.startswith('/aws/bedrock-agentcore/runtimes/') and destination==source.removesuffix('-DEFAULT')+'-business-v'+version
     assert re.fullmatch(r'\d{12}',owner) and re.fullmatch(r'[1-9][0-9]*',version)
+    suffix=next((x for x in ['-DEFAULT','-looplabs_cancel_v'+version] if source.endswith(x)),None)
+    assert suffix and source.startswith('/aws/bedrock-agentcore/runtimes/') and source != destination
+    assert destination==source.removesuffix(suffix)+'-business-v'+version
     encoded=event['awslogs']['data'];assert isinstance(encoded,str) and len(encoded)<=8388608
     zipped=base64.b64decode(encoded,validate=True);decoder=zlib.decompressobj(16+zlib.MAX_WBITS);raw=decoder.decompress(zipped,2097153)
     assert len(raw)<=2097152 and decoder.eof and not decoder.unconsumed_tail and not decoder.unused_data
