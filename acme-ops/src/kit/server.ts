@@ -3,6 +3,8 @@ import { type IncomingMessage, type Server, createServer } from "node:http";
 import { CommandSchema, type Engine } from "./engine";
 import { errorMessage } from "./errors";
 import type { Logger } from "./log";
+import {controlEnvelope,type ControlConfig} from "./looplabs-control";
+import type {KvStore} from "./store";
 
 const MAX_BODY = 1_000_000;
 
@@ -27,6 +29,7 @@ function bearerOk(req: IncomingMessage, token: string): boolean {
 }
 
 export interface ServerOptions {
+  control?: {config:ControlConfig;store:KvStore};
   /**
    * Enables the read-only verifier routes (GET /verify/...), each requiring
    * `Authorization: Bearer <token>`. Unset in production: AgentCore only
@@ -74,6 +77,7 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         } catch (err) {
           return send((err as { status?: number }).status ?? 400, { error: "body must be a JSON command" });
         }
+        if(opts.control && json && typeof json === "object" && ("raw_body" in json || "path" in json)) return send(200,await controlEnvelope(engine,opts.control.store,opts.control.config,json));
         const parsed = CommandSchema.safeParse(json);
         if (!parsed.success) {
           return send(400, { error: "invalid command", issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) });

@@ -13,6 +13,8 @@ const projectDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 export interface WorkflowStackProps extends StackProps {
   workflow: string;
+  /** Public exact scope/reviewer mapping; signing key stays in Secrets Manager. */
+  looplabsControlConfig?: string;
   containerRepository?: string;
   containerTag?: string;
   org: string;
@@ -69,6 +71,7 @@ export class WorkflowStack extends Stack {
         : agentcore.RuntimeAuthorizerConfiguration.usingIAM(),
       environmentVariables: {
         WORKFLOW: props.workflow,
+        ...(props.looplabsControlConfig ? {LOOPLABS_CONTROL_CONFIG:props.looplabsControlConfig} : {}),
         WORKFLOW_ORGANIZATION: "Acme",
         WORKFLOW_COMPANY_NAME: "Acme Corporation",
         WORKFLOW_ENVIRONMENT: "production",

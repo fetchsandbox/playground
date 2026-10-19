@@ -92,6 +92,7 @@ function mcpClient() {
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
       return initialized.serverInfo;
     },
+    async listTools(){return send("tools/list",{});},
     async call(name, args) {
       const result = await send("tools/call", { name, arguments: args });
       const text = (result?.content ?? []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
@@ -191,6 +192,8 @@ await startApp();
 const mcp = mcpClient();
 const mcpInfo = await mcp.init();
 log("MCP observed", mcpInfo?.version ?? "unknown");
+const tools=await mcp.listTools();save("mcp-tools",tools);for(const name of ["manage_tunnel","validate_integration","get_job"])if(!tools.tools?.some(t=>t.name===name))throw Error("Required MCP tool not discovered: "+name);
+log("MCP tool discovery",tools.tools.map(t=>t.name).join(","));
 let credentialFile;
 const finish = async (code) => {
   try {

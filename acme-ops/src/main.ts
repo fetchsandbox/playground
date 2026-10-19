@@ -7,6 +7,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { ClaudeDrafter, templateDrafter } from "./kit/drafter";
 import { Engine } from "./kit/engine";
+import {readControlConfig} from "./kit/looplabs-control";
 import { createLogger } from "./kit/log";
 import { createAgentServer } from "./kit/server";
 import { DynamoStore, FileStore, type KvStore, MemoryStore } from "./kit/store";
@@ -33,7 +34,10 @@ const store: KvStore = process.env.DYNAMODB_TABLE
     : new MemoryStore();
 const endpoints = endpointsFromEnv();
 
+const control=readControlConfig(process.env);
+if(control&&workflow.id!=="product-cancellation")throw Error("LoopLabs adapter is scoped to product cancellation");
 const engine = new Engine(workflow, {
+  control,controlSink:(event)=>console.log(JSON.stringify(event)),
   store,
   providers: providerFactory(endpoints),
   drafter: process.env.ANTHROPIC_API_KEY ? new ClaudeDrafter(process.env.ANTHROPIC_API_KEY, log) : templateDrafter,
@@ -43,6 +47,7 @@ const engine = new Engine(workflow, {
 });
 
 const server = createAgentServer(engine as Engine<unknown>, log, {
+  ...(control?{control:{config:control,store}}:{}),
   verifierToken: process.env.FETCHSANDBOX_VERIFIER_TOKEN || undefined,
   defaultCorrelation: process.env.X_FLOW_RUN_ID ? { "x-flow-run-id": process.env.X_FLOW_RUN_ID } : {},
 });

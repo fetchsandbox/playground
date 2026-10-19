@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { checkpoint, validateReviewed, sameScope, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
 import { errorCode, errorMessage } from "./errors";
@@ -59,6 +60,8 @@ export interface Reply {
 }
 
 export interface EngineDeps {
+  control?: ControlConfig;
+  controlSink?: (event:Record<string,unknown>)=>void;
   store: KvStore;
   providers: ProviderFactory;
   drafter: Drafter;
@@ -100,6 +103,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
 export class Engine<I> {
   private readonly inflight = new Set<Promise<unknown>>();
   private readonly driving = new Set<string>();
+  private readonly emittedControl=new Set<string>();
   private readonly now: () => number;
 
   constructor(
@@ -181,9 +185,11 @@ export class Engine<I> {
       actions: [],
       duplicateStarts: 0,
       events: [{ at, msg: `started by ${cmd.requestedBy.userId}` }],
+      ...(this.deps.control ? {control:{scope:this.deps.control.scope,events:[]}} : {}),
       createdAt: at,
       updatedAt: at,
     };
+    if(this.deps.control)checkpoint(undefined,run,this.deps.control,at);
     if (!(await this.deps.store.create(run as unknown as Item))) {
       const existing = await this.mutate(runId, (r) => {
         r.duplicateStarts++;
@@ -191,6 +197,7 @@ export class Engine<I> {
       });
       return { status: 200, body: { ...this.view(existing!), duplicate: true } };
     }
+    this.emitControl(run);
     const job = this.drive(runId);
     if (cmd.wait !== false) await job;
     return { status: 200, body: { ...this.view((await this.load(runId))!), duplicate: false } };
@@ -375,12 +382,13 @@ export class Engine<I> {
   // decide / cancel / resume / reconcile
   // -------------------------------------------------------------------------
 
-  private async decide(cmd: Extract<Command, { action: "decide" }>): Promise<Reply> {
+  private async decide(cmd: Extract<Command, { action: "decide" }>, expected?:{revision:string;policyVersion:string}): Promise<Reply> {
     let run = await this.load(cmd.runId);
     if (!run) return notFound(cmd.runId);
     run = await this.expireIfDue(run);
     let outcome: string | undefined;
     const updated = await this.mutate(cmd.runId, (r) => {
+      if ((expected || r.control) && (!this.deps.control || !validateReviewed(r,this.deps.control,expected))) return void (outcome="stale_review");
       if (r.phase === "RUNNING") return void (outcome = "not_ready");
       if (r.phase === "EXPIRED") return void (outcome = "expired");
       if (r.phase !== "AWAITING_APPROVAL") return void (outcome = r.approval?.decision ? "already_decided" : "closed");
@@ -405,7 +413,7 @@ export class Engine<I> {
       if (cmd.wait !== false) await job;
     }
     const latest = (await this.load(cmd.runId)) ?? updated!;
-    return { status: outcome === "forbidden" ? 403 : 200, body: { ...this.view(latest), result: outcome } };
+    return { status: outcome === "forbidden" ? 403 : outcome === "stale_review" ? 409 : 200, body: { ...this.view(latest), result: outcome } };
   }
 
   private async cancel(cmd: Extract<Command, { action: "cancel" }>): Promise<Reply> {
@@ -516,9 +524,11 @@ export class Engine<I> {
     for (let i = 0; i < 20; i++) {
       const cur = await this.load(runId);
       if (!cur) return undefined;
+      const previous=structuredClone(cur);
       fn(cur);
+      if(this.deps.control)checkpoint(previous,cur,this.deps.control,new Date(this.now()).toISOString());
       cur.updatedAt = new Date(this.now()).toISOString();
-      if (await this.deps.store.replace(cur as unknown as Item)) return { ...cur, version: (cur.version ?? 0) + 1 };
+      if (await this.deps.store.replace(cur as unknown as Item)) {this.emitControl(cur);return { ...cur, version: (cur.version ?? 0) + 1 };}
       await new Promise((r) => setTimeout(r, 5 + Math.random() * 20));
     }
     throw new Error(`run ${runId}: too much write contention`);
@@ -527,6 +537,14 @@ export class Engine<I> {
   private event(r: RunRecord, msg: string) {
     r.events.push({ at: new Date(this.now()).toISOString(), msg });
     if (r.events.length > MAX_EVENTS) r.events.splice(0, r.events.length - MAX_EVENTS);
+  }
+
+  private emitControl(r:RunRecord){if(!this.deps.control||!r.control||!sameScope(r.control.scope,this.deps.control.scope))return;for(const event of r.control.events){const id=String(event.event_id);if(this.emittedControl.has(id))continue;try{this.deps.controlSink?.(event);this.emittedControl.add(id);}catch{this.deps.log.warn("Control telemetry emission unavailable",{runId:r.runId});}}}
+  async controlRuns(){const rows=(await this.deps.store.list("run#")) as unknown as RunRecord[];return rows.filter(r=>r.control&&this.deps.control&&sameScope(r.control.scope,this.deps.control.scope));}
+  async decideReviewed(runId:string,reviewer:string,userId:string,decision:string,revision:string,policyVersion:string){
+   if(!this.deps.control||this.deps.control.reviewerMap[reviewer]!==userId)return {status:403,body:{error:"Reviewer refused"}};
+   const r=await this.load(runId);if(!r||!validateReviewed(r,this.deps.control,{revision,policyVersion}))return {status:409,body:{error:"Reviewed request changed"}};
+   return this.decide({action:"decide",runId,userId,decision:decision==="approved"?"approve":"reject",wait:false},{revision,policyVersion});
   }
 
   /** What `status` returns: everything a control plane needs to render and steer the run. */

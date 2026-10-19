@@ -1,0 +1,28 @@
+name: Acme runtime quality
+on:
+  pull_request:
+    paths: ['acme-ops/**', '.github/workflows/acme-runtime-quality.yml']
+  push:
+    branches: [main]
+    paths: ['acme-ops/**', '.github/workflows/acme-runtime-quality.yml']
+jobs:
+  runtime-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: acme-ops/package-lock.json
+      - run: npm ci
+        working-directory: acme-ops
+      - run: npm run check && npm test && npm run bundle
+        working-directory: acme-ops
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install boto3
+      - run: python -m unittest discover -s acme-ops/infra/cancellation_delivery

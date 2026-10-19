@@ -4,7 +4,7 @@
 
 Customer Experience needs to acknowledge cancellation requests, evaluate subscription terms, obtain exceptions where required, and let the correct customer choose an eligible refund method.
 
-Cancellation requests by email or phone: open or annotate the Zendesk ticket, acknowledge the customer, research the subscription against the cancellation and refund policy, cancel when the policy allows (exceptions wait for approval), offer the refund methods the policy allows and, when the customer picks one on the ticket, refund to the original payment (Stripe), as store credit (Stripe balance) or as a gift card (Square), then confirm on the ticket.
+Cancellation requests by email, phone or Slack: open or annotate the Zendesk ticket, acknowledge the customer, research the subscription against the cancellation and refund policy, cancel when the policy allows (exceptions wait for approval), offer the refund methods the policy allows and, when the customer picks one on the ticket, refund to the original payment (Stripe), as store credit (Stripe balance) or as a gift card (Square), then confirm on the ticket.
 
 Demo organization: **Acme Corporation**. Department: **Customer Experience**. Owning team: **cx-retention**. Configure your own named owner and approvers when deploying; repository examples do not grant access to Acme or FetchSandbox accounts.
 
@@ -52,7 +52,7 @@ These top-level fields come from the runtime schema. Nested shape and conditiona
 | Field | Required | Type / allowed values |
 |---|---|---|
 | `stage` | yes | string / request |
-| `channel` | yes | string / email, phone |
+| `channel` | yes | string / email, phone, slack |
 | `ticketId` | no/default | integer |
 | `subscriptionId` | no/default | string |
 | `productId` | no/default | string |
@@ -60,6 +60,7 @@ These top-level fields come from the runtime schema. Nested shape and conditiona
 | `customer` | yes | object |
 | `opsChannel` | yes | string |
 | `giftCardLocationId` | no/default | string |
+| `opsThreadTs` | no/default | string |
 | `approvers` | no/default | array |
 
 ### Input variant 2
@@ -72,6 +73,7 @@ These top-level fields come from the runtime schema. Nested shape and conditiona
 | `customer` | yes | object |
 | `opsChannel` | yes | string |
 | `giftCardLocationId` | no/default | string |
+| `opsThreadTs` | no/default | string |
 | `approvers` | no/default | array |
 
 ## Agents and responsibilities
@@ -91,7 +93,7 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 
 | Action | Provider | Gate | Business effect |
 |---|---|---|---|
-| `zendesk.create_ticket` | zendesk | **auto** | Open the ticket for a request that arrived by phone without one |
+| `zendesk.create_ticket` | zendesk | **auto** | Open the ticket for a request that arrived without one |
 | `zendesk.acknowledge` | zendesk | **auto** | Public reply (emailed by Zendesk) explaining the cancellation process |
 | `zendesk.policy_note` | zendesk | **auto** | Internal note with the policy research and the decision |
 | `stripe.cancel_subscription` | stripe | **auto** | Cancel the subscription when the policy allows it; recording the refund offer on it |
@@ -161,18 +163,18 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `square_auth_failure` | With the gift card system down, gift cards are not offered; the cancellation and offer go ahead | Executable declaration; result comes from a receipt |
 | `slack_rate_limited` | Slack rate limiting fails the case post only | Executable declaration; result comes from a receipt |
 | `restart_while_parked` | An exception parked for approval survives a real runtime restart and cancels once when approved afterwards | Executable declaration; result comes from a receipt |
-| `phone_request_opens_ticket` | A phone request without a ticket opens one in Zendesk and works on it | The Zendesk twin simulates only its seeded ticket: POST /api/v2/tickets(.json) and GET /api/v2/tickets?external_id are not simulated. Covered by local tests. |
-| `choice_read_from_customer_reply` | The refund method is read from the customer's own reply on the ticket (not a ticket field) | Every comment on the Zendesk twin is authored by the API user, so a requester reply can't be simulated; the contract passes the choice as the ticket-field value instead. Covered by local tests. |
-| `prorated_credit_tier` | Payments older than the 30-day window get only the unused share, as store credit or gift card | Twin payment intents are stamped with the current time and can't be backdated, so the 31-90 day tier is unreachable. Covered by local tests. |
-| `store_credit_readback` | Reconciliation reads the store-credit balance transaction back from Stripe | GET /v1/customers/{id}/balance_transactions/{id} returns resource_missing on the twin for a transaction it just created. |
-| `gift_card_balance_readback` | Reconciliation confirms the gift card's balance in Square | The Square twin's gift cards report no balance_money after activation, so the read-back is unverifiable. |
-| `customer_email_delivery` | Public ticket replies are emailed to the customer by Zendesk | Zendesk's notification email is not simulated by the twin; the runtime's part (a public comment) is proven by the checks above. |
+| `phone_request_opens_ticket` | A phone request without a ticket opens one in Zendesk and works on it | Executable declaration; result comes from a receipt |
+| `choice_read_from_customer_reply` | The refund method is read from a new requester-authored reply after the offer | Executable declaration; result comes from a receipt |
+| `prorated_credit_tier` | A 45-day-old annual payment gets the unused share as store credit | Executable declaration; result comes from a receipt |
+| `store_credit_readback` | Reconciliation retrieves the saved Stripe customer credit ledger entry | Executable declaration; result comes from a receipt |
+| `gift_card_balance_readback` | Reconciliation reads the loaded Square gift-card balance | Executable declaration; result comes from a receipt |
+| `customer_email_delivery` | Public replies reach the correct customer in the Zendesk twin's simulated mailbox (not live SMTP) | Executable declaration; result comes from a receipt |
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-product-cancellation-1.0.0-4f1894b`, verdict **inconclusive**, and statuses: **21 held**, **6 unmeasured**.
+The checked-in receipt records app version `acme-ops-product-cancellation-1.0.0-400bc3c`, verdict **verified**, and statuses: **27 held**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/3cada5c65b?flow=vr_f8571d4179e047e784d4be7687432230) · [Saved result](../../acme-ops/verify/receipts/product-cancellation.json)
+[Recorded receipt](https://fetchsandbox.com/runs/70cabf96ee?flow=vr_750a50af079849668b6b40d4085c41ef) · [Saved result](../../acme-ops/verify/receipts/product-cancellation.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 
@@ -181,5 +183,8 @@ Blocked reasons above describe this contract revision. They can become stale whe
 - [Workflow and business rules](../../acme-ops/src/workflows/product-cancellation.ts)
 - [Executable verification contract](../../acme-ops/verify/contracts/product-cancellation.mjs)
 - [Shared state, approval and recovery engine](../../acme-ops/src/kit/engine.ts)
+
+
+See the [optional LoopLabs observation and exact approval adapter](../../acme-ops/LOOPLABS.md).
 
 <!-- Generated by scripts/workflow_docs.py from workflow definitions, contracts and saved receipts. Edit source or the business-need mapping, then regenerate. -->

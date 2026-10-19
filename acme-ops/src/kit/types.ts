@@ -127,6 +127,7 @@ export interface ActionRecord {
 }
 
 export interface RunRecord {
+  control?: import("./looplabs-control").ControlState;
   pk: string;
   version?: number;
   runId: string;
