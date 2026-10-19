@@ -1,0 +1,14 @@
+[
+  {
+    "workflow": "duplicate-charge-remediation",
+    "runner_exit": 0,
+    "exact_key_revocation_confirmed": true,
+    "retained_recovery_state": null
+  },
+  {
+    "workflow": "privacy-erasure",
+    "runner_exit": 0,
+    "exact_key_revocation_confirmed": true,
+    "retained_recovery_state": null
+  }
+]

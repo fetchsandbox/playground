@@ -1,0 +1,81 @@
+[
+  {
+    "workflow": "duplicate-charge-remediation",
+    "sandbox_id": "942df07202",
+    "run_id": "vr_32045f5c19c54d8fa57cc7504523a437",
+    "stored_verdict": "verified",
+    "checks": 23,
+    "held": 23,
+    "violated": 0,
+    "unmeasured": 0,
+    "app_version": "acme-ops-duplicate-charge-remediation-1.0.0-639dac1",
+    "app_verified": true,
+    "complete": true,
+    "snapshotted_at": "2026-10-19T14:54:28.218929+00:00",
+    "independent_operator_requests": 1,
+    "operator_source": "external_operator_input",
+    "operator_path": "/v1/refunds",
+    "provider_state_assertions": [
+      {
+        "check_id": "disputed_charge_excluded",
+        "provider": "stripe",
+        "collection": "refunds",
+        "assertion_held": true
+      },
+      {
+        "check_id": "manual_refund_race",
+        "provider": "stripe",
+        "collection": "refunds",
+        "assertion_held": true
+      }
+    ],
+    "archived_provider_witnesses": {
+      "dispute_linked_to_actual_charge": true,
+      "targeted_dispute_read_503": true
+    },
+    "archived_provider_requests": 239,
+    "runtime_restart_observations": 2,
+    "observed_distinct_runtime_identities": true,
+    "snapshot_sha256": "84f2d51d5cb10ecd68745b4f182c547e53087462e9c1f3b43035c03651dc899e"
+  },
+  {
+    "workflow": "privacy-erasure",
+    "sandbox_id": "93969092e3",
+    "run_id": "vr_1fae88cbe29d455aa062b167be9977ed",
+    "stored_verdict": "verified",
+    "checks": 19,
+    "held": 19,
+    "violated": 0,
+    "unmeasured": 0,
+    "app_version": "acme-ops-privacy-erasure-1.0.0-639dac1",
+    "app_verified": true,
+    "complete": true,
+    "snapshotted_at": "2026-10-19T14:54:22.434275+00:00",
+    "independent_operator_requests": 1,
+    "operator_source": "external_operator_input",
+    "operator_path": "/v1/subscriptions",
+    "provider_state_assertions": [
+      {
+        "check_id": "crm_erasure_readback",
+        "provider": "hubspot",
+        "collection": "contacts",
+        "assertion_held": true
+      },
+      {
+        "check_id": "hold_rechecked_at_write",
+        "provider": "stripe",
+        "collection": "customers",
+        "assertion_held": true
+      }
+    ],
+    "archived_provider_witnesses": {
+      "stored_admin_membership_read": true,
+      "purge_204": true,
+      "purged_contact_read_404": true
+    },
+    "archived_provider_requests": 176,
+    "runtime_restart_observations": 2,
+    "observed_distinct_runtime_identities": true,
+    "snapshot_sha256": "08601b5ec22e82b4d0038dd8678faea6136182f97f431ceaddfd102baed1a013"
+  }
+]

@@ -234,17 +234,24 @@ Every gated action shows up in the run view as `pending_approval` with its summa
 was gated), approvals are restricted to the named approvers (`403` for anyone else), and `reconcile`
 re-reads what was written; that is the surface LoopLabs uses to enforce and monitor these agents.
 
-Relay proofs (per-check fixtures seeded on the twins):
-[`duplicate-charge-remediation`](https://fetchsandbox.com/runs/1339114259?flow=vr_924f7a2f651e4f4f863a3545ccbba4d9)
-**20 held, 0 violated** (auto refund, reconcile, large refund parked / approved / rejected / stranger refused,
-re-run refunds nothing, ambiguous and different purchases left alone, two customers in parallel, ceiling halts,
-duplicate and 4x concurrent triggers, Stripe/HubSpot/Gmail/Slack faults, real restart; 3 blocked: disputes on
-session charges, an endpoint-level dispute outage and a mid-run manual refund can't be produced on the twin).
-[`privacy-erasure`](https://fetchsandbox.com/runs/110f044ec5?flow=vr_a90c4a759afa4198991c030878e173a5)
-**16 held, 0 violated** (parked erasures, approve with Stripe and WorkOS read-back, reject, stranger refused,
-unverified, subscription hold, CRM-only, nothing held, duplicate and concurrent, WorkOS/HubSpot/Stripe/Slack
-faults, real restart; 3 blocked: the HubSpot twin's GDPR delete doesn't remove the contact, the WorkOS twin
-doesn't list memberships, and a mid-run subscription can't be produced on the twin).
+Relay proofs on October 19, 2026 (isolated per-check twin fixtures):
+
+| Workflow | Passed | Failed | Not checked | Receipt |
+|---|---:|---:|---:|---|
+| Duplicate-charge remediation | 23 | 0 | 0 | [Recorded proof](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437) |
+| Privacy erasure | 19 | 0 | 0 | [Recorded proof](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed) |
+
+The six formerly blocked check IDs now execute: linked disputed-charge exclusion,
+targeted dispute-read outage, an independent refund while approval is parked,
+HubSpot purge read-back, stored WorkOS admin-membership detection, and a subscription
+created between discovery and approval. The 20 and 16 earlier executable checks
+remain unchanged. Both runs include actual local process restarts and independent
+provider observations. Application source matches PR head `375ed65`; the recorded
+verification version is `639dac1`. FetchSandbox backend: `b72ebb49`; MCP: `0.7.30`.
+
+These are separate local-runtime proofs through production FetchSandbox twins;
+no live provider, fresh native-Claude run, or AWS application deployment is established.
+See [the scoped verification report](../docs/evidence/risk-workflow-proof-20261019.md).
 
 ## Deploy (one AgentCore runtime per workflow)
 

@@ -1,13 +1,13 @@
 {
   "workflow": "duplicate-charge-remediation",
-  "app_version": "acme-ops-duplicate-charge-remediation-1.0.0-d530d19",
-  "session_id": "vs_4a37bba1f0fc",
-  "run_id": "vr_924f7a2f651e4f4f863a3545ccbba4d9",
-  "receipt_url": "https://fetchsandbox.com/runs/1339114259?flow=vr_924f7a2f651e4f4f863a3545ccbba4d9",
+  "app_version": "acme-ops-duplicate-charge-remediation-1.0.0-639dac1",
+  "session_id": "vs_8037da00a9f7",
+  "run_id": "vr_32045f5c19c54d8fa57cc7504523a437",
+  "receipt_url": "https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437",
   "status": null,
-  "verdict": "inconclusive",
-  "app_verified": false,
-  "complete": false,
+  "verdict": "verified",
+  "app_verified": true,
+  "complete": true,
   "checks": [
     {
       "id": "baseline",
@@ -111,19 +111,19 @@
     },
     {
       "id": "disputed_charge_excluded",
-      "status": "unmeasured",
-      "explanation": "The Stripe twin can't open a dispute on a charge created in the session (pm_card_createDispute is not simulated; seeded disputes reference charges that don't exist). Covered by local tests."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "dispute_outage_fails_closed",
-      "status": "unmeasured",
-      "explanation": "Twin faults apply to the whole Stripe twin, so the dispute read can't fail on its own while the payment scan succeeds. Covered by local tests."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "manual_refund_race",
-      "status": "unmeasured",
-      "explanation": "Needs a write to the twin between two steps of one run. Covered by local tests (the refund re-checks the refundable amount at write time)."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     }
   ],
-  "recorded_at": "2026-10-19T14:19:28.132Z"
+  "recorded_at": "2026-10-19T14:54:31.156Z"
 }

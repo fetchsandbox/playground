@@ -1,0 +1,9 @@
+{
+  "saved_state_passes": true,
+  "negative_mutations_rejected": [
+    "missing_code",
+    "wrong_code",
+    "applied_instead_of_blocked"
+  ],
+  "scope": "new positive-count predicate authoring; unchanged engine and original 36 checks"
+}

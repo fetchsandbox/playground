@@ -1,0 +1,14 @@
+{
+  "reviewed_pr_head": "375ed658fe4bfc50f7051bf5941a1a6d08bc8d73",
+  "tested_source_head": "639dac1ec610b03dfb592a230e34cd5243edd6bc",
+  "reviewed_workflow_source_tree": "648cdf2432d5122b150821afc1b0f69a29dbbab7",
+  "tested_workflow_source_tree": "648cdf2432d5122b150821afc1b0f69a29dbbab7",
+  "source_unchanged": true,
+  "local_tests": {
+    "passed": 96,
+    "failed": 0
+  },
+  "typescript_check_exit": 0,
+  "backend_build": "b72ebb49",
+  "mcp_version": "0.7.30"
+}

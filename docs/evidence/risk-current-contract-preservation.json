@@ -1,0 +1,170 @@
+[
+  {
+    "workflow": "duplicate-charge-remediation",
+    "all_check_ids_preserved": true,
+    "unchanged_executable_checks": 20,
+    "newly_executable": [
+      "disputed_charge_excluded",
+      "dispute_outage_fails_closed",
+      "manual_refund_race"
+    ],
+    "comparisons": [
+      {
+        "id": "baseline",
+        "identical": true
+      },
+      {
+        "id": "refund_reconciled",
+        "identical": true
+      },
+      {
+        "id": "large_refund_parked",
+        "identical": true
+      },
+      {
+        "id": "large_refund_approved",
+        "identical": true
+      },
+      {
+        "id": "large_refund_rejected",
+        "identical": true
+      },
+      {
+        "id": "approve_by_stranger_refused",
+        "identical": true
+      },
+      {
+        "id": "rerun_refunds_nothing",
+        "identical": true
+      },
+      {
+        "id": "ambiguous_not_refunded",
+        "identical": true
+      },
+      {
+        "id": "different_purchase_kept",
+        "identical": true
+      },
+      {
+        "id": "two_customers",
+        "identical": true
+      },
+      {
+        "id": "ceiling_halts",
+        "identical": true
+      },
+      {
+        "id": "unknown_customer",
+        "identical": true
+      },
+      {
+        "id": "duplicate_start",
+        "identical": true
+      },
+      {
+        "id": "concurrent_start",
+        "identical": true
+      },
+      {
+        "id": "invalid_window_rejected",
+        "identical": true
+      },
+      {
+        "id": "stripe_auth_failure",
+        "identical": true
+      },
+      {
+        "id": "hubspot_rate_limited",
+        "identical": true
+      },
+      {
+        "id": "gmail_auth_failure",
+        "identical": true
+      },
+      {
+        "id": "slack_rate_limited",
+        "identical": true
+      },
+      {
+        "id": "restart_while_parked",
+        "identical": true
+      }
+    ]
+  },
+  {
+    "workflow": "privacy-erasure",
+    "all_check_ids_preserved": true,
+    "unchanged_executable_checks": 16,
+    "newly_executable": [
+      "crm_erasure_readback",
+      "privileged_account_flagged",
+      "hold_rechecked_at_write"
+    ],
+    "comparisons": [
+      {
+        "id": "baseline",
+        "identical": true
+      },
+      {
+        "id": "approve_erases",
+        "identical": true
+      },
+      {
+        "id": "rejected",
+        "identical": true
+      },
+      {
+        "id": "approve_by_stranger_refused",
+        "identical": true
+      },
+      {
+        "id": "unverified_no_erasure",
+        "identical": true
+      },
+      {
+        "id": "active_subscription_retains_billing",
+        "identical": true
+      },
+      {
+        "id": "crm_only",
+        "identical": true
+      },
+      {
+        "id": "nothing_held",
+        "identical": true
+      },
+      {
+        "id": "duplicate_start",
+        "identical": true
+      },
+      {
+        "id": "concurrent_start",
+        "identical": true
+      },
+      {
+        "id": "invalid_input_rejected",
+        "identical": true
+      },
+      {
+        "id": "workos_auth_failure",
+        "identical": true
+      },
+      {
+        "id": "hubspot_rate_limited",
+        "identical": true
+      },
+      {
+        "id": "stripe_auth_failure",
+        "identical": true
+      },
+      {
+        "id": "slack_rate_limited",
+        "identical": true
+      },
+      {
+        "id": "restart_while_parked",
+        "identical": true
+      }
+    ]
+  }
+]

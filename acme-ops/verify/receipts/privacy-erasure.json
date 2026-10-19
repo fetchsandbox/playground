@@ -1,13 +1,13 @@
 {
   "workflow": "privacy-erasure",
-  "app_version": "acme-ops-privacy-erasure-1.0.0-d530d19",
-  "session_id": "vs_eaa3310b4890",
-  "run_id": "vr_a90c4a759afa4198991c030878e173a5",
-  "receipt_url": "https://fetchsandbox.com/runs/110f044ec5?flow=vr_a90c4a759afa4198991c030878e173a5",
+  "app_version": "acme-ops-privacy-erasure-1.0.0-639dac1",
+  "session_id": "vs_dc51ae2f63fd",
+  "run_id": "vr_1fae88cbe29d455aa062b167be9977ed",
+  "receipt_url": "https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed",
   "status": null,
-  "verdict": "inconclusive",
-  "app_verified": false,
-  "complete": false,
+  "verdict": "verified",
+  "app_verified": true,
+  "complete": true,
   "checks": [
     {
       "id": "baseline",
@@ -91,19 +91,19 @@
     },
     {
       "id": "crm_erasure_readback",
-      "status": "unmeasured",
-      "explanation": "The HubSpot twin accepts POST /crm/v3/objects/contacts/gdpr-delete but keeps the contact, so the read-back reports drift on the twin."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "privileged_account_flagged",
-      "status": "unmeasured",
-      "explanation": "The WorkOS twin doesn't list a user's memberships (GET /user_management/organization_memberships?user_id returns a sample object) or keep role slugs. Covered by local tests."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "hold_rechecked_at_write",
-      "status": "unmeasured",
-      "explanation": "Needs a write to the twin between start and approval of one run. Covered by local tests."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     }
   ],
-  "recorded_at": "2026-10-19T14:22:31.749Z"
+  "recorded_at": "2026-10-19T14:54:24.804Z"
 }

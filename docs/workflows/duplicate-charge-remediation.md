@@ -128,15 +128,15 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `gmail_auth_failure` | A mailbox failure fails the notice draft only | Executable declaration; result comes from a receipt |
 | `slack_rate_limited` | Slack rate limiting fails the digest only | Executable declaration; result comes from a receipt |
 | `restart_while_parked` | A refund parked for approval survives a real runtime restart and is issued once when approved | Executable declaration; result comes from a receipt |
-| `disputed_charge_excluded` | A duplicate whose charge is disputed is excluded from refunds | The Stripe twin can't open a dispute on a charge created in the session (pm_card_createDispute is not simulated; seeded disputes reference charges that don't exist). Covered by local tests. |
-| `dispute_outage_fails_closed` | If the dispute list can't be read, nothing is refunded | Twin faults apply to the whole Stripe twin, so the dispute read can't fail on its own while the payment scan succeeds. Covered by local tests. |
-| `manual_refund_race` | A duplicate refunded by hand between scan and refund is not refunded again | Needs a write to the twin between two steps of one run. Covered by local tests (the refund re-checks the refundable amount at write time). |
+| `disputed_charge_excluded` | A duplicate with a linked dispute is excluded and no refund notice is drafted | Executable declaration; result comes from a receipt |
+| `dispute_outage_fails_closed` | Payment scan succeeds but a targeted dispute-read outage prevents every refund | Executable declaration; result comes from a receipt |
+| `manual_refund_race` | An independent full refund while approval is parked prevents another refund and notice | Executable declaration; result comes from a receipt |
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-duplicate-charge-remediation-1.0.0-d530d19`, verdict **inconclusive**, and statuses: **20 held**, **3 unmeasured**.
+The checked-in receipt records app version `acme-ops-duplicate-charge-remediation-1.0.0-639dac1`, verdict **verified**, and statuses: **23 held**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/1339114259?flow=vr_924f7a2f651e4f4f863a3545ccbba4d9) · [Saved result](../../acme-ops/verify/receipts/duplicate-charge-remediation.json)
+[Recorded receipt](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437) · [Saved result](../../acme-ops/verify/receipts/duplicate-charge-remediation.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 

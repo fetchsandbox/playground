@@ -134,15 +134,15 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `stripe_auth_failure` | With billing unreachable nothing billing-related is changed | Executable declaration; result comes from a receipt |
 | `slack_rate_limited` | Slack rate limiting fails the channel post only | Executable declaration; result comes from a receipt |
 | `restart_while_parked` | Erasures parked for approval survive a real runtime restart and run once when approved | Executable declaration; result comes from a receipt |
-| `crm_erasure_readback` | Reconcile confirms the HubSpot contact is gone after the GDPR delete | The HubSpot twin accepts POST /crm/v3/objects/contacts/gdpr-delete but keeps the contact, so the read-back reports drift on the twin. |
-| `privileged_account_flagged` | An account holding admin roles is flagged for security sign-off | The WorkOS twin doesn't list a user's memberships (GET /user_management/organization_memberships?user_id returns a sample object) or keep role slugs. Covered by local tests. |
-| `hold_rechecked_at_write` | A subscription started after discovery blocks anonymization and the response | Needs a write to the twin between start and approval of one run. Covered by local tests. |
+| `crm_erasure_readback` | Reconcile independently confirms the HubSpot contact is gone after GDPR deletion | Executable declaration; result comes from a receipt |
+| `privileged_account_flagged` | A real stored admin membership is detected and erasure waits for approval | Executable declaration; result comes from a receipt |
+| `hold_rechecked_at_write` | A subscription created by an independent operator after discovery prevents billing erasure and the completion draft | Executable declaration; result comes from a receipt |
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-privacy-erasure-1.0.0-d530d19`, verdict **inconclusive**, and statuses: **16 held**, **3 unmeasured**.
+The checked-in receipt records app version `acme-ops-privacy-erasure-1.0.0-639dac1`, verdict **verified**, and statuses: **19 held**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/110f044ec5?flow=vr_a90c4a759afa4198991c030878e173a5) · [Saved result](../../acme-ops/verify/receipts/privacy-erasure.json)
+[Recorded receipt](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed) · [Saved result](../../acme-ops/verify/receipts/privacy-erasure.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 
