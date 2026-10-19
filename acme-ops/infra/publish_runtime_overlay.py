@@ -30,6 +30,8 @@ out = pathlib.Path(a.out)
 out.mkdir(parents=True, exist_ok=True, mode=0o700)
 revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
 assert not subprocess.check_output(["git", "status", "--porcelain", "--", "src", "infra"], cwd=root).strip(), "Commit the deployment source first"
+# Compile this committed checkout; never label a stale dist/ bundle with its revision.
+subprocess.run(["npm", "run", "bundle"], cwd=root, check=True)
 host, image = a.base_image.split("/", 1)
 repository, digest = image.split("@", 1)
 assert digest.startswith("sha256:")
