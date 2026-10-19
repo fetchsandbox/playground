@@ -1,87 +1,68 @@
 # FetchSandbox Playground
 
-> **Open-source test project for [FetchSandbox](https://fetchsandbox.com).**
-> Brownfield apps with planted bugs in real API integrations — plus a
-> greenfield app to wire an integration from scratch. Run them
-> against your agent, write up what you found, open a PR. Merged PRs
-> appear on your GitHub contribution graph and in the
-> [contributors](https://github.com/fetchsandbox/playground/graphs/contributors)
-> list.
+Open-source integration exercises and Acme business workflows for testing agent-built applications with [FetchSandbox](https://fetchsandbox.com).
 
-Clone, run, point your agent at it, see whether FetchSandbox catches the bug.
+**[Browse the business workflow catalog](docs/WORKFLOWS.md)** · **[Verification guide](docs/VERIFICATION.md)** · **[20-minute integration exercise](TESTING.md)**
 
-**👉 New here? Start with [TESTING.md](TESTING.md)** — a 20-minute, two-task test drive (prove a fresh integration + catch a planted bug).
+## Choose what you want to build or verify
 
-## What's in here
+| Collection | Business/use case | Stack and availability |
+|---|---|---|
+| [Acme Operations](acme-ops/README.md) | Twenty workflows across Support, Customer Experience, Sales, Finance, IT, Quality and other departments | TypeScript; independent AgentCore runtimes; code on `main` |
+| [Customer Operations](docs/workflows/customer-operations.md) | Account research, quote, billing, survey and approved dispatch | TypeScript; code on `main`; no package-specific FetchSandbox proof runner on `main` |
+| [Quote, customer handoff and refund examples](docs/WORKFLOWS.md#separate-branch-examples) | Commercial approvals, onboarding handoffs and evidence-based refunds | Separate branches/PRs; not bundled into `main` |
+| [Small provider apps](docs/WORKFLOWS.md#small-integration-apps-and-planted-bug-exercises) | Focused integrations, including planted-bug and greenfield exercises | Mostly Python; read each app's README |
+| [Invoice Watch](invoice-watch/README.md) | Subscription-invoice bot | BDK; separate build/eval loop |
 
-| App | Stack |
-|---|---|
-| [apps/stripe-receipts](apps/stripe-receipts/CURSOR.md) | FastAPI + Stripe + Resend, buggy baseline and repaired example |
-| [apps/stripe](apps/stripe) | FastAPI + Stripe SDK |
-| [apps/resend](apps/resend) | FastAPI + Resend webhooks |
-| [apps/clerk](apps/clerk) | FastAPI + Clerk auth |
-| [apps/agentmail](apps/agentmail) | FastAPI + AgentMail |
-| [apps/surge](apps/surge) | FastAPI + Surge messaging |
-| [apps/descope](apps/descope) | FastAPI + Descope agentic auth |
-| [apps/descope-onboarding](apps/descope-onboarding) | FastAPI + Descope (greenfield — auth is a placeholder) |
-| [apps/hubspot](apps/hubspot) | FastAPI + HubSpot CRM v3 |
-| [customer-ops-agents](customer-ops-agents) | TypeScript on Amazon Bedrock AgentCore: parallel Claude agents over Stripe, HubSpot, Gmail, Slack (greenfield) |
-| [acme-ops](acme-ops) | Four independent AgentCore runtimes for ACME (Support, Finance, Customer Success, Sales→CS): parallel agents over Zendesk, HubSpot, Gmail, Stripe, Calendar, Slack, proven through the FetchSandbox managed relay (greenfield) |
+These collections are not all planted-bug apps and are not all 50–150-line Python examples. Some are substantial multi-agent workflows. Read the selected business guide for its actual behavior and limitations.
 
-Every app except `apps/descope-onboarding` is a brownfield integration with a
-planted bug — what the bug is, is for you (and your agent) to discover.
-`apps/descope-onboarding` is the greenfield case: nothing is broken there, the
-task is to wire the integration from scratch.
-
-Each app is ~50–150 lines of Python, runs locally in seconds.
-
-## How to run
-
-Pick an app, e.g. stripe:
+## Start locally
 
 ```bash
 git clone https://github.com/fetchsandbox/playground.git
-cd playground/apps/stripe
-pip install -r requirements.txt
-uvicorn main:app --reload
+cd playground
 ```
 
-Open the project in [Cursor](https://cursor.com), [Claude Code](https://docs.anthropic.com/claude/docs/claude-code),
-or any MCP-capable editor. The `.mcp.json` in each app folder is already
-wired to FetchSandbox.
+Pick a guide from the catalog and follow its package setup. Use your own private test credentials and synthetic data. Cloud deployment and live-provider access are optional, separate steps; cloning the repo grants no access to the hosted Acme demo.
 
-Then ask your agent:
+For example, prepare the Acme package:
 
+```bash
+cd acme-ops
+npm ci
+npm run check
+npm test
+npm run bundle
 ```
-./fetchsandbox something's off with our stripe integration — investigate, fix it, and prove it.
+
+## Verification is part of development
+
+Connect the [FetchSandbox MCP](https://fetchsandbox.com/mcp) in your coding client and follow its current authentication/setup instructions. The root `.mcp.json` and `.cursor/mcp.json` declare a key-free MCP server (pinned to `0.7.29`); approve workspace trust and authenticate in your client as needed. Root [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) and the Cursor always-on rule guide supported coding agents through app-owned contracts and measured proof. They do not install a connector, grant credentials, force every client to read instructions or instrument deployed runtime agents.
+
+A useful request to your coding agent:
+
+> Read this workflow's business guide and implementation. Establish its FetchSandbox contract within the app's actual scope. Verify it against isolated twins, investigate failures, fix narrowly, and report the receipt, saved-state evidence, versions and remaining blockers.
+
+For Acme workflows, the existing runner is:
+
+```bash
+cd acme-ops
+node verify/relay-proof.mjs support-escalation
 ```
 
-The agent will call FetchSandbox's brain, pick a workflow, run it, and
-hand back a receipt URL. That's the proof artifact.
+This requires FetchSandbox authentication and managed-relay access and uses network resources. A checked-in receipt is historical: it does not prove your changed code. Keep local tests, twin proof, cloud deployment, native triggers and real customer delivery separate. Read [the verification guide](docs/VERIFICATION.md) before claiming a result.
 
-Each app's README describes what the app does and how to run it.
+## Contribute
 
-## Send us back what you saw
+Fork the repo and open a PR with the business need, source changes, relevant contract, sanitized evidence/receipt and explicit limits. For an exercise, use [FINDINGS_TEMPLATE.md](FINDINGS_TEMPLATE.md). For a new business workflow, use [the workflow documentation requirements](docs/WORKFLOW_TEMPLATE.md). Honest failed or blocked results are useful; do not remove cases to obtain a passing summary.
 
-1. **Fork the repo:** [github.com/fetchsandbox/playground/fork](https://github.com/fetchsandbox/playground/fork) (one click).
-2. After running the demo, paste this to your agent:
+Documentation checks:
 
-   ```
-   save my session as a findings markdown file at findings/<today's date>-<app>-<my-github-username>.md, commit on a new branch named for me, push to my fork.
-   ```
-
-   The agent writes the file from the session it just ran and pushes the branch to your fork.
-3. **Open a PR** from your fork against `main` on this repo.
-
-Prefer to do it by hand? Copy [FINDINGS_TEMPLATE.md](FINDINGS_TEMPLATE.md)
-into `findings/` in your fork, fill it in, commit, push, PR.
-
-Honest "it didn't work" is more useful than a green-checkmark write-up.
-
-Merged PRs appear on your GitHub contribution graph and on the
-[contributors](https://github.com/fetchsandbox/playground/graphs/contributors)
-page.
+```bash
+python3 scripts/workflow_docs.py --check
+python3 scripts/check_doc_links.py
+```
 
 ## License
 
-MIT — fork it, modify it, plant your own bugs.
+[MIT](LICENSE). Fork and adapt the examples. Demo policies and synthetic data are not production certification or your company's approved operating policy.

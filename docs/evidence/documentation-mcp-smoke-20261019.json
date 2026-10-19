@@ -1,0 +1,12 @@
+{
+  "server": {
+    "name": "fetchsandbox",
+    "version": "0.7.29"
+  },
+  "tool_count": 19,
+  "required_tools_discovered": [
+    "validate_integration",
+    "manage_tunnel"
+  ],
+  "scope": "Read-only JSON-RPC initialize/tools-list through the root-configured npm MCP. No verification session, provider call or native editor acceptance run."
+}

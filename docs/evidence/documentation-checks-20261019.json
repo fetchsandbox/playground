@@ -1,0 +1,24 @@
+{
+  "scope": "Workflow documentation and default coding-agent verification setup",
+  "workflow_guides": 24,
+  "generated_from_code_contracts_and_receipts": 20,
+  "additional_guides": ["Customer Operations on main", "Quote agent on separate branch", "Customer Handoff on separate branch", "Refund Operations on separate branch"],
+  "checks": {
+    "schema_validated_baseline_inputs": 20,
+    "local_link_targets": 245,
+    "guide_drift_negative_check": "rejected with exit 1; original restored",
+    "broken_link_negative_check": "rejected with exit 1; original restored",
+    "typescript_check": "passed",
+    "relay_runner_syntax_check": "passed",
+    "mcp_client_configs_match_runner_pin": "0.7.29",
+    "root_mcp_initialize_and_tools_list": "passed; 19 tools observed",
+    "git_diff_check": "passed"
+  },
+  "not_measured": [
+    "Native Cursor or Claude Code automatically loading every instruction",
+    "Fresh FetchSandbox application verification run",
+    "External link availability or Markdown fragment anchors",
+    "Cloud deployment or live-provider behavior"
+  ],
+  "publication": "Documentation PR; no business workflow runtime deployed by this change"
+}

@@ -5,6 +5,8 @@ to run two real tasks against a Descope integration, then tell us what you saw.
 No Descope account, no API keys — everything runs against FetchSandbox's hosted
 sandboxes.
 
+For enterprise workflows, use the [business catalog](docs/WORKFLOWS.md) and [verification guide](docs/VERIFICATION.md). This exercise is separate from their saved receipts.
+
 ## Setup
 
 1. **Fork + clone** this repo, open it in **Cursor** or **Claude Code** (or any
@@ -12,7 +14,7 @@ sandboxes.
 2. Each app has a `.mcp.json` already wired to FetchSandbox. Confirm the
    `fetchsandbox` server is **connected** (in Claude Code: `/mcp`).
 
-> If it asks for an API key or login, something's wrong — note it in your report.
+> Follow the current [MCP setup/authentication instructions](https://fetchsandbox.com/mcp). FetchSandbox authentication may be required; this is separate from obtaining live provider credentials. Record setup blockers rather than treating them as app failures.
 
 ## Task 1 — Fresh integration (greenfield)
 

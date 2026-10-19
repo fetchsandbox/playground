@@ -1,0 +1,76 @@
+# Workflow catalog
+
+Start with a business need, then read the workflow guide before running it.
+This catalog describes repository availability, not the number of runtimes in a private AWS account.
+The repository is public and MIT-licensed; your own provider accounts, credentials and deployment are required.
+
+## Acme workflows on main
+
+Each guide includes a business need, department/team, agent roles, input, writes, approval gates, setup, declared scenarios and the exact historical receipt status.
+
+| Workflow | Department / team | Roles | Business guide |
+|---|---|---:|---|
+| Joiner, mover, leaver access | IT / `it-identity` | 2 | [access-jml](workflows/access-jml.md) |
+| Churn-risk sweep | Customer Success / `cs-ops` | 6 | [churn-risk-sweep](workflows/churn-risk-sweep.md) |
+| Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
+| Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |
+| Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
+| Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |
+| Field service dispatch | Service / `field-service` | 4 | [field-service-dispatch](workflows/field-service-dispatch.md) |
+| Incident communications | IT / `it-operations` | 2 | [incident-comms](workflows/incident-comms.md) |
+| SaaS license reclaim | IT / `it-asset-mgmt` | 1 | [license-reclaim](workflows/license-reclaim.md) |
+| Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
+| Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
+| Product change and end-of-life notices | Engineering / `product-engineering` | 3 | [pcn-eol-notice](workflows/pcn-eol-notice.md) |
+| Product cancellation and refund | Customer Experience / `cx-retention` | 4 | [product-cancellation](workflows/product-cancellation.md) |
+| Returns and warranty (RMA) | Customer Experience / `cx-service` | 4 | [returns-warranty](workflows/returns-warranty.md) |
+| Revenue reconciliation | Finance / `revops-finance` | 3 | [revenue-reconciliation](workflows/revenue-reconciliation.md) |
+| RFQ to quote | Sales / `sales-ops` | 4 | [rfq-quote](workflows/rfq-quote.md) |
+| Security questionnaire responder | IT / `it-security` | 3 | [security-questionnaire](workflows/security-questionnaire.md) |
+| Service and monitoring renewals | Customer Success / `cs-ops` | 3 | [service-renewals](workflows/service-renewals.md) |
+| Supplier nonconformance and corrective action | Quality / `supplier-quality` | 3 | [supplier-ncr](workflows/supplier-ncr.md) |
+| Support escalation | Support / `support-ops` | 5 | [support-escalation](workflows/support-escalation.md) |
+
+[Customer Operations](workflows/customer-operations.md) is also on `main`: six specialist roles plus an approval-controlled dispatch stage. Its own FetchSandbox runner/receipt is not present on `main`.
+
+## Separate branch examples
+
+These guides describe code outside `main`; follow the source branch/PR and its setup instructions. Links do not imply a merged or verified release.
+
+| Example | Owning department/team | Roles | Guide |
+|---|---|---:|---|
+| Original quote agent | Revenue Operations / Sales Support and Quote Operations | 1 | [Quote agent](workflows/quote-agent.md) |
+| Customer handoff | Customer Onboarding Operations / Customer Onboarding and Billing Operations | 5 | [Handoff](workflows/customer-handoff.md) |
+| Refund eligibility and resolution | Customer Service and Revenue Operations / Refund Assurance | 6 | [Refund operations](workflows/refund-operations.md) |
+
+[PR #68](https://github.com/fetchsandbox/playground/pull/68) proposes duplicate-charge remediation and privacy-erasure workflows. They are not included as merged or deployed examples here.
+
+## Small integration apps and planted-bug exercises
+
+These are separate from the enterprise workflow catalog. Read their own setup and findings; do not infer a blanket verification result.
+
+- [agentmail](../apps/agentmail/README.md)
+- [clerk](../apps/clerk/README.md)
+- [descope](../apps/descope/README.md)
+- [descope-onboarding](../apps/descope-onboarding/README.md)
+- [hubspot](../apps/hubspot/README.md)
+- [paddle/01-subscriptions](../apps/paddle/01-subscriptions/README.md)
+- [paddle/02-billing](../apps/paddle/02-billing/README.md)
+- [paddle/03-entitlements](../apps/paddle/03-entitlements/README.md)
+- [paddle/04-upgrades](../apps/paddle/04-upgrades/README.md)
+- [paddle/05-trials](../apps/paddle/05-trials/README.md)
+- [paddle/06-pause-resume](../apps/paddle/06-pause-resume/README.md)
+- [paddle/07-dunning](../apps/paddle/07-dunning/README.md)
+- [paddle/08-checkout](../apps/paddle/08-checkout/README.md)
+- [paddle/09-seats](../apps/paddle/09-seats/README.md)
+- [paddle/10-refunds](../apps/paddle/10-refunds/README.md)
+- [resend](../apps/resend/README.md)
+- [stripe](../apps/stripe/README.md)
+- [stripe-receipts](../apps/stripe-receipts/README.md)
+- [surge](../apps/surge/README.md)
+
+[Invoice Watch](../invoice-watch/README.md) is a BDK-based project with its own agent instructions and eval loop.
+
+## Contribution and verification
+
+Read [AGENTS.md](../AGENTS.md), [verification](VERIFICATION.md) and the [new-workflow template](WORKFLOW_TEMPLATE.md). Coding-agent guidance makes FetchSandbox the default for integration changes; a receipt is still required to establish measured behavior. Historical blockers must be reassessed against current MCP discovery, not silently discarded.
