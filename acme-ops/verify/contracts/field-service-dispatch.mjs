@@ -13,6 +13,10 @@ const alarm = (caseId, over = {}) => ({
   ...over,
 });
 const afterHours = (caseId) => alarm(caseId, { afterHours: true });
+// The booking action exists only when a technician slot is found. A critical alarm searches one weekday of the
+// shared technician calendars, which other checks book into, so whether anything parked depended on when the
+// proof ran. A minor after-hours alarm on a calendar no other check books searches five weekdays and always parks.
+const restartAlarm = alarm("restart", { afterHours: true, technicianCalendars: ["tech.restart-check@acme.example"], alarm: { ...alarm("restart").alarm, severity: "minor" } });
 const notified = [action("asana.create_work_order", "applied"), action("twilio.notify_site", "applied"), action("slack.post_dispatch", "applied")];
 const parked = [eq("phase", "AWAITING_APPROVAL"), action("calendar.book_technician", "pending_approval")];
 
@@ -34,7 +38,7 @@ export const checks = [
   faulted("calendar_auth_failure", "Without technician calendars no booking is attempted; the work order and SMS still go out", "google-calendar", "auth_failure", [agent("technician-availability", "failed"), noAction("calendar.book_technician"), action("asana.create_work_order", "applied")]),
   faulted("stripe_auth_failure", "If the contract can't be verified the visit is treated as billable and parked for approval", "stripe", "auth_failure", [agent("service-contract", "failed"), eq("phase", "AWAITING_APPROVAL"), action("calendar.book_technician", "pending_approval")]),
   faulted("asana_rate_limited", "Asana rate limiting fails the work order only; the site is still texted", "asana", "rate_limited", [action("asana.create_work_order", "failed"), action("twilio.notify_site", "applied")]),
-  check("restart_while_parked", "An after-hours booking parked for approval survives a runtime restart and is booked once approved", [start("restart_while_parked", afterHours("restart")), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], all(runs([eq("phase", "DONE")]), runs([action("calendar.book_technician", "applied", 1, [eq("attempts", 1)])]))),
+  check("restart_while_parked", "An after-hours booking parked for approval survives a runtime restart and is booked once approved", [start("restart_while_parked", restartAlarm), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], all(runs([eq("phase", "DONE")]), runs([action("calendar.book_technician", "applied", 1, [eq("attempts", 1)])]))),
   blocked("parts_reservation", "Spare parts for the asset are reserved from inventory with the work order", "setup_missing", "No ERP/inventory twin (SAP/Oracle/NetSuite) in FetchSandbox; parts are listed in the work order for the technician to pick manually.", ["acme-ops/src/workflows/field-service-dispatch.ts asana.create_work_order", "validate_integration providers:[netsuite|sap] → 'Unknown providers'"]),
   blocked("calendar_booking_readback", "Reconciliation reads the booked visit back from the technician's calendar", "observation_missing", "The Calendar twin returns 404 on events.get right after a successful insert, so the booking can't be read back.", ["acme-ops/src/workflows/field-service-dispatch.ts calendar.book_technician", "GET /calendar/v3/calendars/{id}/events/{eventId} → 404 on the twin"]),
 ];

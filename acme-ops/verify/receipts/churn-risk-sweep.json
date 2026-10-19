@@ -1,9 +1,9 @@
 {
   "workflow": "churn-risk-sweep",
-  "app_version": "acme-ops-churn-risk-sweep-1.0.0-dbab6f7",
-  "session_id": "vs_6eacd16d5f63",
-  "run_id": "vr_4750363d6121468999f2717ee7fa0956",
-  "receipt_url": "https://fetchsandbox.com/runs/4c1386197c?flow=vr_4750363d6121468999f2717ee7fa0956",
+  "app_version": "acme-ops-churn-risk-sweep-1.0.0-f5428db",
+  "session_id": "vs_c68ed11faabe",
+  "run_id": "vr_190e13fdeb6a493b9e53a0999c6a3541",
+  "receipt_url": "https://fetchsandbox.com/runs/48674e7c7a?flow=vr_190e13fdeb6a493b9e53a0999c6a3541",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -75,10 +75,15 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
+      "id": "inbox_signal",
+      "status": "unmeasured",
+      "explanation": "The Gmail twin does not simulate message search, so the inbox-signal agent fails on every run and the sweep's outcome is partial; scoring proceeds without the inbox signal. The baseline therefore asserts the digest, draft and parked QBR, not outcome ok."
+    },
+    {
       "id": "support_signal",
       "status": "unmeasured",
       "explanation": "FetchSandbox has no Zendesk twin yet; the support signal is reported in signalGaps."
     }
   ],
-  "recorded_at": "2026-10-17T06:23:51.264Z"
+  "recorded_at": "2026-10-19T13:55:32.016Z"
 }
