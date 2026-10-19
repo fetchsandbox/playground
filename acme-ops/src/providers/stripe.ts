@@ -240,6 +240,18 @@ export class StripeClient {
     return (await this.http.request<StripeRefund>("POST", "/v1/refunds", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
   }
 
+  /** Open and closed disputes; callers match them to their own charges. */
+  listDisputes() {
+    return this.listAll<{ id: string; charge: string | null; payment_intent?: string | null; status: string }>("/v1/disputes", {}, 500);
+  }
+
+  /** Strips personal data but keeps the customer, so invoices and payments stay for the legally required retention period. */
+  async anonymizeCustomer(id: string, placeholderEmail: string, metadata: Record<string, string>): Promise<StripeCustomer> {
+    const form: Record<string, string> = { email: placeholderEmail, name: "Erased customer", phone: "", description: "" };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeCustomer>("POST", `/v1/customers/${encodeURIComponent(id)}`, { form })).body;
+  }
+
   async getBalanceTransaction(customer: string, id: string): Promise<{ id: string; amount: number; currency: string; metadata?: Record<string, string> | null }> {
     return (await this.http.request<any>("GET", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions/${encodeURIComponent(id)}`)).body;
   }
