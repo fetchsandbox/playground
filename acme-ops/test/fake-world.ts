@@ -239,7 +239,7 @@ export async function startWorld() {
     // ---- Slack
     if (req.method === "POST" && path === "/api/chat.postMessage") {
       if (!state.slack.channels.has(body.channel)) return send(200, { ok: false, error: "channel_not_found" });
-      const msg = { channel: body.channel, text: body.text, ts: `${Date.now()}.${++seq}` };
+      const msg = { channel: body.channel, text: body.text, ts: `${Date.now()}.${++seq}`, ...(body.thread_ts ? { thread_ts: body.thread_ts } : {}) };
       state.slack.messages.push(msg);
       return send(200, { ok: true, channel: msg.channel, ts: msg.ts });
     }

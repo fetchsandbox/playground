@@ -156,12 +156,13 @@ const Shared = {
   opsChannel: ChannelId,
   /** Square location that issues ACME gift cards; without it gift cards are not offered. */
   giftCardLocationId: z.string().min(1).max(64).optional(),
+  opsThreadTs: z.string().regex(/^\d+\.\d+$/).optional(),
   approvers: Approvers,
 };
 
 const RequestInput = z.object({
   stage: z.literal("request"),
-  channel: z.enum(["email", "phone"]),
+  channel: z.enum(["email", "phone", "slack"]),
   /** The Zendesk ticket the email (or call) created. Opened by this runtime when absent. */
   ticketId: TicketId.optional(),
   /** Which subscription; otherwise the customer's only live one (optionally of `productId`). */
@@ -293,7 +294,7 @@ function ackMessage(input: Request, caseRef: string, product: string): Message {
   return {
     marker,
     body:
-      `Hi ${firstName(input)},\n\nWe've received your request to cancel ${product}${input.channel === "phone" ? " from your call with us" : ""}. Here is what happens next:\n\n` +
+      `Hi ${firstName(input)},\n\nWe've received your request to cancel ${product}${input.channel === "phone" ? " from your call with us" : input.channel === "slack" ? " from your Slack message" : ""}. Here is what happens next:\n\n` +
       "1. We check your plan against ACME's cancellation and refund policy.\n" +
       "2. If the policy allows it, we cancel right away. If your plan has a commitment term, a team lead reviews the request first.\n" +
       "3. If a refund is due, we'll ask how you'd like to receive it: back to your original payment method, as ACME store credit, or as an ACME gift card.\n" +
@@ -401,14 +402,17 @@ function plausible(...times: (number | string | null | undefined)[]): number | u
 // ---------------------------------------------------------------------------
 
 async function researchRequest(input: Request, stripe: StripeClient, now: number): Promise<Research> {
-  const customer = await stripe.findCustomerByEmail(input.customer.email);
-  if (!customer) throw new FatalError(`no Stripe customer for ${input.customer.email}`);
+  let customer: Awaited<ReturnType<StripeClient["getCustomer"]>>;
   let sub: StripeSubscription;
   if (input.subscriptionId) {
     sub = await stripe.getSubscription(input.subscriptionId);
-    // Only the requester's own subscription is ever cancelled.
-    if (sub.customer !== customer.id) throw new FatalError(`${input.subscriptionId} does not belong to ${input.customer.email}`);
+    customer = await stripe.getCustomer(sub.customer);
+    // Check the actual owner, not an arbitrary same-email customer.
+    if (customer.email?.toLowerCase() !== input.customer.email.toLowerCase()) throw new FatalError(`${input.subscriptionId} does not belong to ${input.customer.email}`);
   } else {
+    const customers = await stripe.findCustomersByEmail(input.customer.email);
+    if (customers.length !== 1) throw new FatalError(`${customers.length} Stripe customers match; specify a subscription to verify ownership`);
+    customer = customers[0]!;
     const live = (await stripe.listSubscriptions(customer.id)).filter((s) => s.customer === customer.id && s.status !== "canceled" && s.status !== "incomplete_expired");
     const product = (s: StripeSubscription) => {
       const p = s.items?.data?.[0]?.price as unknown;
@@ -440,8 +444,9 @@ async function researchRequest(input: Request, stripe: StripeClient, now: number
 }
 
 async function readOffer(input: Choice, stripe: StripeClient): Promise<Offer> {
-  const customer = await stripe.findCustomerByEmail(input.customer.email);
-  if (!customer) throw new FatalError(`no Stripe customer for ${input.customer.email}`);
+  const matches = (await stripe.findCustomersByEmail(input.customer.email)).filter((c) => c.metadata?.[ticketKey(input.ticketId)]);
+  if (matches.length !== 1) throw new FatalError(`${matches.length} cancellation customers match ticket ${input.ticketId}`);
+  const customer = matches[0]!;
   const subId = customer.metadata?.[ticketKey(input.ticketId)];
   if (!subId) throw new FatalError(`no cancellation on ticket ${input.ticketId} for ${input.customer.email}`);
   const sub = await stripe.getSubscription(subId);
@@ -588,7 +593,7 @@ export const productCancellation: WorkflowDef<Input> = {
   org: "Customer Experience",
   team: "cx-retention",
   description:
-    "Cancellation requests by email or phone: open or annotate the Zendesk ticket, acknowledge the customer, research the subscription against the cancellation and refund policy, cancel when the policy allows (exceptions wait for approval), offer the refund methods the policy allows and, when the customer picks one on the ticket, refund to the original payment (Stripe), as store credit (Stripe balance) or as a gift card (Square), then confirm on the ticket.",
+    "Cancellation requests by email, phone or Slack: open or annotate the Zendesk ticket, acknowledge the customer, research the subscription against the cancellation and refund policy, cancel when the policy allows (exceptions wait for approval), offer the refund methods the policy allows and, when the customer picks one on the ticket, refund to the original payment (Stripe), as store credit (Stripe balance) or as a gift card (Square), then confirm on the ticket.",
   input: Input,
   agents: [
     {
@@ -663,7 +668,7 @@ export const productCancellation: WorkflowDef<Input> = {
   },
 
   catalog: [
-    { kind: "zendesk.create_ticket", provider: "zendesk", gate: "auto", description: "Open the ticket for a request that arrived by phone without one" },
+    { kind: "zendesk.create_ticket", provider: "zendesk", gate: "auto", description: "Open the ticket for a request that arrived without one" },
     { kind: "zendesk.acknowledge", provider: "zendesk", gate: "auto", description: "Public reply (emailed by Zendesk) explaining the cancellation process" },
     { kind: "zendesk.policy_note", provider: "zendesk", gate: "auto", description: "Internal note with the policy research and the decision" },
     { kind: "stripe.cancel_subscription", provider: "stripe", gate: "auto", description: "Cancel the subscription when the policy allows it; recording the refund offer on it" },
@@ -685,7 +690,7 @@ export const productCancellation: WorkflowDef<Input> = {
 // Plans
 // ---------------------------------------------------------------------------
 
-function slackPost(id: string, kind: string, channel: string, text: string, summary: Record<string, unknown>): PlannedAction<Input> {
+function slackPost(id: string, kind: string, channel: string, text: string, summary: Record<string, unknown>, threadTs?: string): PlannedAction<Input> {
   return {
     id,
     kind,
@@ -694,7 +699,7 @@ function slackPost(id: string, kind: string, channel: string, text: string, summ
     gate: "auto",
     summary: { channel, ...summary },
     async execute({ providers }) {
-      const m = await providers.slack!.postMessage(channel, text);
+      const m = await providers.slack!.postMessage(channel, text, undefined, threadTs);
       return { ref: m.ts, detail: { channel: m.channel } };
     },
   };
@@ -742,7 +747,7 @@ function planRequest(input: Request, d: RequestDecision, results: AgentResults):
           prior ??
           (await zd.createTicket({
             subject: `Cancellation request: ${r?.productName ?? "subscription"}`,
-            body: `Cancellation requested by ${input.channel === "phone" ? "phone" : "email"}.\nCustomer said: ${plain(input.message, 3000)}`,
+            body: `Cancellation requested by ${input.channel}.\nCustomer said: ${plain(input.message, 3000)}`,
             requester: { email: input.customer.email, name: input.customer.name },
             tags: ["cancellation", `via_${input.channel}`],
             externalId: d.caseRef,
@@ -817,7 +822,7 @@ function planRequest(input: Request, d: RequestDecision, results: AgentResults):
       : d.outcome === "exception"
         ? `:raised_hand: ${d.caseRef}: ${input.customer.email} asks to cancel ${r.subscriptionId} (${r.productName}) ${d.reason}. Approval needed before cancelling.`
         : `:information_source: ${d.caseRef}: ${input.customer.email} asked to cancel ${r.subscriptionId}: ${d.reason}. Nothing cancelled; needs a person.`;
-  actions.push(slackPost("slack.post_case", "slack.post_case", input.opsChannel, text, { caseRef: d.caseRef, decision: d.outcome }));
+  actions.push(slackPost("slack.post_case", "slack.post_case", input.opsChannel, text, { caseRef: d.caseRef, decision: d.outcome }, input.opsThreadTs));
   return actions;
 }
 
@@ -915,7 +920,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
       : d.outcome === "clarify"
         ? `:speech_balloon: ${d.caseRef}: ${d.reason}; asked ${input.customer.email} again.`
         : `:warning: ${d.caseRef}: refund for ${input.customer.email} not processed (${d.reason}); needs a person.`;
-  actions.push(slackPost("slack.post_refund", "slack.post_refund", input.opsChannel, text, { caseRef: d.caseRef, decision: d.outcome, method: d.method }));
+  actions.push(slackPost("slack.post_refund", "slack.post_refund", input.opsChannel, text, { caseRef: d.caseRef, decision: d.outcome, method: d.method }, input.opsThreadTs));
   return actions;
 }
 

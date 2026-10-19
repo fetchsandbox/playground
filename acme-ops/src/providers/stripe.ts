@@ -105,10 +105,12 @@ export class StripeClient {
   }
 
   async findCustomerByEmail(email: string): Promise<StripeCustomer | undefined> {
+    return (await this.findCustomersByEmail(email)).sort((a, b) => a.id.localeCompare(b.id))[0];
+  }
+
+  async findCustomersByEmail(email: string): Promise<StripeCustomer[]> {
     const matches = await this.listAll<StripeCustomer>("/v1/customers", { email }, 100);
-    // Some backends ignore the filter; never trust a match we didn't check.
-    const exact = matches.filter((c) => c.email?.toLowerCase() === email.toLowerCase());
-    return exact.sort((a, b) => a.id.localeCompare(b.id))[0];
+    return matches.filter((c) => c.email?.toLowerCase() === email.toLowerCase());
   }
 
   listCustomers(max?: number) {
