@@ -140,9 +140,9 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-privacy-erasure-1.0.0-72ac909`, verdict **inconclusive**, and statuses: **16 held**, **3 unmeasured**.
+The checked-in receipt records app version `acme-ops-privacy-erasure-1.0.0-d530d19`, verdict **inconclusive**, and statuses: **16 held**, **3 unmeasured**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/c99560fa28?flow=vr_1401b168edf14f7bbf7368883994577a) · [Saved result](../../acme-ops/verify/receipts/privacy-erasure.json)
+[Recorded receipt](https://fetchsandbox.com/runs/110f044ec5?flow=vr_a90c4a759afa4198991c030878e173a5) · [Saved result](../../acme-ops/verify/receipts/privacy-erasure.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 

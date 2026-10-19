@@ -1,9 +1,9 @@
 {
   "workflow": "duplicate-charge-remediation",
-  "app_version": "acme-ops-duplicate-charge-remediation-1.0.0-72ac909",
-  "session_id": "vs_b453e4bf15b8",
-  "run_id": "vr_d1c0a9d00be3459ebdeca462bebcf8c4",
-  "receipt_url": "https://fetchsandbox.com/runs/beb3fd7432?flow=vr_d1c0a9d00be3459ebdeca462bebcf8c4",
+  "app_version": "acme-ops-duplicate-charge-remediation-1.0.0-d530d19",
+  "session_id": "vs_4a37bba1f0fc",
+  "run_id": "vr_924f7a2f651e4f4f863a3545ccbba4d9",
+  "receipt_url": "https://fetchsandbox.com/runs/1339114259?flow=vr_924f7a2f651e4f4f863a3545ccbba4d9",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -125,5 +125,5 @@
       "explanation": "Needs a write to the twin between two steps of one run. Covered by local tests (the refund re-checks the refundable amount at write time)."
     }
   ],
-  "recorded_at": "2026-10-19T01:55:13.186Z"
+  "recorded_at": "2026-10-19T14:19:28.132Z"
 }

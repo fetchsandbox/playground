@@ -1,9 +1,9 @@
 {
   "workflow": "privacy-erasure",
-  "app_version": "acme-ops-privacy-erasure-1.0.0-72ac909",
-  "session_id": "vs_bdfbe22d082e",
-  "run_id": "vr_1401b168edf14f7bbf7368883994577a",
-  "receipt_url": "https://fetchsandbox.com/runs/c99560fa28?flow=vr_1401b168edf14f7bbf7368883994577a",
+  "app_version": "acme-ops-privacy-erasure-1.0.0-d530d19",
+  "session_id": "vs_eaa3310b4890",
+  "run_id": "vr_a90c4a759afa4198991c030878e173a5",
+  "receipt_url": "https://fetchsandbox.com/runs/110f044ec5?flow=vr_a90c4a759afa4198991c030878e173a5",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -105,5 +105,5 @@
       "explanation": "Needs a write to the twin between start and approval of one run. Covered by local tests."
     }
   ],
-  "recorded_at": "2026-10-19T01:58:24.206Z"
+  "recorded_at": "2026-10-19T14:22:31.749Z"
 }
