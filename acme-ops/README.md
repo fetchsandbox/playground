@@ -234,6 +234,18 @@ Every gated action shows up in the run view as `pending_approval` with its summa
 was gated), approvals are restricted to the named approvers (`403` for anyone else), and `reconcile`
 re-reads what was written; that is the surface LoopLabs uses to enforce and monitor these agents.
 
+Relay proofs (per-check fixtures seeded on the twins):
+[`duplicate-charge-remediation`](https://fetchsandbox.com/runs/beb3fd7432?flow=vr_d1c0a9d00be3459ebdeca462bebcf8c4)
+**20 held, 0 violated** (auto refund, reconcile, large refund parked / approved / rejected / stranger refused,
+re-run refunds nothing, ambiguous and different purchases left alone, two customers in parallel, ceiling halts,
+duplicate and 4x concurrent triggers, Stripe/HubSpot/Gmail/Slack faults, real restart; 3 blocked: disputes on
+session charges, an endpoint-level dispute outage and a mid-run manual refund can't be produced on the twin).
+[`privacy-erasure`](https://fetchsandbox.com/runs/c99560fa28?flow=vr_1401b168edf14f7bbf7368883994577a)
+**16 held, 0 violated** (parked erasures, approve with Stripe and WorkOS read-back, reject, stranger refused,
+unverified, subscription hold, CRM-only, nothing held, duplicate and concurrent, WorkOS/HubSpot/Stripe/Slack
+faults, real restart; 3 blocked: the HubSpot twin's GDPR delete doesn't remove the contact, the WorkOS twin
+doesn't list memberships, and a mid-run subscription can't be produced on the twin).
+
 ## Deploy (one AgentCore runtime per workflow)
 
 ```bash
