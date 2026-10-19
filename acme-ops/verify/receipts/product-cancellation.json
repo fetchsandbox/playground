@@ -1,13 +1,18 @@
 {
   "workflow": "product-cancellation",
-  "app_version": "acme-ops-product-cancellation-1.0.0-4f1894b",
-  "session_id": "vs_91741859c61e",
-  "run_id": "vr_f8571d4179e047e784d4be7687432230",
-  "receipt_url": "https://fetchsandbox.com/runs/3cada5c65b?flow=vr_f8571d4179e047e784d4be7687432230",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-product-cancellation-1.0.0-269e897",
+  "session_id": "vs_d1a523bacec9",
+  "run_id": "vr_1a9b707387024c149ff1ef377b55630a",
+  "receipt_url": "https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a",
   "status": null,
-  "verdict": "inconclusive",
-  "app_verified": false,
-  "complete": false,
+  "verdict": "verified",
+  "app_verified": true,
+  "complete": true,
   "checks": [
     {
       "id": "baseline",
@@ -116,34 +121,34 @@
     },
     {
       "id": "phone_request_opens_ticket",
-      "status": "unmeasured",
-      "explanation": "The Zendesk twin simulates only its seeded ticket: POST /api/v2/tickets(.json) and GET /api/v2/tickets?external_id are not simulated. Covered by local tests."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "choice_read_from_customer_reply",
-      "status": "unmeasured",
-      "explanation": "Every comment on the Zendesk twin is authored by the API user, so a requester reply can't be simulated; the contract passes the choice as the ticket-field value instead. Covered by local tests."
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "prorated_credit_tier",
-      "status": "unmeasured",
-      "explanation": "Twin payment intents are stamped with the current time and can't be backdated, so the 31-90 day tier is unreachable. Covered by local tests."
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "store_credit_readback",
-      "status": "unmeasured",
-      "explanation": "GET /v1/customers/{id}/balance_transactions/{id} returns resource_missing on the twin for a transaction it just created."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "gift_card_balance_readback",
-      "status": "unmeasured",
-      "explanation": "The Square twin's gift cards report no balance_money after activation, so the read-back is unverifiable."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "customer_email_delivery",
-      "status": "unmeasured",
-      "explanation": "Zendesk's notification email is not simulated by the twin; the runtime's part (a public comment) is proven by the checks above."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-18T05:06:49.508Z"
+  "recorded_at": "2026-10-19T20:24:23.055Z"
 }

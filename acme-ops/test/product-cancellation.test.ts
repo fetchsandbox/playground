@@ -116,6 +116,26 @@ describe("product-cancellation runs", () => {
   });
   afterEach(() => w.close());
 
+  it("uses the supplied subscription owner and ticket's offer among duplicate-email customers", async () => {
+    const { cus, sub } = seed();
+    w.state.stripe.customers.unshift({ id: "cus_000_duplicate", email: cus.email, name: "Another record", metadata: {} });
+    const e = w.engine(productCancellation, { now: () => NOW });
+    const r = await e.handle({ action: "start", runId: "duplicate-email-owner", input: request({ subscriptionId: sub.id }), requestedBy: user });
+    expect(r.body).toMatchObject({ phase: "DONE", outcome: "ok" });
+    expect(sub.status).toBe("canceled");
+    reply("1");
+    const refund = await e.handle({ action: "start", runId: "duplicate-email-choice", input: choice(), requestedBy: user });
+    expect(refund.body).toMatchObject({ phase: "DONE", outcome: "ok", output: { refundMethod: "original_payment" } });
+  });
+  it("accepts Slack and posts its case feed in the originating thread", async () => {
+    const { sub } = seed();
+    const e = w.engine(productCancellation, { now: () => NOW });
+    const r = await e.handle({ action: "start", runId: "native-slack", input: request({ channel: "slack", subscriptionId: sub.id, opsThreadTs: "1792340000.000001" }), requestedBy: user });
+    expect(r.body).toMatchObject({ phase: "DONE", outcome: "ok" });
+    expect(comments(true)[0].body).toContain("from your Slack message");
+    expect(w.state.slack.messages[0].thread_ts).toBe("1792340000.000001");
+  });
+
   it("in policy: acknowledges, notes the research, cancels, offers every method, then refunds as store credit from the customer's reply", async () => {
     const { sub } = seed();
     const e = w.engine(productCancellation, { now: () => NOW });

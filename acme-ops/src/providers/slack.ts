@@ -8,9 +8,9 @@ import type { ProviderHttp } from "../kit/http";
 export class SlackClient {
   constructor(readonly http: ProviderHttp) {}
 
-  async postMessage(channel: string, text: string, blocks?: unknown[]): Promise<{ channel: string; ts: string }> {
+  async postMessage(channel: string, text: string, blocks?: unknown[], threadTs?: string): Promise<{ channel: string; ts: string }> {
     const { body } = await this.http.request<any>("POST", "/api/chat.postMessage", {
-      json: { channel, text, blocks, unfurl_links: false, unfurl_media: false },
+      json: { channel, text, blocks, ...(threadTs ? { thread_ts: threadTs } : {}), unfurl_links: false, unfurl_media: false },
     });
     if (body?.ok !== true) {
       const code = String(body?.error ?? "not_ok");

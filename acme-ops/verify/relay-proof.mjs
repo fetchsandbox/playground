@@ -21,6 +21,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import {requireFreePort,waitForOwnListener} from "./runtime-start.mjs";
 import { coverage, scope } from "./contracts/lib.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -42,7 +43,7 @@ const gitSha = (() => {
   }
 })();
 const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
-const OUT_DIR = join(tmpdir(), `acme-proof-${workflow}`);
+const OUT_DIR = process.env.PROOF_OUT_DIR ?? join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});
 const log = (...a) => console.log(new Date().toISOString(), ...a);
@@ -88,9 +89,11 @@ function mcpClient() {
   return {
     child,
     async init() {
-      await send("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "acme-ops-proof", version: "1.0.0" } });
+      const initialized = await send("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "acme-ops-proof", version: "1.0.0" } });
       child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
+      return initialized.serverInfo;
     },
+    async listTools(){return send("tools/list",{});},
     async call(name, args) {
       const result = await send("tools/call", { name, arguments: args });
       const text = (result?.content ?? []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
@@ -120,6 +123,7 @@ async function settle(mcp, res, label) {
 // The runtime under test
 // ---------------------------------------------------------------------------
 let app;
+process.once("exit",()=>{app?.kill("SIGKILL");});
 const stateFile = join(OUT_DIR, "state.json");
 
 function twinEnv(legs) {
@@ -150,8 +154,9 @@ function twinEnv(legs) {
 
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
   if (app) {
+    const stopped=new Promise(resolve=>app.once("exit",resolve));
     app.kill("SIGKILL");
-    await sleep(300);
+    await stopped;
   }
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
@@ -169,8 +174,11 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
   const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
+  await requireFreePort(PORT);
   app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit"] });
+  const listening=waitForOwnListener(app,PORT,workflow);
   app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
+  await listening;
   for (let i = 0; i < 100; i++) {
     try {
       if ((await fetch(`http://127.0.0.1:${PORT}/ping`)).ok) return;
@@ -188,7 +196,10 @@ rmSync(stateFile, { force: true });
 await startApp();
 
 const mcp = mcpClient();
-await mcp.init();
+const mcpInfo = await mcp.init();
+log("MCP observed", mcpInfo?.version ?? "unknown");
+const tools=await mcp.listTools();save("mcp-tools",tools);for(const name of ["manage_tunnel","validate_integration","get_job"])if(!tools.tools?.some(t=>t.name===name))throw Error("Required MCP tool not discovered: "+name);
+log("MCP tool discovery",tools.tools.map(t=>t.name).join(","));
 let credentialFile;
 const finish = async (code) => {
   try {
@@ -225,7 +236,7 @@ log("session", sid, Object.keys(session.legs ?? {}).join(","));
 // Optional per-contract fixtures written straight to the session's twins (e.g. one
 // Stripe customer per check, so checks never share provider state).
 if (contract.seed) {
-  const seeded = await contract.seed(session.legs, log);
+  const seeded = await contract.seed(session.legs, log, {mcp, sessionId:sid});
   save("seed", seeded);
   log("seeded", Object.keys(seeded ?? {}).length, "fixture(s)");
 }
@@ -240,7 +251,7 @@ const application_config = {
   disposable_test_app: true,
   require_verifier_token: true,
   coverage_review: coverage(contract.coverage, contract.checks),
-  scope_review: scope(contract.checks, contract.evidence),
+  scope_review: contract.scope_review ?? scope(contract.checks, contract.evidence),
   checks: contract.checks,
 };
 save("application_config", application_config);
@@ -316,6 +327,8 @@ const shareRaw = final.share_url ?? final.receipt_url ?? final.verdict?.share_ur
 const share = shareRaw ? (shareRaw.startsWith("http") ? shareRaw : `https://fetchsandbox.com${shareRaw.startsWith("/") ? "" : "/"}${shareRaw}`) : "";
 const receipt = {
   workflow,
+  mcp_observed: mcpInfo,
+  mcp_source: process.env.FETCHSANDBOX_MCP_BIN ? "local_build" : "npm_package",
   app_version: APP_VERSION,
   session_id: sid,
   run_id: runId,
@@ -331,4 +344,4 @@ mkdirSync(join(HERE, "receipts"), { recursive: true });
 writeFileSync(join(HERE, "receipts", `${workflow}.json`), JSON.stringify(receipt, null, 2) + "\n");
 log("RECEIPT", share || "(none)");
 for (const c of receipt.checks) log("check", c.id, c.status, String(c.explanation ?? "").slice(0, 160));
-await finish(0);
+await finish(receipt.app_verified === true && receipt.checks.length === contract.checks.length && receipt.checks.every(c=>c.status==="held") ? 0 : 1);
