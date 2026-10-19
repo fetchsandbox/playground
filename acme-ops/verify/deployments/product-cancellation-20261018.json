@@ -241,5 +241,53 @@
     "policy_constants_unchanged": true,
     "runtime_stack_status": "UPDATE_COMPLETE",
     "delivery_stack_status": "UPDATE_COMPLETE"
+  },
+  "native_new_email_intake_v3": {
+    "checked_at": "2026-10-19T00:46:12.498156+00:00",
+    "native_trigger": "Chrome Gmail new email \u2192 new Zendesk email ticket \u2192 signed webhook \u2192 FIFO \u2192 delivery worker \u2192 AgentCore request stage",
+    "manual_workflow_start_sent": false,
+    "run_id": "zd-16-request-56546969971859",
+    "native_webhook_invocation_id": "01M58SY7G1TZS9D064K9ERJ6HS",
+    "zendesk_ticket_id": 16,
+    "case_ref": "CXL-3A99312B",
+    "email_subject": "Cancel subscription sub_1US2LZLMwbLY0hYjZL74mEYS",
+    "recipient": "support@fetchsandboxhelp.zendesk.com",
+    "ticket_origin": "email",
+    "original_email_ticket_reused": true,
+    "runtime_version": "3",
+    "deployment_version": "acme-cancellation-1.1.0-cc79dc9",
+    "delivery_version": "acme-cancellation-delivery-1.2.0",
+    "bridge_source_commit": "c412850",
+    "phase": "DONE",
+    "outcome": "ok",
+    "decision": "cancel",
+    "stripe_test_mode": true,
+    "subscription_id": "sub_1US2LZLMwbLY0hYjZL74mEYS",
+    "subscription_status": "canceled",
+    "subscription_owner_matches_requester": true,
+    "refund_offer_amount_minor": 500,
+    "public_comment_counts": {
+      "ACK": 1,
+      "OFFER": 1
+    },
+    "duplicate_starts_after_delivery_replay": 1,
+    "duplicate_replay_scope": "Directly invoked deployed queue worker after native request completion; saved command/run reused after bot output. Not a forced process crash.",
+    "reconciliation": "match",
+    "customer_email_offer_verified": true,
+    "fixture_model": "Trialing subscription plus a separate succeeded PaymentIntent linked by metadata; not a subscription-invoice billing test.",
+    "unmeasured": [
+      "Refund-choice continuation on this new email case",
+      "Other sender mailboxes",
+      "Approval-threshold branch",
+      "Forced process crash",
+      "Full 27-case twin suite",
+      "Natural language email subjects outside the explicit command format (unsupported by this intake)"
+    ],
+    "customer_email_delivery_observation": "Native Gmail opened the new request thread and displayed cancellation confirmation, $5.00 eligibility, three method choices and CXL-3A99312B-OFFER.",
+    "native_gmail_thread_url": "https://mail.google.com/mail/u/0/#search/in%3Aanywhere+%22CXL-3A99312B%22/FFNDWMklrcnLMjMLFJMJrVjWclWTmXvh",
+    "zendesk_trigger_id": "56546995736211",
+    "zendesk_trigger_active": true,
+    "refund_issued": false,
+    "observer_timing_note": "First observer read preceded ledger creation and reported waiting. Subsequent observation found the automatically started run. No manual start was sent."
   }
 }
