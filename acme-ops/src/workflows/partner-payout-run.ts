@@ -96,7 +96,7 @@ export const partnerPayoutRun: WorkflowDef<Input> = {
   org: "Finance",
   team: "partner-ops",
   description:
-    "Pay the month's partner commissions by Stripe transfer to each partner's connected account. Accounts are checked and earlier transfers in the run's transfer group are found in parallel; each partner is paid at most once per run, with the same idempotency key on every retry so a lost response never becomes a second payment. Small transfers go out automatically, large ones and anything past the run limit wait for approval, and a run beyond the ceiling pays nothing. The run is recorded in Asana and posted to Slack.",
+    "Pay monthly partner commissions by Stripe transfer to each connected account, at most once per partner per run: the same idempotency key on every retry means a lost response never becomes a second payment. Small transfers go out automatically, large ones and anything past the run limit wait for approval, a run beyond the ceiling pays nothing, and an unreadable ledger pays nobody.",
   input: Input,
   agents: [
     {

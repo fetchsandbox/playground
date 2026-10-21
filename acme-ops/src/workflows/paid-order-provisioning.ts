@@ -148,7 +148,7 @@ export const paidOrderProvisioning: WorkflowDef<Input> = {
   org: "Sales",
   team: "order-ops",
   description:
-    "Charge a customer's saved card for seats, then grant access only when Stripe says the order is paid in full: a signed payment_intent.succeeded webhook (or the same request forwarded through AgentCore) starts provisioning, the payment is re-read from Stripe rather than trusted from the event, refunded, disputed, underpaid or foreign payments grant nothing, and a sweep provisions paid orders whose event never arrived. Access is a WorkOS user and organization membership, the CRM contact becomes a customer, the welcome email is a draft, and the payment records which run provisioned it.",
+    "Charge a saved card for seats, then grant access only for an order Stripe says is paid in full: a signed payment_intent.succeeded webhook starts provisioning, the payment is re-read from Stripe instead of trusted, refunded, disputed or underpaid payments grant nothing, and a sweep provisions paid orders whose event never arrived. Access is a WorkOS membership; the CRM contact becomes a customer; the welcome is a draft.",
   input: Input,
 
   events: {
