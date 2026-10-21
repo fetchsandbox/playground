@@ -14,8 +14,8 @@ Last updated: 2026-10-21 (after the event and payout workflows).
 | [product-cancellation](workflows/product-cancellation.md) | #65, #71, #72 | Customer Experience · cx-retention | Stripe, Zendesk, Square, Slack | **verified**, 27 held ([receipt](https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a)) |
 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) | #68 | Finance · billing-ops | Stripe, HubSpot, Gmail, Asana, Slack | **verified**, 23 held ([receipt](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437)) |
 | [privacy-erasure](workflows/privacy-erasure.md) | #68 | Legal · privacy-ops | HubSpot, Stripe, WorkOS, Gmail, Asana, Slack | **verified**, 19 held ([receipt](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed)) |
-| [paid-order-provisioning](workflows/paid-order-provisioning.md) | this PR | Sales · order-ops | Stripe (signed webhooks), WorkOS, HubSpot, Gmail, Slack | **verified**, 21 held ([receipt](https://fetchsandbox.com/runs/1d788244db?flow=vr_10847645f51e49e5987d6c22bee177e6)) |
-| [partner-payout-run](workflows/partner-payout-run.md) | this PR | Finance · partner-ops | Stripe (transfers), Asana, Slack | inconclusive, 15 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/ba734ce28c?flow=vr_1c90299ad75a4b86b8c82264985b9407)) |
+| [paid-order-provisioning](workflows/paid-order-provisioning.md) | this PR | Sales · order-ops | Stripe (signed webhooks), WorkOS, HubSpot, Gmail, Slack | **verified**, 21 held ([receipt](https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e)) |
+| [partner-payout-run](workflows/partner-payout-run.md) | this PR | Finance · partner-ops | Stripe (transfers), Asana, Slack | inconclusive, 15 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/15f2349205?flow=vr_5c1e5f95f6124277a0a7de409adb8344)) |
 
 The other 19 Acme workflows predate this tracker (PRs #44–#61); see the
 [catalog](WORKFLOWS.md). Overall: 24 workflows, 7 verified, 17 inconclusive

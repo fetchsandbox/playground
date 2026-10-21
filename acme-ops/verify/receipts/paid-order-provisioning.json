@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-paid-order-provisioning-1.0.0-2eb0421",
-  "session_id": "vs_a6523ca3da15",
-  "run_id": "vr_10847645f51e49e5987d6c22bee177e6",
-  "receipt_url": "https://fetchsandbox.com/runs/1d788244db?flow=vr_10847645f51e49e5987d6c22bee177e6",
+  "app_version": "acme-ops-paid-order-provisioning-1.0.0-ba92fe0",
+  "session_id": "vs_d7ae49672a65",
+  "run_id": "vr_91d0dcb6472e4337981361327717d67e",
+  "receipt_url": "https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -120,5 +120,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-21T16:32:01.728Z"
+  "recorded_at": "2026-10-21T16:41:59.133Z"
 }
