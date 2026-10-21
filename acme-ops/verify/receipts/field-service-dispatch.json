@@ -1,9 +1,9 @@
 {
   "workflow": "field-service-dispatch",
-  "app_version": "acme-ops-field-service-dispatch-1.0.0-36fbb6e",
-  "session_id": "vs_b0b7d15d1db9",
-  "run_id": "vr_6fa5507329d94f57a25f1dcdd6f271b8",
-  "receipt_url": "https://fetchsandbox.com/runs/11328921ab?flow=vr_6fa5507329d94f57a25f1dcdd6f271b8",
+  "app_version": "acme-ops-field-service-dispatch-1.0.0-f5428db",
+  "session_id": "vs_272504d8f7a4",
+  "run_id": "vr_364ee82d76db433780d67382fa91fe4b",
+  "receipt_url": "https://fetchsandbox.com/runs/3d204d2106?flow=vr_364ee82d76db433780d67382fa91fe4b",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -90,5 +90,5 @@
       "explanation": "The Calendar twin returns 404 on events.get right after a successful insert, so the booking can't be read back."
     }
   ],
-  "recorded_at": "2026-10-17T16:20:53.469Z"
+  "recorded_at": "2026-10-19T13:58:40.081Z"
 }

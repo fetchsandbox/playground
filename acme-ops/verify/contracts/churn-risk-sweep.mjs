@@ -12,7 +12,7 @@ function faulted(id, name, provider, scenario, assertions) {
 }
 
 export const checks = [
-  check("baseline", "Weekly sweep flags the past-due account: digest posted, check-in drafted, QBR invite waits for approval", [start("baseline", book)], all(runs([...parked, eq("outcome", "ok")]), runs([actionKind("slack.post_digest", "applied")]), runs([actionKind("gmail.draft_checkin", "applied", 1)]), runs([actionKind("calendar.book_qbr", "pending_approval", 1)]))),
+  check("baseline", "Weekly sweep flags the past-due account: digest posted, check-in drafted, QBR invite waits for approval", [start("baseline", book)], all(runs(parked), runs([actionKind("slack.post_digest", "applied")]), runs([actionKind("gmail.draft_checkin", "applied", 1)]), runs([actionKind("calendar.book_qbr", "pending_approval", 1)]))),
   check("approve_by_approver", "Approval sends the QBR invite", [start("approve_by_approver", book), command("decide", 1, { decision: "approve", userId: APPROVER })], all(runs([eq("phase", "DONE")]), runs([actionKind("calendar.book_qbr", "applied", 1)]))),
   check("approve_by_stranger_refused", "A non-approver cannot send customer invites", [start("approve_by_stranger_refused", book), command("decide", 1, { decision: "approve", userId: "U_SOMEONE" }, 403)], all(runs(parked), runs([actionKind("calendar.book_qbr", "pending_approval", 1)]))),
   check("reject", "Rejecting withholds the invite", [start("reject", book), command("decide", 1, { decision: "reject", userId: APPROVER })], all(runs([eq("phase", "REJECTED")]), runs([actionKind("calendar.book_qbr", "rejected", 1)]))),
@@ -25,6 +25,7 @@ export const checks = [
   faulted("calendar_auth_failure", "Without the CSM's calendar no invite is proposed; drafts and digest continue", "google-calendar", "auth_failure", [agent("csm-availability", "failed"), actionKind("calendar.book_qbr", null, 0), actionKind("slack.post_digest", "applied")]),
   faulted("gmail_auth_failure", "Gmail auth failure loses the inbox signal and the draft, but the account is still flagged", "gmail", "auth_failure", [agent("inbox-signal", "failed"), actionKind("gmail.draft_checkin", "failed", 1), actionKind("calendar.book_qbr", "pending_approval", 1)]),
   check("restart_while_parked", "A run parked for approval survives a real runtime restart and completes when approved afterwards", [start("restart_while_parked", book), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE")])),
+  blocked("inbox_signal", "Recent customer email in the CSM's Gmail inbox lowers the account's risk score", "setup_missing", "The Gmail twin does not simulate message search, so the inbox-signal agent fails on every run and the sweep's outcome is partial; scoring proceeds without the inbox signal. The baseline therefore asserts the digest, draft and parked QBR, not outcome ok.", ["acme-ops/src/workflows/churn-risk-sweep.ts inbox-signal", "GET /gmail/v1/users/me/messages → 501 not_simulated on the twin"]),
   blocked("support_signal", "Open and urgent Zendesk tickets raise the account's risk score", "setup_missing", "FetchSandbox has no Zendesk twin yet; the support signal is reported in signalGaps.", ["acme-ops/src/workflows/churn-risk-sweep.ts support-signal", "validate_integration providers:[zendesk] → 'Unknown providers: zendesk'"]),
 ];
 
@@ -52,7 +53,7 @@ export default {
     accepted_effect_response_loss: "Covered by side-effect claims in local tests.",
     partial_effects_and_recovery: ["slack_rate_limited", "gmail_auth_failure"],
     restart_and_durability: ["restart_while_parked"],
-    reconciliation: ["support_signal"],
+    reconciliation: ["support_signal", "inbox_signal"],
     cancellation_refund_entitlements: ["reject"],
     data_and_privacy_boundaries: "Check-in drafts never mention scores or overdue payments; the digest goes to the internal CS channel only.",
     cleanup_and_isolation: ["baseline", "concurrent_start"],
