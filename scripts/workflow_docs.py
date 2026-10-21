@@ -15,6 +15,7 @@ WHY={
 'license-reclaim':'IT Asset Management needs to recover unused seats after a warning and grace period, with approval before removing access.',
 'onboarding-kickoff':'Sales needs a reliable closed-won handoff that connects CRM, billing, support and kickoff preparation without silently creating a second subscription.',
 'order-status':'Customer Experience needs to answer delivery questions from billing and fulfillment records, and obtain approval before changing a promised date.',
+'paid-order-provisioning':'Sales needs to grant product access the moment an order is paid, and never for an order that was not paid in full, was refunded or disputed, or whose payment event was forged, replayed, delayed or lost.',
 'pcn-eol-notice':'Product Engineering needs to identify customers affected by a product change or retirement and coordinate reviewed customer notices.',
 'privacy-erasure':'Legal needs to honor data deletion requests across every system before the statutory deadline, while keeping records the law requires and never deleting for an unverified requester.',
 'product-cancellation':'Customer Experience needs to acknowledge cancellation requests, evaluate subscription terms, obtain exceptions where required, and let the correct customer choose an eligible refund method.',

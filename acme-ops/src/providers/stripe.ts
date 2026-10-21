@@ -226,6 +226,19 @@ export class StripeClient {
     return this.listAll<StripePaymentIntent>("/v1/payment_intents", { customer }, 300);
   }
 
+  /** Charges a saved payment method now (off session), e.g. an in-app seat purchase. */
+  async chargeSavedMethod(p: { customer: string; amount: number; currency: string; paymentMethod: string; description: string; metadata: Record<string, string> }, idempotencyKey: string): Promise<StripePaymentIntent> {
+    const form: Record<string, string | number> = { customer: p.customer, amount: p.amount, currency: p.currency, payment_method: p.paymentMethod, confirm: "true", off_session: "true", description: p.description };
+    for (const [k, v] of Object.entries(p.metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripePaymentIntent>("POST", "/v1/payment_intents", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async updatePaymentIntentMetadata(id: string, metadata: Record<string, string>): Promise<StripePaymentIntent> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripePaymentIntent>("POST", `/v1/payment_intents/${encodeURIComponent(id)}`, { form })).body;
+  }
+
   async getPaymentIntent(id: string): Promise<StripePaymentIntent> {
     return (await this.http.request<StripePaymentIntent>("GET", `/v1/payment_intents/${encodeURIComponent(id)}`)).body;
   }

@@ -171,9 +171,17 @@ export async function startWorld() {
     if (req.method === "GET" && path === "/v1/payment_intents") {
       return send(200, { data: S.paymentIntents.filter((p) => !q.get("customer") || p.customer === q.get("customer")), has_more: false });
     }
-    if (req.method === "GET" && (r = m(/^\/v1\/payment_intents\/([^/]+)$/))) {
+    if (req.method === "POST" && path === "/v1/payment_intents") {
+      const declined = String(body.payment_method).includes("Declined");
+      const p = { id: id("pi"), customer: body.customer, amount: Number(body.amount), amount_received: declined ? 0 : Number(body.amount), currency: body.currency, status: declined ? "requires_payment_method" : "succeeded", latest_charge: declined ? null : id("ch"), created: Math.floor(Date.now() / 1000), description: body.description, metadata: meta() };
+      S.paymentIntents.push(p);
+      return send(200, p);
+    }
+    if ((r = m(/^\/v1\/payment_intents\/([^/]+)$/))) {
       const p = S.paymentIntents.find((x) => x.id === r![1]);
-      return p ? send(200, p) : send(404, { error: { code: "resource_missing" } });
+      if (!p) return send(404, { error: { code: "resource_missing" } });
+      if (req.method === "POST") p.metadata = { ...p.metadata, ...meta() };
+      return send(200, p);
     }
     if (req.method === "POST" && path === "/v1/refunds") {
       const pi = S.paymentIntents.find((x) => x.id === body.payment_intent);
@@ -306,6 +314,20 @@ export async function startWorld() {
     const W = state.workos;
     if (req.method === "GET" && path === "/user_management/users") {
       return send(200, { data: W.users.filter((u) => !q.get("email") || u.email === q.get("email")), list_metadata: {} });
+    }
+    if (req.method === "POST" && path === "/user_management/users") {
+      const u = { id: id("user"), ...body };
+      W.users.push(u);
+      return send(201, u);
+    }
+    if (req.method === "POST" && path === "/user_management/organization_memberships") {
+      const mem = { id: id("om"), user_id: body.user_id, organization_id: body.organization_id, role: { slug: body.role_slug }, status: "active" };
+      W.memberships.push(mem);
+      return send(201, mem);
+    }
+    if (req.method === "GET" && (r = m(/^\/user_management\/organization_memberships\/([^/]+)$/))) {
+      const mem = W.memberships.find((x) => x.id === r![1]);
+      return mem ? send(200, mem) : send(404, { code: "entity_not_found" });
     }
     if ((r = m(/^\/user_management\/users\/([^/]+)$/))) {
       const u = W.users.find((x) => x.id === r![1]);

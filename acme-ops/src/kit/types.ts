@@ -84,8 +84,27 @@ export interface WorkflowDef<I> {
   plan(ctx: RunContext<I>, results: AgentResults): PlannedAction<I>[];
   /** The run's business output, shown in `status`. */
   output(ctx: RunContext<I>, results: AgentResults): Record<string, unknown>;
+  /**
+   * Provider events this runtime accepts (signed webhooks). The mapper treats the
+   * event as a hint: it re-reads provider state and returns the run to start, or
+   * null to acknowledge and ignore. Equal run ids make redeliveries one run.
+   */
+  events?: { stripe?(event: ProviderEvent, providers: Providers): Promise<EventStart | null> };
   /** Static catalogue for `describe`: every action kind this workflow may take. */
   catalog: { kind: string; provider: ProviderName; gate: Gate; description: string }[];
+}
+
+export interface ProviderEvent {
+  id: string;
+  type: string;
+  data?: { object?: { id?: unknown } };
+}
+
+export interface EventStart {
+  runId: string;
+  input: unknown;
+  /** Copy the labels of this earlier run (e.g. the order the payment belongs to). */
+  labelsFromRun?: string;
 }
 
 // ---------------------------------------------------------------------------
