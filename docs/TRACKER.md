@@ -5,7 +5,7 @@ FetchSandbox twins, what the twin research found, and what is still pending.
 Status reflects saved receipts and the dates shown; it is not a fresh run.
 Update this page in the same PR as the change it describes.
 
-Last updated: 2026-10-21.
+Last updated: 2026-10-21 (after the event and payout workflows).
 
 ## 1. Built and merged
 
@@ -14,10 +14,12 @@ Last updated: 2026-10-21.
 | [product-cancellation](workflows/product-cancellation.md) | #65, #71, #72 | Customer Experience · cx-retention | Stripe, Zendesk, Square, Slack | **verified**, 27 held ([receipt](https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a)) |
 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) | #68 | Finance · billing-ops | Stripe, HubSpot, Gmail, Asana, Slack | **verified**, 23 held ([receipt](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437)) |
 | [privacy-erasure](workflows/privacy-erasure.md) | #68 | Legal · privacy-ops | HubSpot, Stripe, WorkOS, Gmail, Asana, Slack | **verified**, 19 held ([receipt](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed)) |
+| [paid-order-provisioning](workflows/paid-order-provisioning.md) | this PR | Sales · order-ops | Stripe (signed webhooks), WorkOS, HubSpot, Gmail, Slack | **verified**, 21 held ([receipt](https://fetchsandbox.com/runs/1d788244db?flow=vr_10847645f51e49e5987d6c22bee177e6)) |
+| [partner-payout-run](workflows/partner-payout-run.md) | this PR | Finance · partner-ops | Stripe (transfers), Asana, Slack | inconclusive, 15 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/ba734ce28c?flow=vr_1c90299ad75a4b86b8c82264985b9407)) |
 
 The other 19 Acme workflows predate this tracker (PRs #44–#61); see the
-[catalog](WORKFLOWS.md). Overall: 22 workflows, 6 verified, 16 inconclusive
-because of declared twin gaps, 0 receipts with a violated check.
+[catalog](WORKFLOWS.md). Overall: 24 workflows, 7 verified, 17 inconclusive
+because of declared twin or environment gaps, 0 receipts with a violated check.
 
 ## 2. Re-verification of existing workflows (2026-10-19)
 
@@ -56,8 +58,8 @@ Coverage dimensions across the 22 contracts (executable checks / 22):
 
 | Dimension | Contracts | Note |
 |---|---:|---|
-| Accepted effect, response lost | **0** | Every contract defers to local tests |
-| Delayed or missing events (webhooks) | **2** | No workflow consumed a webhook |
+| Accepted effect, response lost | **0** (1 declared) | Every earlier contract deferred to local tests; `partner-payout-run` now declares an executable check (unmeasured from this sandbox, see 4) |
+| Delayed or missing events (webhooks) | **3** | `paid-order-provisioning` is the first runtime that consumes webhooks |
 | Ordering / stale events | 8 | Mostly not applicable: triggers are direct calls |
 | Data and privacy boundaries | 6 | Mostly stated, not measured |
 | Amount / currency / quantity | 10 | USD only; no test clocks |
@@ -81,12 +83,44 @@ concurrent deliveries, Stripe scenarios `webhook_withheld`, `webhook_retries`,
 `accepted_response_retry`. The Stripe twin states that clock-driven lifecycles
 (renewals, trial expiry, dunning) are out of scope.
 
-## 4. In progress
+## 4. Gap-proving workflows (2026-10-21)
 
-| Workflow | Gap it proves | Status |
-|---|---|---|
-| `paid-order-provisioning` | Webhooks: signature, mutated body, old replay, duplicate and concurrent delivery, stale events, withheld-webhook recovery | Building. Replaces the planned dunning workflow, which the twin can't drive (no clock, no failed-payment lifecycle) |
-| `partner-payout-run` | Accepted effect / response lost; idempotency on money-out | Building. The twin ignores `Idempotency-Key` on transfers, so the workflow must find its own earlier transfer before retrying |
+**paid-order-provisioning: webhooks, verified 21/21.** Replaces the planned
+dunning workflow, which the twin can't drive (no clock, no failed-payment
+lifecycle). Proven on the twins:
+- Signed `payment_intent.succeeded` delivered by the verifier to the real
+  handler `POST /webhooks/stripe` (direct signed-event mode); the same request
+  can arrive through `/invocations` as an envelope on AgentCore.
+- Exact replay and 4 concurrent deliveries grant access once.
+- An event for a payment refunded first (by an independent operator) grants
+  nothing: the runtime re-reads Stripe instead of trusting the event.
+- A payment whose event never arrives is provisioned by the sweep; a late
+  event afterwards changes nothing.
+
+Not measured on the twin: Stripe's own lifecycle delivery (`provider_lifecycle`)
+and the `signed_event_with_mutated_body` / `replayed_old_signed_event`
+scenarios; signature refusals are covered by local tests.
+
+**partner-payout-run: money out, 15 held, 2 unmeasured.**
+- `lost_response_same_transfer` (`accepted_response_retry`, Stripe
+  `recovery_timeout`): the run is correct (one transfer, one attempt, the same
+  idempotency key on the retry), but FetchSandbox records "disconnect
+  witnesses=0". This cloud sandbox sends all outbound HTTPS through a
+  TLS-intercepting proxy, which does not pass the client's abort upstream.
+  Expected to measure from a machine without that proxy.
+- `transfer_reversal_readback`: the twin returns sample reversal fields.
+
+New engine findings:
+- The Stripe twin ignores `Idempotency-Key` on transfers (same key, two
+  transfers), except under the `accepted_response_retry` hold.
+- The WorkOS twin now rejects memberships for an organization it doesn't know;
+  contracts must create the organization first.
+- Created connected accounts get `ACCT-…` ids with no capabilities;
+  provider-state observations don't model `transfer_group` (filter on
+  `destination`).
+- The first contract check must be plain HTTP (no signed events).
+- One relay timeout after a restart (`restart_while_parked`) did not reproduce
+  on re-run.
 
 ## 5. Backlog
 
@@ -101,3 +135,5 @@ concurrent deliveries, Stripe scenarios `webhook_withheld`, `webhook_retries`,
 | Sweep at scale (5k+ records) | Pagination, rate limits | Faithful `has_more` |
 | Order-to-cash with shipping | ERP and carrier twins | New twins |
 | Failed-payment dunning | Clock-driven lifecycle | Stripe test clocks / `payment_failed` profile |
+| Measure `lost_response_same_transfer` without the sandbox proxy | Response-loss dimension still 0 measured | A run from a developer machine |
+| Webhook lifecycle mode (`provider_lifecycle`, `accept_payment`) for paid-order-provisioning | Stripe-originated delivery, not verifier-signed | Contract variant |

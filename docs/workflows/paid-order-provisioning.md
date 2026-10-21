@@ -162,9 +162,9 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-paid-order-provisioning-1.0.0-11e607e`, verdict **verified**, and statuses: **21 held**.
+The checked-in receipt records app version `acme-ops-paid-order-provisioning-1.0.0-2eb0421`, verdict **verified**, and statuses: **21 held**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/9f8714bc34?flow=vr_3f60141c4d0d42c5b81bdfe1f37abad2) · [Saved result](../../acme-ops/verify/receipts/paid-order-provisioning.json)
+[Recorded receipt](https://fetchsandbox.com/runs/1d788244db?flow=vr_10847645f51e49e5987d6c22bee177e6) · [Saved result](../../acme-ops/verify/receipts/paid-order-provisioning.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 

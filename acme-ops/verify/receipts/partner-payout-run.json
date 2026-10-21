@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-partner-payout-run-1.0.0-b53aaba",
-  "session_id": "vs_4c3a65007b06",
-  "run_id": "vr_3829dac008154707a381f23a625968e1",
-  "receipt_url": "https://fetchsandbox.com/runs/7faac7ae96?flow=vr_3829dac008154707a381f23a625968e1",
+  "app_version": "acme-ops-partner-payout-run-1.0.0-2eb0421",
+  "session_id": "vs_2e4e7f0e8099",
+  "run_id": "vr_1c90299ad75a4b86b8c82264985b9407",
+  "receipt_url": "https://fetchsandbox.com/runs/ba734ce28c?flow=vr_1c90299ad75a4b86b8c82264985b9407",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -100,5 +100,5 @@
       "explanation": "The Stripe twin returns sample reversal fields on GET /v1/transfers/{id} (reversed: true, amount_reversed unrelated to the transfer), so the read-back can't distinguish a real reversal. Covered by local tests."
     }
   ],
-  "recorded_at": "2026-10-21T16:24:46.555Z"
+  "recorded_at": "2026-10-21T16:35:28.641Z"
 }
