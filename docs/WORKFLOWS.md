@@ -25,6 +25,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
 | Paid order provisioning (Stripe events) | Sales / `order-ops` | 3 | [paid-order-provisioning](workflows/paid-order-provisioning.md) |
+| Partner payout run | Finance / `partner-ops` | 3 | [partner-payout-run](workflows/partner-payout-run.md) |
 | Product change and end-of-life notices | Engineering / `product-engineering` | 3 | [pcn-eol-notice](workflows/pcn-eol-notice.md) |
 | Privacy erasure request (GDPR / CCPA) | Legal / `privacy-ops` | 4 | [privacy-erasure](workflows/privacy-erasure.md) |
 | Product cancellation and refund | Customer Experience / `cx-retention` | 4 | [product-cancellation](workflows/product-cancellation.md) |

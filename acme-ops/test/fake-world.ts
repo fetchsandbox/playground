@@ -47,6 +47,12 @@ export function seedState() {
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
       disputes: [] as any[],
+      accounts: [] as any[],
+      transfers: [] as any[],
+      /** Idempotency-Key → transfer, as real Stripe keeps for 24h. */
+      transferKeys: new Map<string, any>(),
+      /** Lose this many transfer responses after the transfer was created (the effect happens, the reply doesn't). */
+      loseTransferResponses: 0,
     },
     hubspot: { contacts: [] as any[] },
     gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
@@ -191,6 +197,32 @@ export async function startWorld() {
       const rf = { id: id("re"), amount: Number(body.amount), currency: pi.currency, charge: pi.latest_charge, payment_intent: pi.id, status: "succeeded", metadata: meta() };
       S.refunds.push(rf);
       return send(200, rf);
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/accounts\/([^/]+)$/))) {
+      const a = S.accounts.find((x) => x.id === r![1]);
+      return a ? send(200, a) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "POST" && path === "/v1/transfers") {
+      const key = String(req.headers["idempotency-key"] ?? "");
+      let t = key ? S.transferKeys.get(key) : undefined;
+      if (!t) {
+        t = { id: id("tr"), amount: Number(body.amount), currency: body.currency, destination: body.destination, transfer_group: body.transfer_group, metadata: meta(), reversed: false, amount_reversed: 0 };
+        S.transfers.push(t);
+        if (key) S.transferKeys.set(key, t);
+      }
+      if (S.loseTransferResponses > 0) {
+        S.loseTransferResponses--;
+        req.socket.destroy();
+        return;
+      }
+      return send(200, t);
+    }
+    if (req.method === "GET" && path === "/v1/transfers") {
+      return send(200, { data: S.transfers.filter((t) => !q.get("transfer_group") || t.transfer_group === q.get("transfer_group")), has_more: false });
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/transfers\/([^/]+)$/))) {
+      const t = S.transfers.find((x) => x.id === r![1]);
+      return t ? send(200, t) : send(404, { error: { code: "resource_missing" } });
     }
     if (req.method === "GET" && path === "/v1/disputes") return send(200, { data: S.disputes, has_more: false });
     if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {

@@ -1,0 +1,104 @@
+{
+  "workflow": "partner-payout-run",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-partner-payout-run-1.0.0-b53aaba",
+  "session_id": "vs_4c3a65007b06",
+  "run_id": "vr_3829dac008154707a381f23a625968e1",
+  "receipt_url": "https://fetchsandbox.com/runs/7faac7ae96?flow=vr_3829dac008154707a381f23a625968e1",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "lost_response_same_transfer",
+      "status": "unmeasured",
+      "explanation": "Accepted response retry needs an observed client disconnect followed by a matching retry and the same provider effect; recorded accepted requests=4, disconnect witnesses=0, matching-retry releases=0"
+    },
+    {
+      "id": "rerun_pays_nothing",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "large_transfer_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_transfer_approved",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_transfer_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "missing_account_skipped",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "ceiling_halts",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "asana_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "transfer_reversal_readback",
+      "status": "unmeasured",
+      "explanation": "The Stripe twin returns sample reversal fields on GET /v1/transfers/{id} (reversed: true, amount_reversed unrelated to the transfer), so the read-back can't distinguish a real reversal. Covered by local tests."
+    }
+  ],
+  "recorded_at": "2026-10-21T16:24:46.555Z"
+}

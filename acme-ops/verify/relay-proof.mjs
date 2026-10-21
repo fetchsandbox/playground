@@ -170,6 +170,8 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     HOST: "127.0.0.1",
     STATE_FILE: stateFile,
     PROVIDER_RETRIES: "2",
+    // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
+    ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };

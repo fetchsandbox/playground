@@ -81,6 +81,17 @@ export interface StripePaymentIntent {
   metadata?: Record<string, string>;
 }
 
+export interface StripeTransfer {
+  id: string;
+  amount: number;
+  currency: string;
+  destination: string | null;
+  transfer_group?: string | null;
+  reversed?: boolean;
+  amount_reversed?: number;
+  metadata?: Record<string, string>;
+}
+
 interface List<T> {
   data: T[];
   has_more: boolean;
@@ -224,6 +235,25 @@ export class StripeClient {
 
   listPaymentIntents(customer: string) {
     return this.listAll<StripePaymentIntent>("/v1/payment_intents", { customer }, 300);
+  }
+
+  async getAccount(id: string): Promise<{ id: string; capabilities?: Record<string, string> | null; requirements?: { disabled_reason?: string | null } | null; payouts_enabled?: boolean | null }> {
+    return (await this.http.request<any>("GET", `/v1/accounts/${encodeURIComponent(id)}`)).body;
+  }
+
+  listTransfers(transferGroup: string) {
+    return this.listAll<StripeTransfer>("/v1/transfers", { transfer_group: transferGroup }, 1000);
+  }
+
+  async getTransfer(id: string): Promise<StripeTransfer> {
+    return (await this.http.request<StripeTransfer>("GET", `/v1/transfers/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Money to a connected account. The key makes a retried request (e.g. after a lost response) return the same transfer. */
+  async createTransfer(t: { amount: number; currency: string; destination: string; transferGroup: string; description: string; metadata: Record<string, string> }, idempotencyKey: string): Promise<StripeTransfer> {
+    const form: Record<string, string | number> = { amount: t.amount, currency: t.currency, destination: t.destination, transfer_group: t.transferGroup, description: t.description };
+    for (const [k, v] of Object.entries(t.metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeTransfer>("POST", "/v1/transfers", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
   }
 
   /** Charges a saved payment method now (off session), e.g. an in-app seat purchase. */
