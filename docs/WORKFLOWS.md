@@ -24,6 +24,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
 | Duplicate charge remediation | Finance / `billing-ops` | 4 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) |
 | Failed-payment dunning | Finance / `billing-ops` | 2 | [failed-payment-dunning](workflows/failed-payment-dunning.md) |
+| Employee offboarding with final pay | People Operations / `people-ops` | 3 | [employee-offboarding](workflows/employee-offboarding.md) |
 | Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |
 | Field service dispatch | Service / `field-service` | 4 | [field-service-dispatch](workflows/field-service-dispatch.md) |
 | Incident communications | IT / `it-operations` | 2 | [incident-comms](workflows/incident-comms.md) |

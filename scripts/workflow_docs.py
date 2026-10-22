@@ -14,6 +14,7 @@ WHY={
 'customer-data-sweep':'RevOps needs a nightly data-quality sweep over thousands of billing records that never acts on a partial read and never rewrites thousands of records because of one bad rule.',
 'distributor-claims':'Channel Finance needs to compare requested distributor credits with the actual paid invoices, list prices and agreement before paying them.',
 'duplicate-charge-remediation':'Finance needs to refund customers who were charged twice by a billing incident, quickly and at scale, without refunding a disputed or ambiguous payment and with human approval above set limits.',
+'employee-offboarding':'People Operations needs every departure handled on time: final pay by the work state\'s legal deadline, access removed at the end of the last day, equipment back, and a rescission undone cleanly.',
 'export-screening':'Trade Compliance needs to hold shipment when party or item screening is unclear rather than treating an unavailable check as clearance.',
 'failed-payment-dunning':'Finance needs to recover failed subscription payments with a predictable, never-repeating reminder ladder, and to cancel only after a person agrees.',
 'field-service-dispatch':'Service needs to coordinate technician time, contract coverage and site communication before committing an uncovered or after-hours visit.',

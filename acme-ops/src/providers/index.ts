@@ -1,6 +1,6 @@
 import { zendeskAuthorization } from "./zendesk-oauth";
 import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
-import { EasyPostClient, NetSuiteClient, OpenAIClient, PlaidClient, ShopifyClient, TwilioVerifyClient } from "./commerce";
+import { EasyPostClient, GustoClient, NetSuiteClient, OpenAIClient, PlaidClient, ShopifyClient, TwilioVerifyClient } from "./commerce";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
@@ -30,8 +30,9 @@ export type ProviderName =
   | "netsuite"
   | "easypost"
   | "plaid"
-  | "twilio_verify";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify"];
+  | "twilio_verify"
+  | "gusto";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -64,6 +65,8 @@ export interface Providers {
   plaid?: PlaidClient;
   /** Phone callbacks with one-time codes (Twilio Verify). */
   twilio_verify?: TwilioVerifyClient;
+  /** Payroll and terminations (Gusto Embedded). */
+  gusto?: GustoClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -88,6 +91,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   easypost: "https://api.easypost.com/v2",
   plaid: "https://production.plaid.com",
   twilio_verify: "https://verify.twilio.com",
+  gusto: "https://api.gusto.com",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -113,6 +117,7 @@ const PREFIX: Record<ProviderName, string[]> = {
   easypost: ["EASYPOST"],
   plaid: ["PLAID"],
   twilio_verify: ["TWILIO_VERIFY"],
+  gusto: ["GUSTO"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -187,6 +192,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       easypost: h.easypost && new EasyPostClient(h.easypost),
       plaid: h.plaid && new PlaidClient(h.plaid, env.PLAID_CLIENT_ID ?? "", env.PLAID_SECRET ?? ""),
       twilio_verify: h.twilio_verify && new TwilioVerifyClient(h.twilio_verify, env.TWILIO_VERIFY_SERVICE_SID ?? "VA_ACME_DEMO"),
+      gusto: h.gusto && new GustoClient(h.gusto, env.GUSTO_COMPANY_ID ?? "acme-company"),
     };
   };
 }

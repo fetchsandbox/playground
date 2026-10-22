@@ -166,3 +166,38 @@ export class EasyPostClient {
     return (await this.http.request<any>("GET", `/shipments/${encodeURIComponent(id)}`)).body;
   }
 }
+
+/** Gusto Embedded Payroll (https://docs.gusto.com/embedded-payroll/reference). */
+export class GustoClient {
+  constructor(readonly http: ProviderHttp, readonly companyId: string) {}
+
+  async getEmployee(id: string): Promise<{ uuid: string; email?: string | null; terminated?: boolean; terminations?: { uuid: string; effective_date: string }[] }> {
+    return (await this.http.request<any>("GET", `/v1/employees/${encodeURIComponent(id)}`)).body;
+  }
+
+  async listTerminations(employeeId: string): Promise<{ uuid: string; effective_date: string; active?: boolean }[]> {
+    const { body } = await this.http.request<any>("GET", `/v1/employees/${encodeURIComponent(employeeId)}/terminations`);
+    return Array.isArray(body) ? body : [];
+  }
+
+  async terminate(employeeId: string, effectiveDate: string): Promise<{ uuid: string; effective_date: string }> {
+    return (await this.http.request<any>("POST", `/v1/employees/${encodeURIComponent(employeeId)}/terminations`, { json: { effective_date: effectiveDate, run_termination_payroll: true } })).body;
+  }
+
+  /** Cancels a termination that hasn't taken effect (rescission). */
+  async cancelTermination(employeeId: string): Promise<void> {
+    await this.http.request("DELETE", `/v1/employees/${encodeURIComponent(employeeId)}/terminations`);
+  }
+
+  /** Off-cycle "dismissed employee" payroll for one person, submitted for the check date. */
+  async finalPayroll(p: { employeeId: string; startDate: string; endDate: string; checkDate: string }): Promise<{ uuid: string; check_date: string; processed?: boolean }> {
+    const created = (await this.http.request<any>("POST", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { json: { off_cycle: true, off_cycle_reason: "Dismissed employee", start_date: p.startDate, end_date: p.endDate, check_date: p.checkDate, employee_uuids: [p.employeeId] } })).body;
+    await this.http.request("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(created.uuid ?? created.payroll_uuid)}/submit`, { json: {} });
+    return { uuid: created.uuid ?? created.payroll_uuid, check_date: created.check_date ?? p.checkDate, processed: true };
+  }
+
+  async listPayrolls(startDate: string): Promise<{ uuid: string; off_cycle?: boolean; check_date?: string; employee_compensations?: { employee_uuid: string }[] }[]> {
+    const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { query: { start_date: startDate, include_off_cycle: "true" } });
+    return Array.isArray(body) ? body : [];
+  }
+}

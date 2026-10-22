@@ -65,6 +65,7 @@ export function seedState() {
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
+    gusto: { terminations: [] as any[], payrolls: [] as any[] },
     github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
     netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[] },
     plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
@@ -395,6 +396,38 @@ export async function startWorld() {
       return sh ? send(200, sh) : send(404, { error: { code: "NOT_FOUND" } });
     }
 
+    // ---- Gusto
+    if ((r = m(/^\/v1\/employees\/([^/]+)\/terminations$/))) {
+      const G = state.gusto;
+      if (req.method === "POST") {
+        const t = { uuid: id("term"), employee_uuid: r[1], effective_date: body.effective_date, active: true };
+        G.terminations.push(t);
+        return send(201, t);
+      }
+      if (req.method === "DELETE") {
+        const t = G.terminations.find((x) => x.employee_uuid === r![1] && x.active);
+        if (!t) return send(404, { errors: [{ category: "not_found" }] });
+        t.active = false;
+        res.writeHead(204);
+        return res.end();
+      }
+      return send(200, G.terminations.filter((x) => x.employee_uuid === r![1] && x.active));
+    }
+    if ((r = m(/^\/v1\/companies\/([^/]+)\/payrolls$/))) {
+      if (req.method === "POST") {
+        const p = { uuid: id("payroll"), off_cycle: true, off_cycle_reason: body.off_cycle_reason, check_date: body.check_date, processed: false, employee_compensations: (body.employee_uuids ?? []).map((u: string) => ({ employee_uuid: u })) };
+        state.gusto.payrolls.push(p);
+        return send(201, p);
+      }
+      return send(200, state.gusto.payrolls);
+    }
+    if (req.method === "PUT" && (r = m(/^\/v1\/companies\/([^/]+)\/payrolls\/([^/]+)\/submit$/))) {
+      const p = state.gusto.payrolls.find((x) => x.uuid === r![2]);
+      if (!p) return send(404, {});
+      p.processed = true;
+      return send(202, p);
+    }
+
     // ---- GitHub organizations
     if (req.method === "GET" && (r = m(/^\/orgs\/([^/]+)\/members$/))) {
       const page = Number(q.get("page") ?? 1);
@@ -585,7 +618,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto"];
 
   return {
     state,
