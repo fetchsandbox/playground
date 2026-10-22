@@ -5,6 +5,8 @@ export interface StripeCustomer {
   email: string | null;
   name?: string | null;
   metadata?: Record<string, string>;
+  address?: Record<string, string | null> | null;
+  created?: number;
 }
 export interface StripePrice {
   id: string;

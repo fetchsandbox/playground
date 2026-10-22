@@ -16,6 +16,8 @@ export interface RequestOptions {
   json?: unknown;
   /** Stripe-style application/x-www-form-urlencoded body (already flattened). */
   form?: Record<string, string | number | boolean | undefined>;
+  /** A body sent as is (e.g. multipart uploads). */
+  raw?: { body: string; contentType: string };
   /** Treat these statuses as data rather than errors (e.g. HubSpot 409). */
   allow?: number[];
   headers?: Record<string, string>;
@@ -72,7 +74,8 @@ export class ProviderHttp {
   }
 
   url(path: string, query?: RequestOptions["query"]): string {
-    const u = new URL(this.endpoint.baseUrl.replace(/\/+$/, "") + path);
+    // An absolute URL is a vendor's second host (e.g. Box uploads); credentials still come from this endpoint.
+    const u = new URL(/^https?:\/\//.test(path) ? path : this.endpoint.baseUrl.replace(/\/+$/, "") + path);
     for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) u.searchParams.set(k, String(v));
     return u.toString();
   }
@@ -100,6 +103,9 @@ export class ProviderHttp {
     if (opts.json !== undefined) {
       headers["content-type"] = "application/json; charset=utf-8";
       body = JSON.stringify(opts.json);
+    } else if (opts.raw) {
+      headers["content-type"] = opts.raw.contentType;
+      body = opts.raw.body;
     } else if (opts.form) {
       headers["content-type"] = "application/x-www-form-urlencoded";
       const p = new URLSearchParams();

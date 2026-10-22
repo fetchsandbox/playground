@@ -319,7 +319,16 @@ export interface BoxFile {
 }
 
 export class BoxClient {
-  constructor(readonly http: ProviderHttp) {}
+  constructor(readonly http: ProviderHttp, private readonly uploadUrl = "") {}
+
+  /** Uploads a new file (multipart, Box's upload host in production). */
+  async upload(folderId: string, name: string, content: string): Promise<{ id: string; name: string }> {
+    const boundary = `acme${Date.now().toString(36)}`;
+    const body = [`--${boundary}`, 'Content-Disposition: form-data; name="attributes"', "", JSON.stringify({ name, parent: { id: folderId } }), `--${boundary}`, `Content-Disposition: form-data; name="file"; filename="${name}"`, "Content-Type: application/json", "", content, `--${boundary}--`, ""].join("\r\n");
+    const { body: res } = await this.http.request<any>("POST", `${this.uploadUrl}/files/content`, { raw: { body, contentType: `multipart/form-data; boundary=${boundary}` } });
+    const f = res?.entries?.[0] ?? res;
+    return { id: String(f.id), name: f.name };
+  }
 
   async search(query: string, ancestorFolderId?: string): Promise<BoxFile[]> {
     const { body } = await this.http.request<any>("GET", "/search", { query: { query, type: "file", ancestor_folder_ids: ancestorFolderId, limit: 50 } });

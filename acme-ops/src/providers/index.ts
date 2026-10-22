@@ -193,7 +193,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       twilio: h.twilio && new TwilioClient(h.twilio, env.TWILIO_ACCOUNT_SID ?? "AC_ACME_DEMO"),
       pagerduty: h.pagerduty && new PagerDutyClient(h.pagerduty, env.PAGERDUTY_FROM_EMAIL ?? "ops-bot@acme.example"),
       notion: h.notion && new NotionClient(h.notion),
-      box: h.box && new BoxClient(h.box),
+      box: h.box && new BoxClient(h.box, env.BOX_UPLOAD_URL ?? ""),
       screening: h.screening && new ScreeningClient(h.screening),
       square: h.square && new SquareClient(h.square),
       openai: h.openai && new OpenAIClient(h.openai, env.OPENAI_MODEL ?? "gpt-4o-mini"),

@@ -11,6 +11,7 @@ WHY={
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',
+'dsar-export':'Privacy teams must answer every access request completely and within the statutory deadline, with identity confirmed and the export reviewed by a second person before anything leaves the company.',
 'contract-intake':'Legal needs routine NDAs signed the same day without a lawyer, every deviation reviewed by one, unsigned envelopes cleaned up, and renewal notice dates never missed.',
 'cross-border-refund':'Customer Experience needs to refund international customers in the currency they paid, only to the customer who paid, with currency-aware limits and without letting ticket text decide the amount.',
 'customer-data-sweep':'RevOps needs a nightly data-quality sweep over thousands of billing records that never acts on a partial read and never rewrites thousands of records because of one bad rule.',

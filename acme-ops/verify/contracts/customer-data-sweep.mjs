@@ -33,11 +33,18 @@ export const checks = [
 async function seed(legs, log) {
   const t0 = Date.now();
   let made = 0;
+  const transient = [];
   const create = async (form) => {
-    const res = await fetch(`${legs.stripe.base_url}/v1/customers`, { method: "POST", headers: { authorization: `Bearer ${legs.stripe.api_key}`, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(form).toString() });
-    const body = await res.json();
-    if (!res.ok || !body.id) throw new Error(`seed customer → ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
-    made++;
+    // The twin has answered concurrent creates with a non-JSON "upstream connect error"; retry those and record them.
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(`${legs.stripe.base_url}/v1/customers`, { method: "POST", headers: { authorization: `Bearer ${legs.stripe.api_key}`, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(form).toString() });
+      const text = await res.text();
+      let body = null;
+      try { body = JSON.parse(text); } catch {}
+      if (res.ok && body?.id) { made++; return; }
+      if ((res.status >= 500 || !body) && attempt < 4) { transient.push(`${res.status} ${text.slice(0, 60)}`); await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt)); continue; }
+      throw new Error(`seed customer → ${res.status} ${text.slice(0, 200)}`);
+    }
   };
   for (const [caseId, f] of Object.entries(FIXTURES)) {
     // Bounded parallelism: the twin creates about one customer per 0.6 s per connection.
@@ -45,8 +52,8 @@ async function seed(legs, log) {
     let next = 0;
     await Promise.all(Array.from({ length: 8 }, async () => { while (next < jobs.length) await jobs[next++](); }));
   }
-  log("seed", made, "customers in", Math.round((Date.now() - t0) / 1000), "s");
-  return { made };
+  log("seed", made, "customers in", Math.round((Date.now() - t0) / 1000), "s;", transient.length, "transient twin error(s)", transient.slice(0, 3).join("; "));
+  return { made, transient: transient.length };
 }
 
 export default {

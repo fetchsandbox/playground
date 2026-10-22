@@ -65,10 +65,10 @@ export function seedState() {
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
-    asana: { tasks: [] as any[] },
+    asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
-    box: { files: [] as { id: string; name: string; text: string | null }[] },
+    box: { files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; sharedLink?: { url: string; unshared_at: string } }[] },
     docusign: { envelopes: [] as any[] },
     dependabot: [] as { repo: string; number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; dismissed_reason?: string }[],
     issues: [] as { repo: string; number: number; title: string; body?: string; state: string; labels: string[]; comments: string[] }[],
@@ -500,6 +500,24 @@ export async function startWorld() {
     }
 
     // ---- Box
+    if (req.method === "POST" && path === "/files/content") {
+      const attrs = JSON.parse(/name="attributes"\r\n\r\n(.*?)\r\n--/s.exec(raw)![1]!);
+      const content = /name="file"; filename="[^"]*"\r\nContent-Type: [^\r]*\r\n\r\n(.*?)\r\n--/s.exec(raw)![1]!;
+      if (state.box.files.some((f) => f.folder === attrs.parent.id && f.name === attrs.name)) return send(409, { type: "error", code: "item_name_in_use" });
+      const f = { id: String(9_000_000 + ++seq), name: attrs.name, text: null, folder: attrs.parent.id, content };
+      state.box.files.push(f);
+      return send(201, { total_count: 1, entries: [{ type: "file", id: f.id, name: f.name }] });
+    }
+    if (req.method === "GET" && path === "/search") {
+      const folder = q.get("ancestor_folder_ids");
+      return send(200, { entries: state.box.files.filter((f) => f.name.includes(q.get("query") ?? "") && (!folder || f.folder === folder)).map((f) => ({ type: "file", id: f.id, name: f.name })) });
+    }
+    if (req.method === "PUT" && (r = m(/^\/files\/(\d+)$/))) {
+      const f = state.box.files.find((x) => x.id === r![1]);
+      if (!f) return send(404, { type: "error", code: "not_found" });
+      f.sharedLink = { url: `https://acme.app.box.com/s/${f.id}x`, unshared_at: body.shared_link.unshared_at };
+      return send(200, { id: f.id, shared_link: f.sharedLink });
+    }
     if (req.method === "GET" && (r = m(/^\/files\/(\d+)$/))) {
       const f = state.box.files.find((x) => x.id === r![1]);
       if (!f) return send(404, { type: "error", code: "not_found" });
@@ -763,6 +781,11 @@ export async function startWorld() {
       const t = { gid: String(++seq), ...body.data };
       state.asana.tasks.push(t);
       return send(201, { data: t });
+    }
+    if (req.method === "POST" && (r = m(/^\/tasks\/(\d+)\/stories$/))) {
+      const st = { gid: String(++seq), task: r[1]!, text: body.data.text };
+      state.asana.stories.push(st);
+      return send(201, { data: st });
     }
     if (req.method === "GET" && (r = m(/^\/tasks\/(\d+)$/))) {
       const t = state.asana.tasks.find((x) => x.gid === r![1]);
