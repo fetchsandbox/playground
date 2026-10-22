@@ -23,9 +23,28 @@ export const checks = [
   check("invalid_input_rejected", "A malformed contract id is rejected before any agent runs", [start("invalid_input_rejected", { ...input("baseline"), contractId: "nda for northwind" }, { expectStatus: 400 })], runs([], 0)),
 ];
 
+async function seed(legs, log) {
+  // Upload the NDA through Box's documented multipart upload, then point every check at the file the twin returns.
+  const trail = [];
+  const leg = legs.box;
+  const boundary = "acmeseed";
+  const nda = "MUTUAL NON-DISCLOSURE AGREEMENT between Northwind Traders and ACME Inc. Term: 2 years. Governed by the laws of the State of New York. No exclusivity.";
+  const body = [`--${boundary}`, 'Content-Disposition: form-data; name="attributes"', "", JSON.stringify({ name: `northwind-nda-${Date.now()}.txt`, parent: { id: "0" } }), `--${boundary}`, 'Content-Disposition: form-data; name="file"; filename="northwind-nda.txt"', "Content-Type: text/plain", "", nda, `--${boundary}--`, ""].join("\r\n");
+  const res = await fetch(`${leg.base_url}/files/content`, { method: "POST", headers: { authorization: `Bearer ${leg.api_key}`, "content-type": `multipart/form-data; boundary=${boundary}` }, body });
+  const text = await res.text();
+  let json = null;
+  try { json = JSON.parse(text); } catch {}
+  const id = json?.entries?.[0]?.id;
+  trail.push(`upload ${res.status}${id ? ` file ${id}` : ` ${text.slice(0, 200)}`}`);
+  if (id) for (const [i, c] of checks.entries()) checks[i] = JSON.parse(JSON.stringify(c).replaceAll('"boxFileId":"1"', `"boxFileId":"${id}"`));
+  log("seed", trail.join("; "));
+  return { trail };
+}
+
 export default {
   workflow: "contract-intake",
   providers: ["box", "openai", "asana", "slack"],
+  seed,
   context: {
     goal: "Prove the contract-intake AgentCore runtime: a counterparty NDA or MSA in Box → extracted text → OpenAI clause extraction (JSON, fenced contract text) → code playbook (governing law, NDA term, liability cap, forbidden clauses, every MSA to a lawyer) → clean NDAs to DocuSign, deviations to a lawyer who isn't the requester; signature chased on day 3 and 7, voided after 30 days; renewal reminder once signed.",
     workflow: "POST /invocations {action:start}; {action:signal} for legal approval; {action:tick} fires chases, voiding and the renewal reminder. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",

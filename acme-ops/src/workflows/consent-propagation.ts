@@ -53,7 +53,6 @@ export function verdict(stored: string | null | undefined, state: string, at: st
 interface Crm {
   contactId: string | null;
   values: Record<string, string | null>;
-  marketingStatus: string | null;
 }
 interface Billing {
   customers: { id: string; values: Record<string, string | null> }[];
@@ -76,9 +75,17 @@ export const consentPropagation: WorkflowDef<Input> = {
       async run({ input, providers }) {
         const hs = providers.hubspot!;
         const c = await hs.findByEmail(input.email, PURPOSES.map(prop));
-        const marketing = (await hs.subscriptionStatuses(input.email)).find((s) => s.id === input.marketingSubscriptionId)?.status ?? null;
-        const data: Crm = { contactId: c?.id ?? null, values: Object.fromEntries(PURPOSES.map((p) => [p, (c?.properties[prop(p)] as string | undefined) ?? null])), marketingStatus: marketing };
-        return { summary: c ? `contact ${c.id}, marketing ${marketing ?? "unknown"}` : "no HubSpot contact", data };
+        const data: Crm = { contactId: c?.id ?? null, values: Object.fromEntries(PURPOSES.map((p) => [p, (c?.properties[prop(p)] as string | undefined) ?? null])) };
+        return { summary: c ? `contact ${c.id}` : "no HubSpot contact", data };
+      },
+    },
+    {
+      // Separate from the contact read: an unreachable subscriptions API mustn't stop the contact write.
+      name: "subscriptions",
+      needs: ["hubspot"],
+      async run({ input, providers }) {
+        const status = (await providers.hubspot!.subscriptionStatuses(input.email)).find((s) => s.id === input.marketingSubscriptionId)?.status ?? null;
+        return { summary: `marketing ${status ?? "not set"}`, data: { status } };
       },
     },
     {
@@ -141,7 +148,8 @@ export const consentPropagation: WorkflowDef<Input> = {
       });
     }
     const marketing = input.changes.find((c) => c.purpose === "marketing_email");
-    if (marketing && crm) {
+    const subs = out<{ status: string | null }>(results, "subscriptions");
+    if (marketing && crm && subs) {
       const subscribed = marketing.state === "granted";
       const k = `hubspot.subscription:${input.marketingSubscriptionId}`;
       writes.push(k);
@@ -149,7 +157,7 @@ export const consentPropagation: WorkflowDef<Input> = {
         id: k,
         kind: "hubspot.subscription",
         provider: "hubspot",
-        agent: "crm",
+        agent: "subscriptions",
         gate: "auto",
         summary: { eventId: input.eventId, subscription: input.marketingSubscriptionId, to: subscribed ? "SUBSCRIBED" : "NOT_SUBSCRIBED" },
         after: crm.contactId ? [`hubspot.consent:${crm.contactId}`] : [],
@@ -182,7 +190,7 @@ export const consentPropagation: WorkflowDef<Input> = {
       });
     }
 
-    const missing = [...(crm ? [] : ["HubSpot"]), ...(billing ? [] : ["Stripe"])];
+    const missing = [...(crm ? [] : ["HubSpot contacts"]), ...(marketing && !subs ? ["HubSpot email subscriptions"] : []), ...(billing ? [] : ["Stripe"])];
     if (missing.length || !writes.length) {
       actions.push({
         id: "slack.post_consent",
@@ -228,7 +236,7 @@ export const consentPropagation: WorkflowDef<Input> = {
             if (input.changes.some((ch) => verdict(again[ch.purpose], ch.state, at) === "write")) mismatched.push(`HubSpot ${crm.contactId}`);
           }
         }
-        if (marketing && crm) {
+        if (marketing && crm && subs) {
           const want = marketing.state === "granted" ? "SUBSCRIBED" : "NOT_SUBSCRIBED";
           const now = (await providers.hubspot!.subscriptionStatuses(input.email)).find((s) => s.id === input.marketingSubscriptionId)?.status;
           if (now !== want) mismatched.push(`HubSpot subscription ${input.marketingSubscriptionId} is ${now ?? "unknown"}`);
@@ -250,7 +258,9 @@ export const consentPropagation: WorkflowDef<Input> = {
   output({ input }, results) {
     const crm = out<Crm>(results, "crm");
     const billing = out<Billing>(results, "billing");
-    return { mode: crm && billing ? "propagate" : "partial", contact: crm?.contactId ?? null, customers: billing?.customers.length ?? null, purposes: input.changes.map((c) => `${c.purpose}=${c.state}`) };
+    const subs = out<{ status: string | null }>(results, "subscriptions");
+    const marketing = input.changes.some((c) => c.purpose === "marketing_email");
+    return { mode: crm && billing && (subs || !marketing) ? "propagate" : "partial", contact: crm?.contactId ?? null, customers: billing?.customers.length ?? null, purposes: input.changes.map((c) => `${c.purpose}=${c.state}`) };
   },
 
   catalog: [

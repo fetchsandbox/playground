@@ -1,4 +1,4 @@
-import { action, actionKind, agent, check, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, check, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for work-authorization and leave dates (Notion HR
 // register rows, Kit v2 timers that stand down when the row changes, Asana
@@ -23,7 +23,9 @@ const FIXTURES = {
 };
 
 export const checks = [
-  check("baseline", "A register row is read and classified", [changed("baseline")], runs([agent("register", "ok"), eq("output.mode", "work_authorization")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [changed("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A register row is read and classified", [asCase("baseline_effects", changed("baseline"))], runs([agent("register", "ok"), eq("output.mode", "work_authorization")])),
   check("authorization_timers_scheduled", "An authorization 200 days out gets 180/90/30-day notices, a counsel case and an expiry escalation scheduled", [changed("authorization_timers_scheduled")], runs([actionKind("hr.auth_notice", "scheduled", 3), action("asana.counsel_case", "scheduled"), action("hr.reverification_overdue", "scheduled")])),
   check("counsel_case_inside_90_days", "An authorization already inside 90 days opens the counsel case at once", [changed("counsel_case_inside_90_days")], runs([action("asana.counsel_case", "applied")])),
   check("renewed_row_schedules_nothing", "A row marked renewed schedules nothing", [changed("renewed_row_schedules_nothing")], runs([eq("output.status", "renewed"), actionKind("hr.auth_notice", null, 0), actionKind("asana.counsel_case", null, 0)])),
@@ -41,7 +43,7 @@ async function seed(legs, log) {
     const text = await res.text();
     let body = null;
     try { body = JSON.parse(text); } catch {}
-    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 300)}`);
     return res.ok ? body : null;
   };
   const found = await call("POST", "/v1/search", { filter: { property: "object", value: "database" }, page_size: 5 });
@@ -53,7 +55,10 @@ async function seed(legs, log) {
     const p = await call("POST", "/v1/pages", { parent: { database_id: db }, properties: props });
     if (p?.id) ids[c] = p.id.replaceAll("-", "");
   }
-  for (const [i, chk] of checks.entries()) if (ids[chk.id]) checks[i] = JSON.parse(JSON.stringify(chk).replaceAll(page(chk.id), ids[chk.id]));
+  for (const [i, chk] of checks.entries()) {
+    const key = chk.id === "baseline_effects" ? "baseline" : chk.id;
+    if (ids[key]) checks[i] = JSON.parse(JSON.stringify(chk).replaceAll(page(key), ids[key]));
+  }
   log("seed database", db ?? "none", ";", Object.keys(ids).length, "rows;", trail.slice(0, 6).join("; "));
   return { db, ids, trail };
 }
@@ -70,7 +75,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: "Notices go to HR and counsel only; the employee gets a draft, never an automatic send.",
     schema_and_value_boundaries: ["invalid_input_rejected", "unrelated_row_ignored"],
     amount_currency_quantity: ["authorization_timers_scheduled"],

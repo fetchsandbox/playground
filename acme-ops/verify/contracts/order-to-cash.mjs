@@ -1,4 +1,4 @@
-import { action, agent, all, check, eq, runs, start } from "./lib.mjs";
+import { action, agent, all, check, eq, runs, start, asCase } from "./lib.mjs";
 
 // seed() creates every check's Shopify order on the session's Shopify Admin
 // twin and swaps ORDER_<check> for its id. The ERP (NetSuite) and carrier
@@ -34,7 +34,9 @@ const order = (caseId) => `ORDER_${caseId}`;
 const ship = (caseId) => start(caseId, { orderId: order(caseId), opsChannel: CHANNEL, approvers: [APPROVER] });
 
 export const checks = [
-  check("baseline", "A paid order is read from Shopify and its outcome posted to operations", [ship("baseline")], runs([eq("phase", "DONE"), agent("order-check", "ok"), action("slack.post_order", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [ship("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A paid order is read from Shopify and its outcome posted to operations", [asCase("baseline_effects", ship("baseline"))], runs([eq("phase", "DONE"), agent("order-check", "ok"), action("slack.post_order", "applied")])),
   check("sales_order_booked_in_erp", "A paid, complete order is booked as a NetSuite sales order (external id shopify-<order>)", [ship("sales_order_booked_in_erp")], runs([eq("output.mode", "ship"), action(`netsuite.book_sales_order:${order("sales_order_booked_in_erp")}`, "applied")])),
   check("label_bought_under_limit", "After the sales order, the cheapest EasyPost label under $50 is bought", [ship("label_bought_under_limit")], runs([action(`easypost.buy_label:${order("label_bought_under_limit")}`, "applied")])),
   check("customer_gets_tracking", "The Shopify order gets a fulfillment with the label's tracking number", [ship("customer_gets_tracking")], runs([eq("phase", "DONE"), action(`shopify.fulfill:${order("customer_gets_tracking")}`, "applied")])),
@@ -71,9 +73,9 @@ async function seed(legs, log) {
     if (fulfill) await call("POST", `/admin/api/2026-01/orders/${id}/fulfillments.json`, { fulfillment: { tracking_number: "1Z999AA10123456784", tracking_company: "UPS" } });
   }
   for (const c of checks) {
-    const real = ids[c.id];
+    const real = ids[c.id === "baseline_effects" ? "baseline" : c.id];
     if (!real) continue;
-    const ph = order(c.id);
+    const ph = order(c.id === "baseline_effects" ? "baseline" : c.id);
     for (const a of c.actions ?? []) if (a.body?.input?.orderId === ph) a.body.input.orderId = real;
     const fix = (where) => where?.forEach((w) => { if (typeof w.equals === "string" && w.equals.endsWith(`:${ph}`)) w.equals = w.equals.replace(`:${ph}`, `:${real}`); fix(w.where); });
     const walk = (a) => { if (!a) return; fix(a.where); a.all_of?.forEach(walk); };
@@ -95,7 +97,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: "Large orders and expensive labels wait for approval (local tests).",
     schema_and_value_boundaries: ["invalid_input_rejected", "incomplete_address_held"],
     amount_currency_quantity: ["label_bought_under_limit"],

@@ -45,10 +45,15 @@ async function seed(legs, log) {
       try { json = JSON.parse(text); } catch {}
       if (res.ok && json) return json;
       if ((res.status >= 500 || !json) && attempt < 3) { trail.push(`${path} ${res.status} retried`); await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt)); continue; }
-      trail.push(`${path} ${res.status} ${text.slice(0, 80)}`);
+      trail.push(`${path} ${res.status} ${text.slice(0, 300)}`);
       return null;
     }
   };
+  // HubSpot rejects undefined custom properties; production setup defines them once (CRM Properties API).
+  for (const name of ['acme_stripe_customer_id', 'acme_plan', 'acme_mrr', 'acme_billing_status']) {
+    const res = await fetch(`${legs.hubspot.base_url}/crm/v3/properties/contacts`, { method: "POST", headers: { authorization: `Bearer ${legs.hubspot.api_key}`, "content-type": "application/json" }, body: JSON.stringify({ name, label: name, type: "string", fieldType: "text", groupName: "contactinformation" }) });
+    if (!res.ok && res.status !== 409) trail.push(`define property ${name}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  }
   let made = 0;
   for (const [c, rows] of Object.entries(FIXTURES)) {
     for (const [i, row] of rows.entries()) {

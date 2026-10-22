@@ -29,7 +29,7 @@ async function seed(legs, log) {
   const post = async (leg, path, body, form = false) => {
     const res = await fetch(`${leg.base_url}${path}`, { method: "POST", headers: { authorization: `Bearer ${leg.api_key}`, "content-type": form ? "application/x-www-form-urlencoded" : "application/json" }, body: form ? new URLSearchParams(body).toString() : JSON.stringify(body) });
     const text = await res.text();
-    if (!res.ok) trail.push(`${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${path} ${res.status} ${text.slice(0, 300)}`);
     return res.ok;
   };
   let made = 0;

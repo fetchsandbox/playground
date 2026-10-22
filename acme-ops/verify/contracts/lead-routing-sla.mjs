@@ -49,7 +49,7 @@ async function seed(legs, log) {
       if (res.ok && body.id) return body.id;
       // Drop the first property the twin names (or any non-email one) and say so.
       const named = Object.keys(props).find((k) => k !== "email" && JSON.stringify(body).includes(k)) ?? Object.keys(props).find((k) => k !== "email");
-      trail.push(`contact ${props.email}: ${res.status} ${(body.message ?? "").slice(0, 80)}${named ? `; dropped ${named}` : ""}`);
+      trail.push(`contact ${props.email}: ${res.status} ${(body.message ?? "").slice(0, 300)}${named ? `; dropped ${named}` : ""}`);
       if (!named) throw new Error(`seed contact ${props.email} → ${res.status}`);
       delete props[named];
     }

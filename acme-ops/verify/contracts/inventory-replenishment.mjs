@@ -33,7 +33,7 @@ async function seed(legs, log) {
     const text = await res.text();
     let body = null;
     try { body = JSON.parse(text); } catch {}
-    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 300)}`);
     return body;
   };
   const product = await call("POST", "/admin/api/2026-01/products.json", { product: { title: "Mug", variants: [{ sku: "MUG-BLK", price: "12.00", inventory_management: "shopify" }] } });

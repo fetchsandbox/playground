@@ -1,4 +1,4 @@
-import { action, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for treasury payment approval (dual control as Kit v2
 // signals with segregation of duties, cut-off deadline, idempotent payment
@@ -15,7 +15,9 @@ const id = (c, k) => `${k}:${input(c).paymentId}`;
 const approve = (c, kind, userId, status = 200) => command("signal", 1, { actionId: id(c, kind), value: "approve", userId }, status);
 
 export const checks = [
-  check("baseline", "A payment is announced to treasury with its approvals and cut-off", [pay("baseline")], runs([action("slack.post_payment", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [pay("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A payment is announced to treasury with its approvals and cut-off", [asCase("baseline_effects", pay("baseline"))], runs([action("slack.post_payment", "applied")])),
   check("beneficiary_and_history_read", "Beneficiary verification, sanctions, duplicates and daily outflow are read before any approval", [pay("beneficiary_and_history_read")], runs([agent("beneficiary", "ok"), agent("screening", "ok"), agent("history", "ok"), eq("output.mode", "approval")])),
   check("maker_cannot_approve", "The maker can't approve their own payment", [pay("maker_cannot_approve"), approve("maker_cannot_approve", "treasury.approve", "U_MAKER", 403)], runs([action(id("maker_cannot_approve", "treasury.approve"), "awaiting_signal")])),
   check("checker_releases_once", "A checker's approval releases exactly one payment order", [pay("checker_releases_once"), approve("checker_releases_once", "treasury.approve", "U_TREAS")], runs([action(id("checker_releases_once", "moderntreasury.release"), "applied"), action(id("checker_releases_once", "slack.dm_maker"), "applied")])),
@@ -37,7 +39,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["maker_cannot_approve", "cfo_distinct_from_checker"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["cfo_distinct_from_checker"],

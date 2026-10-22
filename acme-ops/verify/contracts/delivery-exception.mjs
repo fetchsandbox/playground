@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for delivery exceptions (EasyPost tracker scans,
 // proactive Zendesk ticket, Kit v2 48-hour re-check, Shopify replacement draft
@@ -12,14 +12,16 @@ const input = (c, over = {}) => ({ eventId: `evt_${c}`.slice(0, 68), trackerId: 
 const event = (c, over) => start(c, input(c, over));
 
 export const checks = [
-  check("baseline", "A tracker update is read together with its order", [event("baseline")], runs([agent("order", "ok"), agent("tracking", "ok")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [event("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A tracker update is read together with its order", [asCase("baseline_effects", event("baseline"))], runs([agent("order", "ok"), agent("tracking", "ok")])),
   check("stuck_parcel_customer_told", "A parcel with no scan for 3 days opens one proactive ticket", [event("stuck_parcel_customer_told")], runs([eq("output.mode", "stuck"), actionKind("zendesk.proactive_notice", "applied")])),
   check("lost_parcel_replaced", "A parcel with no scan for 7 days is replaced at no cost", [event("lost_parcel_replaced")], runs([eq("output.mode", "lost"), actionKind("shopify.replacement", "applied")])),
   check("returned_parcel_replaced", "A parcel returned to sender is replaced", [event("returned_parcel_replaced")], runs([eq("output.mode", "returned"), actionKind("shopify.replacement", "applied")])),
   check("delivered_after_notice_solves_ticket", "Delivered within 48 hours: the ticket is solved and nothing is replaced (needs clock control)", [event("delivered_after_notice_solves_ticket"), { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 }], runs([actionKind("easypost.recheck", "skipped"), actionKind("shopify.replacement", "skipped")])),
   check("redelivered_webhook_one_ticket", "The same tracker update delivered twice opens one ticket", [event("redelivered_webhook_one_ticket"), start("redelivered_webhook_one_ticket", input("redelivered_webhook_one_ticket"), { runId: "again-{{run_id}}" })], all(runs([], 2))),
   check("tracker_unreadable_reported", "A tracker that can't be read changes nothing for the customer", [event("tracker_unreadable_reported", { trackerId: "trk_does_not_exist" })], runs([eq("output.mode", "blocked"), action("slack.post_unreadable", "applied")])),
-  check("invalid_input_rejected", "A malformed tracker id is rejected before any agent runs", [start("invalid_input_rejected", { ...input("baseline"), trackerId: "1Z999" }, { expectStatus: 400 })], runs([], 0)),
+  check("invalid_input_rejected", "A malformed tracker id is rejected before any agent runs", [start("invalid_input_rejected", { ...input("baseline"), trackerId: "1Z 999 tracking" }, { expectStatus: 400 })], runs([], 0)),
 ];
 
 async function seed(legs, log) {
@@ -27,16 +29,19 @@ async function seed(legs, log) {
   const trail = [];
   const ids = {};
   for (const chk of checks) {
-    if (chk.id === "invalid_input_rejected") continue;
+    if (chk.id === "invalid_input_rejected" || chk.id === "baseline_effects") continue;
     const res = await fetch(`${leg.base_url}/admin/api/2026-01/orders.json`, { method: "POST", headers: { authorization: `Bearer ${leg.api_key}`, "content-type": "application/json" }, body: JSON.stringify({ order: { email: `${chk.id.replaceAll("_", "-")}@ship.example`, line_items: [{ title: "Mug", quantity: 2, price: "32.00", variant_id: 1001 }] } }) });
     const text = await res.text();
     let body = null;
     try { body = JSON.parse(text); } catch {}
     const id = body?.order?.id ?? body?.id;
-    if (!res.ok || !id) { trail.push(`order ${chk.id}: ${res.status} ${text.slice(0, 80)}`); continue; }
+    if (!res.ok || !id) { trail.push(`order ${chk.id}: ${res.status} ${text.slice(0, 300)}`); continue; }
     ids[chk.id] = String(id);
   }
-  for (const [i, chk] of checks.entries()) if (ids[chk.id]) checks[i] = JSON.parse(JSON.stringify(chk).replaceAll(order(chk.id), ids[chk.id]));
+  for (const [i, chk] of checks.entries()) {
+    const key = chk.id === "baseline_effects" ? "baseline" : chk.id;
+    if (ids[key]) checks[i] = JSON.parse(JSON.stringify(chk).replaceAll(order(key), ids[key]));
+  }
   log("seed", Object.keys(ids).length, "orders;", trail.slice(0, 6).join("; "));
   return { ids, trail };
 }
@@ -53,7 +58,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: "Replacements over 200 need a fulfillment lead (local tests).",
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["lost_parcel_replaced"],

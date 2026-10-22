@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
 
 // seed() creates every check's own customer segment on the session's Stripe
 // twin (metadata acme_segment = the check id): every tenth customer has no
@@ -21,7 +21,9 @@ const sweep = (caseId, over = {}) => start(caseId, { segment: segment(caseId), e
 const flags = (status, count) => actionKind("stripe.flag_customer", status, count);
 
 export const checks = [
-  check("baseline", "A small segment is scanned and its customer without a country is flagged; the sweep is recorded and posted", [sweep("baseline")], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 3), flags("applied", 1), action("asana.sweep_record", "applied"), action("slack.post_sweep", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [sweep("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A small segment is scanned and its customer without a country is flagged; the sweep is recorded and posted", [asCase("baseline_effects", sweep("baseline"))], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 3), flags("applied", 1), action("asana.sweep_record", "applied"), action("slack.post_sweep", "applied")])),
   check("full_scan_250", "A 250-customer segment is read completely across three pages and all 25 customers without a country are flagged", [sweep("full_scan_250")], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 250), eq("output.flags", 25), flags("applied", 25)])),
   check("flag_limit_needs_approval", "Past the run's automatic limit (5), flags wait for approval", [sweep("flag_limit_needs_approval", { autoFlagMax: 5 })], runs([eq("phase", "AWAITING_APPROVAL"), flags("applied", 5), flags("pending_approval", 7)])),
   check("rerun_flags_nothing", "A second sweep of the same segment finds everything flagged already and writes nothing", [sweep("rerun_flags_nothing"), start("rerun_flags_nothing", { segment: segment("rerun_flags_nothing"), expectedMin: 3, revopsChannel: CHANNEL, approvers: [APPROVER] }, { runId: "rerun-b-{{run_id}}" })], all(runs([], 2), runs([flags("applied", 1)]), runs([eq("output.mode", "nothing"), flags(null, 0)]))),
@@ -41,7 +43,7 @@ async function seed(legs, log) {
       const text = await res.text();
       let body = null;
       try { body = JSON.parse(text); } catch {}
-      if (res.ok && body?.id) { made++; return; }
+      if (res.ok && body?.id) { made++; return body; }
       if ((res.status >= 500 || !body) && attempt < 4) { transient.push(`${res.status} ${text.slice(0, 60)}`); await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt)); continue; }
       throw new Error(`seed customer → ${res.status} ${text.slice(0, 200)}`);
     }
@@ -52,7 +54,13 @@ async function seed(legs, log) {
     let next = 0;
     await Promise.all(Array.from({ length: 8 }, async () => { while (next < jobs.length) await jobs[next++](); }));
   }
-  log("seed", made, "customers in", Math.round((Date.now() - t0) / 1000), "s;", transient.length, "transient twin error(s)", transient.slice(0, 3).join("; "));
+  // Read one created customer back: is the address Stripe documents on the customer object stored?
+  const probe = await create({ email: `address-probe-${Date.now()}@scale.example.com`, "address[country]": "US", "address[line1]": "1 Main St" });
+  if (probe?.id) {
+    const got = await (await fetch(`${legs.stripe.base_url}/v1/customers/${probe.id}`, { headers: { authorization: `Bearer ${legs.stripe.api_key}` } })).json().catch(() => ({}));
+    transient.push(`address readback: create returned ${JSON.stringify(probe.address ?? null)}, GET returned ${JSON.stringify(got.address ?? null)}`);
+  }
+  log("seed", made, "customers in", Math.round((Date.now() - t0) / 1000), "s;", transient.length, "transient twin error(s) / probes:", transient.slice(-4).join("; "));
   return { made, transient: transient.length };
 }
 
@@ -68,7 +76,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: "Only metadata flags are written, to customers the scan read; approvals as in every runtime.",
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["full_scan_250", "flag_limit_needs_approval"],

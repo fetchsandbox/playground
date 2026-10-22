@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for the support first-response SLA (Kit v2 timers,
 // compare-and-swap ticket claims across overlapping sweeps, de-duplicated
@@ -22,7 +22,9 @@ const FIXTURES = {
 };
 
 export const checks = [
-  check("baseline", "A sweep reads the scoped queue and posts a summary", [sweep("baseline")], runs([agent("queue", "ok"), eq("output.mode", "timing"), action("slack.post_sweep", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [sweep("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A sweep reads the scoped queue and posts a summary", [asCase("baseline_effects", sweep("baseline"))], runs([agent("queue", "ok"), eq("output.mode", "timing"), action("slack.post_sweep", "applied")])),
   check("unanswered_ticket_timed", "An unanswered open ticket gets warning and breach timers", [sweep("unanswered_ticket_timed")], runs([eq("output.awaitingReply", 1), actionKind("sla.warn", "scheduled"), actionKind("sla.breach", "scheduled")])),
   check("enterprise_tier_detected", "A ticket tagged tier_enterprise is timed against the enterprise target and can page", [sweep("enterprise_tier_detected")], runs([eq("output.enterprise", 1), actionKind("pagerduty.page", "scheduled")])),
   check("answered_ticket_not_timed", "A ticket with an agent's public reply has no SLA timer", [sweep("answered_ticket_not_timed")], runs([eq("output.awaitingReply", 0), actionKind("sla.breach", null, 0)])),
@@ -38,7 +40,7 @@ async function seed(legs, log) {
   const call = async (method, path, body) => {
     const res = await fetch(`${legs.zendesk.base_url}${path}`, { method, headers: { authorization: `Bearer ${legs.zendesk.api_key}`, "content-type": "application/json" }, body: JSON.stringify(body) });
     const text = await res.text();
-    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 300)}`);
     try { return JSON.parse(text); } catch { return null; }
   };
   let made = 0;
@@ -67,7 +69,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["answered_ticket_not_timed"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["unanswered_ticket_timed", "enterprise_tier_detected"],

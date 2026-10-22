@@ -46,13 +46,25 @@ async function seed(legs, log) {
     trail.push(`${leg} ${method} ${path} → ${res.status}`);
     return { status: res.status, body };
   };
-  await call("github", "POST", `/repos/${REPO}/pulls`, { title: "Fix checkout rounding", head: "fix-rounding", base: "main" });
-  await call("github", "PUT", `/repos/${REPO}/pulls/1/merge`, {});
-  await call("github", "POST", `/repos/${REPO}/pulls/1/reviews`, { event: "APPROVE", body: "LGTM" });
+  // Use the pull request the twin actually created, and the monitor id it returned.
+  const created = await call("github", "POST", `/repos/${REPO}/pulls`, { title: "Fix checkout rounding", head: "fix-rounding", base: "main" });
+  const n = created.body?.number;
+  trail.push(`pull created: number=${n ?? "none"} (keys ${Object.keys(created.body ?? {}).slice(0, 8).join(",")})`);
+  if (n) {
+    await call("github", "PUT", `/repos/${REPO}/pulls/${n}/merge`, {});
+    await call("github", "POST", `/repos/${REPO}/pulls/${n}/reviews`, { event: "APPROVE", body: "LGTM" });
+    const pr = await call("github", "GET", `/repos/${REPO}/pulls/${n}`);
+    trail.push(`pull ${n}: merged=${pr.body?.merged} user=${pr.body?.user?.login}`);
+  }
   await call("github", "POST", `/repos/${REPO}/deployments`, { ref: "main", environment: "production", payload: {} });
-  await call("datadog", "POST", "/api/v1/monitor", { name: "checkout 5xx", type: "metric alert", query: "avg(last_5m):sum:checkout.errors{*} > 5" });
-  const pr = await call("github", "GET", `/repos/${REPO}/pulls/1`);
-  trail.push(`pull 1: merged=${pr.body?.merged} user=${pr.body?.user?.login}`);
+  const mon = await call("datadog", "POST", "/api/v1/monitor", { name: "checkout 5xx", type: "metric alert", query: "avg(last_5m):sum:checkout.errors{*} > 5" });
+  const monitorId = mon.body?.id;
+  for (const [i, c] of checks.entries()) {
+    let json = JSON.stringify(c);
+    if (n) json = json.replaceAll('"pullRequest":1', `"pullRequest":${n}`);
+    if (monitorId) json = json.replaceAll('"monitorIds":[]', `"monitorIds":[${Number(monitorId)}]`);
+    checks[i] = JSON.parse(json);
+  }
   log("seed", trail.join("; "));
   return { trail };
 }

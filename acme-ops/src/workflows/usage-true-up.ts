@@ -21,7 +21,8 @@ const DAY = 86_400_000;
 
 const Input = z.object({
   trueUpId: z.string().regex(/^TU-[\w-]{3,40}$/, "true-up id like TU-2026-Q3"),
-  meterId: z.string().regex(/^mtr_[\w]+$/),
+  /** Stripe billing meter id (opaque; Stripe issues mtr_…). */
+  meterId: z.string().regex(/^[\w-]{3,255}$/),
   periodStart: z.iso.date(),
   periodEnd: z.iso.date(),
   customers: z.array(z.string().regex(/^cus_\w+$/)).min(1).max(POLICY.maxCustomers),

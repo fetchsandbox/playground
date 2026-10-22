@@ -23,7 +23,8 @@ const DAY = 86_400_000;
 
 const Input = z.object({
   eventId: z.string().regex(/^evt_[\w-]{6,64}$/),
-  trackerId: z.string().regex(/^trk_\w+$/),
+  /** EasyPost tracker id (opaque; EasyPost issues trk_…). */
+  trackerId: z.string().regex(/^[\w-]{3,255}$/),
   orderId: z.string().regex(/^\d+$/),
   opsChannel: ChannelId,
   approvers: z.array(z.string()).min(1),

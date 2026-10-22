@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for the payroll anomaly review (Gusto payroll
 // history, version-guarded exclusion, Kit v2 deadline signal that defaults to
@@ -9,7 +9,9 @@ const input = (c, over = {}) => ({ reviewId: `PAYREV-${c.replaceAll("_", "-")}`.
 const review = (c, over) => start(c, input(c, over));
 
 export const checks = [
-  check("baseline", "A payroll review reads the payroll, its history and employees", [review("baseline")], runs([agent("payroll", "ok"), agent("employees", "ok")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [review("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A payroll review reads the payroll, its history and employees", [asCase("baseline_effects", review("baseline"))], runs([agent("payroll", "ok"), agent("employees", "ok")])),
   check("clean_payroll_submitted", "A payroll without anomalies is submitted at once", [review("clean_payroll_submitted")], runs([eq("output.mode", "clean"), actionKind("gusto.submit", "applied")])),
   check("anomalies_flagged", "Pay after termination, a large raise and an oversized first payroll are flagged", [review("anomalies_flagged")], runs([eq("output.mode", "review"), action("slack.post_anomalies", "applied")])),
   check("preparer_cannot_approve", "The person who prepared the payroll can't approve its anomalies", [review("preparer_cannot_approve"), command("signal", 1, { actionId: "payroll.review:pr_preparer_cannot_approve", value: "approve", userId: "U_PREP" }, 403)], runs([actionKind("payroll.review", "awaiting_signal")])),
@@ -29,7 +31,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["preparer_cannot_approve"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["anomalies_flagged"],

@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for the committed-use true-up (Stripe billing meters,
 // draft invoices and invoice items with idempotency keys, Kit v2 default-approve
@@ -25,7 +25,9 @@ const FIXTURES = {
 };
 
 export const checks = [
-  check("baseline", "A true-up reads contracts and usage and posts a summary", [run("baseline")], runs([agent("contracts", "ok"), eq("output.mode", "true_up"), action("slack.post_true_up", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [run("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A true-up reads contracts and usage and posts a summary", [asCase("baseline_effects", run("baseline"))], runs([agent("contracts", "ok"), eq("output.mode", "true_up"), action("slack.post_true_up", "applied")])),
   check("usage_read_from_meter", "Usage for the period is read from the billing meter", [run("usage_read_from_meter")], runs([agent("usage", "ok"), eq("output.owed", 1)])),
   check("overage_drafted_once", "300 units over a 1,000-unit commitment become one draft invoice and a notice", [run("overage_drafted_once"), start("overage_drafted_once", input("overage_drafted_once"), { runId: "again-{{run_id}}" })], all(runs([], 2), runs([actionKind("stripe.draft_overage", "applied"), actionKind("gmail.notice", "applied")], 2))),
   check("under_commitment_not_billed", "Usage under the commitment bills nothing", [run("under_commitment_not_billed")], runs([eq("output.owed", 0), actionKind("stripe.draft_overage", null, 0)])),
@@ -43,7 +45,7 @@ async function seed(legs, log) {
     const text = await res.text();
     let body = null;
     try { body = JSON.parse(text); } catch {}
-    if (!res.ok) trail.push(`${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${path} ${res.status} ${text.slice(0, 300)}`);
     return res.ok ? body : null;
   };
   const meter = await post("/v1/billing/meters", { display_name: "API calls", event_name: "acme_api_calls", "default_aggregation[formula]": "sum", "customer_mapping[event_payload_key]": "stripe_customer_id", "customer_mapping[type]": "by_id" });
@@ -60,8 +62,9 @@ async function seed(legs, log) {
   for (const chk of checks) {
     const body = chk.actions?.[0]?.body?.input;
     if (!body) continue;
-    const real = ids[chk.id];
-    const json = JSON.stringify(chk).replaceAll(cus(chk.id), real ?? cus(chk.id)).replaceAll("mtr_SEED", meter?.id ?? "mtr_SEED");
+    const key = chk.id === "baseline_effects" ? "baseline" : chk.id;
+    const real = ids[key];
+    const json = JSON.stringify(chk).replaceAll(cus(key), real ?? cus(key)).replaceAll("mtr_SEED", meter?.id ?? "mtr_SEED");
     Object.assign(chk, JSON.parse(json));
   }
   log("seed", Object.keys(ids).length, "customers; meter", meter?.id ?? "refused", ";", trail.slice(0, 6).join("; "));
@@ -80,7 +83,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["owner_holds_invoice"],
     schema_and_value_boundaries: ["invalid_input_rejected", "missing_contract_reported"],
     amount_currency_quantity: ["overage_drafted_once", "under_commitment_not_billed", "large_overage_needs_approval"],

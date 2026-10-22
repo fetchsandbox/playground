@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for the partner sanctions re-screen (Stripe Connect
 // payout holds as precaution and compensation, analyst and MLRO signals with
@@ -19,7 +19,9 @@ const FIXTURES = {
 };
 
 export const checks = [
-  check("baseline", "A re-screen reads the program's accounts and posts a summary", [rescreen("baseline")], runs([agent("screening", "ok"), eq("output.mode", "rescreen"), action("slack.post_rescreen", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [rescreen("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A re-screen reads the program's accounts and posts a summary", [asCase("baseline_effects", rescreen("baseline"))], runs([agent("screening", "ok"), eq("output.mode", "rescreen"), action("slack.post_rescreen", "applied")])),
   check("accounts_in_program_screened", "Only connected accounts in the program are screened", [rescreen("accounts_in_program_screened")], runs([eq("output.accounts", 2)])),
   check("strong_match_held", "A strong sanctions match holds payouts at once", [rescreen("strong_match_held")], runs([eq("output.held", 1), actionKind("stripe.precautionary_hold", "applied")])),
   check("analyst_clears_false_positive", "An analyst's false-positive decision records the clearance", [rescreen("analyst_clears_false_positive"), command("signal", 1, { actionId: "compliance.review:ACCT_analyst_clears_false_positive", value: "reject", userId: "U_ANALYST" })], runs([actionKind("stripe.clear", "applied")])),
@@ -37,7 +39,7 @@ async function seed(legs, log) {
       const text = await res.text();
       let body = null;
       try { body = JSON.parse(text); } catch {}
-      if (!res.ok || !body?.id) { trail.push(`account ${name}: ${res.status} ${text.slice(0, 80)}`); continue; }
+      if (!res.ok || !body?.id) { trail.push(`account ${name}: ${res.status} ${text.slice(0, 300)}`); continue; }
       ids[c] ??= body.id;
     }
   }
@@ -61,7 +63,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["mlro_distinct_from_analyst"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["accounts_in_program_screened"],

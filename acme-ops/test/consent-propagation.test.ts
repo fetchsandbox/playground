@@ -90,4 +90,13 @@ describe("consent-propagation runs", () => {
     expect(action(r.body, "stripe.consent:cus_alice").status).toBe("applied");
     expect(action(r.body, "slack.post_consent").status).toBe("applied");
   });
+
+  it("when the subscriptions API can't be read, the contact and billing are still updated and privacy-ops is told", async () => {
+    w.faults.push({ method: "GET", path: /^\/communication-preferences\/v3\/status\/email\//, status: 404, body: { message: "not found" }, times: 99 });
+    const r = await w.engine(consentPropagation, { now: () => NOW }).handle({ action: "start", runId: "c", input: input(), requestedBy: user });
+    expect(r.body.output.mode).toBe("partial");
+    expect(action(r.body, "hubspot.consent:601").status).toBe("applied");
+    expect(action(r.body, "hubspot.subscription:4242")).toBeUndefined();
+    expect(w.state.slack.messages.at(-1).text).toMatch(/could not be applied in HubSpot email subscriptions/);
+  });
 });

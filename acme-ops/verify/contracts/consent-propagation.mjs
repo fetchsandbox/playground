@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "./lib.mjs";
 
 // Executable expectations for consent propagation (event-time ordering guard,
 // read-back verification on a Kit v2 delayAfter timer). HubSpot, Stripe and
@@ -23,7 +23,9 @@ const FIXTURES = {
 };
 
 export const checks = [
-  check("baseline", "A withdrawal is written to the HubSpot contact with its event time", [change("baseline")], runs([agent("crm", "ok"), eq("output.mode", "propagate"), actionKind("hubspot.consent", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [change("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A withdrawal is written to the HubSpot contact with its event time", [asCase("baseline_effects", change("baseline"))], runs([agent("crm", "ok"), eq("output.mode", "propagate"), actionKind("hubspot.consent", "applied")])),
   check("subscription_turned_off", "Marketing email withdrawal unsubscribes the address in HubSpot", [change("subscription_turned_off")], runs([action(`hubspot.subscription:${SUBSCRIPTION}`, "applied")])),
   check("every_customer_updated", "Every Stripe customer with the address carries the withdrawal", [change("every_customer_updated")], runs([eq("output.customers", 2), actionKind("stripe.consent", "applied", 2)])),
   check("stale_event_ignored", "An event older than the consent on record changes nothing", [change("stale_event_ignored")], runs([actionKind("hubspot.consent", "skipped")])),
@@ -38,9 +40,14 @@ async function seed(legs, log) {
   const call = async (leg, method, path, body, form = false) => {
     const res = await fetch(`${leg.base_url}${path}`, { method, headers: { authorization: `Bearer ${leg.api_key}`, "content-type": form ? "application/x-www-form-urlencoded" : "application/json" }, body: form ? new URLSearchParams(body).toString() : JSON.stringify(body) });
     const text = await res.text();
-    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 80)}`);
+    if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 300)}`);
     return res.ok;
   };
+  // HubSpot rejects undefined custom properties; production setup defines them once (CRM Properties API).
+  for (const name of ['acme_consent_marketing_email', 'acme_consent_sale_or_share', 'acme_consent_profiling', 'acme_consent_last_event']) {
+    const res = await fetch(`${legs.hubspot.base_url}/crm/v3/properties/contacts`, { method: "POST", headers: { authorization: `Bearer ${legs.hubspot.api_key}`, "content-type": "application/json" }, body: JSON.stringify({ name, label: name, type: "string", fieldType: "text", groupName: "contactinformation" }) });
+    if (!res.ok && res.status !== 409) trail.push(`define property ${name}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  }
   let made = 0;
   for (const [c, f] of Object.entries(FIXTURES)) {
     const e = email(c);
@@ -65,7 +72,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: "Consent is keyed by the verified email from the preference center.",
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["every_customer_updated"],

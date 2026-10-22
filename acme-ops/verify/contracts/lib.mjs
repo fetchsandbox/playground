@@ -42,6 +42,11 @@ export function start(caseId, input, { runId = `${caseId.replaceAll("_", "-")}-{
   };
 }
 
+/** The same start action, run and labelled as another case (its own run id and observation collection). */
+export function asCase(caseId, a) {
+  return { ...a, body: { ...a.body, runId: `${caseId.replaceAll("_", "-")}-{{run_id}}`, labels: labels(caseId) } };
+}
+
 /** Any other command against the run created by step `step` (1-based). */
 export function command(action, step, extra = {}, expectStatus = 200) {
   return { method: "POST", path: "/invocations", body: { action, runId: `{{step${step}.runId}}`, ...extra }, expect_status: expectStatus };
