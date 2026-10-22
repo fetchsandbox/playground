@@ -32,6 +32,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Inventory replenishment | Operations / `supply-chain` | 3 | [inventory-replenishment](workflows/inventory-replenishment.md) |
 | Delivery exception handling | Operations / `fulfillment-ops` | 3 | [delivery-exception](workflows/delivery-exception.md) |
 | Payroll anomaly review | People / `payroll-ops` | 3 | [payroll-anomaly-review](workflows/payroll-anomaly-review.md) |
+| Work authorization and leave dates | People / `hr-compliance` | 3 | [visa-and-leave-expiry](workflows/visa-and-leave-expiry.md) |
 | Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Customer data-quality sweep (at scale) | RevOps / `revops-data` | 2 | [customer-data-sweep](workflows/customer-data-sweep.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |

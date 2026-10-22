@@ -68,6 +68,7 @@ export function seedState() {
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
+    notion: { pages: [] as any[] },
     asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
     shopify: { drafts: [] as any[], orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[], employees: [] as any[] },
@@ -666,6 +667,17 @@ export async function startWorld() {
       return res.end("%PDF-1.4 fake");
     }
 
+    // ---- Notion
+    if ((r = m(/^\/v1\/pages\/([^/]+)$/))) {
+      const pg = state.notion.pages.find((x) => x.id === r![1]);
+      if (!pg) return send(404, { object: "error", code: "object_not_found" });
+      if (req.method === "PATCH") {
+        Object.assign(pg.properties, body.properties);
+        pg.last_edited_time = new Date(Date.now() + ++seq).toISOString();
+      }
+      return send(200, pg);
+    }
+
     // ---- EasyPost trackers
     if (req.method === "GET" && (r = m(/^\/trackers\/([^/]+)$/))) {
       const t = state.easypost.trackers.find((x) => x.id === r![1]);
@@ -1003,7 +1015,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign", "moderntreasury"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign", "moderntreasury", "notion"];
 
   return {
     state,

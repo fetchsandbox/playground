@@ -304,6 +304,17 @@ export class NotionClient {
     return out;
   }
 
+  async getPage(id: string): Promise<{ id: string; last_edited_time?: string; properties: Record<string, any> }> {
+    return (await this.http.request<any>("GET", `/v1/pages/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Sets plain properties: select by name, date by ISO date, rich text by string. */
+  async updatePage(id: string, props: Record<string, { select: string } | { date: string } | { text: string }>): Promise<{ id: string }> {
+    const value = (v: { select: string } | { date: string } | { text: string }) => ("select" in v ? { select: { name: v.select } } : "date" in v ? { date: { start: v.date } } : { rich_text: [{ type: "text", text: { content: v.text.slice(0, 1900) } }] });
+    const properties = Object.fromEntries(Object.entries(props).map(([k, v]) => [k, value(v)]));
+    return (await this.http.request<any>("PATCH", `/v1/pages/${encodeURIComponent(id)}`, { json: { properties } })).body;
+  }
+
   async createPage(databaseId: string, title: string, markdownish: string): Promise<{ id: string }> {
     const { body } = await this.http.request<any>("POST", "/v1/pages", {
       json: {
