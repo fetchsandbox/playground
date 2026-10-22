@@ -100,6 +100,18 @@ export class NetSuiteClient {
     await this.http.request("PATCH", `/services/rest/record/v1/vendor/${encodeURIComponent(id)}`, { json: fields });
   }
 
+  async getVendorBill(id: string): Promise<NetSuiteVendorBill> {
+    return (await this.http.request<NetSuiteVendorBill>("GET", `/services/rest/record/v1/vendorBill/${encodeURIComponent(id)}`, { query: { expandSubResources: "true" } })).body;
+  }
+
+  async updateVendorBill(id: string, fields: Record<string, unknown>): Promise<void> {
+    await this.http.request("PATCH", `/services/rest/record/v1/vendorBill/${encodeURIComponent(id)}`, { json: fields });
+  }
+
+  async getPurchaseOrder(id: string): Promise<NetSuitePurchaseOrder> {
+    return (await this.http.request<NetSuitePurchaseOrder>("GET", `/services/rest/record/v1/purchaseOrder/${encodeURIComponent(id)}`, { query: { expandSubResources: "true" } })).body;
+  }
+
   /** SuiteQL (POST /services/rest/query/v1/suiteql), first page. */
   async suiteql<T = Record<string, unknown>>(q: string): Promise<T[]> {
     const { body } = await this.http.request<{ items?: T[] }>("POST", "/services/rest/query/v1/suiteql", { json: { q }, headers: { Prefer: "transient" }, query: { limit: 1000 } });
@@ -120,6 +132,24 @@ export interface NetSuiteVendor {
   custentity_acme_bank_last4?: string | null;
   custentity_acme_bank_token?: string | null;
   custentity_acme_bank_changed_at?: string | null;
+}
+
+export interface NetSuiteVendorBill {
+  id: string;
+  tranId?: string;
+  entity?: { id: string };
+  total?: number;
+  tranDate?: string;
+  approvalStatus?: { id: string };
+  createdBy?: { id: string } | null;
+  custbody_acme_hold_reason?: string | null;
+  item?: { items: { item: { id: string }; quantity: number; rate: number; orderDoc?: { id: string } | null; orderLine?: number | null }[] };
+}
+export interface NetSuitePurchaseOrder {
+  id: string;
+  tranId?: string;
+  entity?: { id: string };
+  item?: { items: { line: number; item: { id: string }; quantity: number; quantityReceived: number; quantityBilled: number; rate: number }[] };
 }
 
 /** Plaid Identity Match (https://plaid.com/docs/api/products/identity/#identitymatch): does the account owner match? */

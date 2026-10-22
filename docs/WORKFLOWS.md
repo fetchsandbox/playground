@@ -28,6 +28,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |
 | Field service dispatch | Service / `field-service` | 4 | [field-service-dispatch](workflows/field-service-dispatch.md) |
 | Incident communications | IT / `it-operations` | 2 | [incident-comms](workflows/incident-comms.md) |
+| Invoice three-way match | Finance / `accounts-payable` | 1 | [invoice-three-way-match](workflows/invoice-three-way-match.md) |
 | SaaS license reclaim | IT / `it-asset-mgmt` | 1 | [license-reclaim](workflows/license-reclaim.md) |
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |

@@ -67,7 +67,7 @@ export function seedState() {
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
     github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
-    netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[] },
+    netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[], vendorBills: [] as any[], purchaseOrders: [] as any[] },
     plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
     verify: { verifications: [] as any[] },
     screening: { entries: [] as { name: string; source: string; score?: number }[] },
@@ -356,6 +356,17 @@ export async function startWorld() {
       const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
       return send(200, { items: N.salesOrders.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id })) });
     }
+    if ((r = m(/^\/services\/rest\/record\/v1\/(vendorBill|purchaseOrder)\/([^/]+)$/))) {
+      const list = r[1] === "vendorBill" ? state.netsuite.vendorBills : state.netsuite.purchaseOrders;
+      const rec = list.find((x) => x.id === r![2]);
+      if (!rec) return send(404, { title: "Record not found" });
+      if (req.method === "PATCH") {
+        Object.assign(rec, body);
+        res.writeHead(204);
+        return res.end();
+      }
+      return send(200, rec);
+    }
     if ((r = m(/^\/services\/rest\/record\/v1\/vendor\/([^/]+)$/))) {
       const v = state.netsuite.vendors.find((x) => x.id === r![1]);
       if (!v) return send(404, { title: "Record not found" });
@@ -365,6 +376,18 @@ export async function startWorld() {
         return res.end();
       }
       return send(200, v);
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /approvalstatus = 1/.test(body.q)) {
+      return send(200, { items: state.netsuite.vendorBills.filter((b) => b.approvalStatus?.id === "1").map((b) => ({ id: b.id })) });
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /id <> (\d+)/.test(body.q)) {
+      const [, entity] = /entity = (\d+)/.exec(body.q)!;
+      const [, self] = /id <> (\d+)/.exec(body.q)!;
+      const tranid = /tranid = '([^']*)'/.exec(body.q)?.[1];
+      const total = Number(/foreigntotal = ([\d.]+)/.exec(body.q)?.[1]);
+      const since = /TO_DATE\('([\d-]+)'/.exec(body.q)?.[1] ?? "";
+      const dup = state.netsuite.vendorBills.filter((b) => b.entity?.id === entity && b.id !== self && (b.tranId === tranid || (b.total === total && b.tranDate >= since)));
+      return send(200, { items: dup.map((b) => ({ id: b.id })) });
     }
     if (req.method === "POST" && path === "/services/rest/query/v1/suiteql") {
       const entity = /entity = (\d+)/.exec(body.q)?.[1];
