@@ -69,7 +69,7 @@ export function seedState() {
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
-    shopify: { orders: [] as any[], fulfillments: [] as any[] },
+    shopify: { orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
     box: { files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; sharedLink?: { url: string; unshared_at: string } }[] },
     docusign: { envelopes: [] as any[] },
@@ -417,6 +417,20 @@ export async function startWorld() {
     }
 
     // ---- Shopify Admin
+    if (req.method === "GET" && m(/^\/admin\/api\/[\w-]+\/orders\.json$/)) {
+      const min = Date.parse(q.get("created_at_min") ?? "1970-01-01");
+      const since = Number(q.get("since_id") ?? 0);
+      const rows = state.shopify.orders.filter((o) => Date.parse(o.created_at ?? "1970-01-01") >= min && Number(o.id) > since).sort((a, b) => Number(a.id) - Number(b.id));
+      return send(200, { orders: rows.slice(0, Number(q.get("limit") ?? 50)) });
+    }
+    if (req.method === "GET" && (r = m(/^\/admin\/api\/[\w-]+\/variants\/(\d+)\.json$/))) {
+      const v = state.shopify.variants.find((x) => String(x.id) === r![1]);
+      return v ? send(200, { variant: v }) : send(404, { errors: "Not Found" });
+    }
+    if (req.method === "GET" && m(/^\/admin\/api\/[\w-]+\/inventory_levels\.json$/)) {
+      const ids = (q.get("inventory_item_ids") ?? "").split(",");
+      return send(200, { inventory_levels: state.shopify.levels.filter((l) => ids.includes(String(l.inventory_item_id)) && String(l.location_id) === q.get("location_ids")) });
+    }
     if ((r = m(/^\/admin\/api\/[\w-]+\/orders\/([^/]+)\.json$/))) {
       const o = state.shopify.orders.find((x) => String(x.id) === r![1]);
       if (!o) return send(404, { errors: "Not Found" });
@@ -454,6 +468,11 @@ export async function startWorld() {
       }
       const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
       return send(200, { items: P.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id, tranId: x.tranId })) });
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /JOIN transactionline/.test(body.q)) {
+      const open: Record<string, number> = {};
+      for (const p of state.netsuite.purchaseOrders.filter((x) => x.status !== "closed")) for (const l of p.item?.items ?? []) open[l.item.id] = (open[l.item.id] ?? 0) + l.quantity - (l.quantityReceived ?? 0);
+      return send(200, { items: Object.entries(open).map(([item, n]) => ({ item, open: n })) });
     }
     if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /type = 'PurchOrd'/.test(body.q)) {
       const entity = /entity = (\d+)/.exec(body.q)?.[1];

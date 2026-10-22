@@ -26,7 +26,8 @@ export interface ShopifyOrder {
   currency?: string;
   total_price?: string;
   tags?: string;
-  line_items?: { sku?: string | null; title?: string; quantity?: number; price?: string }[];
+  line_items?: { sku?: string | null; title?: string; quantity?: number; price?: string; variant_id?: string | number | null }[];
+  created_at?: string;
   shipping_address?: { name?: string; address1?: string; city?: string; province_code?: string; province?: string; zip?: string; country_code?: string; country?: string } | null;
 }
 
@@ -35,8 +36,33 @@ export class ShopifyClient {
   constructor(readonly http: ProviderHttp, readonly version = "2024-10") {}
 
   /** Shopify authenticates with X-Shopify-Access-Token (twins accept the bearer token too). */
-  private req<T>(method: string, p: string, opts: { json?: unknown } = {}) {
+  private req<T>(method: string, p: string, opts: { json?: unknown; query?: Record<string, string | number | undefined> } = {}) {
     return this.http.request<T>(method, `/admin/api/${this.version}${p}`, { ...opts, headers: { "X-Shopify-Access-Token": this.http.endpoint.token } });
+  }
+
+  /** Orders created since `createdAtMin`, any status, paged by since_id. */
+  async ordersSince(createdAtMin: string, max = 5000): Promise<ShopifyOrder[]> {
+    const out: ShopifyOrder[] = [];
+    let sinceId: string | undefined;
+    while (out.length < max) {
+      const { body } = await this.req<any>("GET", "/orders.json", { query: { status: "any", created_at_min: createdAtMin, limit: 250, since_id: sinceId, fields: "id,created_at,cancelled_at,line_items" } });
+      const page: ShopifyOrder[] = body?.orders ?? [];
+      out.push(...page);
+      if (page.length < 250) break;
+      sinceId = String(page[page.length - 1]!.id);
+    }
+    return out.slice(0, max);
+  }
+
+  async getVariant(id: string | number): Promise<{ id: string | number; sku?: string | null; inventory_item_id: string | number }> {
+    const { body } = await this.req<any>("GET", `/variants/${encodeURIComponent(String(id))}.json`);
+    return body.variant;
+  }
+
+  /** Available units per inventory item at one location. */
+  async available(inventoryItemIds: (string | number)[], locationId: string | number): Promise<Record<string, number>> {
+    const { body } = await this.req<any>("GET", "/inventory_levels.json", { query: { inventory_item_ids: inventoryItemIds.join(","), location_ids: String(locationId), limit: 250 } });
+    return Object.fromEntries((body?.inventory_levels ?? []).map((l: any) => [String(l.inventory_item_id), Number(l.available ?? 0)]));
   }
 
   async getOrder(id: string | number): Promise<ShopifyOrder> {
@@ -119,13 +145,31 @@ export class NetSuiteClient {
     return item ? { id: String(item.id), tranId: item.tranId } : undefined;
   }
 
-  async createPurchaseOrder(po: { externalId: string; vendorId: string; department: string; memo: string; currency: string; lines: { description: string; amount: number; account: string }[] }): Promise<{ id: string }> {
+  async createPurchaseOrder(po: { externalId: string; vendorId: string; department: string; memo: string; currency: string; lines?: { description: string; amount: number; account: string }[]; items?: { item: string; quantity: number; rate: number }[]; dueDate?: string }): Promise<{ id: string }> {
     const res = await this.http.request<any>("POST", "/services/rest/record/v1/purchaseOrder", {
-      json: { externalId: po.externalId, entity: { id: po.vendorId }, department: { id: po.department }, memo: po.memo, currency: { refName: po.currency.toUpperCase() }, expense: { items: po.lines.map((l) => ({ account: { id: l.account }, amount: l.amount, memo: l.description, department: { id: po.department } })) } },
+      json: {
+        externalId: po.externalId,
+        entity: { id: po.vendorId },
+        department: { id: po.department },
+        memo: po.memo,
+        currency: { refName: po.currency.toUpperCase() },
+        ...(po.dueDate ? { dueDate: po.dueDate } : {}),
+        ...(po.lines?.length ? { expense: { items: po.lines.map((l) => ({ account: { id: l.account }, amount: l.amount, memo: l.description, department: { id: po.department } })) } } : {}),
+        ...(po.items?.length ? { item: { items: po.items.map((l) => ({ item: { id: l.item }, quantity: l.quantity, rate: l.rate })) } } : {}),
+      },
     });
     const id = ((res.headers?.location as string | undefined) ?? "").split("/").pop() || res.body?.id;
     if (!id) throw new Error("NetSuite returned no purchase order id");
     return { id: String(id) };
+  }
+
+  /** Units on open purchase orders not yet received, per NetSuite item id. */
+  async incomingByItem(itemIds: string[]): Promise<Record<string, number>> {
+    if (!itemIds.length) return {};
+    const rows = await this.suiteql<{ item: string | number; open: number | string }>(
+      `SELECT tl.item AS item, SUM(tl.quantity - NVL(tl.quantityshiprecv, 0)) AS open FROM transaction t JOIN transactionline tl ON tl.transaction = t.id WHERE t.type = 'PurchOrd' AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E') AND tl.item IN (${itemIds.map((i) => Number(i)).join(", ")}) GROUP BY tl.item`,
+    );
+    return Object.fromEntries(rows.map((r) => [String(r.item), Number(r.open ?? 0)]));
   }
 
   /** Journal entries are found again by external id, so a retry never posts twice. */

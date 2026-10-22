@@ -29,6 +29,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Treasury payment approval (dual control) | Finance / `treasury` | 3 | [treasury-payment-approval](workflows/treasury-payment-approval.md) |
 | Usage true-up (committed use) | RevOps / `billing-ops` | 3 | [usage-true-up](workflows/usage-true-up.md) |
 | Partner sanctions re-screen | Compliance / `financial-crimes` | 3 | [customer-kyc-rescreen](workflows/customer-kyc-rescreen.md) |
+| Inventory replenishment | Operations / `supply-chain` | 3 | [inventory-replenishment](workflows/inventory-replenishment.md) |
 | Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Customer data-quality sweep (at scale) | RevOps / `revops-data` | 2 | [customer-data-sweep](workflows/customer-data-sweep.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
