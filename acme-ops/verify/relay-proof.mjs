@@ -152,6 +152,8 @@ function twinEnv(legs) {
     if (!map[p]) continue;
     env[`${map[p]}_BASE_URL`] = leg.base_url;
     env[`${map[p]}_API_KEY`] = leg.api_key;
+    // Twins take the relay's bearer token; production uses each vendor's own scheme.
+    env[`${map[p]}_AUTH_SCHEME`] = "bearer";
   }
   return env;
 }

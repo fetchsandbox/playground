@@ -1,3 +1,4 @@
+import { ProviderError, SpecDeviation } from "../kit/errors";
 // AI, storefront, ERP and carrier clients. Each speaks the vendor's own REST
 // paths, so the same code runs against production and a FetchSandbox twin.
 import type { ProviderHttp } from "../kit/http";
@@ -9,7 +10,7 @@ export class OpenAIClient {
   /** One JSON-mode completion; returns the assistant's text and how the model stopped. */
   async completeJson(system: string, user: string, maxTokens = 600): Promise<{ text: string | null; finishReason: string | null; role: string | null; model: string | null }> {
     const { body } = await this.http.request<any>("POST", "/chat/completions", {
-      json: { model: this.model, temperature: 0, max_tokens: maxTokens, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: user }] },
+      json: { model: this.model, temperature: 0, max_completion_tokens: maxTokens, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: user }] },
     });
     const choice = body?.choices?.[0];
     return { text: typeof choice?.message?.content === "string" ? choice.message.content : null, finishReason: choice?.finish_reason ?? null, role: choice?.message?.role ?? null, model: body?.model ?? null };
@@ -33,7 +34,8 @@ export interface ShopifyOrder {
 
 /** Shopify Admin REST (https://shopify.dev/docs/api/admin-rest). */
 export class ShopifyClient {
-  constructor(readonly http: ProviderHttp, readonly version = "2024-10") {}
+  /** Default Admin API version: inside Shopify's 12-month support window as of 2026-10. */
+  constructor(readonly http: ProviderHttp, readonly version = "2026-01") {}
 
   /** Shopify authenticates with X-Shopify-Access-Token (twins accept the bearer token too). */
   private req<T>(method: string, p: string, opts: { json?: unknown; query?: Record<string, string | number | undefined> } = {}) {
@@ -61,8 +63,13 @@ export class ShopifyClient {
 
   /** Available units per inventory item at one location. */
   async available(inventoryItemIds: (string | number)[], locationId: string | number): Promise<Record<string, number>> {
-    const { body } = await this.req<any>("GET", "/inventory_levels.json", { query: { inventory_item_ids: inventoryItemIds.join(","), location_ids: String(locationId), limit: 250 } });
-    return Object.fromEntries((body?.inventory_levels ?? []).map((l: any) => [String(l.inventory_item_id), Number(l.available ?? 0)]));
+    // inventory_item_ids takes at most 50 ids; `available` is null for untracked items, which are left out.
+    const out: Record<string, number> = {};
+    for (let i = 0; i < inventoryItemIds.length; i += 50) {
+      const { body } = await this.req<any>("GET", "/inventory_levels.json", { query: { inventory_item_ids: inventoryItemIds.slice(i, i + 50).join(","), location_ids: String(locationId), limit: 250 } });
+      for (const l of body?.inventory_levels ?? []) if (l.available !== null && l.available !== undefined) out[String(l.inventory_item_id)] = Number(l.available);
+    }
+    return out;
   }
 
   /** A free replacement: a draft order at 100% discount, completed into an order. */
@@ -85,9 +92,16 @@ export class ShopifyClient {
     return body?.fulfillments ?? [];
   }
 
+  /**
+   * Fulfils every open fulfillment order of the order with one tracking number
+   * (fulfillment-order flow; the order-based create was removed in 2022-07).
+   */
   async createFulfillment(orderId: string | number, f: { trackingNumber: string; trackingCompany: string; trackingUrl?: string }): Promise<{ id: string | number }> {
-    const { body } = await this.req<any>("POST", `/orders/${encodeURIComponent(String(orderId))}/fulfillments.json`, {
-      json: { fulfillment: { tracking_number: f.trackingNumber, tracking_company: f.trackingCompany, tracking_url: f.trackingUrl, notify_customer: true } },
+    const { body: fo } = await this.req<any>("GET", `/orders/${encodeURIComponent(String(orderId))}/fulfillment_orders.json`);
+    const open = (fo?.fulfillment_orders ?? []).filter((x: any) => ["open", "in_progress"].includes(x.status));
+    if (!open.length) throw new SpecDeviation("shopify", `order ${orderId} has no open fulfillment order to fulfil`);
+    const { body } = await this.req<any>("POST", "/fulfillments.json", {
+      json: { fulfillment: { line_items_by_fulfillment_order: open.map((x: any) => ({ fulfillment_order_id: x.id })), tracking_info: { number: f.trackingNumber, company: f.trackingCompany, ...(f.trackingUrl ? { url: f.trackingUrl } : {}) }, notify_customer: true } },
     });
     return body.fulfillment;
   }
@@ -104,22 +118,32 @@ export class ShopifyClient {
 export class NetSuiteClient {
   constructor(readonly http: ProviderHttp) {}
 
+  /** A record by its external id (`/record/v1/{type}/eid:{externalId}`), or undefined on 404. */
+  private async byExternalId(type: string, externalId: string): Promise<{ id: string; tranId?: string } | undefined> {
+    const res = await this.http.request<any>("GET", `/services/rest/record/v1/${type}/eid:${encodeURIComponent(externalId)}`, { allow: [404] });
+    return res.status === 404 ? undefined : { id: String(res.body.id), tranId: res.body.tranId };
+  }
+
   /** Sales orders whose external id is ours (the storefront order). */
-  async findSalesOrder(externalId: string): Promise<{ id: string; tranId?: string } | undefined> {
-    const { body } = await this.http.request<any>("GET", "/services/rest/record/v1/salesOrder", { query: { q: `externalId IS "${externalId}"`, limit: 5 } });
-    const item = body?.items?.[0];
-    return item ? { id: String(item.id), tranId: item.tranId } : undefined;
+  findSalesOrder(externalId: string) {
+    return this.byExternalId("salesOrder", externalId);
+  }
+
+  /** The customer whose email is exactly this one (record references take ids, not emails). */
+  async findCustomerId(email: string): Promise<string | undefined> {
+    const rows = await this.suiteql<{ id: string | number }>(`SELECT id FROM customer WHERE email = '${email.replaceAll("'", "''")}' AND isinactive = 'F'`);
+    return rows[0] ? String(rows[0].id) : undefined;
   }
 
   /** Creates the sales order; NetSuite answers 204 with the new record in Location. */
-  async createSalesOrder(so: { externalId: string; customerEmail: string; currency: string; lines: { sku: string; quantity: number; rate: number }[]; memo: string }): Promise<{ id: string }> {
+  /** Creates the sales order for an existing customer (by internal id); the order takes the customer's currency. */
+  async createSalesOrder(so: { externalId: string; customerId: string; lines: { sku: string; quantity: number; rate: number }[]; memo: string }): Promise<{ id: string }> {
     const res = await this.http.request<any>("POST", "/services/rest/record/v1/salesOrder", {
-      json: { externalId: so.externalId, entity: { email: so.customerEmail }, currency: { refName: so.currency.toUpperCase() }, memo: so.memo, item: { items: so.lines.map((l) => ({ item: { externalId: l.sku }, quantity: l.quantity, rate: l.rate })) } },
-      headers: { Prefer: "transient" },
+      json: { externalId: so.externalId, entity: { id: so.customerId }, memo: so.memo, item: { items: so.lines.map((l) => ({ item: { externalId: l.sku }, quantity: l.quantity, rate: l.rate })) } },
     });
     const loc = (res.headers?.location as string | undefined) ?? "";
-    const id = loc.split("/").pop() || res.body?.id;
-    if (!id) throw new Error("NetSuite returned no sales order id");
+    const id = loc.split("/").pop();
+    if (!id) throw new SpecDeviation("netsuite", "sales order create returned no Location header");
     return { id: String(id) };
   }
 
@@ -149,20 +173,18 @@ export class NetSuiteClient {
   }
 
   /** Purchase orders are found again by external id (the purchase request), so a retry never raises two. */
-  async findPurchaseOrder(externalId: string): Promise<{ id: string; tranId?: string } | undefined> {
-    const { body } = await this.http.request<any>("GET", "/services/rest/record/v1/purchaseOrder", { query: { q: `externalId IS "${externalId}"`, limit: 5 } });
-    const item = body?.items?.[0];
-    return item ? { id: String(item.id), tranId: item.tranId } : undefined;
+  findPurchaseOrder(externalId: string) {
+    return this.byExternalId("purchaseOrder", externalId);
   }
 
-  async createPurchaseOrder(po: { externalId: string; vendorId: string; department: string; memo: string; currency: string; lines?: { description: string; amount: number; account: string }[]; items?: { item: string; quantity: number; rate: number }[]; dueDate?: string }): Promise<{ id: string }> {
+  /** The PO takes the vendor's currency. */
+  async createPurchaseOrder(po: { externalId: string; vendorId: string; department: string; memo: string; lines?: { description: string; amount: number; account: string }[]; items?: { item: string; quantity: number; rate: number }[]; dueDate?: string }): Promise<{ id: string }> {
     const res = await this.http.request<any>("POST", "/services/rest/record/v1/purchaseOrder", {
       json: {
         externalId: po.externalId,
         entity: { id: po.vendorId },
         department: { id: po.department },
         memo: po.memo,
-        currency: { refName: po.currency.toUpperCase() },
         ...(po.dueDate ? { dueDate: po.dueDate } : {}),
         ...(po.lines?.length ? { expense: { items: po.lines.map((l) => ({ account: { id: l.account }, amount: l.amount, memo: l.description, department: { id: po.department } })) } } : {}),
         ...(po.items?.length ? { item: { items: po.items.map((l) => ({ item: { id: l.item }, quantity: l.quantity, rate: l.rate })) } } : {}),
@@ -177,7 +199,7 @@ export class NetSuiteClient {
   async incomingByItem(itemIds: string[]): Promise<Record<string, number>> {
     if (!itemIds.length) return {};
     const rows = await this.suiteql<{ item: string | number; open: number | string }>(
-      `SELECT tl.item AS item, SUM(tl.quantity - NVL(tl.quantityshiprecv, 0)) AS open FROM transaction t JOIN transactionline tl ON tl.transaction = t.id WHERE t.type = 'PurchOrd' AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E') AND tl.item IN (${itemIds.map((i) => Number(i)).join(", ")}) GROUP BY tl.item`,
+      `SELECT tl.item AS item, SUM(tl.quantity - NVL(tl.quantityshiprecv, 0)) AS open FROM transaction t JOIN transactionline tl ON tl.transaction = t.id WHERE t.type = 'PurchOrd' AND BUILTIN.CF(t.status) IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E') AND tl.item IN (${itemIds.map((i) => Number(i)).join(", ")}) GROUP BY tl.item`,
     );
     return Object.fromEntries(rows.map((r) => [String(r.item), Number(r.open ?? 0)]));
   }
@@ -206,9 +228,17 @@ export class NetSuiteClient {
   }
 
   /** SuiteQL (POST /services/rest/query/v1/suiteql), first page. */
-  async suiteql<T = Record<string, unknown>>(q: string): Promise<T[]> {
-    const { body } = await this.http.request<{ items?: T[] }>("POST", "/services/rest/query/v1/suiteql", { json: { q }, headers: { Prefer: "transient" }, query: { limit: 1000 } });
-    return body?.items ?? [];
+  /** All rows, following `hasMore` with offset (Prefer: transient is required for SuiteQL). */
+  async suiteql<T = Record<string, unknown>>(q: string, max = 10_000): Promise<T[]> {
+    const out: T[] = [];
+    for (let offset = 0; out.length < max; ) {
+      const { body } = await this.http.request<{ items?: T[]; hasMore?: boolean }>("POST", "/services/rest/query/v1/suiteql", { json: { q }, headers: { Prefer: "transient" }, query: { limit: 1000, offset } });
+      const page = body?.items ?? [];
+      out.push(...page);
+      offset += page.length;
+      if (!body?.hasMore || !page.length) break;
+    }
+    return out.slice(0, max);
   }
 }
 
@@ -254,6 +284,7 @@ export interface GustoPayroll {
   off_cycle?: boolean;
   check_date?: string;
   payroll_deadline?: string;
+  calculated_at?: string | null;
   pay_period?: { start_date?: string; end_date?: string };
   employee_compensations?: { employee_uuid: string; gross_pay?: string | null; net_pay?: string | null; excluded?: boolean }[];
 }
@@ -344,10 +375,23 @@ export class GustoClient {
   }
 
   /** Off-cycle "dismissed employee" payroll for one person, submitted for the check date. */
-  async finalPayroll(p: { employeeId: string; startDate: string; endDate: string; checkDate: string }): Promise<{ uuid: string; check_date: string; processed?: boolean }> {
-    const created = (await this.http.request<any>("POST", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { json: { off_cycle: true, off_cycle_reason: "Dismissed employee", start_date: p.startDate, end_date: p.endDate, check_date: p.checkDate, employee_uuids: [p.employeeId] } })).body;
-    await this.http.request("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(created.uuid ?? created.payroll_uuid)}/submit`, { json: {} });
-    return { uuid: created.uuid ?? created.payroll_uuid, check_date: created.check_date ?? p.checkDate, processed: true };
+  /**
+   * Final pay as an off-cycle "Dismissed employee" payroll: create, calculate (async; poll until
+   * calculated_at), then submit (async, 202). Returns the payroll as submitted, not as processed.
+   */
+  async finalPayroll(p: { employeeId: string; startDate: string; endDate: string; checkDate: string }, pollMs = 2_000, polls = 15): Promise<{ uuid: string; check_date: string; processed: boolean }> {
+    const base = `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`;
+    const created = (await this.http.request<any>("POST", base, { json: { off_cycle: true, off_cycle_reason: "Dismissed employee", start_date: p.startDate, end_date: p.endDate, check_date: p.checkDate, employee_uuids: [p.employeeId] } })).body;
+    const id = created.uuid ?? created.payroll_uuid;
+    await this.http.request("PUT", `${base}/${encodeURIComponent(id)}/calculate`, { json: {} });
+    let cur = await this.getPayroll(id);
+    for (let i = 0; !cur.calculated_at && i < polls; i++) {
+      await new Promise((r) => setTimeout(r, pollMs));
+      cur = await this.getPayroll(id);
+    }
+    if (!cur.calculated_at) throw new ProviderError("gusto", 0, "calculation_pending", true, `payroll ${id} not calculated yet`);
+    await this.submitPayroll(id);
+    return { uuid: id, check_date: created.check_date ?? p.checkDate, processed: false };
   }
 
   /** One payroll with per-employee compensation (gross and net pay as decimal strings). */
@@ -356,8 +400,15 @@ export class GustoClient {
   }
 
   /** Excludes employees from an unprocessed payroll; `version` guards concurrent edits (409 on mismatch). */
-  async excludeEmployees(id: string, version: string, employeeIds: string[]): Promise<GustoPayroll> {
-    return (await this.http.request<GustoPayroll>("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(id)}`, { json: { version, employee_compensations: employeeIds.map((u) => ({ employee_uuid: u, excluded: true })) } })).body;
+  /** Prepares the payroll for editing (returns the current `version`), then excludes the employees (max 100 per call). */
+  async excludeEmployees(id: string, employeeIds: string[]): Promise<GustoPayroll> {
+    const base = `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(id)}`;
+    let last: GustoPayroll | undefined;
+    for (let i = 0; i < employeeIds.length; i += 100) {
+      const prepared = (await this.http.request<GustoPayroll>("PUT", `${base}/prepare`, { json: {} })).body;
+      last = (await this.http.request<GustoPayroll>("PUT", base, { json: { version: prepared.version, employee_compensations: employeeIds.slice(i, i + 100).map((u) => ({ employee_uuid: u, excluded: true })) } })).body;
+    }
+    return last!;
   }
 
   async submitPayroll(id: string): Promise<void> {
@@ -365,12 +416,23 @@ export class GustoClient {
   }
 
   async listEmployees(): Promise<{ uuid: string; first_name?: string; last_name?: string; terminated?: boolean; terminations?: { effective_date: string }[]; jobs?: { hire_date?: string }[] }[]> {
-    const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/employees`, { query: { per: 500 } });
-    return Array.isArray(body) ? body : [];
+    const out: any[] = [];
+    for (let page = 1; ; page++) {
+      const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/employees`, { query: { page, per: 100 } });
+      const rows = Array.isArray(body) ? body : [];
+      out.push(...rows);
+      if (rows.length < 100) return out;
+    }
   }
 
   async listPayrolls(startDate: string): Promise<{ uuid: string; off_cycle?: boolean; check_date?: string; employee_compensations?: { employee_uuid: string }[] }[]> {
-    const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { query: { start_date: startDate, include_off_cycle: "true" } });
-    return Array.isArray(body) ? body : [];
+    // Defaults are processed regular payrolls only; ask for unprocessed and off-cycle ones too, every page.
+    const out: any[] = [];
+    for (let page = 1; ; page++) {
+      const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { query: { start_date: startDate, processing_statuses: "unprocessed,processed", payroll_types: "regular,off_cycle", include_off_cycle: "true", page, per: 100 } });
+      const rows = Array.isArray(body) ? body : [];
+      out.push(...rows);
+      if (rows.length < 100) return out;
+    }
   }
 }

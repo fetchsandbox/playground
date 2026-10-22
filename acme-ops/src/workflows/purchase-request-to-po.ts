@@ -189,7 +189,7 @@ export const purchaseRequestToPo: WorkflowDef<Input> = {
         // Re-check the vendor at write time: a hold placed during approval stops the PO.
         const v = await ns.getVendor(input.vendorId);
         if (v.isInactive || v.custentity_acme_payment_hold) throw new FatalError(`vendor ${input.vendorId} was put on hold during approval`);
-        const created = await ns.createPurchaseOrder({ externalId: input.requestId, vendorId: input.vendorId, department: input.department.id, memo: `${input.requestId}: ${input.description}`, currency: input.currency, lines: [{ description: input.description, amount: input.amount / 100, account: input.expenseAccount }] });
+        const created = await ns.createPurchaseOrder({ externalId: input.requestId, vendorId: input.vendorId, department: input.department.id, memo: `${input.requestId}: ${input.description}`, lines: [{ description: input.description, amount: input.amount / 100, account: input.expenseAccount }] });
         const found = await ns.findPurchaseOrder(input.requestId);
         return { ref: created.id, detail: { tranId: found?.tranId } };
       },

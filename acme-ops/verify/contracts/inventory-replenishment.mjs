@@ -36,13 +36,13 @@ async function seed(legs, log) {
     if (!res.ok) trail.push(`${method} ${path} ${res.status} ${text.slice(0, 80)}`);
     return body;
   };
-  const product = await call("POST", "/admin/api/2024-10/products.json", { product: { title: "Mug", variants: [{ sku: "MUG-BLK", price: "12.00", inventory_management: "shopify" }] } });
+  const product = await call("POST", "/admin/api/2026-01/products.json", { product: { title: "Mug", variants: [{ sku: "MUG-BLK", price: "12.00", inventory_management: "shopify" }] } });
   const variant = product?.product?.variants?.[0] ?? product?.variants?.[0];
-  const locations = await call("GET", "/admin/api/2024-10/locations.json");
+  const locations = await call("GET", "/admin/api/2026-01/locations.json");
   const location = locations?.locations?.[0]?.id;
-  if (variant?.inventory_item_id && location) await call("POST", "/admin/api/2024-10/inventory_levels/set.json", { inventory_item_id: variant.inventory_item_id, location_id: location, available: 20 });
+  if (variant?.inventory_item_id && location) await call("POST", "/admin/api/2026-01/inventory_levels/set.json", { inventory_item_id: variant.inventory_item_id, location_id: location, available: 20 });
   let orders = 0;
-  for (let d = 1; d <= 28 && variant?.id; d++) if (await call("POST", "/admin/api/2024-10/orders.json", { order: { line_items: [{ variant_id: variant.id, quantity: 2 }], created_at: new Date(Date.now() - d * 86_400_000).toISOString() } })) orders++;
+  for (let d = 1; d <= 28 && variant?.id; d++) if (await call("POST", "/admin/api/2026-01/orders.json", { order: { line_items: [{ variant_id: variant.id, quantity: 2 }], created_at: new Date(Date.now() - d * 86_400_000).toISOString() } })) orders++;
   trail.push(`variant ${variant?.id ?? "none"}, location ${location ?? "none"}, ${orders} orders`);
   const swap = JSON.stringify(checks).replaceAll("VARIANT_A", String(variant?.id ?? "1")).replaceAll("LOCATION", String(location ?? "1"));
   JSON.parse(swap).forEach((c, i) => Object.assign(checks[i], c));

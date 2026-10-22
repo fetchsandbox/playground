@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FatalError, SkipAction } from "../kit/errors";
+import { FatalError, SkipAction, specWarning } from "../kit/errors";
 import type { PlannedAction, WorkflowDef } from "../kit/types";
 import { ChannelId, money, out } from "./shared";
 
@@ -96,8 +96,11 @@ export const treasuryPaymentApproval: WorkflowDef<Input> = {
       needs: ["moderntreasury"],
       async run({ input, providers, startedAt }) {
         const mt = providers.moderntreasury!;
-        const live = (p: { status: string }) => !["cancelled", "failed", "returned", "denied"].includes(p.status);
-        const sameAccount = await mt.listPaymentOrders({ receiving_account_id: input.receivingAccountId });
+        const live = (p: { status: string }) => !["cancelled", "failed", "returned", "reversed", "denied"].includes(p.status);
+        const listed = await mt.listPaymentOrders({ receiving_account_id: input.receivingAccountId });
+        // Keep only orders to this account even if the filter wasn't applied.
+        const sameAccount = listed.filter((p) => p.receiving_account_id === input.receivingAccountId);
+        if (sameAccount.length !== listed.length) specWarning("moderntreasury", `payment_orders?receiving_account_id returned ${listed.length - sameAccount.length} order(s) to other accounts`);
         const since = startedAt.getTime() - POLICY.duplicateWindowDays * DAY;
         const duplicates = sameAccount.filter((p) => live(p) && p.amount === input.amount && p.metadata?.acme_payment_id !== input.paymentId && Date.parse(p.created_at ?? "1970-01-01") >= since).map((p) => p.metadata?.acme_payment_id ?? p.id);
         const today = await mt.listPaymentOrders({ originating_account_id: input.originatingAccountId, effective_date_start: input.valueDate, effective_date_end: input.valueDate });

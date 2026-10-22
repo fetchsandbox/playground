@@ -45,8 +45,9 @@ export class ModernTreasuryClient {
       const res = await this.http.request<PaymentOrder[]>("GET", "/api/payment_orders", { query: { ...filters, per_page: 100, after_cursor: after } });
       const page = Array.isArray(res.body) ? res.body : [];
       out.push(...page);
+      // Pages may be blank while a cursor remains; follow X-After-Cursor until it is absent.
       after = (res.headers?.["x-after-cursor"] as string | undefined) || undefined;
-      if (!after || !page.length) break;
+      if (!after) break;
     }
     return out.slice(0, max);
   }

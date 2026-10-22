@@ -28,7 +28,7 @@ async function seed(legs, log) {
   const ids = {};
   for (const chk of checks) {
     if (chk.id === "invalid_input_rejected") continue;
-    const res = await fetch(`${leg.base_url}/admin/api/2024-10/orders.json`, { method: "POST", headers: { authorization: `Bearer ${leg.api_key}`, "content-type": "application/json" }, body: JSON.stringify({ order: { email: `${chk.id.replaceAll("_", "-")}@ship.example`, line_items: [{ title: "Mug", quantity: 2, price: "32.00", variant_id: 1001 }] } }) });
+    const res = await fetch(`${leg.base_url}/admin/api/2026-01/orders.json`, { method: "POST", headers: { authorization: `Bearer ${leg.api_key}`, "content-type": "application/json" }, body: JSON.stringify({ order: { email: `${chk.id.replaceAll("_", "-")}@ship.example`, line_items: [{ title: "Mug", quantity: 2, price: "32.00", variant_id: 1001 }] } }) });
     const text = await res.text();
     let body = null;
     try { body = JSON.parse(text); } catch {}

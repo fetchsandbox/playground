@@ -6,7 +6,7 @@ import { action, agent, all, check, eq, runs, start } from "./lib.mjs";
 // FetchSandbox has no twin for either (validate_integration: "Unknown
 // providers"), so the session carries only shopify-admin and slack and the
 // receipt shows what can't be measured. The runtime and the seed use a
-// supported Admin API version (2024-10), as production does; a twin that only
+// supported Admin API version (2026-01), as production does; a twin that only
 // models retired versions shows up as refused seeds and failing reads.
 const CHANNEL = "C0OPS00001";
 const APPROVER = "U_OPS_LEAD";
@@ -60,7 +60,7 @@ async function seed(legs, log) {
   const ids = {};
   for (const [caseId, f] of Object.entries(FIXTURES)) {
     const { fulfill, ...o } = f;
-    const created = await call("POST", "/admin/api/2024-10/orders.json", { order: o });
+    const created = await call("POST", "/admin/api/2026-01/orders.json", { order: o });
     // Shopify returns the id inside `order`; anything else is recorded as a deviation and the check runs unseeded.
     const id = created?.order?.id;
     if (!id) {
@@ -68,7 +68,7 @@ async function seed(legs, log) {
       continue;
     }
     ids[caseId] = String(id);
-    if (fulfill) await call("POST", `/admin/api/2024-10/orders/${id}/fulfillments.json`, { fulfillment: { tracking_number: "1Z999AA10123456784", tracking_company: "UPS" } });
+    if (fulfill) await call("POST", `/admin/api/2026-01/orders/${id}/fulfillments.json`, { fulfillment: { tracking_number: "1Z999AA10123456784", tracking_company: "UPS" } });
   }
   for (const c of checks) {
     const real = ids[c.id];

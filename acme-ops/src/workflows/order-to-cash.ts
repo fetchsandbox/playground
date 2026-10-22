@@ -144,7 +144,9 @@ export const orderToCash: WorkflowDef<Input> = {
           if (!providers.netsuite) throw new FatalError("ERP not connected");
           const existing = await providers.netsuite.findSalesOrder(externalId);
           if (existing) return { ref: existing.id, detail: { reused: true } };
-          const so = await providers.netsuite.createSalesOrder({ externalId, customerEmail: order.email ?? "", currency: order.currency, lines: order.lines.map((l) => ({ sku: l.sku, quantity: l.quantity, rate: l.rateMinor / 100 })), memo: `Shopify order ${input.orderId}` });
+          const customerId = order.email ? await providers.netsuite.findCustomerId(order.email) : undefined;
+          if (!customerId) throw new FatalError(`no ERP customer for ${order.email ? "the order email" : "an order without an email"}; create the customer in NetSuite first`);
+          const so = await providers.netsuite.createSalesOrder({ externalId, customerId, lines: order.lines.map((l) => ({ sku: l.sku, quantity: l.quantity, rate: l.rateMinor / 100 })), memo: `Shopify order ${input.orderId}` });
           return { ref: so.id };
         },
         async reconcile({ providers }, receipt) {

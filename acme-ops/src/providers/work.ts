@@ -1,6 +1,7 @@
 // Work-management, identity, engineering, messaging and document systems.
 // Each client speaks the vendor's own REST paths, so the same code runs against
 // production and a FetchSandbox twin by swapping the base URL.
+import { SpecDeviation } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 /** Asana tasks: ACME's work orders, CAPAs, RMAs and IT tickets. */
@@ -179,12 +180,15 @@ export class GitHubClient {
 
   /** Open Dependabot alerts of a repository. */
   async dependabotAlerts(repo: string, max = 1_000): Promise<{ number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; security_vulnerability?: { first_patched_version?: { identifier: string } | null } }[]> {
+    // Cursor pagination via the Link header (GitHub removed page/first/last for this endpoint on 2025-10-14).
     const out: any[] = [];
-    for (let page = 1; out.length < max; page++) {
-      const { body } = await this.http.request<any[]>("GET", `/repos/${repo}/dependabot/alerts`, { query: { state: "open", per_page: 100, page } });
-      const rows = Array.isArray(body) ? body : [];
-      out.push(...rows);
-      if (rows.length < 100) break;
+    let next: string | undefined = `/repos/${repo}/dependabot/alerts`;
+    let query: Record<string, string | number> | undefined = { state: "open", per_page: 100 };
+    while (next && out.length < max) {
+      const res: { body: any[]; headers?: Record<string, string> } = await this.http.request<any[]>("GET", next, { query });
+      out.push(...(Array.isArray(res.body) ? res.body : []));
+      next = /<([^>]+)>;\s*rel="next"/.exec(res.headers?.link ?? "")?.[1];
+      query = undefined;
     }
     return out.slice(0, max);
   }
@@ -260,7 +264,7 @@ export class PagerDutyClient {
 
   /** Open (triggered or acknowledged) incidents on these services. */
   async openIncidents(serviceIds: string[]): Promise<{ id: string; urgency: string; status: string; title?: string; incident_key?: string | null; priority?: { summary?: string } | null }[]> {
-    const { body } = await this.http.request<any>("GET", "/incidents", { query: { "service_ids[]": serviceIds.join(","), "statuses[]": "triggered,acknowledged", limit: 100 } });
+    const { body } = await this.http.request<any>("GET", "/incidents", { query: { "service_ids[]": serviceIds, "statuses[]": ["triggered", "acknowledged"], limit: 100 } });
     return (body?.incidents ?? []).filter((i: any) => !serviceIds.length || serviceIds.includes(i.service?.id));
   }
 
@@ -347,7 +351,9 @@ export class BoxClient {
     const boundary = `acme${Date.now().toString(36)}`;
     const body = [`--${boundary}`, 'Content-Disposition: form-data; name="attributes"', "", JSON.stringify({ name, parent: { id: folderId } }), `--${boundary}`, `Content-Disposition: form-data; name="file"; filename="${name}"`, "Content-Type: application/json", "", content, `--${boundary}--`, ""].join("\r\n");
     const { body: res } = await this.http.request<any>("POST", `${this.uploadUrl}/files/content`, { raw: { body, contentType: `multipart/form-data; boundary=${boundary}` } });
-    const f = res?.entries?.[0] ?? res;
+    // Box answers { total_count, entries: [file] }.
+    const f = res?.entries?.[0];
+    if (!f?.id) throw new SpecDeviation("box", "POST /files/content returned no entries[0].id");
     return { id: String(f.id), name: f.name };
   }
 
@@ -366,15 +372,14 @@ export class BoxClient {
     const rep = body?.representations?.entries?.find((e: any) => e.representation === "extracted_text");
     const url: string | undefined = rep?.content?.url_template?.replace("{+asset_path}", "");
     if (!url || rep?.status?.state !== "success") return null;
-    const path = url.replace(/^https?:\/\/[^/]+(\/2\.0)?/, "");
-    const res = await this.http.request<any>("GET", path);
-    return typeof res.body === "string" ? res.body : (res.body?.raw ?? JSON.stringify(res.body ?? ""));
+    // Box: call the url_template as given (dl.boxcloud.com); the body is plain text.
+    return (await this.http.request<string>("GET", url, { responseType: "text" })).body;
   }
 
   /** The file's bytes, base64 (for e-signature envelopes). */
   async downloadBase64(fileId: string): Promise<string> {
-    const res = await this.http.request<any>("GET", `/files/${encodeURIComponent(fileId)}/content`);
-    return Buffer.from(typeof res.body === "string" ? res.body : (res.body?.raw ?? JSON.stringify(res.body ?? "")), "utf8").toString("base64");
+    // Box redirects to dl.boxcloud.com with the raw bytes.
+    return (await this.http.request<string>("GET", `/files/${encodeURIComponent(fileId)}/content`, { responseType: "base64" })).body;
   }
 
   async createSharedLink(fileId: string, expiresAt: string): Promise<{ url: string }> {
@@ -394,7 +399,8 @@ export class ScreeningClient {
   constructor(readonly http: ProviderHttp) {}
 
   async search(name: string, country?: string): Promise<{ name: string; source: string; score?: number }[]> {
-    const { body } = await this.http.request<any>("GET", "/consolidated_screening_list/v1/search", { query: { name, countries: country, fuzzy_name: "true", size: 25 } });
+    // The CSL API authenticates with a developer.trade.gov `subscription-key` header.
+    const { body } = await this.http.request<any>("GET", "/consolidated_screening_list/v1/search", { query: { name, countries: country, fuzzy_name: "true", size: 25 }, headers: { "subscription-key": this.http.endpoint.token } });
     return (body?.results ?? []).map((r: any) => ({ name: r.name, source: r.source, score: r.score }));
   }
 }

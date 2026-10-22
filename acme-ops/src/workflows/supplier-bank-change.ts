@@ -128,7 +128,7 @@ export const supplierBankChange: WorkflowDef<Input> = {
         const ns = providers.netsuite!;
         const v: NetSuiteVendor = await ns.getVendor(input.vendorId);
         const until = new Date(startedAt.getTime() + POLICY.billsDueDays * DAY).toISOString().slice(0, 10);
-        const bills = await ns.suiteql<{ amount: string | number }>(`SELECT foreigntotal AS amount FROM transaction WHERE type = 'VendBill' AND entity = ${Number(input.vendorId)} AND status = 'VendBill:A' AND duedate <= TO_DATE('${until}', 'YYYY-MM-DD')`);
+        const bills = await ns.suiteql<{ amount: string | number }>(`SELECT foreigntotal AS amount FROM transaction WHERE type = 'VendBill' AND entity = ${Number(input.vendorId)} AND BUILTIN.CF(status) = 'VendBill:A' AND duedate <= TO_DATE('${until}', 'YYYY-MM-DD')`);
         const data: Vendor = {
           id: v.id,
           name: v.legalName || v.companyName || `vendor ${v.id}`,

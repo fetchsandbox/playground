@@ -157,7 +157,7 @@ export const inventoryReplenishment: WorkflowDef<Input> = {
           const ns = providers.netsuite!;
           const existing = await ns.findPurchaseOrder(externalId);
           if (existing) return { ref: existing.id, detail: { reused: true, tranId: existing.tranId } };
-          const created = await ns.createPurchaseOrder({ externalId, vendorId: supplierId, department: input.department, memo: `${input.runId} replenishment`, currency: "usd", dueDate: due, items: lines.map((l) => ({ item: l.item.netsuiteItemId, quantity: l.n.qty, rate: l.item.unitCost / 100 })) });
+          const created = await ns.createPurchaseOrder({ externalId, vendorId: supplierId, department: input.department, memo: `${input.runId} replenishment`, dueDate: due, items: lines.map((l) => ({ item: l.item.netsuiteItemId, quantity: l.n.qty, rate: l.item.unitCost / 100 })) });
           return { ref: created.id, detail: { tranId: (await ns.findPurchaseOrder(externalId))?.tranId } };
         },
       });

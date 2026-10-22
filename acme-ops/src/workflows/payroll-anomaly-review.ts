@@ -14,7 +14,7 @@ import { ChannelId, money, out } from "./shared";
 // A clean payroll is submitted at once. Otherwise a reviewer who didn't prepare
 // the payroll decides before Gusto's deadline (signal): approve = pay as is.
 // Without approval by two hours before the deadline, the flagged employees are
-// excluded (guarded by the payroll's version) and everyone else is paid on
+// excluded (prepare, then update with its version) and everyone else is paid on
 // time; payroll-ops is told to run an off-cycle payroll for those held back.
 
 export const POLICY = { upShare: 0.25, upMinMinor: 500_00, newHireMaxMinor: 15_000_00, historyRuns: 3, decideBeforeDeadlineMs: 2 * 3_600_000 } as const;
@@ -169,7 +169,7 @@ export const payrollAnomalyReview: WorkflowDef<Input> = {
           const g = providers.gusto!;
           const p = await g.getPayroll(input.payrollId);
           if (p.processed) throw new SkipAction("already submitted");
-          await g.excludeEmployees(input.payrollId, p.version ?? "", a.flags.map((f) => f.employee));
+          await g.excludeEmployees(input.payrollId, a.flags.map((f) => f.employee));
           await providers.slack!.postMessage(input.payrollChannel, `:pause_button: ${input.reviewId}: ${a.flags.length} employee(s) held back from payroll ${input.payrollId} (${a.flags.map((f) => f.name).join(", ")}). Run an off-cycle payroll once each is resolved.`);
           return { ref: input.payrollId, detail: { excluded: a.flags.map((f) => f.employee) } };
         },
@@ -188,7 +188,7 @@ export const payrollAnomalyReview: WorkflowDef<Input> = {
   catalog: [
     { kind: "slack.post_anomalies", provider: "slack", gate: "auto", description: "Anomalies, who may approve and the decision deadline" },
     { kind: "payroll.review", provider: "gusto", gate: "auto", description: "Signal: a reviewer who didn't prepare the payroll approves paying as is" },
-    { kind: "gusto.exclude_flagged", provider: "gusto", gate: "auto", description: "Without approval, exclude the flagged employees (version-guarded)" },
+    { kind: "gusto.exclude_flagged", provider: "gusto", gate: "auto", description: "Without approval, exclude the flagged employees (prepare, then version-guarded update)" },
     { kind: "gusto.submit", provider: "gusto", gate: "auto", description: "Submit the payroll so everyone else is paid on time" },
     { kind: "slack.post_blocked", provider: "slack", gate: "auto", description: "Gusto unreadable: nothing submitted" },
   ],

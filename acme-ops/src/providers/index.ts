@@ -150,7 +150,8 @@ function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
 export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<Record<ProviderName, ProviderEndpoint>> {
   const out: Partial<Record<ProviderName, ProviderEndpoint>> = {};
   for (const p of PROVIDERS) {
-    const token = pick(env, PREFIX[p].flatMap((x) => [`${x}_API_KEY`, `${x}_TOKEN`]));
+    // Plaid authenticates with client_id + secret in the body; there is no API key.
+    const token = p === "plaid" && env.PLAID_CLIENT_ID && env.PLAID_SECRET ? (pick(env, ["PLAID_API_KEY", "PLAID_TOKEN"]) ?? "") || "plaid" : pick(env, PREFIX[p].flatMap((x) => [`${x}_API_KEY`, `${x}_TOKEN`]));
     let baseUrl = pick(env, PREFIX[p].map((x) => `${x}_BASE_URL`)) ?? DEFAULT_BASE[p];
     if (p === "zendesk" && !baseUrl && env.ZENDESK_SUBDOMAIN) baseUrl = `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com`;
     const zendeskOauth = p === "zendesk" && baseUrl === `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com` && env.ZENDESK_SUBDOMAIN && env.ZENDESK_CLIENT_ID && env.ZENDESK_CLIENT_SECRET && env.ZENDESK_SCOPES;
@@ -160,14 +161,32 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
     if (!zendeskOauth && p === "zendesk" && env.ZENDESK_EMAIL) {
       endpoint.authorization = `Basic ${Buffer.from(`${env.ZENDESK_EMAIL}/token:${token}`).toString("base64")}`;
     }
-    // Vendor auth dialects, applied only against the vendor's own host (twins take Bearer).
-    if (p === "twilio" && baseUrl === DEFAULT_BASE.twilio) {
-      endpoint.authorization = `Basic ${Buffer.from(`${env.TWILIO_ACCOUNT_SID ?? ""}:${token}`).toString("base64")}`;
-    }
-    if (p === "pagerduty" && baseUrl === DEFAULT_BASE.pagerduty) endpoint.authorization = `Token token=${token}`;
-    if (p === "easypost" && baseUrl === DEFAULT_BASE.easypost) endpoint.authorization = `Basic ${Buffer.from(`${token}:`).toString("base64")}`;
-    if (p === "moderntreasury" && baseUrl === DEFAULT_BASE.moderntreasury) {
-      endpoint.authorization = `Basic ${Buffer.from(`${env.MODERN_TREASURY_ORGANIZATION_ID ?? ""}:${token}`).toString("base64")}`;
+    // Each vendor's documented auth scheme applies wherever the endpoint points. Only an explicit
+    // <PREFIX>_AUTH_SCHEME=bearer (set by the FetchSandbox relay runner for twins) sends a bearer token instead.
+    const bearer = pick(env, PREFIX[p].map((x) => `${x}_AUTH_SCHEME`)) === "bearer";
+    const required = (name: string) => {
+      if (!env[name]) throw new Error(`${p} is configured but ${name} is not set`);
+      return env[name]!;
+    };
+    if (!bearer) {
+      if (p === "twilio_verify") {
+        endpoint.authorization = `Basic ${Buffer.from(`${required("TWILIO_ACCOUNT_SID")}:${token}`).toString("base64")}`;
+        required("TWILIO_VERIFY_SERVICE_SID");
+      }
+      // Shopify authenticates with X-Shopify-Access-Token only.
+      if (p === "shopify") endpoint.authorization = "";
+      if (p === "gusto") required("GUSTO_COMPANY_ID");
+      if (p === "docusign") required("DOCUSIGN_ACCOUNT_ID");
+      if (p === "twilio") endpoint.authorization = `Basic ${Buffer.from(`${required("TWILIO_ACCOUNT_SID")}:${token}`).toString("base64")}`;
+      if (p === "pagerduty") endpoint.authorization = `Token token=${token}`;
+      if (p === "easypost") endpoint.authorization = `Basic ${Buffer.from(`${token}:`).toString("base64")}`;
+      if (p === "plaid") {
+        // client_id and secret travel in each request body (PlaidClient); no Authorization header.
+        required("PLAID_CLIENT_ID");
+        required("PLAID_SECRET");
+        endpoint.authorization = "";
+      }
+      if (p === "moderntreasury") endpoint.authorization = `Basic ${Buffer.from(`${required("MODERN_TREASURY_ORGANIZATION_ID")}:${token}`).toString("base64")}`;
     }
     out[p] = endpoint;
   }
@@ -176,8 +195,14 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
 
 export type ProviderFactory = (headers: Record<string, string>) => Providers;
 
-/** Headers some vendors require on every call. */
+/**
+ * Headers some vendors require on every call. Stripe is pinned to the API version these clients
+ * are written against (2024-12-18.acacia: invoice.subscription / payment_intent, line-item price,
+ * invoice item `price`); an account's default version must never change response shapes underneath.
+ */
 const VENDOR_HEADERS: Partial<Record<ProviderName, Record<string, string>>> = {
+  stripe: { "Stripe-Version": process.env.STRIPE_API_VERSION ?? "2024-12-18.acacia" },
+  gusto: { "X-Gusto-API-Version": process.env.GUSTO_API_VERSION ?? "2026-06-15" },
   notion: { "Notion-Version": "2022-06-28" },
   github: { "X-GitHub-Api-Version": "2022-11-28" },
   square: { "Square-Version": "2025-01-23" },
@@ -205,7 +230,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       screening: h.screening && new ScreeningClient(h.screening),
       square: h.square && new SquareClient(h.square),
       openai: h.openai && new OpenAIClient(h.openai, env.OPENAI_MODEL ?? "gpt-4o-mini"),
-      shopify: h.shopify && new ShopifyClient(h.shopify, env.SHOPIFY_API_VERSION ?? "2024-10"),
+      shopify: h.shopify && new ShopifyClient(h.shopify, env.SHOPIFY_API_VERSION ?? "2026-01"),
       netsuite: h.netsuite && new NetSuiteClient(h.netsuite),
       easypost: h.easypost && new EasyPostClient(h.easypost),
       plaid: h.plaid && new PlaidClient(h.plaid, env.PLAID_CLIENT_ID ?? "", env.PLAID_SECRET ?? ""),
