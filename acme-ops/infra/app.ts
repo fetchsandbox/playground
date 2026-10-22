@@ -28,6 +28,7 @@ for (const wf of Object.values(WORKFLOWS)) {
     org: wf.org,
     team: wf.team,
     description: wf.description,
+    tickEvery: wf.tickEvery,
     approverUserIds: ctx(`approvers:${wf.id}`) ?? ctx("approverUserIds"),
     approvalTtlHours: ctx("approvalTtlHours") ? Number(ctx("approvalTtlHours")) : undefined,
     claudeModel: ctx("claudeModel"),

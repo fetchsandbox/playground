@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { checkpoint, validateReviewed, sameScope, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
@@ -10,7 +10,9 @@ import {
   type ActionContext,
   type ActionReceipt,
   type ActionRecord,
+  type ActionStatus,
   type AgentRecord,
+  type Checkpoints,
   type AgentResults,
   CLOSED,
   type PlannedAction,
@@ -49,6 +51,21 @@ export const CommandSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("cancel"), runId: z.string().min(1), userId: z.string().min(1) }),
   z.object({ action: z.literal("resume"), runId: z.string().min(1), wait: z.boolean().optional() }),
   z.object({ action: z.literal("reconcile"), runId: z.string().min(1) }),
+  // Kit v2
+  z.object({
+    action: z.literal("signal"),
+    runId: z.string().min(1),
+    /** The action the signal is for (a per-item decision, a callback, a confirmation). */
+    actionId: z.string().min(1),
+    value: z.enum(["approve", "reject"]),
+    userId: z.string().min(1),
+    note: z.string().max(500).optional(),
+    wait: z.boolean().optional(),
+  }),
+  /** Wakes every waiting run whose timer or signal deadline is due (EventBridge Scheduler or the server's interval). */
+  z.object({ action: z.literal("tick"), wait: z.boolean().optional() }),
+  /** The run's hash-chained audit trail, verified. */
+  z.object({ action: z.literal("evidence"), runId: z.string().min(1) }),
 ]);
 export type Command = z.infer<typeof CommandSchema>;
 
@@ -145,6 +162,12 @@ export class Engine<I> {
         return this.resume(cmd);
       case "reconcile":
         return this.reconcile(cmd.runId);
+      case "signal":
+        return this.signal(cmd);
+      case "tick":
+        return this.tick(cmd.wait !== false);
+      case "evidence":
+        return this.evidence(cmd.runId);
     }
   }
 
@@ -160,7 +183,7 @@ export class Engine<I> {
       agents: wf.agents.map((a) => ({ name: a.name, needs: a.needs })).concat(wf.compose ? [{ name: wf.compose.name, needs: [] }] : []),
       actions: wf.catalog,
       input: z.toJSONSchema(wf.input as z.ZodType, { unrepresentable: "any" }),
-      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile"],
+      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence"],
     };
   }
 
@@ -266,7 +289,7 @@ export class Engine<I> {
         this.event(r, `planned ${planned.length} action(s): ${planned.filter((p) => p.gate === "approval").length} need approval`);
       }))!;
 
-      await this.execute(runId, ctx, planned, "auto");
+      if ((await this.execute(runId, ctx, planned, "auto")) === "compensated") return;
       run = (await this.load(runId))!;
       if (run.phase !== "RUNNING") return; // cancelled meanwhile
 
@@ -280,23 +303,36 @@ export class Engine<I> {
             expiresAt: new Date(this.now() + (this.deps.approvalTtlMs ?? 24 * 3_600_000)).toISOString(),
           };
           r.phase = "AWAITING_APPROVAL";
+          setWake(r);
           this.event(r, "awaiting approval");
-        } else {
-          r.phase = "DONE";
-          this.event(r, `done (${outcome(r)})`);
-        }
+        } else this.settle(r);
       }))!;
       return;
     }
 
     if (run.phase === "APPROVED") {
-      await this.execute(runId, ctx, this.workflow.plan(ctx, this.results(run)), "approval");
+      const plan = this.workflow.plan(ctx, this.results(run));
+      if ((await this.execute(runId, ctx, plan, "approval")) === "compensated") return;
+      // Timers or signals that came due while the run waited for its approval.
+      if (run.actions.some(isWaiting) && (await this.execute(runId, ctx, plan, "auto")) === "compensated") return;
       await this.mutate(runId, (r) => {
         if (r.phase !== "APPROVED") return;
-        r.phase = "DONE";
-        this.event(r, `done (${outcome(r)})`);
+        this.settle(r);
       });
       return;
+    }
+
+    // Kit v2: a waiting run executes whatever timer or signal is due, then waits again or finishes.
+    if (run.phase === "WAITING" || (run.phase === "AWAITING_APPROVAL" && run.actions.some(isWaiting))) {
+      const plan = this.workflow.plan(ctx, this.results(run));
+      if ((await this.execute(runId, ctx, plan, "auto")) === "compensated") return;
+      if (run.approval?.decision === "approve" && (await this.execute(runId, ctx, plan, "approval")) === "compensated") return;
+      await this.mutate(runId, (r) => {
+        if (r.phase === "WAITING") this.settle(r);
+        else if (r.phase === "AWAITING_APPROVAL") setWake(r);
+      });
+      if (!run.actions.some((a) => a.status === "failed")) return;
+      run = (await this.load(runId))!;
     }
 
     // Repair: a parked or finished run retries effects that failed (provider
@@ -324,19 +360,28 @@ export class Engine<I> {
   }
 
   /** Applies every not-yet-applied action of `gate`, in plan order (later actions may use earlier receipts). */
-  private async execute(runId: string, ctx: RunContext<I>, planned: PlannedAction<I>[], gate: "auto" | "approval") {
+  private async execute(runId: string, ctx: RunContext<I>, planned: PlannedAction<I>[], gate: "auto" | "approval"): Promise<"done" | "compensated"> {
     for (const p of planned.filter((x) => x.gate === gate)) {
       const run = (await this.load(runId))!;
       if (run.cancelRequested || run.phase === "CANCELLED") {
         await this.mutate(runId, (r) => {
-          for (const a of r.actions) if (a.status === "planned" || a.status === "pending_approval") a.status = "skipped";
+          for (const a of r.actions) if (a.status === "planned" || a.status === "pending_approval" || isWaiting(a)) a.status = "skipped";
           r.phase = "CANCELLED";
           this.event(r, "cancelled");
         });
-        return;
+        return "done";
       }
       const rec = run.actions.find((a) => a.id === p.id);
-      if (!rec || rec.status === "applied" || rec.status === "skipped" || rec.status === "rejected") continue;
+      if (!rec || rec.status === "applied" || rec.status === "skipped" || rec.status === "rejected" || rec.status === "compensated") continue;
+
+      // Kit v2: a timer that isn't due, or a signal that hasn't come, leaves the action waiting.
+      const gateState = this.readiness(p, rec);
+      if (gateState !== "ready") {
+        if (gateState.status !== rec.status || gateState.signal) await this.updateAction(runId, p.id, { status: gateState.status, ...(gateState.signal ? { signal: gateState.signal } : {}), ...(gateState.error ? { error: gateState.error, errorCode: "signal_deadline" } : {}) });
+        if (gateState.status === "failed" && p.onFailure === "compensate") return this.compensateRun(runId, ctx, planned, p.id);
+        // A deadline that defaults to approve runs the action now; anything else keeps waiting.
+        if (gateState.signal?.value !== "approve") continue;
+      }
 
       if (!ctx.providers[p.provider]) {
         await this.updateAction(runId, p.id, { status: "skipped", error: `${p.provider} not configured`, errorCode: "not_configured" });
@@ -354,11 +399,13 @@ export class Engine<I> {
         continue;
       }
 
+      const fresh = (await this.load(runId))!;
       const applied = Object.fromEntries(
-        run.actions.filter((a) => a.status === "applied" && a.ref).map((a) => [a.id, { ref: a.ref!, detail: a.detail } satisfies ActionReceipt]),
+        fresh.actions.filter((a) => a.status === "applied" && a.ref).map((a) => [a.id, { ref: a.ref!, detail: a.detail } satisfies ActionReceipt]),
       );
+      const statuses = Object.fromEntries(fresh.actions.map((a) => [a.id, a.status]));
       try {
-        const receipt = await p.execute({ ...ctx, applied } as ActionContext<I>);
+        const receipt = await p.execute({ ...ctx, applied, statuses, signal: fresh.actions.find((a) => a.id === p.id)?.signal } as ActionContext<I>);
         await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "applied", ref: receipt.ref, detail: receipt.detail ?? {} });
         await this.updateAction(runId, p.id, { status: "applied", ref: receipt.ref, detail: receipt.detail, appliedAt: new Date(this.now()).toISOString() });
       } catch (err) {
@@ -366,8 +413,76 @@ export class Engine<I> {
         await this.deps.store.delete(claimKey);
         ctx.log.warn("action failed", { action: p.id, err: errorMessage(err) });
         await this.updateAction(runId, p.id, { status: "failed", error: errorMessage(err), errorCode: errorCode(err) });
+        if (p.onFailure === "compensate") return this.compensateRun(runId, ctx, planned, p.id);
       }
     }
+    return "done";
+  }
+
+  /**
+   * Kit v2 gate for timers and signals. "ready" runs the action; otherwise the
+   * status it should show. A deadline without a signal applies the action's default.
+   */
+  private readiness(p: PlannedAction<I>, rec: ActionRecord): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string } {
+    const now = this.now();
+    if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
+    if (!p.awaitSignal) return "ready";
+    const sig = rec.signal;
+    if (sig) return sig.value === "approve" ? "ready" : { status: "rejected" };
+    const deadline = p.awaitSignal.deadline ? Date.parse(p.awaitSignal.deadline) : undefined;
+    if (deadline === undefined || deadline > now) return { status: "awaiting_signal" };
+    const at = new Date(now).toISOString();
+    switch (p.awaitSignal.onDeadline ?? "reject") {
+      case "approve":
+        // Recorded as a defaulted signal, then executed on the next pass.
+        return { status: "awaiting_signal", signal: { value: "approve", by: "deadline", at, defaulted: true } };
+      case "fail":
+        return { status: "failed", error: `no signal by ${p.awaitSignal.deadline}` };
+      default:
+        return { status: "rejected", signal: { value: "reject", by: "deadline", at, defaulted: true } };
+    }
+  }
+
+  /** Kit v2 saga: undo applied effects in reverse plan order, skip everything not yet done, finish the run. */
+  private async compensateRun(runId: string, ctx: RunContext<I>, planned: PlannedAction<I>[], failedId: string): Promise<"compensated"> {
+    const run = (await this.load(runId))!;
+    const statuses = Object.fromEntries(run.actions.map((a) => [a.id, a.status]));
+    const applied = Object.fromEntries(run.actions.filter((a) => a.status === "applied" && a.ref).map((a) => [a.id, { ref: a.ref!, detail: a.detail } satisfies ActionReceipt]));
+    for (const p of [...planned].reverse()) {
+      const rec = run.actions.find((a) => a.id === p.id);
+      if (!rec || rec.status !== "applied") continue;
+      const at = new Date(this.now()).toISOString();
+      if (!p.compensate) {
+        await this.mutate(runId, (r) => {
+          const a = r.actions.find((x) => x.id === p.id)!;
+          a.compensation = { status: "not_supported", at };
+          this.event(r, `${p.id}: kept (no undo)`);
+        });
+        continue;
+      }
+      try {
+        const res = await p.compensate({ ...ctx, applied, statuses } as ActionContext<I>, { ref: rec.ref!, detail: rec.detail });
+        await this.mutate(runId, (r) => {
+          const a = r.actions.find((x) => x.id === p.id)!;
+          a.status = "compensated";
+          a.compensation = { status: "applied", ref: res?.ref, at };
+          this.event(r, `${p.id}: compensated`);
+        });
+      } catch (err) {
+        await this.mutate(runId, (r) => {
+          const a = r.actions.find((x) => x.id === p.id)!;
+          a.compensation = { status: "failed", error: errorMessage(err), at };
+          this.event(r, `${p.id}: compensation failed (${errorCode(err)})`);
+        });
+      }
+    }
+    await this.mutate(runId, (r) => {
+      for (const a of r.actions) if (a.status === "planned" || a.status === "pending_approval" || isWaiting(a)) a.status = "skipped";
+      if (!CLOSED.includes(r.phase)) r.phase = "DONE";
+      delete r.wakeAt;
+      this.event(r, `compensated after ${failedId} failed`);
+    });
+    return "compensated";
   }
 
   private updateAction(runId: string, id: string, patch: Partial<ActionRecord>) {
@@ -425,9 +540,10 @@ export class Engine<I> {
     if (!(await this.load(cmd.runId))) return notFound(cmd.runId);
     let outcome = "not_cancellable";
     const run = await this.mutate(cmd.runId, (r) => {
-      if (r.phase === "AWAITING_APPROVAL") {
+      if (r.phase === "AWAITING_APPROVAL" || r.phase === "WAITING") {
         r.phase = "CANCELLED";
-        for (const a of r.actions) if (a.status === "pending_approval") a.status = "skipped";
+        delete r.wakeAt;
+        for (const a of r.actions) if (a.status === "pending_approval" || isWaiting(a)) a.status = "skipped";
         this.event(r, `cancelled by ${cmd.userId}`);
         outcome = "cancelled";
       } else if (r.phase === "RUNNING" || r.phase === "APPROVED") {
@@ -443,6 +559,11 @@ export class Engine<I> {
     const run = await this.load(cmd.runId);
     if (!run) return notFound(cmd.runId);
     const repairable = (run.phase === "AWAITING_APPROVAL" || run.phase === "DONE") && run.actions.some((a) => a.status === "failed");
+    if (run.phase === "WAITING") {
+      const job = this.drive(cmd.runId);
+      if (cmd.wait !== false) await job;
+      return { status: 200, body: { ...this.view((await this.load(cmd.runId))!), result: "resumed" } };
+    }
     if (run.phase !== "RUNNING" && run.phase !== "APPROVED" && !repairable) return { status: 200, body: { ...this.view(run), result: "nothing_to_resume" } };
     const stale = this.now() - Date.parse(run.updatedAt) > (this.deps.staleMs ?? 60_000);
     if (!repairable && !stale && !run.lastError && !this.driving.has(cmd.runId)) {
@@ -493,7 +614,8 @@ export class Engine<I> {
     return (await this.mutate(run.runId, (r) => {
       if (r.phase !== "AWAITING_APPROVAL") return;
       r.phase = "EXPIRED";
-      for (const a of r.actions) if (a.status === "pending_approval") a.status = "skipped";
+      delete r.wakeAt;
+      for (const a of r.actions) if (a.status === "pending_approval" || isWaiting(a)) a.status = "skipped";
       this.event(r, "approval window expired");
     }))!;
   }
@@ -510,6 +632,22 @@ export class Engine<I> {
       drafter: this.deps.drafter,
       log: this.deps.log.child({ runId: run.runId, workflow: run.workflow }),
       startedAt: new Date(run.createdAt),
+      checkpoint: this.checkpoints(run.runId),
+    };
+  }
+
+  private checkpoints(runId: string): Checkpoints {
+    const store = this.deps.store;
+    const key = (k: string) => `ckpt#${runId}#${k}`;
+    return {
+      async load<T>(k: string) {
+        return (await store.get(key(k)))?.value as T | undefined;
+      },
+      async save(k: string, value: unknown) {
+        const cur = await store.get(key(k));
+        if (cur) await store.replace({ ...cur, value });
+        else if (!(await store.create({ pk: key(k), value }))) await store.replace({ ...(await store.get(key(k)))!, value });
+      },
     };
   }
 
@@ -533,15 +671,120 @@ export class Engine<I> {
       fn(cur);
       if(this.deps.control)checkpoint(previous,cur,this.deps.control,new Date(this.now()).toISOString());
       cur.updatedAt = new Date(this.now()).toISOString();
-      if (await this.deps.store.replace(cur as unknown as Item)) {this.emitControl(cur);return { ...cur, version: (cur.version ?? 0) + 1 };}
+      if (await this.deps.store.replace(cur as unknown as Item)) {
+        this.emitControl(cur);
+        const saved = { ...cur, version: (cur.version ?? 0) + 1 };
+        if ((cur as RunRecord & { auditTail?: AuditEntry[] }).auditTail?.length) await this.flushAudit(saved);
+        return saved;
+      }
       await new Promise((r) => setTimeout(r, 5 + Math.random() * 20));
     }
     throw new Error(`run ${runId}: too much write contention`);
   }
 
   private event(r: RunRecord, msg: string) {
-    r.events.push({ at: new Date(this.now()).toISOString(), msg });
+    const at = new Date(this.now()).toISOString();
+    r.events.push({ at, msg });
     if (r.events.length > MAX_EVENTS) r.events.splice(0, r.events.length - MAX_EVENTS);
+    if (this.workflow.audit) {
+      // Kit v2: hash chain over every event; flushed to audit#<run>#<seq> items after the write commits.
+      const prev = r.audit ?? { seq: 0, head: genesis(r.runId) };
+      const entry = { seq: prev.seq + 1, at, msg };
+      const head = chain(prev.head, entry);
+      r.audit = { seq: entry.seq, head };
+      (r as RunRecord & { auditTail?: AuditEntry[] }).auditTail = [...((r as RunRecord & { auditTail?: AuditEntry[] }).auditTail ?? []), { ...entry, hash: head }];
+    }
+  }
+
+  /** Kit v2: waiting statuses become WAITING (with the next wake time), everything else DONE. */
+  private settle(r: RunRecord) {
+    if (r.actions.some(isWaiting)) {
+      r.phase = "WAITING";
+      setWake(r);
+      this.event(r, `waiting until ${r.wakeAt ?? "a signal"}`);
+    } else {
+      r.phase = "DONE";
+      delete r.wakeAt;
+      this.event(r, `done (${outcome(r)})`);
+    }
+  }
+
+  private async signal(cmd: Extract<Command, { action: "signal" }>): Promise<Reply> {
+    const run = await this.load(cmd.runId);
+    if (!run) return notFound(cmd.runId);
+    const ctx = this.context(run);
+    const p = this.workflow.plan(ctx, this.results(run)).find((x) => x.id === cmd.actionId);
+    const rec = run.actions.find((a) => a.id === cmd.actionId);
+    if (!p || !rec || !p.awaitSignal) return { status: 404, body: { result: "no_such_signal", runId: cmd.runId, actionId: cmd.actionId } };
+    const w = p.awaitSignal;
+    if ((w.from?.length && !w.from.includes(cmd.userId)) || w.notFrom?.includes(cmd.userId)) {
+      await this.mutate(cmd.runId, (r) => this.event(r, `signal for ${cmd.actionId} by ${cmd.userId} refused`));
+      return { status: 403, body: { ...this.view((await this.load(cmd.runId))!), result: "forbidden" } };
+    }
+    let result = "recorded";
+    await this.mutate(cmd.runId, (r) => {
+      const a = r.actions.find((x) => x.id === cmd.actionId)!;
+      if (CLOSED.includes(r.phase)) return void (result = "closed");
+      if (a.signal) return void (result = a.signal.value === cmd.value ? "already_signalled" : "conflict");
+      if (!isWaiting(a) && a.status !== "planned" && a.status !== "pending_approval") return void (result = "not_waiting");
+      a.signal = { value: cmd.value, by: cmd.userId, at: new Date(this.now()).toISOString(), ...(cmd.note ? { note: cmd.note } : {}) };
+      if (cmd.value === "reject") a.status = "rejected";
+      this.event(r, `signal ${cmd.value} for ${cmd.actionId} by ${cmd.userId}`);
+      if (r.phase === "WAITING" || r.phase === "AWAITING_APPROVAL") setWake(r);
+    });
+    if (result === "recorded") {
+      const job = this.drive(cmd.runId);
+      if (cmd.wait !== false) await job;
+    }
+    const latest = (await this.load(cmd.runId))!;
+    return { status: result === "conflict" ? 409 : 200, body: { ...this.view(latest), result } };
+  }
+
+  /** Wakes every run whose timer or signal deadline is due; also expires approvals that ran out. */
+  private async tick(wait: boolean): Promise<Reply> {
+    const now = this.now();
+    const all = (await this.deps.store.list("run#")) as unknown as RunRecord[];
+    const due = all.filter((r) => (r.phase === "WAITING" || r.phase === "AWAITING_APPROVAL") && r.wakeAt && Date.parse(r.wakeAt) <= now);
+    for (const r of all.filter((x) => x.phase === "AWAITING_APPROVAL")) await this.expireIfDue(r);
+    const jobs = due.map((r) => this.drive(r.runId));
+    if (wait) await Promise.all(jobs);
+    return { status: 200, body: { woken: due.map((r) => r.runId) } };
+  }
+
+  private async evidence(runId: string): Promise<Reply> {
+    const run = await this.load(runId);
+    if (!run) return notFound(runId);
+    if (!this.workflow.audit) return { status: 404, body: { result: "no_audit_trail", runId } };
+    await this.flushAudit(run);
+    const items = ((await this.deps.store.list(`audit#${runId}#`)) as unknown as AuditEntry[]).sort((a, b) => a.seq - b.seq);
+    let head = genesis(runId);
+    let verified = true;
+    let brokenAt: number | null = null;
+    for (const e of items) {
+      const next = chain(head, { seq: e.seq, at: e.at, msg: e.msg });
+      if (next !== e.hash || (brokenAt === null && e.seq !== (items.indexOf(e) + 1))) {
+        verified = false;
+        brokenAt ??= e.seq;
+      }
+      head = e.hash;
+    }
+    const complete = items.length === (run.audit?.seq ?? 0) && head === (run.audit?.head ?? genesis(runId));
+    return { status: 200, body: { runId, entries: items.map(({ seq, at, msg, hash }) => ({ seq, at, msg, hash })), head: run.audit?.head ?? null, verified: verified && complete, brokenAt } };
+  }
+
+  /** Persists audit entries that are still in the run record, then drops them from it. */
+  private async flushAudit(run: RunRecord) {
+    const tail = (run as RunRecord & { auditTail?: AuditEntry[] }).auditTail ?? [];
+    if (!tail.length) return;
+    for (const e of tail) await this.deps.store.create({ pk: `audit#${run.runId}#${String(e.seq).padStart(8, "0")}`, ...e });
+    const flushed = new Set(tail.map((e) => e.seq));
+    for (let i = 0; i < 20; i++) {
+      const cur = await this.load(run.runId);
+      if (!cur) return;
+      const t = (cur as RunRecord & { auditTail?: AuditEntry[] }).auditTail ?? [];
+      (cur as RunRecord & { auditTail?: AuditEntry[] }).auditTail = t.filter((e) => !flushed.has(e.seq));
+      if (await this.deps.store.replace(cur as unknown as Item)) return;
+    }
   }
 
   private emitControl(r:RunRecord){if(!this.deps.control||!r.control||!sameScope(r.control.scope,this.deps.control.scope))return;for(const event of r.control.events){const id=String(event.event_id);if(this.emittedControl.has(id))continue;try{this.deps.controlSink?.(event);this.emittedControl.add(id);}catch{this.deps.log.warn("Control telemetry emission unavailable",{runId:r.runId});}}}
@@ -576,7 +819,12 @@ export class Engine<I> {
         pendingApproval: count("pending_approval"),
         skipped: count("skipped"),
         rejected: count("rejected"),
+        scheduled: count("scheduled"),
+        awaitingSignal: count("awaiting_signal"),
+        compensated: count("compensated"),
       },
+      wakeAt: r.wakeAt ?? null,
+      audit: r.audit ?? null,
       approval: r.approval,
       output: r.output ?? {},
       lastError: r.lastError,
@@ -609,15 +857,39 @@ function toRecord<I>(p: PlannedAction<I>): ActionRecord {
     provider: p.provider,
     agent: p.agent,
     gate: p.gate,
-    status: p.gate === "approval" ? "pending_approval" : "planned",
+    status: p.gate === "approval" ? "pending_approval" : p.waitUntil ? "scheduled" : p.awaitSignal ? "awaiting_signal" : "planned",
     summary: p.summary,
     attempts: 0,
+    ...(p.waitUntil ? { waitUntil: p.waitUntil } : {}),
+    ...(p.awaitSignal?.deadline ? { signalDeadline: p.awaitSignal.deadline } : {}),
   };
 }
 
+interface AuditEntry {
+  seq: number;
+  at: string;
+  msg: string;
+  hash: string;
+}
+
+const genesis = (runId: string) => createHash("sha256").update(`audit:${runId}`).digest("hex");
+const chain = (prev: string, e: { seq: number; at: string; msg: string }) => createHash("sha256").update(prev).update(JSON.stringify(e)).digest("hex");
+
+function isWaiting(a: ActionRecord) {
+  return a.status === "scheduled" || a.status === "awaiting_signal";
+}
+
+/** Next time the run must be looked at: the earliest timer or signal deadline still open. */
+function setWake(r: RunRecord) {
+  const times = r.actions.filter(isWaiting).flatMap((a) => [a.status === "scheduled" ? a.waitUntil : undefined, a.status === "awaiting_signal" ? (a.signal ? new Date(0).toISOString() : a.signalDeadline) : undefined]).filter((t): t is string => !!t);
+  if (times.length) r.wakeAt = times.sort()[0];
+  else delete r.wakeAt;
+}
+
 /** ok: everything attempted worked · partial: some agent or action failed · failed: nothing useful happened. */
-function outcome(r: RunRecord): "ok" | "partial" | "failed" | "pending" {
+function outcome(r: RunRecord): "ok" | "partial" | "failed" | "pending" | "compensated" {
   if (r.phase === "RUNNING") return "pending";
+  if (r.actions.some((a) => a.status === "compensated" || a.compensation)) return "compensated";
   const agentFail = r.agents.some((a) => a.status === "failed");
   const actFail = r.actions.some((a) => a.status === "failed");
   const anyOk = r.agents.some((a) => a.status === "ok") || r.actions.some((a) => a.status === "applied");
