@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-supplier-bank-change-1.0.0-ed90f18",
-  "session_id": "vs_e27e3a2a97c7",
-  "run_id": "vr_83f2c2be987345299221e162f6fc9a72",
-  "receipt_url": "https://fetchsandbox.com/runs/d1f010eccf?flow=vr_83f2c2be987345299221e162f6fc9a72",
+  "app_version": "acme-ops-supplier-bank-change-1.0.0-93f319c",
+  "session_id": "vs_154c65e363fc",
+  "run_id": "vr_1d352154f9af49b5b8738b1d015ff7e8",
+  "receipt_url": "https://fetchsandbox.com/runs/855eccad90?flow=vr_1d352154f9af49b5b8738b1d015ff7e8",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -80,5 +80,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:26:32.871Z"
+  "recorded_at": "2026-10-22T19:13:36.667Z"
 }

@@ -190,6 +190,27 @@ New engine findings:
 - A second proof started right after the previous one sometimes fails with
   "Owned managed tunnel required"; an immediate retry works.
 
+## 5b. Enterprise operations program (2026-10-22)
+
+All 24 workflows from [the program](ENTERPRISE_WORKFLOW_PROGRAM.md) are built:
+
+- **Wave 1:** supplier-bank-change, user-access-review, employee-offboarding,
+  invoice-three-way-match, month-end-close, change-management-gate.
+- **Wave 2:** lead-routing-sla, vulnerability-remediation, contract-intake,
+  dsar-export, consent-propagation, crm-billing-sync, purchase-request-to-po.
+- **Wave 3:** support-sla-breach, treasury-payment-approval, usage-true-up,
+  customer-kyc-rescreen, inventory-replenishment, delivery-exception,
+  payroll-anomaly-review, visa-and-leave-expiry.
+- **Gap probes:** failed-payment-dunning, customer-data-sweep, order-to-cash.
+
+Each has local tests, a contract, a guide and a receipt. Their provider clients
+were audited against the vendors' own API references
+([PROVIDER_SPEC_AUDIT.md](PROVIDER_SPEC_AUDIT.md)) before the final proofs.
+Across the 24 receipts: 232 checks, 91 held, 96 violated, 45 unmeasured. Every
+gap is classified in [FETCHSANDBOX_GAPS.md](FETCHSANDBOX_GAPS.md) as twin
+missing, twin spec divergence, operation not in twin, engine/verifier, or our
+fixture or bug.
+
 ## 6. Backlog
 
 | Item | Why | Blocked on |

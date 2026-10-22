@@ -1,6 +1,6 @@
 # Enterprise operations workflow program
 
-Status: wave 1 and Kit v2 built (2026-10-22); FetchSandbox proofs running. Owner: FetchSandbox (dogfooding). Progress is
+Status (2026-10-22): waves 1–3 (24 workflows) and Kit v2 built; provider clients audited against vendor docs; all 24 re-proven on FetchSandbox with every gap classified. Owner: FetchSandbox (dogfooding). Progress is
 tracked in [TRACKER.md](TRACKER.md); FetchSandbox gaps found so far are in
 [FETCHSANDBOX_GAPS.md](FETCHSANDBOX_GAPS.md).
 

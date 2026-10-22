@@ -1,0 +1,64 @@
+{
+  "workflow": "lead-routing-sla",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-routing-sla-1.0.0-befeb35",
+  "session_id": "vs_518fe0d525b0",
+  "run_id": "vr_ec298074bb2e40a9906d9d41a2a32090",
+  "receipt_url": "https://fetchsandbox.com/runs/7657f560d2?flow=vr_ec298074bb2e40a9906d9d41a2a32090",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "least_loaded_rep_assigned",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "enterprise_lead_one_hour_sla",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "account_owner_wins",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "owned_lead_not_rerouted",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "missed_sla_reassigns",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "hubspot_unreadable_blocks",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T20:04:03.286Z"
+}

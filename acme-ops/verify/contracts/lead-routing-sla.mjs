@@ -24,7 +24,8 @@ const FIXTURES = {
   hubspot_unreadable_blocks: { lead: { country: "DE" } },
   slack_rate_limited: { lead: { country: "DE", numberofemployees: "300" } },
 };
-const lead = (c) => `LEAD_${c}`;
+// Numeric placeholders (HubSpot contact ids are numeric), replaced by the seeded contact ids.
+const lead = (c) => `8000${String(Math.abs([...c].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7))).padStart(10, "0")}`;
 const routeLead = (c) => start(c, { contactId: lead(c), pods: PODS, regions: { DE: "EMEA", FR: "EMEA", JP: "APAC" }, salesChannel: SALES });
 
 export const checks = [

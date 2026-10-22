@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-order-to-cash-1.0.0-ed90f18",
-  "session_id": "vs_c6819833a9ac",
-  "run_id": "vr_7da2205c58614300905b552dd73df3d2",
-  "receipt_url": "https://fetchsandbox.com/runs/859a31fe39?flow=vr_7da2205c58614300905b552dd73df3d2",
+  "app_version": "acme-ops-order-to-cash-1.0.0-befeb35",
+  "session_id": "vs_f0b674e1eaff",
+  "run_id": "vr_cfd2d89105c2494eafa5054ce7cd773a",
+  "receipt_url": "https://fetchsandbox.com/runs/e62545113b?flow=vr_cfd2d89105c2494eafa5054ce7cd773a",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -18,6 +18,11 @@
       "id": "baseline",
       "status": "held",
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "sales_order_booked_in_erp",
@@ -41,18 +46,18 @@
     },
     {
       "id": "unpaid_order_held",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "incomplete_address_held",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "cancelled_order_ignored",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "shopify_rate_limited",
@@ -65,5 +70,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:23:20.839Z"
+  "recorded_at": "2026-10-22T19:57:07.783Z"
 }

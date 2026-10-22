@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-employee-offboarding-1.0.0-ed90f18",
-  "session_id": "vs_ff53e6673488",
-  "run_id": "vr_987893a0d04b4f60b275954b47a600bd",
-  "receipt_url": "https://fetchsandbox.com/runs/ec860d8196?flow=vr_987893a0d04b4f60b275954b47a600bd",
+  "app_version": "acme-ops-employee-offboarding-1.0.0-4ac41d8",
+  "session_id": "vs_91c65159d1b7",
+  "run_id": "vr_e0eba42018b34a0abbcc31f78a52085b",
+  "receipt_url": "https://fetchsandbox.com/runs/6721b4e193?flow=vr_e0eba42018b34a0abbcc31f78a52085b",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -65,5 +65,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:36:15.063Z"
+  "recorded_at": "2026-10-22T18:01:27.062Z"
 }

@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-month-end-close-1.0.0-af7aa6f",
-  "session_id": "vs_d46eb9271d42",
-  "run_id": "vr_62a0e417b56e4d1db37235c4d4dca434",
-  "receipt_url": "https://fetchsandbox.com/runs/c1b8d6c96d?flow=vr_62a0e417b56e4d1db37235c4d4dca434",
+  "app_version": "acme-ops-month-end-close-1.0.0-4ac41d8",
+  "session_id": "vs_1735f8b532d0",
+  "run_id": "vr_f88da1c718664c50bd389823c70535ac",
+  "receipt_url": "https://fetchsandbox.com/runs/bf7aec0d1d?flow=vr_f88da1c718664c50bd389823c70535ac",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -31,8 +31,8 @@
     },
     {
       "id": "payouts_reconciled",
-      "status": "violated",
-      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+      "status": "unmeasured",
+      "explanation": "Application request timed out before recovery could be observed; no recovery verdict was established"
     },
     {
       "id": "fee_journal_on_approval",
@@ -65,5 +65,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:50:20.563Z"
+  "recorded_at": "2026-10-22T17:19:28.719Z"
 }

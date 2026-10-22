@@ -1,0 +1,156 @@
+# Treasury payment approval (dual control)
+
+## Business need
+
+Treasury must never send money on one person's say-so, to an unverified or sanctioned beneficiary, twice, or after the value date has been missed, and must know the next day if a payment came back.
+
+Check an outbound wire or ACH for beneficiary verification, sanctions, duplicates and the daily outflow limit; require a checker who isn't the maker and, over 100,000, the CFO; lapse at the rail's cut-off; release the Modern Treasury payment order exactly once and escalate it if it's returned or failed.
+
+Demo organization: **Acme Corporation**. Department: **Finance**. Owning team: **treasury**. Configure your own named owner and approvers when deploying; repository examples do not grant access to Acme or FetchSandbox accounts.
+
+## Trigger and result
+
+The runtime accepts the `start` command through `POST /invocations`. The baseline below is an executable-contract example using synthetic twin identifiers, not live customer data. Automatic Slack/email/scheduled intake requires a separately configured adapter; an input schema alone does not establish that intake is deployed.
+
+```json
+{
+  "action": "start",
+  "runId": "baseline-{{run_id}}",
+  "input": {
+    "paymentId": "PAY-baseline",
+    "type": "wire",
+    "amount": 4000000,
+    "currency": "usd",
+    "originatingAccountId": "ia_ops",
+    "receivingAccountId": "ea_northwind",
+    "purpose": "Invoice NW-1182",
+    "valueDate": "2026-10-23",
+    "maker": "U_MAKER",
+    "approvers": {
+      "treasury": [
+        "U_TREAS",
+        "U_MAKER",
+        "U_TREAS_2"
+      ],
+      "cfo": [
+        "U_CFO",
+        "U_TREAS"
+      ]
+    },
+    "dailyLimit": 100000000,
+    "treasuryChannel": "C0TREASURY1"
+  },
+  "requestedBy": {
+    "userId": "U_FETCHSANDBOX"
+  },
+  "labels": {
+    "fs_run": "{{run_id}}",
+    "fs_case": "baseline"
+  }
+}
+```
+
+The customer/operator result is determined by the actions below. A `gmail.draft_*` action creates a draft; it does not prove that email was sent or received. A public ticket comment does not establish live inbox delivery.
+
+## Input contract
+
+These top-level fields come from the runtime schema. Nested shape and conditional rules are demonstrated in the example and enforced by the linked source.
+
+| Field | Required | Type / allowed values |
+|---|---|---|
+| `paymentId` | yes | string |
+| `type` | yes | string / wire, ach |
+| `amount` | yes | integer |
+| `currency` | yes | string / usd |
+| `originatingAccountId` | yes | string |
+| `receivingAccountId` | yes | string |
+| `purpose` | yes | string |
+| `valueDate` | yes | string |
+| `maker` | yes | string |
+| `approvers` | yes | object |
+| `dailyLimit` | yes | integer |
+| `treasuryChannel` | yes | string |
+
+## Agents and responsibilities
+
+| Role | Required provider clients |
+|---|---|
+| `beneficiary` | moderntreasury |
+| `screening` | moderntreasury, screening |
+| `history` | moderntreasury |
+
+**3 declared roles**, including the compose stage where present. These are logical responsibilities, not a count of independent models or servers.
+
+## Policies, writes and approval boundaries
+
+Every possible action kind is declared below. `auto` means the workflow may perform it without a human gate after its business conditions pass; it does not mean it always runs. `approval` means the configured approver must decide. Read the linked workflow source for eligibility, thresholds and input-dependent branches. Never copy one workflow’s discount/refund rules into another.
+
+| Action | Provider | Gate | Business effect |
+|---|---|---|---|
+| `slack.post_blocked` | slack | **auto** | Unverified beneficiary, sanctions, unreadable data or daily limit: nothing is sent |
+| `slack.post_payment` | slack | **auto** | Payment, approvals needed and cut-off |
+| `treasury.approve` | slack | **auto** | Signal: checker who isn't the maker, before cut-off |
+| `cfo.approve` | slack | **auto** | Signal: CFO over 100,000, not the maker or checker |
+| `moderntreasury.release` | moderntreasury | **auto** | Payment order, once per payment id |
+| `moderntreasury.settlement_check` | moderntreasury | **auto** | Escalate if not completed a day after release |
+| `slack.dm_maker` | slack | **auto** | Outcome to the maker |
+
+## Setup and run
+
+From the repository root:
+
+```bash
+cd acme-ops
+npm ci
+npm run check
+npm test
+npm run bundle
+WORKFLOW=treasury-payment-approval STATE_FILE=.state/treasury-payment-approval.json node --env-file=.env dist/main.mjs
+```
+
+Create a private `.env` using the package setup guide. Set only credentials and provider URLs for your own sandbox/test accounts. Optional LLM drafting needs your model-service key; a template run is not an LLM evaluation. Missing provider credentials must stay visible as skipped/not configured. See the [shared setup and deployment guide](../../acme-ops/README.md#run-locally).
+
+The sample requires the isolated twin fixtures created by its contract. Do not send the sample identifiers to production. For live-vendor testing, prepare your own customer, product, ticket and approver identities and obtain any required access.
+
+## FetchSandbox verification
+
+Coding agents must follow the [repository verification instructions](../../AGENTS.md) and [verification guide](../VERIFICATION.md), including contract scope, independent observations and explicit blockers.
+
+```bash
+cd acme-ops
+npm run bundle
+node verify/relay-proof.mjs treasury-payment-approval
+```
+
+This makes network calls, creates isolated twin resources and consumes FetchSandbox usage. It needs FetchSandbox authentication and managed-relay access. It does not deploy to AWS or authorize live customer communication.
+
+### Declared scenarios
+
+| Check | Business behavior | Contract blocker |
+|---|---|---|
+| `baseline` | A request starts one recorded run (provider-independent, so every later check is measured) | Executable declaration; result comes from a receipt |
+| `baseline_effects` | A payment is announced to treasury with its approvals and cut-off | Executable declaration; result comes from a receipt |
+| `beneficiary_and_history_read` | Beneficiary verification, sanctions, duplicates and daily outflow are read before any approval | Executable declaration; result comes from a receipt |
+| `maker_cannot_approve` | The maker can't approve their own payment | Executable declaration; result comes from a receipt |
+| `checker_releases_once` | A checker's approval releases exactly one payment order | Executable declaration; result comes from a receipt |
+| `cfo_distinct_from_checker` | Over 100,000 the CFO must approve too, and can't be the checker | Executable declaration; result comes from a receipt |
+| `cutoff_lapses` | Unapproved at the rail's cut-off, the payment lapses and nothing is sent (needs clock control) | Executable declaration; result comes from a receipt |
+| `returned_payment_escalated` | A payment returned the day after release is escalated (needs clock control and a returned order) | Executable declaration; result comes from a receipt |
+| `bank_unavailable_blocks` | When payment data can't be read nothing is approved or sent | Executable declaration; result comes from a receipt |
+| `invalid_input_rejected` | A non-USD currency is rejected before any agent runs | Executable declaration; result comes from a receipt |
+
+### Saved evidence — historical, not a fresh run
+
+The checked-in receipt records app version `acme-ops-treasury-payment-approval-1.0.0-befeb35`, verdict **failing**, and statuses: **2 held**, **4 unmeasured**, **4 violated**.
+
+[Recorded receipt](https://fetchsandbox.com/runs/b1a7f4f2c1?flow=vr_61dc098b5ebb4006b791152e25b33996) · [Saved result](../../acme-ops/verify/receipts/treasury-payment-approval.json)
+
+Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
+
+## Source and contract
+
+- [Workflow and business rules](../../acme-ops/src/workflows/treasury-payment-approval.ts)
+- [Executable verification contract](../../acme-ops/verify/contracts/treasury-payment-approval.mjs)
+- [Shared state, approval and recovery engine](../../acme-ops/src/kit/engine.ts)
+
+<!-- Generated by scripts/workflow_docs.py from workflow definitions, contracts and saved receipts. Edit source or the business-need mapping, then regenerate. -->

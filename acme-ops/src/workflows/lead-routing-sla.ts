@@ -26,7 +26,8 @@ export const POLICY = {
 const Region = z.enum(["NA", "EMEA", "APAC"]);
 const Pod = z.object({ reps: z.array(z.object({ ownerId: z.string().regex(/^\d{1,12}$/), slackId: z.string().regex(/^U[A-Z0-9_]+$/) })).min(1).max(50), managerSlackId: z.string().regex(/^U[A-Z0-9_]+$/) });
 const Input = z.object({
-  contactId: z.string().regex(/^\d{1,12}$/),
+  /** HubSpot object ids are 64-bit integers. */
+  contactId: z.string().regex(/^\d{1,19}$/),
   /** The territory plan: pods by region and segment. */
   pods: z.object({ NA: z.object({ enterprise: Pod, commercial: Pod }), EMEA: z.object({ enterprise: Pod, commercial: Pod }), APAC: z.object({ enterprise: Pod, commercial: Pod }) }),
   /** Country code → region; others go to NA. */

@@ -10,7 +10,7 @@ import { action, actionKind, agent, all, check, eq, runs, start } from "./lib.mj
 const OPS = "C0SUPPLY001";
 const SUPPLIERS = { "401": { name: "Ceramica", email: "orders@ceramica.example" } };
 const item = (sku, v) => ({ sku, variantId: v, netsuiteItemId: "101", supplierId: "401", unitCost: 500, leadTimeDays: 10, safetyDays: 5, moq: 1, casePack: 1 });
-const input = (c, over = {}) => ({ runId: `REPL-${c.replaceAll("_", "-")}`.slice(0, 45), locationId: "LOCATION", department: "3", items: [item("MUG-BLK", "VARIANT_A")], suppliers: SUPPLIERS, opsChannel: OPS, approvers: ["U_BUYER"], ...over });
+const input = (c, over = {}) => ({ runId: `REPL-${c.replaceAll("_", "-")}`.slice(0, 45), locationId: "9000000002", department: "3", items: [item("MUG-BLK", "9000000001")], suppliers: SUPPLIERS, opsChannel: OPS, approvers: ["U_BUYER"], ...over });
 const replenish = (c, over) => start(c, input(c, over));
 
 export const checks = [
@@ -19,7 +19,7 @@ export const checks = [
   check("stock_from_inventory_levels", "Available units come from Shopify inventory levels at the location", [replenish("stock_from_inventory_levels")], runs([agent("stock", "ok")])),
   check("open_pos_counted", "Units on open purchase orders are read from the ERP", [replenish("open_pos_counted")], runs([agent("open-pos", "ok")])),
   check("below_reorder_point_po_raised", "A SKU below its reorder point gets a purchase order and a supplier email", [replenish("below_reorder_point_po_raised")], runs([eq("output.reorder", 1), actionKind("netsuite.create_po", "applied"), actionKind("gmail.po_to_supplier", "applied")])),
-  check("large_po_needs_buyer", "A PO over 10,000 waits for a buyer", [replenish("large_po_needs_buyer", { items: [{ ...item("MUG-BLK", "VARIANT_A"), unitCost: 50_000 }] })], runs([actionKind("netsuite.create_po", "pending_approval")])),
+  check("large_po_needs_buyer", "A PO over 10,000 waits for a buyer", [replenish("large_po_needs_buyer", { items: [{ ...item("MUG-BLK", "9000000001"), unitCost: 50_000 }] })], runs([actionKind("netsuite.create_po", "pending_approval")])),
   check("late_receipt_escalated", "A PO not received two days after its due date is escalated (needs clock control)", [replenish("late_receipt_escalated"), { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 }], runs([actionKind("receiving.late_check", "applied")])),
   check("shopify_rate_limited", "When stock can't be read nothing is ordered", [replenish("shopify_rate_limited")], all(runs([eq("output.reorder", 0), actionKind("netsuite.create_po", null, 0)])), { fault: { provider: "shopify-admin", scenario: "rate_limited", evidence: "refusal" } }),
   check("invalid_input_rejected", "A non-numeric variant id is rejected before any agent runs", [start("invalid_input_rejected", { ...input("baseline"), items: [item("MUG-BLK", "black-mug")] }, { expectStatus: 400 })], runs([], 0)),
@@ -44,7 +44,7 @@ async function seed(legs, log) {
   let orders = 0;
   for (let d = 1; d <= 28 && variant?.id; d++) if (await call("POST", "/admin/api/2026-01/orders.json", { order: { line_items: [{ variant_id: variant.id, quantity: 2 }], created_at: new Date(Date.now() - d * 86_400_000).toISOString() } })) orders++;
   trail.push(`variant ${variant?.id ?? "none"}, location ${location ?? "none"}, ${orders} orders`);
-  const swap = JSON.stringify(checks).replaceAll("VARIANT_A", String(variant?.id ?? "1")).replaceAll("LOCATION", String(location ?? "1"));
+  const swap = JSON.stringify(checks).replaceAll("9000000001", String(variant?.id ?? "1")).replaceAll("9000000002", String(location ?? "1"));
   JSON.parse(swap).forEach((c, i) => Object.assign(checks[i], c));
   log("seed", trail.slice(0, 6).join("; "));
   return { trail };

@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-user-access-review-1.0.0-ed90f18",
-  "session_id": "vs_e27a7ffef1c1",
-  "run_id": "vr_fbd6a30e24704ec1846b6f9c0cfd961d",
-  "receipt_url": "https://fetchsandbox.com/runs/9e98ac452b?flow=vr_fbd6a30e24704ec1846b6f9c0cfd961d",
+  "app_version": "acme-ops-user-access-review-1.0.0-4ac41d8",
+  "session_id": "vs_f844552543d6",
+  "run_id": "vr_c14cb6f1efe04a0fbf095e93e9089086",
+  "receipt_url": "https://fetchsandbox.com/runs/192682caf9?flow=vr_c14cb6f1efe04a0fbf095e93e9089086",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -75,5 +75,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:29:45.513Z"
+  "recorded_at": "2026-10-22T19:04:07.153Z"
 }

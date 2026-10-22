@@ -41,45 +41,74 @@ measured against the real API, never against our assumptions about it.
 
 ## Results
 
-> **Measured before the spec audit.** These eleven receipts ran at
-> ed90f18 / af7aa6f, before the clients were corrected to the vendor references
-> (4ac41d8). Their failure causes stand as historical evidence, but two rows
-> are invalid as twin measurements: order-to-cash ran Shopify at the retired
-> `2020-04` (the twin's newest), and change-management-gate never gave the app
-> Datadog credentials. All twenty-four workflows are being re-proven at 4ac41d8;
-> rows are replaced with the classified results as they land.
+Each row is one checked-in receipt (`acme-ops/verify/receipts/<workflow>.json`).
+The app version is in the receipt, and every proof ran from a worktree pinned at
+that commit. The 24 workflows built in this program were all re-proven after the
+spec audit (4ac41d8 or later): **232 checks, 91 held, 96 violated, 45
+unmeasured**. A violated or unmeasured check is listed with the one class that
+explains it (see "How a gap is classified") and the evidence from the runtime
+log or seed. Every listed check passes locally against the documented behaviour
+(`acme-ops/test/`).
 
-Each row is one checked-in receipt (`acme-ops/verify/receipts/<workflow>.json`,
-app version in the receipt). "Proved" lists what FetchSandbox measured as held;
-"Not proved" names the check ids that were violated or unmeasured and the cause
-traced in the runtime log. A violated check here is a **FetchSandbox gap unless
-the cause column says otherwise**; the same checks pass locally against the fake.
+Legend: **TM** twin missing · **TD** twin spec divergence · **ON** operation not
+in twin · **EV** engine/verifier · (consequence) means the check couldn't run
+because an earlier step had no data.
 
-| Workflow | App version | Held / violated / unmeasured | Proved on twins | Not proved, and why | Needs |
-|---|---|---|---|---|---|
-| ai-support-triage | 3abd028 | 18 / 3 / 0 | Zendesk read and tagging, Slack, rate-limit and auth faults, guarded fallbacks | `model_answers_how_to`, `model_classifies_billing`, `model_answer_validated`: the OpenAI twin answers `"Sample content"` as role `system` | R1 |
-| cross-border-refund | 78468f6 | 26 / 0 / 4 | Stripe refunds with idempotency, approval gates, Zendesk notes, faults | `locale_from_zendesk`, `tax_portion_refund`, `settlement_fx_readback`, `takeover_hold_while_parked` | R7, R9, R10 |
-| account-takeover-containment | 40b5cbb | 20 / 0 / 2 | WorkOS reads, Stripe holds, approval, faults | `sessions_revoked` and membership deactivation | R8 |
-| failed-payment-dunning | ed90f18 | 5 / 3 / 2 | Stage entry, Slack, invoice-not-found and auth faults | `first_failure_card_update_notice`, `second_failure_tries_backup_card` (no `attempt_count`), `final_notice_after_14_days`, `cancellation_needs_approval`, `repeated_failure_no_second_notice`: invoices can't be open/failed, no time | R2, R15 |
-| order-to-cash | ed90f18 | 6 / 4 / 0 | Shopify order read (2020-04), cancelled and unpaid orders skipped, Shopify 429 | `sales_order_booked_in_erp`, `label_bought_under_limit`, `customer_gets_tracking`, `shipped_order_not_shipped_again`: no NetSuite or EasyPost twin | R4, R5, R6 |
-| supplier-bank-change | ed90f18 | 4 / 5 / 4 | Intake, invalid input, Slack fault | `payments_held_while_verifying`, `callback_to_number_on_file`, `ownership_checked_with_plaid`, `sanctions_screened`, `callback_deadline_rejects`; the four signal checks got 404 because nothing was planned: the vendor record lives in NetSuite and screening has no twin | R4, R14, R15 |
-| user-access-review | ed90f18 | 8 / 4 / 0 | WorkOS org memberships per entitlement, owner and self-review rules, Asana evidence, faults | `campaign_covers_every_system`, `github_member_revoked` (GitHub twin: `GET /orgs/{org}/members` → "Unknown method"), `deadline_revokes_unreviewed_admin`, `reminder_only_for_open_items` (need time) | R15, R18 |
-| employee-offboarding | ed90f18 | 5 / 5 / 0 | WorkOS inventory, EasyPost-free paths, Slack | `termination_filed`, `payroll_approval_pays`, `deadline_pays_without_approval`, `rescission_undoes_termination`: no Gusto twin; `access_removed_after_last_day`: needs time and WorkOS deactivation | R8, R15, R16 |
-| invoice-three-way-match | ed90f18 | 4 / 5 / 1 | Batch intake, invalid input, Slack | `bills_read_from_erp`, `clean_match_auto_approved`, `variance_needs_ap_approval`, `over_billed_held`, `duplicate_never_approved`; `entering_clerk_cannot_approve` 404 (nothing planned): every bill, PO and receipt is in NetSuite | R4 |
-| change-management-gate | ed90f18 | 5 / 5 / 1 | Intake, freeze and author rules where no GitHub data is needed, faults | `change_facts_read`, `standard_change_deploys`, `normal_change_needs_cab`, `healthy_watch_marks_success`, `degraded_watch_rolls_back`: the GitHub twin has no pull request, check runs or deployments to read (`GET /repos/acme/checkout/pulls/1` → 404) and Datadog has no twin; `author_cannot_approve` 404 follows | R18, R21 |
-| month-end-close | af7aa6f | 4 / 4 / 2 | Plaid sandbox link and transactions, Stripe auth fault, invalid input | `payouts_read`, `payouts_reconciled`: the Stripe twin's payout `arrival_date` isn't epoch seconds (the runtime threw; fixed afterwards in 43ddbe8, not yet re-proven); `accrual_reverses_next_period`, `fee_journal_on_approval`, `signoff_locks_period`: NetSuite; `reminder_while_open`: time | R4, R15, R20 |
+| Workflow | Version | Held / violated / unmeasured | Not proved: class, evidence | Needs |
+|---|---|---|---|---|
+| failed-payment-dunning | 4ac41d8 | 5 / 3 / 2 | **ON** invoice `pay` → 501 "not simulated"; `auto_advance` and subscription invoices → 501; **TD** `finalize` → `paid`, `amount_due` 0 (invoice items not attached), so `attempt_count` is never observed; **EV** day-14/21 steps need the runtime clock | R2, R15 |
+| customer-data-sweep | befeb35 | 4 / 4 / 0 | **TD** customer `address` isn't stored (create and GET both return `null`), so every customer is flagged; **TD** `has_more` false, so 100 of 275 customers are scanned (`full_scan_250`, `flag_limit_needs_approval`, `rerun_flags_nothing`) | R3, R20 |
+| order-to-cash | befeb35 | 3 / 8 / 0 | **TD** Shopify twin has no supported Admin version: `POST`/`GET /admin/api/2026-01/orders…` → "No route matches"; it serves only 2020-01…2021-01; **TM** NetSuite, EasyPost | R4, R5, R6, R23 |
+| supplier-bank-change | 93f319c | 4 / 5 / 4 | **TM** NetSuite (the vendor record), CSL screening, Twilio Verify; the four signal checks get 404 because nothing is planned without the vendor (consequence) | R4, R14 |
+| user-access-review | 4ac41d8 | 8 / 4 / 0 | **ON** GitHub `GET /orgs/{org}/members` → "Unknown method" (`campaign_covers_every_system`, `github_member_revoked`); **EV** deadline and reminder need the runtime clock | R15, R18 |
+| employee-offboarding | 4ac41d8 | 5 / 5 / 0 | **TM** Gusto (termination, final pay, deadline pay, rescission); **EV** + **ON** last-day removal needs the clock and WorkOS deactivation | R8, R15, R16 |
+| invoice-three-way-match | 4ac41d8 | 4 / 5 / 1 | **TM** NetSuite: bills, POs and receipts all live there | R4 |
+| change-management-gate | 06c2f09 | 5 / 5 / 1 | **ON** GitHub reviews (`GET …/pulls/4/reviews` → "Unknown method"), merge and deployments → 404; **TD** Datadog monitor id is a UUID string, while Datadog documents integers; **EV** watch window needs the clock | R15, R18, R21 |
+| month-end-close | 4ac41d8 | 4 / 3 / 3 | **TD** Stripe payout `arrival_date` isn't epoch seconds (`SpecDeviation`); **TM** NetSuite journals and period lock; **EV** day-2 reminder | R4, R15, R20 |
+| lead-routing-sla | befeb35 | 7 / 2 / 0 | **TD** HubSpot standard property `numberofemployees` → `PROPERTY_DOESNT_EXIST`, so the enterprise segment can't be seeded; **EV** SLA reassignment needs the clock | R15, R22 |
+| vulnerability-remediation | befeb35 | 3 / 3 / 3 | **ON** GitHub Dependabot alerts → "Unknown method" | R18 |
+| contract-intake | 06c2f09 | 2 / 0 / 8 | **TD** Box upload returns file id `obj_…`, while Box documents numeric ids, so the runtime rejects every seeded file; (behind it) **ON** OpenAI sample answers, **TM** DocuSign | R1, R19, R24 |
+| dsar-export | 06c2f09 | 3 / 2 / 3 | **ON** Zendesk Search API → "Unknown method"; the identity and release signals get 404 (consequence); **EV** statutory deadline needs the clock | R9, R15 |
+| consent-propagation | befeb35 | 4 / 4 / 1 | **ON** HubSpot Communication Preferences → "Unknown method"; **ON** CRM Properties API → "No route", so custom consent properties can't be defined and writes get 400 `VALIDATION_ERROR`. Stripe consent writes held | R22 |
+| crm-billing-sync | befeb35 | 4 / 5 / 0 | **ON** HubSpot custom properties can't be defined (no Properties API), so every field write gets 400 | R22 |
+| purchase-request-to-po | 06c2f09 | 2 / 4 / 4 | **TM** NetSuite (vendor, budget, POs) and CSL screening; approval signals 404 (consequence) | R4, R14 |
+| support-sla-breach | 06c2f09 | 3 / 3 / 4 | **ON** Zendesk ticket list with cursor pagination (`page[size]`) → 501; **TD** ticket create with priority, status and tags → 422 "A subject and a supported ticket payload are required"; **EV** breach timers | R9, R15 |
+| treasury-payment-approval | befeb35 | 2 / 4 / 4 | **TM** Modern Treasury and CSL screening | R14, R17 |
+| usage-true-up | 06c2f09 | 5 / 4 / 1 | **ON** meter event summaries return 0 for every customer after the meter events were accepted with 200, minutes earlier (Stripe documents eventual consistency, so this needs a longer re-check); **TD** meter id is a UUID, not `mtr_…`; **EV** notice window | R15, R25 |
+| customer-kyc-rescreen | befeb35 | 2 / 2 / 4 | **TM** CSL screening; Stripe Connect accounts were created fine | R14 |
+| inventory-replenishment | 4ac41d8 | 3 / 6 / 0 | **TD** Shopify 2026-01 → "Unknown method" (orders, variants, products, locations); **TM** NetSuite | R4, R6 |
+| delivery-exception | 06c2f09 | 4 / 5 / 0 | **TD** Shopify 2026-01 → "No route" (orders can't be created or read); **TM** EasyPost trackers | R5, R6 |
+| payroll-anomaly-review | befeb35 | 3 / 4 / 1 | **TM** Gusto | R16 |
+| visa-and-leave-expiry | befeb35 | 2 / 6 / 1 | **ON** Notion `POST /v1/pages` succeeds, but `GET /v1/pages/{id}` → 404 (no read-after-write) | R26 |
 
-_Wave 2 and 3 receipts (customer-data-sweep, lead-routing-sla, vulnerability-remediation, contract-intake, dsar-export, consent-propagation, crm-billing-sync, purchase-request-to-po, support-sla-breach, treasury-payment-approval, usage-true-up, customer-kyc-rescreen; then inventory-replenishment, delivery-exception, payroll-anomaly-review, visa-and-leave-expiry) are queued; rows are added as they land._
+Earlier receipts, measured before the audit and not re-run, because they
+belong to workflows already in review: ai-support-triage (3abd028: 18 / 3 / 0;
+**ON** OpenAI sample answers, R1), cross-border-refund (78468f6: 26 / 0 / 4; R7,
+R9, R10) and account-takeover-containment (40b5cbb: 20 / 0 / 2; R8).
 
-### Corrections found by the proofs (our bugs, not FetchSandbox's)
+### Tally by class (24 re-proven workflows)
 
-- month-end-close validated Plaid access tokens against the documented
-  `access-<env>-<id>` shape; the twin's tokens look like `aaa_9a99a99999aa9999`.
-  Plaid calls tokens opaque, so the runtime now accepts any non-blank token.
-  The first receipt (ed90f18) failed every check at baseline for this reason.
-- support-sla-breach (local tests, before any proof): overlapping sweeps both
-  read "not tagged" and alerted twice. Fixed with a Zendesk `safe_update`
-  compare-and-swap claim per step.
+| Class | Providers and operations |
+|---|---|
+| Twin missing | NetSuite (8 workflows), Gusto (2), EasyPost (2), Modern Treasury, DocuSign, CSL screening (4), Twilio Verify |
+| Twin spec divergence | Shopify API versions (3 workflows), Stripe payout dates, Stripe customer address, Stripe pagination, Box file ids, Datadog monitor ids, Stripe meter ids, HubSpot standard property, Zendesk ticket create |
+| Operation not in twin | GitHub orgs, reviews, merge, deployments, Dependabot; HubSpot Communication Preferences and Properties; Zendesk search and cursor pagination; Stripe invoice pay, auto-advance and meter summaries; Notion page read; OpenAI generation |
+| Engine / verifier | Runtime clock during an attempt (15 workflows); tunnel allowance (every proof loop) |
+
+### Our bugs the proofs exposed (fixed)
+
+- Over-strict ID formats that the vendors don't guarantee: Plaid access token
+  shape, Stripe meter id, EasyPost tracker id, and HubSpot contact ids capped at
+  12 digits (HubSpot ids are 64-bit).
+- Contracts whose baseline needed a provider. A missing twin then skipped every
+  other check; baselines now only require a recorded run.
+- Unseeded or wrongly seeded fixtures: a GitHub PR hard-coded as #1, an
+  unuploaded Box file, Datadog credentials never passed to the app, and
+  non-numeric placeholders that made baseline inputs invalid.
+- A purchase-request contract that asserted an array (the verifier accepts
+  only scalar values).
+- support-sla-breach double alerts across overlapping sweeps, caught in local
+  tests and fixed with a compare-and-swap claim.
 
 ## Requirements for FetchSandbox
 
@@ -110,8 +139,11 @@ or unmeasured into measured.
 | R19 | **E-signature twin (DocuSign).** Envelopes with a custom field, status changes, reminders, void. | contract-intake | "Unknown providers: docusign" | An envelope is created once per contract id and voided at 30 days |
 | R20 | **Field fidelity and robustness on existing twins.** Stripe payout `arrival_date` as epoch seconds; Plaid tokens in Plaid's format; Stripe customer create under 8 concurrent requests without a non-JSON "upstream connect error". | month-end-close `payouts_read`; customer-data-sweep seeding | observed 2026-10-22 | Seeding 250 customers 8-wide succeeds and payout dates parse as Stripe documents them |
 | R21 | **Scriptable Datadog monitor and metric state.** A Datadog twin exists (235 endpoints). Whether a contract can make a monitor degrade after a deploy is being measured; the first receipt never gave the app Datadog credentials (our runner, fixed). | change-management-gate watch and rollback | Re-run at 4ac41d8 | A degraded monitor after deploy makes the runtime roll back, observed on GitHub deployments |
-| R22 | **HubSpot beyond contacts.** The twin's spec has 13 endpoints (contacts only). Missing: Communication Preferences (subscription status, subscribe and unsubscribe), companies and deals. | consent-propagation subscription leg | `list_specs`: hubspot 13 endpoints | The marketing subscription is turned off on the twin and read back |
+| R22 | **HubSpot beyond contacts.** The twin's spec has 13 endpoints (contacts only). Missing: the CRM Properties API (custom contact properties can't be defined, and standard ones such as `numberofemployees` are absent), Communication Preferences (subscription status, subscribe, unsubscribe), companies and deals. | consent-propagation, crm-billing-sync, lead-routing-sla | `list_specs`: hubspot 13 endpoints; `POST /crm/v3/properties/contacts` → "No route"; `numberofemployees` → `PROPERTY_DOESNT_EXIST` | Defined custom properties can be written and read back; the marketing subscription is turned off and read back |
 | R23 | **Version-faithful twins.** Twins should honour the vendor's version header and serve supported versions: `Stripe-Version` (pinned clients), Shopify Admin versions inside the support window, `X-GitHub-Api-Version`, `Notion-Version`, `X-Gusto-API-Version`. | every pinned client | Shopify twin: 2020-01…2021-01 only; whether the Stripe twin honours `Stripe-Version` is being measured | A pinned client gets that version's shapes |
+| R24 | **Box ids in Box's format.** Uploads return numeric file ids as Box documents them, and `/files/{id}` and the representations endpoints work for uploaded files. | contract-intake | upload → `obj_ccc36ef1…` | A file uploaded through `files/content` can be read and its text extracted |
+| R25 | **Stripe usage billing.** Billing meters with `mtr_` ids, meter events aggregated into `event_summaries`, invoice items attached to draft invoices. | usage-true-up | events accepted, summaries 0 | 1,300 metered units for a customer read back as 1,300 |
+| R26 | **Stateful Notion pages.** `POST /v1/pages` into a database, then `GET`/`PATCH /v1/pages/{id}` on the same page. | visa-and-leave-expiry | create 200, read 404 | A created register row can be read and updated |
 
 ## Engine and contract findings (not twin data)
 

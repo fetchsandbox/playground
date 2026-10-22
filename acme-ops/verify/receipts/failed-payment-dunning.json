@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-failed-payment-dunning-1.0.0-ed90f18",
-  "session_id": "vs_f49bfc2ce12e",
-  "run_id": "vr_57ce9995377240f6a27b6726106fa7b2",
-  "receipt_url": "https://fetchsandbox.com/runs/38ef7d3cb1?flow=vr_57ce9995377240f6a27b6726106fa7b2",
+  "app_version": "acme-ops-failed-payment-dunning-1.0.0-4ac41d8",
+  "session_id": "vs_78dd5423f602",
+  "run_id": "vr_243352f82fcf4575922b792da8a81865",
+  "receipt_url": "https://fetchsandbox.com/runs/198897286c?flow=vr_243352f82fcf4575922b792da8a81865",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -65,5 +65,5 @@
       "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:18:53.623Z"
+  "recorded_at": "2026-10-22T18:56:54.371Z"
 }
