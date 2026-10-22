@@ -6,6 +6,7 @@ import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
 import { SquareClient } from "./square";
 import { StripeClient } from "./stripe";
+import { ModernTreasuryClient } from "./treasury";
 import { AsanaClient, BoxClient, DatadogClient, DocuSignClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
 
@@ -33,8 +34,9 @@ export type ProviderName =
   | "twilio_verify"
   | "gusto"
   | "datadog"
-  | "docusign";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign"];
+  | "docusign"
+  | "moderntreasury";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign", "moderntreasury"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -73,6 +75,7 @@ export interface Providers {
   datadog?: DatadogClient;
   /** E-signature (DocuSign eSignature). */
   docusign?: DocuSignClient;
+  moderntreasury?: ModernTreasuryClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -100,6 +103,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   gusto: "https://api.gusto.com",
   datadog: "https://api.datadoghq.com",
   docusign: "https://na1.docusign.net/restapi",
+  moderntreasury: "https://app.moderntreasury.com",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -128,6 +132,7 @@ const PREFIX: Record<ProviderName, string[]> = {
   gusto: ["GUSTO"],
   datadog: ["DATADOG", "DD"],
   docusign: ["DOCUSIGN"],
+  moderntreasury: ["MODERN_TREASURY", "MODERNTREASURY"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -161,6 +166,9 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
     }
     if (p === "pagerduty" && baseUrl === DEFAULT_BASE.pagerduty) endpoint.authorization = `Token token=${token}`;
     if (p === "easypost" && baseUrl === DEFAULT_BASE.easypost) endpoint.authorization = `Basic ${Buffer.from(`${token}:`).toString("base64")}`;
+    if (p === "moderntreasury" && baseUrl === DEFAULT_BASE.moderntreasury) {
+      endpoint.authorization = `Basic ${Buffer.from(`${env.MODERN_TREASURY_ORGANIZATION_ID ?? ""}:${token}`).toString("base64")}`;
+    }
     out[p] = endpoint;
   }
   return out;
@@ -204,6 +212,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       twilio_verify: h.twilio_verify && new TwilioVerifyClient(h.twilio_verify, env.TWILIO_VERIFY_SERVICE_SID ?? "VA_ACME_DEMO"),
       gusto: h.gusto && new GustoClient(h.gusto, env.GUSTO_COMPANY_ID ?? "acme-company"),
       docusign: h.docusign && new DocuSignClient(h.docusign, env.DOCUSIGN_ACCOUNT_ID ?? "acme-account"),
+      moderntreasury: h.moderntreasury && new ModernTreasuryClient(h.moderntreasury),
       datadog: h.datadog && new DatadogClient(h.datadog, env.DATADOG_APP_KEY ?? env.DD_APPLICATION_KEY ?? ""),
     };
   };

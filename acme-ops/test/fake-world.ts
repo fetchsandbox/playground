@@ -74,6 +74,7 @@ export function seedState() {
     issues: [] as { repo: string; number: number; title: string; body?: string; state: string; labels: string[]; comments: string[] }[],
     gh: { pulls: [] as any[], reviews: [] as any[], checkRuns: [] as any[], deployments: [] as any[], statuses: [] as any[] },
     pagerduty: { incidents: [] as any[] },
+    moderntreasury: { externalAccounts: [] as any[], counterparties: [] as any[], orders: [] as any[], keys: new Map<string, any>() },
     datadog: { monitors: [] as any[], errorRate: 0.4 },
     github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
     netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[], vendorBills: [] as any[], purchaseOrders: [] as any[], journals: [] as any[], periods: [] as any[], unbilledReceipts: 0 },
@@ -638,6 +639,34 @@ export async function startWorld() {
       return send(201, st);
     }
 
+    // ---- Modern Treasury
+    const MT = state.moderntreasury;
+    if (req.method === "GET" && (r = m(/^\/api\/external_accounts\/([^/]+)$/))) {
+      const a = MT.externalAccounts.find((x) => x.id === r![1]);
+      return a ? send(200, a) : send(404, { errors: { code: "resource_not_found" } });
+    }
+    if (req.method === "GET" && (r = m(/^\/api\/counterparties\/([^/]+)$/))) {
+      const c = MT.counterparties.find((x) => x.id === r![1]);
+      return c ? send(200, c) : send(404, { errors: { code: "resource_not_found" } });
+    }
+    if (req.method === "GET" && path === "/api/payment_orders") {
+      const meta = q.get("metadata[acme_payment_id]");
+      const rows = MT.orders.filter((o) => (!q.get("receiving_account_id") || o.receiving_account_id === q.get("receiving_account_id")) && (!q.get("originating_account_id") || o.originating_account_id === q.get("originating_account_id")) && (!meta || o.metadata?.acme_payment_id === meta));
+      return send(200, rows);
+    }
+    if (req.method === "POST" && path === "/api/payment_orders") {
+      const key = String(req.headers["idempotency-key"] ?? "");
+      if (key && MT.keys.has(key)) return send(201, MT.keys.get(key));
+      const o = { id: id("po"), status: "approved", created_at: new Date().toISOString(), ...body };
+      MT.orders.push(o);
+      if (key) MT.keys.set(key, o);
+      return send(201, o);
+    }
+    if (req.method === "GET" && (r = m(/^\/api\/payment_orders\/([^/]+)$/))) {
+      const o = MT.orders.find((x) => x.id === r![1]);
+      return o ? send(200, o) : send(404, { errors: { code: "resource_not_found" } });
+    }
+
     // ---- PagerDuty
     if (req.method === "GET" && path === "/incidents") {
       return send(200, { incidents: state.pagerduty.incidents.filter((i) => i.status !== "resolved"), more: false });
@@ -868,7 +897,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign", "moderntreasury"];
 
   return {
     state,

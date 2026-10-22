@@ -26,6 +26,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | CRM ↔ billing sync | RevOps / `revops-systems` | 2 | [crm-billing-sync](workflows/crm-billing-sync.md) |
 | Purchase request to purchase order | Finance / `procurement` | 2 | [purchase-request-to-po](workflows/purchase-request-to-po.md) |
 | Support first-response SLA | Support / `support-ops` | 3 | [support-sla-breach](workflows/support-sla-breach.md) |
+| Treasury payment approval (dual control) | Finance / `treasury` | 3 | [treasury-payment-approval](workflows/treasury-payment-approval.md) |
 | Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Customer data-quality sweep (at scale) | RevOps / `revops-data` | 2 | [customer-data-sweep](workflows/customer-data-sweep.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
