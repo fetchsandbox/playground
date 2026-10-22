@@ -127,6 +127,8 @@ export async function startWorld() {
     }
     if ((r = m(/^\/v1\/customers\/([^/]+)\/balance_transactions(?:\/([^/]+))?$/))) {
       if (req.method === "POST") {
+        const owner = S.customers.find((x) => x.id === r![1]);
+        if (owner?.currency && owner.currency.toLowerCase() !== String(body.currency).toLowerCase()) return send(400, { error: { type: "invalid_request_error", code: "currency_mismatch", message: "Customer balance currency differs" } });
         const tx = { id: id("cbtxn"), customer: r[1], amount: Number(body.amount), currency: body.currency, description: body.description, metadata: meta() };
         S.balanceTxns.push(tx);
         return send(200, tx);
@@ -322,6 +324,10 @@ export async function startWorld() {
         t.updated_at = new Date(Date.now() + ++seq).toISOString();
       }
       return send(200, { ticket: t });
+    }
+    if (req.method === "GET" && (r = m(/^\/api\/v2\/users\/(\d+)\.json$/))) {
+      const u = Z.users.find((x) => String(x.id) === r![1]) ?? Z.tickets.filter((t) => String(t.requester_id) === r![1]).map((t) => ({ id: t.requester_id, email: t.requester_email, name: t.requester_name }))[0];
+      return u ? send(200, { user: u }) : send(404, { error: "RecordNotFound" });
     }
     if (req.method === "GET" && path === "/api/v2/search.json") {
       const query = q.get("query") ?? "";

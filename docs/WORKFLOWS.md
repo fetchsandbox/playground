@@ -16,6 +16,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Churn-risk sweep | Customer Success / `cs-ops` | 6 | [churn-risk-sweep](workflows/churn-risk-sweep.md) |
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
 | Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |
+| Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
 | Duplicate charge remediation | Finance / `billing-ops` | 4 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) |
 | Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |

@@ -27,6 +27,7 @@ export interface ZendeskUser {
   email?: string;
   name?: string;
   organization_id?: number | null;
+  locale?: string | null;
 }
 
 /**
@@ -43,8 +44,9 @@ export class ZendeskClient {
   }
 
   async getUser(id: number): Promise<ZendeskUser> {
-    const { body } = await this.http.request<{ user: ZendeskUser }>("GET", `/api/v2/users/${id}.json`);
-    return body.user;
+    const { body } = await this.http.request<{ user?: ZendeskUser } & ZendeskUser>("GET", `/api/v2/users/${id}.json`);
+    // Zendesk wraps the user; the FetchSandbox twin returns it bare.
+    return body.user ?? body;
   }
 
   /** Update fields and optionally add a comment (internal unless `public`). */

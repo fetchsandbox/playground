@@ -7,6 +7,7 @@ WHY={
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',
+'cross-border-refund':'Customer Experience needs to refund international customers in the currency they paid, only to the customer who paid, with currency-aware limits and without letting ticket text decide the amount.',
 'distributor-claims':'Channel Finance needs to compare requested distributor credits with the actual paid invoices, list prices and agreement before paying them.',
 'duplicate-charge-remediation':'Finance needs to refund customers who were charged twice by a billing incident, quickly and at scale, without refunding a disputed or ambiguous payment and with human approval above set limits.',
 'export-screening':'Trade Compliance needs to hold shipment when party or item screening is unclear rather than treating an unavailable check as clearance.',
