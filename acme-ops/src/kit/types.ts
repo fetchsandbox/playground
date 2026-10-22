@@ -68,6 +68,8 @@ export interface PlannedAction<I> {
   compensate?(ctx: ActionContext<I>, receipt: ActionReceipt): Promise<ActionReceipt | void>;
   /** Waits until these actions are settled (applied, rejected, skipped, failed or compensated). */
   after?: string[];
+  /** Durable timer relative to another action: runs `ms` after that action was applied. */
+  delayAfter?: { action: string; ms: number };
   /** Needs these actions applied: waits for them, and is skipped as soon as one settles any other way. */
   requires?: string[];
   /** "compensate": if this action fails, stop the run and undo every applied action that can be undone. */

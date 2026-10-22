@@ -16,6 +16,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | AI support triage (LLM, guarded) | Support / `support-ops` | 3 | [ai-support-triage](workflows/ai-support-triage.md) |
 | User access review (SOC 2) | IT Security / `grc` | 3 | [user-access-review](workflows/user-access-review.md) |
 | Joiner, mover, leaver access | IT / `it-identity` | 2 | [access-jml](workflows/access-jml.md) |
+| Change management gate | Engineering / `platform-ops` | 3 | [change-management-gate](workflows/change-management-gate.md) |
 | Churn-risk sweep | Customer Success / `cs-ops` | 6 | [churn-risk-sweep](workflows/churn-risk-sweep.md) |
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
 | Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |

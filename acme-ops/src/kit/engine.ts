@@ -378,7 +378,7 @@ export class Engine<I> {
       const gateState = this.readiness(p, rec, run.actions);
       if (gateState !== "ready") {
         const why = gateState.error ? (gateState.status === "skipped" ? { detail: { reason: gateState.error } } : { error: gateState.error, errorCode: "signal_deadline" }) : {};
-        if (gateState.status !== rec.status || gateState.signal) await this.updateAction(runId, p.id, { status: gateState.status, ...(gateState.signal ? { signal: gateState.signal } : {}), ...why });
+        if (gateState.status !== rec.status || gateState.signal || (gateState.waitUntil && gateState.waitUntil !== rec.waitUntil)) await this.updateAction(runId, p.id, { status: gateState.status, ...(gateState.signal ? { signal: gateState.signal } : {}), ...(gateState.waitUntil ? { waitUntil: gateState.waitUntil } : {}), ...why });
         if (gateState.status === "failed" && p.onFailure === "compensate") return this.compensateRun(runId, ctx, planned, p.id);
         // A deadline that defaults to approve runs the action now; anything else keeps waiting.
         if (gateState.signal?.value !== "approve") continue;
@@ -430,9 +430,17 @@ export class Engine<I> {
    * Kit v2 gate for timers and signals. "ready" runs the action; otherwise the
    * status it should show. A deadline without a signal applies the action's default.
    */
-  private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string } {
+  private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string; waitUntil?: string } {
     const now = this.now();
     if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
+    if (p.delayAfter) {
+      const dep = all.find((a) => a.id === p.delayAfter!.action);
+      if (dep && dep.status !== "applied" && !SETTLED.has(dep.status)) return { status: "scheduled" };
+      if (dep?.status === "applied" && dep.appliedAt) {
+        const due = Date.parse(dep.appliedAt) + p.delayAfter.ms;
+        if (due > now) return { status: "scheduled", waitUntil: new Date(due).toISOString() };
+      }
+    }
     if (p.after?.some((id) => { const dep = all.find((a) => a.id === id); return dep && !SETTLED.has(dep.status); })) return { status: "scheduled" };
     for (const id of p.requires ?? []) {
       const dep = all.find((a) => a.id === id);
@@ -872,7 +880,7 @@ function toRecord<I>(p: PlannedAction<I>): ActionRecord {
     provider: p.provider,
     agent: p.agent,
     gate: p.gate,
-    status: p.gate === "approval" ? "pending_approval" : p.waitUntil ? "scheduled" : p.awaitSignal ? "awaiting_signal" : "planned",
+    status: p.gate === "approval" ? "pending_approval" : p.waitUntil || p.delayAfter ? "scheduled" : p.awaitSignal ? "awaiting_signal" : "planned",
     summary: p.summary,
     attempts: 0,
     ...(p.waitUntil ? { waitUntil: p.waitUntil } : {}),

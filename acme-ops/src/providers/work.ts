@@ -149,6 +149,34 @@ export class GitHubClient {
     return (await this.http.request<GitHubIssue>("PATCH", `/repos/${repo}/issues/${n}`, { json: { labels } })).body;
   }
 
+  async getPullRequest(repo: string, n: number): Promise<{ number: number; state: string; merged: boolean; merge_commit_sha: string | null; head: { sha: string }; base: { ref: string }; user: { login: string } }> {
+    return (await this.http.request<any>("GET", `/repos/${repo}/pulls/${n}`)).body;
+  }
+
+  async listReviews(repo: string, n: number): Promise<{ user: { login: string }; state: string }[]> {
+    const { body } = await this.http.request<any>("GET", `/repos/${repo}/pulls/${n}/reviews`, { query: { per_page: 100 } });
+    return Array.isArray(body) ? body : [];
+  }
+
+  /** Combined check-run conclusion for a commit. */
+  async checkRuns(repo: string, sha: string): Promise<{ name: string; status: string; conclusion: string | null }[]> {
+    const { body } = await this.http.request<any>("GET", `/repos/${repo}/commits/${sha}/check-runs`, { query: { per_page: 100 } });
+    return body?.check_runs ?? [];
+  }
+
+  async createDeployment(repo: string, d: { ref: string; environment: string; description: string; payload: Record<string, unknown> }): Promise<{ id: number; sha?: string }> {
+    return (await this.http.request<any>("POST", `/repos/${repo}/deployments`, { json: { ref: d.ref, environment: d.environment, description: d.description, payload: d.payload, auto_merge: false, required_contexts: [] } })).body;
+  }
+
+  async listDeployments(repo: string, environment: string): Promise<{ id: number; sha: string; ref: string; payload?: Record<string, unknown> }[]> {
+    const { body } = await this.http.request<any>("GET", `/repos/${repo}/deployments`, { query: { environment, per_page: 30 } });
+    return Array.isArray(body) ? body : [];
+  }
+
+  async setDeploymentStatus(repo: string, id: number, state: "in_progress" | "success" | "failure" | "inactive", description: string): Promise<{ id: number; state: string }> {
+    return (await this.http.request<any>("POST", `/repos/${repo}/deployments/${id}/statuses`, { json: { state, description, auto_inactive: true } })).body;
+  }
+
   /** Organization members with a role (admin | member), following Link pagination. */
   async listOrgMembers(org: string, role: "admin" | "member", max = 5_000): Promise<{ login: string; id: number }[]> {
     const out: { login: string; id: number }[] = [];
@@ -195,6 +223,18 @@ export class PagerDutyClient {
     readonly http: ProviderHttp,
     private readonly fromEmail: string,
   ) {}
+
+  /** Open (triggered or acknowledged) incidents on these services. */
+  async openIncidents(serviceIds: string[]): Promise<{ id: string; urgency: string; status: string; title?: string; priority?: { summary?: string } | null }[]> {
+    const { body } = await this.http.request<any>("GET", "/incidents", { query: { "service_ids[]": serviceIds.join(","), "statuses[]": "triggered,acknowledged", limit: 100 } });
+    return (body?.incidents ?? []).filter((i: any) => !serviceIds.length || serviceIds.includes(i.service?.id));
+  }
+
+  /** Who is on call now for this escalation policy. */
+  async onCall(escalationPolicyId: string): Promise<{ user: { id: string; summary?: string } }[]> {
+    const { body } = await this.http.request<any>("GET", "/oncalls", { query: { "escalation_policy_ids[]": escalationPolicyId, earliest: "true" } });
+    return body?.oncalls ?? [];
+  }
 
   async addNote(incidentId: string, content: string): Promise<{ id: string }> {
     const { body } = await this.http.request<any>("POST", `/incidents/${encodeURIComponent(incidentId)}/notes`, {
@@ -271,5 +311,27 @@ export class ScreeningClient {
   async search(name: string, country?: string): Promise<{ name: string; source: string; score?: number }[]> {
     const { body } = await this.http.request<any>("GET", "/consolidated_screening_list/v1/search", { query: { name, countries: country, fuzzy_name: "true", size: 25 } });
     return (body?.results ?? []).map((r: any) => ({ name: r.name, source: r.source, score: r.score }));
+  }
+}
+
+/** Datadog monitors and metrics (https://docs.datadoghq.com/api/latest/). */
+export class DatadogClient {
+  constructor(readonly http: ProviderHttp, private readonly appKey = "") {}
+
+  /** Datadog authenticates with DD-API-KEY / DD-APPLICATION-KEY (twins also take the bearer token). */
+  private get headers() {
+    return { "DD-API-KEY": this.http.endpoint.token, ...(this.appKey ? { "DD-APPLICATION-KEY": this.appKey } : {}) };
+  }
+
+  async monitor(id: number): Promise<{ id: number; name: string; overall_state: string }> {
+    return (await this.http.request<any>("GET", `/api/v1/monitor/${id}`, { headers: this.headers })).body;
+  }
+
+  /** Last value of a metric query over the window (e.g. an error rate). */
+  async lastValue(query: string, fromSec: number, toSec: number): Promise<number | null> {
+    const { body } = await this.http.request<any>("GET", "/api/v1/query", { query: { query, from: fromSec, to: toSec }, headers: this.headers });
+    const points: [number, number | null][] = body?.series?.[0]?.pointlist ?? [];
+    const last = [...points].reverse().find((p) => p[1] !== null);
+    return last ? last[1] : null;
   }
 }

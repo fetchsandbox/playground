@@ -7,6 +7,7 @@ WHY={
 'user-access-review':'IT Security needs quarterly access certifications that auditors accept: every entitlement decided by its owner, nobody certifying themselves, unreviewed admin access removed, and evidence that cannot be edited after the fact.',
 'access-jml':'IT needs to grant the correct employee access and remove it when employment changes, while keeping privileged changes under human control.',
 'ai-support-triage':'Support needs every new ticket triaged in seconds with a language model, without letting the model lower an outage priority, promise money, or send a reply a person should have checked.',
+'change-management-gate':'Platform Engineering needs every production change checked against incidents, monitors and freezes, approved by someone other than its author when required, and rolled back automatically when it degrades the service.',
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',

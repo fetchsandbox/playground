@@ -66,6 +66,9 @@ export function seedState() {
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
+    gh: { pulls: [] as any[], reviews: [] as any[], checkRuns: [] as any[], deployments: [] as any[], statuses: [] as any[] },
+    pagerduty: { incidents: [] as any[] },
+    datadog: { monitors: [] as any[], errorRate: 0.4 },
     github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
     netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[], vendorBills: [] as any[], purchaseOrders: [] as any[] },
     plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
@@ -451,6 +454,45 @@ export async function startWorld() {
       return send(202, p);
     }
 
+    // ---- GitHub pulls, checks, deployments
+    if (req.method === "GET" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/pulls\/(\d+)$/))) {
+      const pr = state.gh.pulls.find((x) => x.repo === r![1] && String(x.number) === r![2]);
+      return pr ? send(200, pr) : send(404, { message: "Not Found" });
+    }
+    if (req.method === "GET" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/pulls\/(\d+)\/reviews$/))) {
+      return send(200, state.gh.reviews.filter((x) => x.repo === r![1] && String(x.number) === r![2]));
+    }
+    if (req.method === "GET" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/commits\/([^/]+)\/check-runs$/))) {
+      return send(200, { total_count: 0, check_runs: state.gh.checkRuns.filter((x) => x.repo === r![1] && x.sha === r![2]) });
+    }
+    if ((r = m(/^\/repos\/([^/]+\/[^/]+)\/deployments$/))) {
+      if (req.method === "POST") {
+        const d = { id: ++seq, repo: r[1], sha: body.ref, ref: body.ref, environment: body.environment, description: body.description, payload: body.payload ?? {}, created_at: new Date().toISOString() };
+        state.gh.deployments.unshift(d);
+        return send(201, d);
+      }
+      return send(200, state.gh.deployments.filter((x) => x.repo === r![1] && (!q.get("environment") || x.environment === q.get("environment"))));
+    }
+    if (req.method === "POST" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/deployments\/(\d+)\/statuses$/))) {
+      const st = { id: ++seq, deployment_id: Number(r[2]), state: body.state, description: body.description };
+      state.gh.statuses.push(st);
+      return send(201, st);
+    }
+
+    // ---- PagerDuty
+    if (req.method === "GET" && path === "/incidents") {
+      return send(200, { incidents: state.pagerduty.incidents, more: false });
+    }
+
+    // ---- Datadog
+    if (req.method === "GET" && (r = m(/^\/api\/v1\/monitor\/(\d+)$/))) {
+      const mon = state.datadog.monitors.find((x) => String(x.id) === r![1]);
+      return mon ? send(200, mon) : send(404, { errors: ["Monitor not found"] });
+    }
+    if (req.method === "GET" && path === "/api/v1/query") {
+      return send(200, { status: "ok", series: [{ pointlist: [[Date.now(), state.datadog.errorRate]] }] });
+    }
+
     // ---- GitHub organizations
     if (req.method === "GET" && (r = m(/^\/orgs\/([^/]+)\/members$/))) {
       const page = Number(q.get("page") ?? 1);
@@ -641,7 +683,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog"];
 
   return {
     state,
