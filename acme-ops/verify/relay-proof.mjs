@@ -146,6 +146,7 @@ function twinEnv(legs) {
     openai: "OPENAI",
     "shopify-admin": "SHOPIFY",
     plaid: "PLAID",
+    datadog: "DATADOG",
   };
   for (const [p, leg] of Object.entries(legs ?? {})) {
     if (!map[p]) continue;

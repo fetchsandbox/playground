@@ -1,3 +1,4 @@
+import { specWarning } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 export interface StripeCustomer {
@@ -44,7 +45,7 @@ export interface StripeInvoice {
   amount_due: number;
   amount_remaining: number;
   currency: string;
-  /** Epoch seconds on real Stripe; some backends send ISO strings. */
+  /** Epoch seconds (Stripe API reference). */
   due_date?: number | string | null;
   created?: number | string;
   charge?: string | null;
@@ -316,8 +317,10 @@ export class StripeClient {
 
   async listRefundsForPaymentIntent(paymentIntent: string): Promise<StripeRefund[]> {
     const refunds = await this.listAll<StripeRefund>("/v1/refunds", { payment_intent: paymentIntent });
-    // Some backends ignore the filter; never count another payment's refunds.
-    return refunds.filter((r) => r.payment_intent === paymentIntent);
+    // Never count another payment's refunds, even if the documented filter wasn't applied.
+    const mine = refunds.filter((r) => r.payment_intent === paymentIntent);
+    if (mine.length !== refunds.length) specWarning("stripe", `GET /v1/refunds?payment_intent=${paymentIntent} returned ${refunds.length - mine.length} refund(s) of other payments`);
+    return mine;
   }
 
   async refundPaymentIntent(paymentIntent: string, amount: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeRefund> {

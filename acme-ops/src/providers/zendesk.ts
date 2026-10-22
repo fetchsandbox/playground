@@ -1,3 +1,4 @@
+import { SpecDeviation } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 export interface ZendeskTicket {
@@ -45,9 +46,10 @@ export class ZendeskClient {
   }
 
   async getUser(id: number): Promise<ZendeskUser> {
-    const { body } = await this.http.request<{ user?: ZendeskUser } & ZendeskUser>("GET", `/api/v2/users/${id}.json`);
-    // Zendesk wraps the user; the FetchSandbox twin returns it bare.
-    return body.user ?? body;
+    const { body } = await this.http.request<{ user?: ZendeskUser }>("GET", `/api/v2/users/${id}.json`);
+    // Zendesk documents the user wrapped in `user` (Show User).
+    if (!body?.user) throw new SpecDeviation("zendesk", `GET /api/v2/users/${id}.json returned no \`user\` object`);
+    return body.user;
   }
 
   /** Update fields and optionally add a comment (internal unless `public`). */

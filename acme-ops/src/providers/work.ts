@@ -339,7 +339,8 @@ export interface BoxFile {
 }
 
 export class BoxClient {
-  constructor(readonly http: ProviderHttp, private readonly uploadUrl = "") {}
+  /** Box takes uploads on a separate host (upload.box.com/api/2.0); `uploadUrl` overrides it, e.g. for a test double. */
+  constructor(readonly http: ProviderHttp, private readonly uploadUrl = "https://upload.box.com/api/2.0") {}
 
   /** Uploads a new file (multipart, Box's upload host in production). */
   async upload(folderId: string, name: string, content: string): Promise<{ id: string; name: string }> {

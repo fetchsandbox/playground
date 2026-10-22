@@ -15,6 +15,28 @@ export class ProviderError extends Error {
   }
 }
 
+/**
+ * A provider answered in a shape its own published API reference doesn't allow
+ * (a field of the wrong type, an unwrapped object, a missing documented field).
+ * Clients follow the vendor's spec and never adapt to such answers: the run
+ * fails closed and the deviation is visible in the run record and logs.
+ */
+export class SpecDeviation extends ProviderError {
+  override name = "SpecDeviation";
+  constructor(provider: string, what: string) {
+    super(provider, 0, "spec_deviation", false, `${provider} response deviates from its published API: ${what}`);
+  }
+}
+
+/**
+ * Defensive checks that real-spec code keeps (e.g. re-applying a documented
+ * filter) report when they fire, so a provider ignoring its own spec is logged
+ * rather than silently absorbed.
+ */
+export function specWarning(provider: string, what: string): void {
+  console.log(JSON.stringify({ level: "warn", msg: "provider spec deviation", provider, deviation: what, at: new Date().toISOString() }));
+}
+
 /** Bad input or an impossible request. Retrying cannot help. */
 export class FatalError extends Error {
   override name = "FatalError";

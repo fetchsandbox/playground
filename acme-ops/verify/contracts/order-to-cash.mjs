@@ -5,8 +5,9 @@ import { action, agent, all, check, eq, runs, start } from "./lib.mjs";
 // (EasyPost) legs are named in the checks as ordinary executable expectations;
 // FetchSandbox has no twin for either (validate_integration: "Unknown
 // providers"), so the session carries only shopify-admin and slack and the
-// receipt shows what can't be measured. The Shopify twin models Admin REST
-// versions 2020-01..2021-01 only, so the runtime is pointed at 2020-04.
+// receipt shows what can't be measured. The runtime and the seed use a
+// supported Admin API version (2024-10), as production does; a twin that only
+// models retired versions shows up as refused seeds and failing reads.
 const CHANNEL = "C0OPS00001";
 const APPROVER = "U_OPS_LEAD";
 
@@ -49,18 +50,25 @@ async function seed(legs, log) {
   const leg = legs["shopify-admin"];
   const call = async (method, path, json) => {
     const res = await fetch(`${leg.base_url}${path}`, { method, headers: { authorization: `Bearer ${leg.api_key}`, "content-type": "application/json" }, body: json ? JSON.stringify(json) : undefined });
-    const body = await res.json();
-    if (!res.ok) throw new Error(`seed ${method} ${path} → ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
-    return body;
+    const text = await res.text();
+    let body = null;
+    try { body = JSON.parse(text); } catch {}
+    if (!res.ok) trail.push(`${method} ${path} → ${res.status} ${text.slice(0, 120)}`);
+    return res.ok ? body : null;
   };
+  const trail = [];
   const ids = {};
   for (const [caseId, f] of Object.entries(FIXTURES)) {
     const { fulfill, ...o } = f;
-    const created = await call("POST", "/admin/api/2020-04/orders.json", { order: o });
-    // The twin returns the id beside the order object, not inside it.
-    const id = String(created.order?.id ?? created.id);
-    ids[caseId] = id;
-    if (fulfill) await call("POST", `/admin/api/2020-04/orders/${id}/fulfillments.json`, { fulfillment: { tracking_number: "1Z999AA10123456784", tracking_company: "UPS" } });
+    const created = await call("POST", "/admin/api/2024-10/orders.json", { order: o });
+    // Shopify returns the id inside `order`; anything else is recorded as a deviation and the check runs unseeded.
+    const id = created?.order?.id;
+    if (!id) {
+      if (created) trail.push(`POST orders.json: no order.id in response (keys: ${Object.keys(created).join(",")})`);
+      continue;
+    }
+    ids[caseId] = String(id);
+    if (fulfill) await call("POST", `/admin/api/2024-10/orders/${id}/fulfillments.json`, { fulfillment: { tracking_number: "1Z999AA10123456784", tracking_company: "UPS" } });
   }
   for (const c of checks) {
     const real = ids[c.id];
@@ -71,15 +79,14 @@ async function seed(legs, log) {
     const walk = (a) => { if (!a) return; fix(a.where); a.all_of?.forEach(walk); };
     walk(c.assertion);
   }
-  log("seed", Object.keys(ids).length, "Shopify orders");
-  return ids;
+  log("seed", Object.keys(ids).length, "Shopify orders;", trail.slice(0, 6).join("; "));
+  return { ids, trail };
 }
 
 export default {
   workflow: "order-to-cash",
   providers: ["shopify-admin", "slack"],
   seed,
-  appEnv: { SHOPIFY_API_VERSION: "2020-04" },
   context: {
     goal: "Prove the order-to-cash AgentCore runtime: a Shopify order → parallel order read (Shopify Admin) and ERP lookup (NetSuite) → for a paid, complete, unshipped order: NetSuite sales order, cheapest EasyPost label under $50, Shopify fulfillment with tracking; nothing ships without a sales order; unpaid, incomplete, cancelled and shipped orders are held or ignored; outcome posted to Slack.",
     workflow: "POST /invocations {action:start} decides and ships or holds the order. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",

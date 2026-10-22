@@ -67,7 +67,7 @@ async function seed(legs, log) {
 
 export default {
   workflow: "employee-offboarding",
-  providers: ["workos", "gmail", "slack", "asana"],
+  providers: ["workos", "github", "gmail", "slack", "asana"],
   seed,
   context: {
     goal: "Prove the employee-offboarding AgentCore runtime: a termination → payroll record (Gusto) and access inventory (WorkOS, GitHub) → termination filed at once; HR rescission window to the end of the last day (a rescission compensates the filed termination); final off-cycle payroll on approval or automatically four hours before the work state's legal deadline; access removed at the end of the last day and verified; equipment return labels; benefits notice draft; every step hash-chained.",
