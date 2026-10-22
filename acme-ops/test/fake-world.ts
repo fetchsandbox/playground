@@ -69,7 +69,7 @@ export function seedState() {
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
-    shopify: { orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
+    shopify: { drafts: [] as any[], orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
     box: { files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; sharedLink?: { url: string; unshared_at: string } }[] },
     docusign: { envelopes: [] as any[] },
@@ -84,7 +84,7 @@ export function seedState() {
     plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]>, transactions: {} as Record<string, any[]> },
     verify: { verifications: [] as any[] },
     screening: { entries: [] as { name: string; source: string; score?: number }[] },
-    easypost: { shipments: [] as any[], rates: [{ carrier: "USPS", service: "Ground", rate: "7.40", currency: "USD" }, { carrier: "UPS", service: "Ground", rate: "9.10", currency: "USD" }] as any[] },
+    easypost: { trackers: [] as any[], shipments: [] as any[], rates: [{ carrier: "USPS", service: "Ground", rate: "7.40", currency: "USD" }, { carrier: "UPS", service: "Ground", rate: "9.10", currency: "USD" }] as any[] },
     /** Scripted model answers, used in order; then a how-to default. */
     openai: { replies: [] as { content: string; role?: string }[], calls: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
@@ -423,6 +423,20 @@ export async function startWorld() {
       const rows = state.shopify.orders.filter((o) => Date.parse(o.created_at ?? "1970-01-01") >= min && Number(o.id) > since).sort((a, b) => Number(a.id) - Number(b.id));
       return send(200, { orders: rows.slice(0, Number(q.get("limit") ?? 50)) });
     }
+    if (req.method === "POST" && m(/^\/admin\/api\/[\w-]+\/draft_orders\.json$/)) {
+      const d = { id: ++seq, ...body.draft_order, order_id: null as number | null };
+      state.shopify.drafts.push(d);
+      return send(201, { draft_order: d });
+    }
+    if (req.method === "PUT" && (r = m(/^\/admin\/api\/[\w-]+\/draft_orders\/(\d+)\/complete\.json$/))) {
+      const d = state.shopify.drafts.find((x) => String(x.id) === r![1]);
+      if (!d) return send(404, { errors: "Not Found" });
+      if (!d.order_id) {
+        d.order_id = ++seq;
+        state.shopify.orders.push({ id: d.order_id, email: d.email, line_items: d.line_items, tags: d.tags, total_price: "0.00", created_at: new Date().toISOString() });
+      }
+      return send(200, { draft_order: d });
+    }
     if (req.method === "GET" && (r = m(/^\/admin\/api\/[\w-]+\/variants\/(\d+)\.json$/))) {
       const v = state.shopify.variants.find((x) => String(x.id) === r![1]);
       return v ? send(200, { variant: v }) : send(404, { errors: "Not Found" });
@@ -635,6 +649,12 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/files\/(\d+)\/content$/))) {
       res.writeHead(200, { "content-type": "application/pdf" });
       return res.end("%PDF-1.4 fake");
+    }
+
+    // ---- EasyPost trackers
+    if (req.method === "GET" && (r = m(/^\/trackers\/([^/]+)$/))) {
+      const t = state.easypost.trackers.find((x) => x.id === r![1]);
+      return t ? send(200, t) : send(404, { error: { code: "NOT_FOUND" } });
     }
 
     // ---- DocuSign

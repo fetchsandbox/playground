@@ -11,6 +11,7 @@ WHY={
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',
+'delivery-exception':'Customers should hear about a late or lost parcel from us before they have to ask, and get a replacement without a fight, exactly once.',
 'inventory-replenishment':'Supply chain needs stock reordered before it runs out, in the quantities suppliers accept, without double-ordering, and needs to know when a supplier is late.',
 'customer-kyc-rescreen':'Compliance must catch partners who become sanctioned after onboarding, stop their payouts before money moves, avoid re-reviewing the same false positives, and meet the SAR filing deadline.',
 'usage-true-up':'Billing must invoice every committed-use customer for what they used beyond their contract, exactly once, with notice and a chance to dispute, and never guess when a contract is incomplete.',

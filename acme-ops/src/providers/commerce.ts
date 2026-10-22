@@ -65,6 +65,16 @@ export class ShopifyClient {
     return Object.fromEntries((body?.inventory_levels ?? []).map((l: any) => [String(l.inventory_item_id), Number(l.available ?? 0)]));
   }
 
+  /** A free replacement: a draft order at 100% discount, completed into an order. */
+  async createReplacement(r: { lineItems: { variant_id: string | number; quantity: number }[]; email: string | null; note: string; tags: string[] }): Promise<{ draftId: string | number; orderId: string | number | null }> {
+    const { body } = await this.req<any>("POST", "/draft_orders.json", {
+      json: { draft_order: { line_items: r.lineItems, email: r.email ?? undefined, note: r.note, tags: r.tags.join(", "), applied_discount: { value_type: "percentage", value: "100.0", title: "Replacement" }, shipping_line: { title: "Replacement shipping", price: "0.00" } } },
+    });
+    const draft = body.draft_order;
+    const done = await this.req<any>("PUT", `/draft_orders/${encodeURIComponent(String(draft.id))}/complete.json`, { query: { payment_pending: "false" } });
+    return { draftId: draft.id, orderId: done.body?.draft_order?.order_id ?? null };
+  }
+
   async getOrder(id: string | number): Promise<ShopifyOrder> {
     const { body } = await this.req<any>("GET", `/orders/${encodeURIComponent(String(id))}.json`);
     return body.order;
@@ -287,6 +297,11 @@ export class EasyPostClient {
   async buy(shipmentId: string, rateId: string, idempotencyKey: string): Promise<{ id: string; tracking_code: string | null; postage_label?: { label_url?: string } | null; selected_rate?: { carrier?: string; rate?: string } | null }> {
     const { body } = await this.http.request<any>("POST", `/shipments/${encodeURIComponent(shipmentId)}/buy`, { json: { rate: { id: rateId } }, headers: { "Idempotency-Key": idempotencyKey } });
     return body;
+  }
+
+  /** Tracker with its scan history (https://docs.easypost.com/docs/trackers). */
+  async getTracker(id: string): Promise<{ id: string; status: string; tracking_code: string; carrier?: string; est_delivery_date?: string | null; tracking_details?: { datetime: string; status: string; message?: string | null }[] }> {
+    return (await this.http.request<any>("GET", `/trackers/${encodeURIComponent(id)}`)).body;
   }
 
   async getShipment(id: string): Promise<{ id: string; reference?: string; tracking_code?: string | null; status?: string }> {
