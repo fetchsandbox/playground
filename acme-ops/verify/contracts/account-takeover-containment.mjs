@@ -51,32 +51,36 @@ const restoreInput = (caseId, memberships) => ({ stage: "restore", alertId: aler
 const removal = (caseId, x, status, extra = []) => action(`workos.remove_membership:${om(caseId, x)}`, status, 1, extra);
 const removals = (status, count) => actionKind("workos.remove_membership", status, count);
 const hold = (status, count = 1) => actionKind("stripe.hold_customer", status, count);
-/** The suspected user's memberships that still exist on the WorkOS twin. */
-const onTwin = (caseId, count) => ({ provider: "workos", collection: "organization_memberships", assertion: { select: "records[*]", count, required: true, where: [eq("user_id", user(caseId))] } });
+/** Whether the user's seeded membership in org x still exists on the WorkOS twin (twin sample records carry no user_id, so match by id). */
+const onTwin = (caseId, x, count) => ({ provider: "workos", collection: "organization_memberships", assertion: { select: "records[*]", count, required: true, where: [eq("id", om(caseId, x))] } });
+const kept = (caseId, x) => onTwin(caseId, x, 1);
+const gone = (caseId, x) => onTwin(caseId, x, 0);
+/** All of the user's memberships on the twin, including restored ones (new ids). */
+const userMemberships = (caseId, count) => ({ provider: "workos", collection: "organization_memberships", assertion: { select: "records[*]", count, required: true, where: [{ select: "user_id", equals: user(caseId), required: false }] } });
 const twin = (c, ...assertions) => ({ ...c, provider_assertions: assertions });
 const faulted = (id, name, provider, scenario, assertions, signals = HIGH) => check(id, name, [contain(id, signals)], all(...assertions.map((a) => runs([a]))), { fault: { provider, scenario, evidence: "refusal" } });
 
 export const checks = [
   twin(
     check("baseline", "A high-risk takeover holds the account's refunds and removes its admin seat in an organization that keeps another admin; the record and alert go out", [contain("baseline")], runs([eq("phase", "DONE"), eq("outcome", "ok"), eq("output.level", "high"), hold("applied"), removal("baseline", "a", "applied", [eq("attempts", 1)]), removals(null, 1), action("asana.incident_record", "applied"), action("slack.post_alert", "applied")])),
-    onTwin("baseline", 1),
+    gone("baseline", "a"), kept("baseline", "c"),
   ),
   twin(
     check("last_admin_parked", "The user's seat as an organization's only admin is not removed automatically: it waits for approval while the shared one goes", [contain("last_admin_parked")], runs([eq("phase", "AWAITING_APPROVAL"), removal("last_admin_parked", "a", "applied"), removal("last_admin_parked", "b", "pending_approval")])),
-    onTwin("last_admin_parked", 1),
+    gone("last_admin_parked", "a"), kept("last_admin_parked", "b"),
   ),
-  twin(check("last_admin_approved", "Security's approval removes the sole-admin seat once", [contain("last_admin_approved"), command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE"), removal("last_admin_approved", "b", "applied", [eq("attempts", 1)])])), onTwin("last_admin_approved", 0)),
-  twin(check("last_admin_rejected", "A rejected removal leaves the organization its admin", [contain("last_admin_rejected"), command("decide", 1, { decision: "reject", userId: APPROVER })], runs([eq("phase", "REJECTED"), removal("last_admin_rejected", "b", "rejected")])), onTwin("last_admin_rejected", 1)),
+  twin(check("last_admin_approved", "Security's approval removes the sole-admin seat once", [contain("last_admin_approved"), command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE"), removal("last_admin_approved", "b", "applied", [eq("attempts", 1)])])), gone("last_admin_approved", "b")),
+  twin(check("last_admin_rejected", "A rejected removal leaves the organization its admin", [contain("last_admin_rejected"), command("decide", 1, { decision: "reject", userId: APPROVER })], runs([eq("phase", "REJECTED"), removal("last_admin_rejected", "b", "rejected")])), kept("last_admin_rejected", "b")),
   check("approve_by_stranger_refused", "Someone who is not a security approver cannot release a removal", [contain("approve_by_stranger_refused"), command("decide", 1, { decision: "approve", userId: "U_HELPDESK" }, 403)], runs([eq("phase", "AWAITING_APPROVAL"), removal("approve_by_stranger_refused", "b", "pending_approval")])),
-  twin(check("medium_risk_asks_first", "At medium risk refunds are held at once but no membership is removed without approval", [contain("medium_risk_asks_first", MEDIUM)], runs([eq("phase", "AWAITING_APPROVAL"), eq("output.level", "medium"), hold("applied"), removal("medium_risk_asks_first", "a", "pending_approval")])), onTwin("medium_risk_asks_first", 1)),
-  twin(check("low_risk_monitors", "A low-risk alert changes nothing and is posted for monitoring", [contain("low_risk_monitors", ["new_device"])], runs([eq("phase", "DONE"), eq("output.mode", "monitor"), hold(null, 0), removals(null, 0), action("slack.post_alert", "applied")])), onTwin("low_risk_monitors", 1)),
-  twin(check("refund_spike_escalates", "A refund spike on the account's own Stripe customer raises a medium alert to high and contains it", [contain("refund_spike_escalates", MEDIUM)], runs([eq("output.level", "high"), removal("refund_spike_escalates", "a", "applied")])), onTwin("refund_spike_escalates", 0)),
+  twin(check("medium_risk_asks_first", "At medium risk refunds are held at once but no membership is removed without approval", [contain("medium_risk_asks_first", MEDIUM)], runs([eq("phase", "AWAITING_APPROVAL"), eq("output.level", "medium"), hold("applied"), removal("medium_risk_asks_first", "a", "pending_approval")])), kept("medium_risk_asks_first", "a")),
+  twin(check("low_risk_monitors", "A low-risk alert changes nothing and is posted for monitoring", [contain("low_risk_monitors", ["new_device"])], runs([eq("phase", "DONE"), eq("output.mode", "monitor"), hold(null, 0), removals(null, 0), action("slack.post_alert", "applied")])), kept("low_risk_monitors", "a")),
+  twin(check("refund_spike_escalates", "A refund spike on the account's own Stripe customer raises a medium alert to high and contains it", [contain("refund_spike_escalates", MEDIUM)], runs([eq("output.level", "high"), removal("refund_spike_escalates", "a", "applied")])), gone("refund_spike_escalates", "a")),
   twin(
     check("rerun_finds_contained", "A repeated alert (a new trigger) finds the account contained and changes nothing", [contain("rerun_finds_contained"), contain("rerun_finds_contained", HIGH, { runId: "rerun-b-{{run_id}}" })], all(runs([], 2), runs([removal("rerun_finds_contained", "a", "applied")]), runs([eq("output.mode", "nothing"), removals(null, 0), hold(null, 0)]))),
-    onTwin("rerun_finds_contained", 1),
+    gone("rerun_finds_contained", "a"), kept("rerun_finds_contained", "c"),
   ),
-  twin(check("duplicate_start", "A re-delivered alert contains once", [contain("duplicate_start"), startAgain("duplicate_start", alert("duplicate_start"))], runs([removal("duplicate_start", "a", "applied", [eq("attempts", 1)]), hold("applied")])), onTwin("duplicate_start", 0)),
-  twin(check("concurrent_start", "Four simultaneous deliveries of one alert contain once", [contain("concurrent_start"), startAgain("concurrent_start", alert("concurrent_start"), 1, 4)], runs([removal("concurrent_start", "a", "applied", [eq("attempts", 1)]), hold("applied", 1)])), onTwin("concurrent_start", 0)),
+  twin(check("duplicate_start", "A re-delivered alert contains once", [contain("duplicate_start"), startAgain("duplicate_start", alert("duplicate_start"))], runs([removal("duplicate_start", "a", "applied", [eq("attempts", 1)]), hold("applied")])), gone("duplicate_start", "a")),
+  twin(check("concurrent_start", "Four simultaneous deliveries of one alert contain once", [contain("concurrent_start"), startAgain("concurrent_start", alert("concurrent_start"), 1, 4)], runs([removal("concurrent_start", "a", "applied", [eq("attempts", 1)]), hold("applied", 1)])), gone("concurrent_start", "a")),
   check("unknown_account_nothing", "An alert for an address with no user and no billing account changes nothing", [contain("unknown_account_nothing")], runs([eq("phase", "DONE"), eq("output.mode", "nothing"), hold(null, 0), removals(null, 0)])),
   twin(
     check(
@@ -85,11 +89,11 @@ export const checks = [
       [contain("restore_with_approval"), start("restore_with_approval", restoreInput("restore_with_approval", [SHARED, MEMBER]), { runId: "restore-{{run_id}}" }), command("decide", 2, { decision: "approve", userId: APPROVER })],
       all(runs([], 2), runs([eq("output.mode", "restore"), eq("output.restores", 1), eq("output.releases", 1), action(`workos.restore_membership:${org("restore_with_approval", "a")}`, "applied"), actionKind("stripe.release_hold", "applied", 1)])),
     ),
-    onTwin("restore_with_approval", 2),
+    gone("restore_with_approval", "a"), kept("restore_with_approval", "c"), userMemberships("restore_with_approval", 2),
   ),
   check("restore_leaves_other_hold", "Restore releases only its own alert's hold, never another investigation's", [start("restore_leaves_other_hold", restoreInput("restore_leaves_other_hold", []))], runs([eq("output.mode", "restore"), eq("output.releases", 0), actionKind("stripe.release_hold", null, 0)])),
-  twin(faulted("workos_auth_failure", "Without the directory nothing is held or removed blindly; Slack escalates", "workos", "auth_failure", [agent("identity", "failed"), eq("output.mode", "blocked"), hold(null, 0), removals(null, 0), action("slack.post_alert", "applied")]), onTwin("workos_auth_failure", 1)),
-  twin(faulted("stripe_rate_limited", "When billing can't be read, containment still removes the admin seat but holds nothing", "stripe", "rate_limited", [agent("billing", "failed"), removal("stripe_rate_limited", "a", "applied"), hold(null, 0)]), onTwin("stripe_rate_limited", 0)),
+  twin(faulted("workos_auth_failure", "Without the directory nothing is held or removed blindly; Slack escalates", "workos", "auth_failure", [agent("identity", "failed"), eq("output.mode", "blocked"), hold(null, 0), removals(null, 0), action("slack.post_alert", "applied")]), kept("workos_auth_failure", "a")),
+  twin(faulted("stripe_rate_limited", "When billing can't be read, containment still removes the admin seat but holds nothing", "stripe", "rate_limited", [agent("billing", "failed"), removal("stripe_rate_limited", "a", "applied"), hold(null, 0)]), gone("stripe_rate_limited", "a")),
   faulted("slack_rate_limited", "Slack rate limiting fails the post only; containment happens", "slack", "rate_limited", [action("slack.post_alert", "failed"), removal("slack_rate_limited", "a", "applied"), hold("applied")]),
   check("restart_while_parked", "A removal parked for approval survives a real runtime restart and is applied once when approved", [contain("restart_while_parked"), restart, command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE"), removal("restart_while_parked", "b", "applied", [eq("attempts", 1)])])),
   check("reconcile_reads_back", "Reconcile finds the membership still removed and the hold still on the customer", [contain("reconcile_reads_back"), command("reconcile", 1)], runs([removal("reconcile_reads_back", "a", "applied", [eq("reconcile.status", "match")]), hold("applied", 1, [eq("reconcile.status", "match")])])),
