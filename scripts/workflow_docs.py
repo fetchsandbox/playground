@@ -39,6 +39,7 @@ WHY={
 'service-renewals':'Customer Success needs advance notice of expiring service contracts and coordinated renewal follow-up, with review for policy-level price changes.',
 'supplier-ncr':'Supplier Quality needs an accountable corrective-action process after a failed inspection, including supplier follow-up and review scheduling.',
 'supplier-bank-change':'Accounts Payable needs to stop payment fraud through supplier bank-detail changes: nothing is paid to new details until a callback to the number on file and two different people have verified them.',
+'vulnerability-remediation':'Application Security needs every known vulnerability tracked to its severity deadline, escalated when late, and accepted as risk only by someone outside the owning team, for a limited time.',
 'support-escalation':'Support needs to combine incident severity, account context and billing health so urgent cases reach the right team with a reviewed customer reply.',
 }
 def cell(v):return str(v).replace('|','\\|').replace('\n',' ')

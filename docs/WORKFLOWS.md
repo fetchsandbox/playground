@@ -48,6 +48,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Service and monitoring renewals | Customer Success / `cs-ops` | 3 | [service-renewals](workflows/service-renewals.md) |
 | Supplier nonconformance and corrective action | Quality / `supplier-quality` | 3 | [supplier-ncr](workflows/supplier-ncr.md) |
 | Supplier bank-detail change (fraud control) | Finance / `accounts-payable` | 4 | [supplier-bank-change](workflows/supplier-bank-change.md) |
+| Vulnerability remediation SLA | IT Security / `appsec` | 1 | [vulnerability-remediation](workflows/vulnerability-remediation.md) |
 | Support escalation | Support / `support-ops` | 5 | [support-escalation](workflows/support-escalation.md) |
 
 [Customer Operations](workflows/customer-operations.md) is also on `main`: six specialist roles plus an approval-controlled dispatch stage. Its own FetchSandbox runner/receipt is not present on `main`.

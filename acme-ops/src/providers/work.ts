@@ -177,6 +177,40 @@ export class GitHubClient {
     return (await this.http.request<any>("POST", `/repos/${repo}/deployments/${id}/statuses`, { json: { state, description, auto_inactive: true } })).body;
   }
 
+  /** Open Dependabot alerts of a repository. */
+  async dependabotAlerts(repo: string, max = 1_000): Promise<{ number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; security_vulnerability?: { first_patched_version?: { identifier: string } | null } }[]> {
+    const out: any[] = [];
+    for (let page = 1; out.length < max; page++) {
+      const { body } = await this.http.request<any[]>("GET", `/repos/${repo}/dependabot/alerts`, { query: { state: "open", per_page: 100, page } });
+      const rows = Array.isArray(body) ? body : [];
+      out.push(...rows);
+      if (rows.length < 100) break;
+    }
+    return out.slice(0, max);
+  }
+
+  async getDependabotAlert(repo: string, n: number): Promise<{ number: number; state: string }> {
+    return (await this.http.request<any>("GET", `/repos/${repo}/dependabot/alerts/${n}`)).body;
+  }
+
+  async setDependabotAlert(repo: string, n: number, patch: { state: "dismissed" | "open"; dismissed_reason?: "tolerable_risk" | "no_bandwidth" | "inaccurate" | "not_used" | "fix_started"; dismissed_comment?: string }): Promise<{ number: number; state: string }> {
+    return (await this.http.request<any>("PATCH", `/repos/${repo}/dependabot/alerts/${n}`, { json: patch })).body;
+  }
+
+  /** Issues carrying a label (open and closed). */
+  async issuesWithLabel(repo: string, label: string): Promise<GitHubIssue[]> {
+    const { body } = await this.http.request<GitHubIssue[]>("GET", `/repos/${repo}/issues`, { query: { labels: label, state: "all", per_page: 100 } });
+    return Array.isArray(body) ? body : [];
+  }
+
+  async comment(repo: string, n: number, body: string): Promise<{ id: number }> {
+    return (await this.http.request<any>("POST", `/repos/${repo}/issues/${n}/comments`, { json: { body } })).body;
+  }
+
+  async addLabels(repo: string, n: number, labels: string[]): Promise<void> {
+    await this.http.request("POST", `/repos/${repo}/issues/${n}/labels`, { json: { labels } });
+  }
+
   /** Organization members with a role (admin | member), following Link pagination. */
   async listOrgMembers(org: string, role: "admin" | "member", max = 5_000): Promise<{ login: string; id: number }[]> {
     const out: { login: string; id: number }[] = [];

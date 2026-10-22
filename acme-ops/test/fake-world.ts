@@ -68,6 +68,8 @@ export function seedState() {
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
+    dependabot: [] as { repo: string; number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; dismissed_reason?: string }[],
+    issues: [] as { repo: string; number: number; title: string; body?: string; state: string; labels: string[]; comments: string[] }[],
     gh: { pulls: [] as any[], reviews: [] as any[], checkRuns: [] as any[], deployments: [] as any[], statuses: [] as any[] },
     pagerduty: { incidents: [] as any[] },
     datadog: { monitors: [] as any[], errorRate: 0.4 },
@@ -493,6 +495,35 @@ export async function startWorld() {
       if (!p) return send(404, {});
       p.processed = true;
       return send(202, p);
+    }
+
+    // ---- GitHub Dependabot alerts and issues
+    if (req.method === "GET" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/dependabot\/alerts$/))) {
+      const page = Number(q.get("page") ?? 1);
+      const rows = state.dependabot.filter((a) => a.repo === r![1] && (!q.get("state") || a.state === q.get("state")));
+      return send(200, rows.slice((page - 1) * 100, page * 100));
+    }
+    if ((r = m(/^\/repos\/([^/]+\/[^/]+)\/dependabot\/alerts\/(\d+)$/))) {
+      const a = state.dependabot.find((x) => x.repo === r![1] && String(x.number) === r![2]);
+      if (!a) return send(404, { message: "Not Found" });
+      if (req.method === "PATCH") Object.assign(a, { state: body.state, dismissed_reason: body.dismissed_reason });
+      return send(200, a);
+    }
+    if ((r = m(/^\/repos\/([^/]+\/[^/]+)\/issues$/))) {
+      if (req.method === "POST") {
+        const i = { repo: r[1]!, number: state.issues.filter((x) => x.repo === r![1]).length + 1, title: body.title, body: body.body, state: "open", labels: body.labels ?? [], comments: [] as string[] };
+        state.issues.push(i);
+        return send(201, { ...i, labels: i.labels.map((name: string) => ({ name })) });
+      }
+      const want = (q.get("labels") ?? "").split(",").filter(Boolean);
+      return send(200, state.issues.filter((i) => i.repo === r![1] && want.every((l) => i.labels.includes(l))).map((i) => ({ ...i, labels: i.labels.map((name) => ({ name })) })));
+    }
+    if (req.method === "POST" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/issues\/(\d+)\/(comments|labels)$/))) {
+      const i = state.issues.find((x) => x.repo === r![1] && String(x.number) === r![2]);
+      if (!i) return send(404, { message: "Not Found" });
+      if (r[3] === "comments") i.comments.push(body.body);
+      else i.labels.push(...body.labels.filter((l: string) => !i.labels.includes(l)));
+      return send(201, { id: ++seq });
     }
 
     // ---- GitHub pulls, checks, deployments
