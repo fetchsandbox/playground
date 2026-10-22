@@ -47,6 +47,8 @@ export function seedState() {
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
       paymentMethods: [] as any[],
+      /** Behave like a backend that ignores starting_after. */
+      ignoreCursor: false,
       disputes: [] as any[],
       accounts: [] as any[],
       transfers: [] as any[],
@@ -62,6 +64,9 @@ export function seedState() {
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
+    shopify: { orders: [] as any[], fulfillments: [] as any[] },
+    netsuite: { salesOrders: [] as any[] },
+    easypost: { shipments: [] as any[], rates: [{ carrier: "USPS", service: "Ground", rate: "7.40", currency: "USD" }, { carrier: "UPS", service: "Ground", rate: "9.10", currency: "USD" }] as any[] },
     /** Scripted model answers, used in order; then a how-to default. */
     openai: { replies: [] as { content: string; role?: string }[], calls: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
@@ -112,7 +117,13 @@ export async function startWorld() {
     // ---- Stripe
     if (req.method === "GET" && path === "/v1/customers") {
       const email = q.get("email");
-      return send(200, { data: S.customers.filter((c) => !email || c.email === email), has_more: false });
+      const all = S.customers.filter((c) => !email || c.email === email);
+      // Real cursor pagination only when a limit is asked for (older tests list everything at once).
+      if (!q.get("limit") || email) return send(200, { data: all, has_more: false });
+      const limit = Number(q.get("limit"));
+      const from = q.get("starting_after") && !S.ignoreCursor ? all.findIndex((c) => c.id === q.get("starting_after")) + 1 : 0;
+      const page = all.slice(from, from + limit);
+      return send(200, { data: page, has_more: S.ignoreCursor ? all.length > limit : from + limit < all.length });
     }
     if (req.method === "POST" && path === "/v1/customers") {
       const metadata = Object.fromEntries(Object.entries(body).filter(([k]) => k.startsWith("metadata[")).map(([k, v]) => [k.slice(9, -1), v]));
@@ -309,6 +320,59 @@ export async function startWorld() {
       const msg = { channel: body.channel, text: body.text, ts: `${Date.now()}.${++seq}`, ...(body.thread_ts ? { thread_ts: body.thread_ts } : {}) };
       state.slack.messages.push(msg);
       return send(200, { ok: true, channel: msg.channel, ts: msg.ts });
+    }
+
+    // ---- Shopify Admin
+    if ((r = m(/^\/admin\/api\/[\w-]+\/orders\/([^/]+)\.json$/))) {
+      const o = state.shopify.orders.find((x) => String(x.id) === r![1]);
+      if (!o) return send(404, { errors: "Not Found" });
+      if (req.method === "PUT") Object.assign(o, body.order, { id: o.id });
+      return send(200, { order: o });
+    }
+    if ((r = m(/^\/admin\/api\/[\w-]+\/orders\/([^/]+)\/fulfillments\.json$/))) {
+      if (req.method === "POST") {
+        const f = { id: ++seq, order_id: r[1], status: "success", ...body.fulfillment };
+        state.shopify.fulfillments.push(f);
+        return send(201, { fulfillment: f });
+      }
+      return send(200, { fulfillments: state.shopify.fulfillments.filter((f) => String(f.order_id) === r![1]) });
+    }
+
+    // ---- NetSuite
+    if (path === "/services/rest/record/v1/salesOrder") {
+      const N = state.netsuite;
+      if (req.method === "POST") {
+        const so = { id: String(++seq), externalId: body.externalId, entity: body.entity, item: body.item };
+        N.salesOrders.push(so);
+        res.writeHead(204, { location: `/services/rest/record/v1/salesOrder/${so.id}` });
+        return res.end();
+      }
+      const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
+      return send(200, { items: N.salesOrders.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id })) });
+    }
+    if (req.method === "GET" && (r = m(/^\/services\/rest\/record\/v1\/salesOrder\/([^/]+)$/))) {
+      const so = state.netsuite.salesOrders.find((x) => x.id === r![1]);
+      return so ? send(200, so) : send(404, { title: "Not Found" });
+    }
+
+    // ---- EasyPost
+    if (req.method === "POST" && path === "/shipments") {
+      const sh = { id: id("shp"), reference: body.shipment.reference, to: body.shipment.to_address, rates: state.easypost.rates.map((x: any, i: number) => ({ id: `rate_${seq}_${i}`, ...x })), tracking_code: null as string | null, keys: [] as string[] };
+      state.easypost.shipments.push(sh);
+      return send(201, sh);
+    }
+    if (req.method === "POST" && (r = m(/^\/shipments\/([^/]+)\/buy$/))) {
+      const sh = state.easypost.shipments.find((x) => x.id === r![1]);
+      if (!sh) return send(404, { error: { code: "NOT_FOUND" } });
+      if (sh.tracking_code) return send(422, { error: { code: "SHIPMENT.POSTAGE.EXISTS" } });
+      const rate = sh.rates.find((x: any) => x.id === body.rate.id);
+      sh.tracking_code = `9400${seq}`;
+      sh.selected_rate = rate;
+      return send(200, sh);
+    }
+    if (req.method === "GET" && (r = m(/^\/shipments\/([^/]+)$/))) {
+      const sh = state.easypost.shipments.find((x) => x.id === r![1]);
+      return sh ? send(200, sh) : send(404, { error: { code: "NOT_FOUND" } });
     }
 
     // ---- OpenAI

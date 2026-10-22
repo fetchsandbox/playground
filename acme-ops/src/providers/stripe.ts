@@ -128,6 +128,12 @@ export class StripeClient {
     return matches.filter((c) => c.email?.toLowerCase() === email.toLowerCase());
   }
 
+  /** One page of customers, for callers that need to see the cursor's behaviour themselves. */
+  async customerPage(limit: number, startingAfter?: string): Promise<{ data: StripeCustomer[]; has_more: boolean }> {
+    const { body } = await this.http.request<{ data: StripeCustomer[]; has_more: boolean }>("GET", "/v1/customers", { query: { limit, starting_after: startingAfter } });
+    return { data: body?.data ?? [], has_more: !!body?.has_more };
+  }
+
   listCustomers(max?: number) {
     return this.listAll<StripeCustomer>("/v1/customers", {}, max);
   }

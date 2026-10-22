@@ -19,6 +19,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
 | Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |
 | Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
+| Customer data-quality sweep (at scale) | RevOps / `revops-data` | 2 | [customer-data-sweep](workflows/customer-data-sweep.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
 | Duplicate charge remediation | Finance / `billing-ops` | 4 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) |
 | Failed-payment dunning | Finance / `billing-ops` | 2 | [failed-payment-dunning](workflows/failed-payment-dunning.md) |
@@ -28,6 +29,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | SaaS license reclaim | IT / `it-asset-mgmt` | 1 | [license-reclaim](workflows/license-reclaim.md) |
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
+| Order to cash with shipping | Operations / `fulfillment-ops` | 3 | [order-to-cash](workflows/order-to-cash.md) |
 | Paid order provisioning (Stripe events) | Sales / `order-ops` | 3 | [paid-order-provisioning](workflows/paid-order-provisioning.md) |
 | Partner payout run | Finance / `partner-ops` | 3 | [partner-payout-run](workflows/partner-payout-run.md) |
 | Product change and end-of-life notices | Engineering / `product-engineering` | 3 | [pcn-eol-notice](workflows/pcn-eol-notice.md) |
