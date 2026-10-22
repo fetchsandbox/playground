@@ -4,7 +4,7 @@
 
 Customer Experience needs to refund international customers in the currency they paid, only to the customer who paid, with currency-aware limits and without letting ticket text decide the amount.
 
-Refund a Zendesk refund request in the currency the customer paid: the requester must be the paying customer, disputed or over-refunded payments go to a person, per-currency limits (zero- and three-decimal aware) gate approval, ticket text is never trusted for amounts, and store credit falls back to the card when the balance currency differs.
+Refund a Zendesk refund request in the currency the customer paid: the requester must be the paying customer, disputed, held or over-refunded payments go to a person, per-currency limits (zero- and three-decimal aware) gate approval, ticket text is never trusted for amounts, and store credit falls back to the card when the balance currency differs.
 
 Demo organization: **Acme Corporation**. Department: **Customer Experience**. Owning team: **global-support**. Configure your own named owner and approvers when deploying; repository examples do not grant access to Acme or FetchSandbox accounts.
 
@@ -126,6 +126,7 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `concurrent_start` | Four simultaneous deliveries of one request refund once | Executable declaration; result comes from a receipt |
 | `operator_refund_first` | A payment an operator already refunded in full gets nothing more | Executable declaration; result comes from a receipt |
 | `operator_refund_while_parked` | An operator's full refund while approval is parked stops the approved refund and its reply | Executable declaration; result comes from a receipt |
+| `takeover_hold_blocks_refund` | A customer under an account-takeover hold gets no refund; a person follows up | Executable declaration; result comes from a receipt |
 | `stripe_auth_failure` | Without Stripe nothing is refunded; the ticket gets a note and Slack a warning | Executable declaration; result comes from a receipt |
 | `zendesk_rate_limited` | When the ticket can't be read, nothing is refunded (fail closed) and Slack is told | Executable declaration; result comes from a receipt |
 | `slack_rate_limited` | Slack rate limiting fails the post only; the refund and reply go out | Executable declaration; result comes from a receipt |
@@ -133,14 +134,15 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `reconcile_reads_refund` | Reconcile reads the refund back from Stripe and finds it as written | Executable declaration; result comes from a receipt |
 | `invalid_input_rejected` | A request with a malformed payment id is rejected before any agent runs | Executable declaration; result comes from a receipt |
 | `locale_from_zendesk` | Amounts are formatted in the requester's Zendesk locale when the request names none | The Zendesk twin keeps no user locale: tickets whose requester carries `locale` are rejected ("A valid requester email is required") and PUT /api/v2/users/{id}.json is 404, so contracts pass the locale in the request. The Zendesk-locale path is covered by local tests. |
+| `takeover_hold_while_parked` | A takeover hold placed while the refund waits for approval stops the approved refund | The verifier qualifies only certain provider writes as external-operator input; a Stripe customer metadata update (the hold) is refused ("Provider operation is not qualified as an external operator input"), and the two workflows run as separate runtimes. The write-time hold re-check is covered by a local test, and a hold present before the request is covered by takeover_hold_blocks_refund. |
 | `tax_portion_refund` | The VAT/GST share of a refund is reversed with the right tax rate per country | The Stripe twin's tax calculations return sample data, so a tax reversal can't be asserted. The workflow refunds the gross amount the customer paid and does not compute tax itself. |
 | `settlement_fx_readback` | The refund's settlement-currency amount and exchange rate are read back for finance | Refunds on the Stripe twin have balance_transaction null and no exchange rates, so the settlement leg of a cross-currency refund is not observable. |
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-cross-border-refund-1.0.0-6670912`, verdict **inconclusive**, and statuses: **25 held**, **3 unmeasured**.
+The checked-in receipt records app version `acme-ops-cross-border-refund-1.0.0-78468f6`, verdict **inconclusive**, and statuses: **26 held**, **4 unmeasured**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/a5b21ce399?flow=vr_57e4df0485364ea1880182c6b4c04ee6) · [Saved result](../../acme-ops/verify/receipts/cross-border-refund.json)
+[Recorded receipt](https://fetchsandbox.com/runs/1f4adfc8be?flow=vr_99c5689f49494f759adad1f473cc1875) · [Saved result](../../acme-ops/verify/receipts/cross-border-refund.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 

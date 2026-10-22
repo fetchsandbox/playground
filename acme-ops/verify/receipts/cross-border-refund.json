@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-cross-border-refund-1.0.0-6670912",
-  "session_id": "vs_b56ba3a6c6a6",
-  "run_id": "vr_57e4df0485364ea1880182c6b4c04ee6",
-  "receipt_url": "https://fetchsandbox.com/runs/a5b21ce399?flow=vr_57e4df0485364ea1880182c6b4c04ee6",
+  "app_version": "acme-ops-cross-border-refund-1.0.0-78468f6",
+  "session_id": "vs_771b0f2daadc",
+  "run_id": "vr_99c5689f49494f759adad1f473cc1875",
+  "receipt_url": "https://fetchsandbox.com/runs/1f4adfc8be?flow=vr_99c5689f49494f759adad1f473cc1875",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -110,6 +110,11 @@
       "explanation": "runs[*]: expected exactly 1, found 1"
     },
     {
+      "id": "takeover_hold_blocks_refund",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
       "id": "stripe_auth_failure",
       "status": "held",
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
@@ -145,6 +150,11 @@
       "explanation": "The Zendesk twin keeps no user locale: tickets whose requester carries `locale` are rejected (\"A valid requester email is required\") and PUT /api/v2/users/{id}.json is 404, so contracts pass the locale in the request. The Zendesk-locale path is covered by local tests."
     },
     {
+      "id": "takeover_hold_while_parked",
+      "status": "unmeasured",
+      "explanation": "The verifier qualifies only certain provider writes as external-operator input; a Stripe customer metadata update (the hold) is refused (\"Provider operation is not qualified as an external operator input\"), and the two workflows run as separate runtimes. The write-time hold re-check is covered by a local test, and a hold present before the request is covered by takeover_hold_blocks_refund."
+    },
+    {
       "id": "tax_portion_refund",
       "status": "unmeasured",
       "explanation": "The Stripe twin's tax calculations return sample data, so a tax reversal can't be asserted. The workflow refunds the gross amount the customer paid and does not compute tax itself."
@@ -155,5 +165,5 @@
       "explanation": "Refunds on the Stripe twin have balance_transaction null and no exchange rates, so the settlement leg of a cross-currency refund is not observable."
     }
   ],
-  "recorded_at": "2026-10-22T01:30:27.807Z"
+  "recorded_at": "2026-10-22T01:54:31.186Z"
 }
