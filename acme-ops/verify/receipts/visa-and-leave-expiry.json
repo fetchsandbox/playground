@@ -1,0 +1,64 @@
+{
+  "workflow": "visa-and-leave-expiry",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-visa-and-leave-expiry-1.0.0-befeb35",
+  "session_id": "vs_a7c9f266a9b2",
+  "run_id": "vr_a609579128f94a92a22d0ea14b5ca3fd",
+  "receipt_url": "https://fetchsandbox.com/runs/83716cae3a?flow=vr_a609579128f94a92a22d0ea14b5ca3fd",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "authorization_timers_scheduled",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "counsel_case_inside_90_days",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "renewed_row_schedules_nothing",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.status' is missing"
+    },
+    {
+      "id": "leave_return_planned",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "expiry_escalates_reverification",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "unrelated_row_ignored",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:43:40.693Z"
+}

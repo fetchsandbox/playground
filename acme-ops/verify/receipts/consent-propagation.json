@@ -1,0 +1,64 @@
+{
+  "workflow": "consent-propagation",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-consent-propagation-1.0.0-befeb35",
+  "session_id": "vs_db0acc59009a",
+  "run_id": "vr_d6428dde89434b3096ac24e1ffe115a0",
+  "receipt_url": "https://fetchsandbox.com/runs/6d12a62768?flow=vr_d6428dde89434b3096ac24e1ffe115a0",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "subscription_turned_off",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "every_customer_updated",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stale_event_ignored",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "replay_changes_nothing",
+      "status": "violated",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 0"
+    },
+    {
+      "id": "verified_after_15_minutes",
+      "status": "unmeasured",
+      "explanation": "required observation 'ref' is missing"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:16:31.346Z"
+}

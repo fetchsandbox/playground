@@ -1,0 +1,59 @@
+{
+  "workflow": "payroll-anomaly-review",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-payroll-anomaly-review-1.0.0-befeb35",
+  "session_id": "vs_e4de701fa923",
+  "run_id": "vr_42e0d5627b754acda8a2603350d1d9bc",
+  "receipt_url": "https://fetchsandbox.com/runs/460b43d7b8?flow=vr_42e0d5627b754acda8a2603350d1d9bc",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "clean_payroll_submitted",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "anomalies_flagged",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "preparer_cannot_approve",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 403, received 404"
+    },
+    {
+      "id": "deadline_holds_flagged_pays_rest",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "gusto_unavailable_never_submits",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:36:58.555Z"
+}

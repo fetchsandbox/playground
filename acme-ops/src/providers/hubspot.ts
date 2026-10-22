@@ -12,15 +12,15 @@ interface SearchResponse {
   paging?: { next?: { after: string } };
 }
 
-const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "hs_lead_status", "hubspot_owner_id"];
+const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "hs_lead_status", "hubspot_owner_id", "hs_email_domain", "country", "numberofemployees", "notes_last_contacted", "createdate"];
 
 /** HubSpot CRM v3 contacts. Email is the unique key; a 409 on create names the existing id. */
 export class HubSpotClient {
   constructor(readonly http: ProviderHttp) {}
 
-  async findByEmail(email: string): Promise<HubSpotContact | undefined> {
+  async findByEmail(email: string, extraProps: string[] = []): Promise<HubSpotContact | undefined> {
     const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", {
-      json: { filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: email }] }], properties: PROPS, limit: 10 },
+      json: { filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: email }] }], properties: [...PROPS, ...extraProps], limit: 10 },
     });
     return (body?.results ?? []).find((c) => !c.archived && c.properties.email?.toLowerCase() === email.toLowerCase());
   }
@@ -40,8 +40,35 @@ export class HubSpotClient {
     return out;
   }
 
-  async get(id: string): Promise<HubSpotContact> {
-    return (await this.http.request<HubSpotContact>("GET", `/crm/v3/objects/contacts/${encodeURIComponent(id)}`, { query: { properties: PROPS.join(",") } })).body;
+  /** Contacts matching every filter (AND), up to `max`. */
+  async searchAll(filters: { propertyName: string; operator: "EQ" | "NEQ" | "HAS_PROPERTY" | "NOT_HAS_PROPERTY"; value?: string }[], max = 1000, extraProps: string[] = []): Promise<HubSpotContact[]> {
+    const out: HubSpotContact[] = [];
+    let after: string | undefined;
+    while (out.length < max) {
+      const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", { json: { filterGroups: [{ filters }], properties: [...PROPS, ...extraProps], limit: 100, after } });
+      out.push(...(body?.results ?? []));
+      after = body?.paging?.next?.after;
+      if (!after || !body?.results?.length) break;
+    }
+    return out.slice(0, max);
+  }
+
+  async get(id: string, extraProps: string[] = []): Promise<HubSpotContact> {
+    return (await this.http.request<HubSpotContact>("GET", `/crm/v3/objects/contacts/${encodeURIComponent(id)}`, { query: { properties: [...PROPS, ...extraProps].join(",") } })).body;
+  }
+
+  /** Email subscription statuses (Communication Preferences v3). */
+  async subscriptionStatuses(email: string): Promise<{ id: string; status: string }[]> {
+    const { body } = await this.http.request<any>("GET", `/communication-preferences/v3/status/email/${encodeURIComponent(email)}`);
+    return (body?.subscriptionStatuses ?? []).map((s: any) => ({ id: String(s.id), status: String(s.status) }));
+  }
+
+  /** Opts the address out of one subscription type, or back in under a legal basis. */
+  async setSubscription(email: string, subscriptionId: string, subscribed: boolean, legalBasisExplanation: string): Promise<{ id: string; status: string }> {
+    const { body } = await this.http.request<any>("POST", `/communication-preferences/v3/${subscribed ? "subscribe" : "unsubscribe"}`, {
+      json: { emailAddress: email, subscriptionId, legalBasis: "CONSENT_WITH_NOTICE", legalBasisExplanation },
+    });
+    return { id: String(body?.id ?? subscriptionId), status: String(body?.status ?? (subscribed ? "SUBSCRIBED" : "NOT_SUBSCRIBED")) };
   }
 
   async update(id: string, properties: Record<string, string>): Promise<HubSpotContact> {

@@ -50,11 +50,17 @@ const server = createAgentServer(engine as Engine<unknown>, log, {
   ...(control?{control:{config:control,store}}:{}),
   verifierToken: process.env.FETCHSANDBOX_VERIFIER_TOKEN || undefined,
   defaultCorrelation: process.env.X_FLOW_RUN_ID ? { "x-flow-run-id": process.env.X_FLOW_RUN_ID } : {},
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || undefined,
 });
 const port = Number(process.env.PORT ?? 8080);
 server.listen(port, process.env.HOST ?? "0.0.0.0", () =>
   log.info("listening", { port, providers: Object.keys(endpoints), store: store.constructor.name, verifier: !!process.env.FETCHSANDBOX_VERIFIER_TOKEN }),
 );
+
+// Kit v2 timers outside AgentCore (containers, local): wake due runs on an interval.
+// On AgentCore the stack's EventBridge schedule sends {action:"tick"} instead.
+const tickMs = Number(process.env.TICK_INTERVAL_MS ?? 0);
+if (tickMs > 0) setInterval(() => void engine.handle({ action: "tick", wait: false }).catch((err) => log.warn("tick failed", { err: String(err) })), tickMs).unref();
 
 process.on("SIGTERM", () => {
   log.info("SIGTERM: draining");

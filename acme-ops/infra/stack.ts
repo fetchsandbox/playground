@@ -6,6 +6,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import { Platform } from "aws-cdk-lib/aws-ecr-assets";
 import * as ecr from "aws-cdk-lib/aws-ecr";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as scheduler from "aws-cdk-lib/aws-scheduler";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import type { Construct } from "constructs";
 
@@ -34,6 +35,8 @@ export interface WorkflowStackProps extends StackProps {
   /** Cross-account role the control plane (LoopLabs) assumes to call InvokeAgentRuntime. */
   looplabsAccountId?: string;
   looplabsExternalId?: string;
+  /** Kit v2 timers: wake waiting runs on this schedule (e.g. "rate(5 minutes)"). */
+  tickEvery?: string;
 }
 
 /** One workflow = one AgentCore runtime, one state table, one secret. Nothing is shared between workflows. */
@@ -106,6 +109,24 @@ export class WorkflowStack extends Stack {
       });
       runtime.grantInvoke(invoker);
       new CfnOutput(this, "LoopLabsInvokerRoleArn", { value: invoker.roleArn });
+    }
+
+    if (props.tickEvery) {
+      // Kit v2: durable timers. AgentCore containers only run on invocation, so a
+      // schedule invokes the runtime with {action:"tick"}; the engine wakes due runs.
+      const tickRole = new iam.Role(this, "TickRole", { assumedBy: new iam.ServicePrincipal("scheduler.amazonaws.com"), description: `Wakes waiting ${props.workflow} runs` });
+      tickRole.addToPolicy(new iam.PolicyStatement({ actions: ["bedrock-agentcore:InvokeAgentRuntime"], resources: [runtime.agentRuntimeArn, `${runtime.agentRuntimeArn}/*`] }));
+      new scheduler.CfnSchedule(this, "Tick", {
+        description: `Kit v2 timers for ${props.workflow}`,
+        scheduleExpression: props.tickEvery,
+        flexibleTimeWindow: { mode: "OFF" },
+        target: {
+          arn: "arn:aws:scheduler:::aws-sdk:bedrockagentcore:invokeAgentRuntime",
+          roleArn: tickRole.roleArn,
+          input: JSON.stringify({ AgentRuntimeArn: runtime.agentRuntimeArn, Payload: JSON.stringify({ action: "tick", wait: false }), ContentType: "application/json" }),
+          retryPolicy: { maximumRetryAttempts: 3, maximumEventAgeInSeconds: 300 },
+        },
+      });
     }
 
     new CfnOutput(this, "AgentRuntimeArn", { value: runtime.agentRuntimeArn });

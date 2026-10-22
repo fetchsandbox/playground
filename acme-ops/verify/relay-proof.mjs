@@ -31,6 +31,8 @@ if (!workflow) {
   console.error("usage: node verify/relay-proof.mjs <support-escalation|revenue-reconciliation|churn-risk-sweep|onboarding-kickoff>");
   process.exit(2);
 }
+// Contracts date their inputs from PROOF_NOW: the real time in a proof, a fixed date in generated docs.
+process.env.PROOF_NOW ??= new Date().toISOString();
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
 // PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.
@@ -143,11 +145,17 @@ function twinEnv(legs) {
     notion: "NOTION",
     box: "BOX",
     square: "SQUARE",
+    openai: "OPENAI",
+    "shopify-admin": "SHOPIFY",
+    plaid: "PLAID",
+    datadog: "DATADOG",
   };
   for (const [p, leg] of Object.entries(legs ?? {})) {
     if (!map[p]) continue;
     env[`${map[p]}_BASE_URL`] = leg.base_url;
     env[`${map[p]}_API_KEY`] = leg.api_key;
+    // Twins take the relay's bearer token; production uses each vendor's own scheme.
+    env[`${map[p]}_AUTH_SCHEME`] = "bearer";
   }
   return env;
 }
@@ -161,7 +169,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|OPENAI|SHOPIFY|NETSUITE|EASYPOST|PLAID|TWILIO_VERIFY|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
   );
   const env = {
     ...inherited,
@@ -170,6 +178,8 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     HOST: "127.0.0.1",
     STATE_FILE: stateFile,
     PROVIDER_RETRIES: "2",
+    // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
+    ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
@@ -224,6 +234,10 @@ if (!tunnel?.app_base_url) {
   await finish(2);
 }
 log("relay", tunnel.app_base_url);
+// Anything thrown from here on (a seed refused by a twin, a relay error) must
+// still close the tunnel: a leaked tunnel blocks the next proof for a long time.
+process.on("uncaughtException", (err) => { console.error("FATAL", err?.stack ?? err); void finish(4); });
+process.on("unhandledRejection", (err) => { console.error("FATAL", err?.stack ?? err); void finish(4); });
 
 const session = await mcp.call("validate_integration", { providers: contract.providers, app_base_url: tunnel.app_base_url });
 save("session", session);
@@ -253,6 +267,8 @@ const application_config = {
   coverage_review: coverage(contract.coverage, contract.checks),
   scope_review: contract.scope_review ?? scope(contract.checks, contract.evidence),
   checks: contract.checks,
+  // Optional contract-specific config, e.g. event_destinations for signed webhooks.
+  ...(contract.applicationConfig ?? {}),
 };
 save("application_config", application_config);
 const cfg = await settle(mcp, await mcp.call("validate_integration", { session_id: sid, suite: "application_workflow_v1", application_config }), "configure");
@@ -264,7 +280,7 @@ if (!runId) {
 }
 log("run", runId);
 
-const creds = await settle(mcp, await mcp.call("install_test_credentials", { session_id: sid, run_id: runId }), "credentials");
+const creds = await settle(mcp, await mcp.call("install_test_credentials", { session_id: sid, run_id: runId, ...(contract.envMapping ? { env_mapping: contract.envMapping } : {}) }), "credentials");
 save("credentials", { variable_names: creds.variable_names, expires_in_seconds: creds.expires_in_seconds });
 credentialFile = creds.credential_file;
 if (!credentialFile) {
