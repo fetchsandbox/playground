@@ -28,7 +28,7 @@ const FIXTURES = {
   concurrent_start: { currency: "eur", amount: 12_345 },
   operator_refund_first: { currency: "eur", amount: 12_345 },
   operator_refund_while_parked: { currency: "jpy", amount: 90_000 },
-  takeover_hold_while_parked: { currency: "jpy", amount: 90_000 },
+  takeover_hold_blocks_refund: { currency: "eur", amount: 12_345, hold: "SEC-2026-0099" },
   stripe_auth_failure: { currency: "eur", amount: 12_345 },
   zendesk_rate_limited: { currency: "eur", amount: 12_345 },
   slack_rate_limited: { currency: "eur", amount: 12_345 },
@@ -54,8 +54,6 @@ const operatorRefund = (caseId) => ({ provider_input: { actor: "external_operato
 const once = (assertion) => ({ all_of: [assertion] });
 /** A read-only app call, so a check can start with the operator's provider write. */
 const describe = { method: "POST", path: "/invocations", body: { action: "describe" }, expect_status: 200 };
-/** What account-takeover-containment writes on the paying customer, made here by an independent operator. */
-const takeoverHold = (caseId) => ({ provider_input: { actor: "external_operator", provider: "stripe", method: "POST", path: `/v1/customers/SEEDED_CUSTOMER_${caseId}`, body: { "metadata[acme_ato_hold]": "SEC-2026-0099" } } });
 const reply = (caseId, status, count = 1) => action(`zendesk.reply:${ticket(caseId)}`, status, count);
 const note = (caseId) => action(`zendesk.internal_note:${ticket(caseId)}`, "applied");
 const review = (caseId, reason) => runs([eq("phase", "DONE"), eq("output.mode", "review"), eq("output.reason", reason), actionKind("stripe.refund", null, 0), reply(caseId, null, 0), note(caseId)]);
@@ -114,10 +112,7 @@ export const checks = [
     check("operator_refund_while_parked", "An operator's full refund while approval is parked stops the approved refund and its reply", [ask("operator_refund_while_parked"), operatorRefund("operator_refund_while_parked"), command("decide", 1, { decision: "approve", userId: APPROVER })], once(runs([eq("outcome", "partial"), refund("operator_refund_while_parked", "failed"), reply("operator_refund_while_parked", "failed")]))),
     onTwin("operator_refund_while_parked", 1),
   ),
-  twin(
-    check("takeover_hold_while_parked", "An account-takeover hold placed on the customer while the refund waits for approval stops it: no money, no reply", [ask("takeover_hold_while_parked"), takeoverHold("takeover_hold_while_parked"), command("decide", 1, { decision: "approve", userId: APPROVER })], once(runs([eq("outcome", "partial"), refund("takeover_hold_while_parked", "failed"), reply("takeover_hold_while_parked", "failed")]))),
-    onTwin("takeover_hold_while_parked", 0),
-  ),
+  twin(check("takeover_hold_blocks_refund", "A customer under an account-takeover hold gets no refund; a person follows up", [ask("takeover_hold_blocks_refund")], review("takeover_hold_blocks_refund", "the account is under an account-takeover hold (SEC-2026-0099)")), onTwin("takeover_hold_blocks_refund", 0)),
   twin(faulted("stripe_auth_failure", "Without Stripe nothing is refunded; the ticket gets a note and Slack a warning", "stripe", "auth_failure", [agent("payment-check", "failed"), eq("output.mode", "blocked"), actionKind("stripe.refund", null, 0), note("stripe_auth_failure"), action("slack.post_refund", "applied")]), onTwin("stripe_auth_failure", 0)),
   twin(faulted("zendesk_rate_limited", "When the ticket can't be read, nothing is refunded (fail closed) and Slack is told", "zendesk", "rate_limited", [agent("ticket-intake", "failed"), eq("output.mode", "blocked"), actionKind("stripe.refund", null, 0), action("slack.post_refund", "applied")]), onTwin("zendesk_rate_limited", 0)),
   twin(faulted("slack_rate_limited", "Slack rate limiting fails the post only; the refund and reply go out", "slack", "rate_limited", [action("slack.post_refund", "failed"), refund("slack_rate_limited", "applied"), reply("slack_rate_limited", "applied")]), onTwin("slack_rate_limited", 1)),
@@ -125,6 +120,7 @@ export const checks = [
   check("reconcile_reads_refund", "Reconcile reads the refund back from Stripe and finds it as written", [ask("reconcile_reads_refund"), command("reconcile", 1)], runs([refund("reconcile_reads_refund", "applied", 1, [eq("reconcile.status", "match")])])),
   check("invalid_input_rejected", "A request with a malformed payment id is rejected before any agent runs", [start("invalid_input_rejected", { ...request("baseline"), paymentIntent: "ch_not_a_payment" }, { expectStatus: 400 })], runs([], 0)),
   blocked("locale_from_zendesk", "Amounts are formatted in the requester's Zendesk locale when the request names none", "setup_missing", "The Zendesk twin keeps no user locale: tickets whose requester carries `locale` are rejected (\"A valid requester email is required\") and PUT /api/v2/users/{id}.json is 404, so contracts pass the locale in the request. The Zendesk-locale path is covered by local tests.", ["acme-ops/src/workflows/cross-border-refund.ts ticket-intake", "POST /api/v2/tickets.json with requester.locale → 422 on the twin"]),
+  blocked("takeover_hold_while_parked", "A takeover hold placed while the refund waits for approval stops the approved refund", "setup_missing", "The verifier qualifies only certain provider writes as external-operator input; a Stripe customer metadata update (the hold) is refused (\"Provider operation is not qualified as an external operator input\"), and the two workflows run as separate runtimes. The write-time hold re-check is covered by a local test, and a hold present before the request is covered by takeover_hold_blocks_refund.", ["acme-ops/test/cross-border-refund.test.ts \"a takeover hold placed while the refund waits for approval stops it\"", "provider_input POST /v1/customers/{id} metadata → configuration refused"]),
   blocked("tax_portion_refund", "The VAT/GST share of a refund is reversed with the right tax rate per country", "observation_missing", "The Stripe twin's tax calculations return sample data, so a tax reversal can't be asserted. The workflow refunds the gross amount the customer paid and does not compute tax itself.", ["POST /v1/tax/calculations on the twin → sample line items unrelated to the input"]),
   blocked("settlement_fx_readback", "The refund's settlement-currency amount and exchange rate are read back for finance", "observation_missing", "Refunds on the Stripe twin have balance_transaction null and no exchange rates, so the settlement leg of a cross-currency refund is not observable.", ["GET /v1/refunds/{id} on the twin → balance_transaction: null"]),
 ];
@@ -145,7 +141,8 @@ async function seed(legs, log) {
   };
   const ids = {};
   for (const [caseId, f] of Object.entries(FIXTURES)) {
-    const cus = await stripe("/v1/customers", { email: email(caseId), name: "Kim Customer" });
+    // A hold is what account-takeover-containment writes on the customer.
+    const cus = await stripe("/v1/customers", { email: email(caseId), name: "Kim Customer", ...(f.hold ? { "metadata[acme_ato_hold]": f.hold } : {}) });
     const p = await stripe("/v1/payment_intents", { amount: String(f.amount), currency: f.currency, customer: cus.id, confirm: "true", payment_method: f.paymentMethod ?? "pm_card_visa", description: `Order for ${caseId}` });
     if (p.status !== "succeeded" || !p.latest_charge) throw new Error(`seed payment for ${caseId} is ${p.status}`);
     const requester = f.requester ? `${f.requester}-${caseId.replaceAll("_", "-")}@example.com` : email(caseId);
@@ -161,7 +158,6 @@ async function seed(legs, log) {
       const input = a.body?.input;
       if (input) for (const k of ["paymentIntent", "ticketId"]) if (k in input) input[k] = swap(input[k]);
       if (a.provider_input?.body.charge) a.provider_input.body.charge = swap(a.provider_input.body.charge);
-      if (a.provider_input) a.provider_input.path = a.provider_input.path.replace(`SEEDED_CUSTOMER_${c.id}`, id.customer);
     }
     const fix = (where) => where?.forEach((w) => {
       w.equals = swap(w.equals);
@@ -194,7 +190,7 @@ export default {
     amount_currency_quantity: ["jpy_zero_decimal_auto", "jpy_over_limit_parked", "partial_refund", "currency_mismatch_review", "store_credit_currency_fallback", "tax_portion_refund", "settlement_fx_readback"],
     duplicate_replay: ["duplicate_start", "rerun_moves_no_money"],
     concurrency: ["concurrent_start"],
-    ordering_and_stale_events: ["operator_refund_first", "operator_refund_while_parked", "takeover_hold_while_parked"],
+    ordering_and_stale_events: ["operator_refund_first", "operator_refund_while_parked", "takeover_hold_while_parked", "takeover_hold_blocks_refund"],
     delayed_or_missing_events: "The request is a direct call from the support form or macro; no provider events are consumed.",
     provider_auth_and_scopes: ["stripe_auth_failure"],
     rate_limit_server_error_timeout: ["zendesk_rate_limited", "slack_rate_limited"],
