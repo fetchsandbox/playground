@@ -23,6 +23,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Contract intake and signature | Legal / `commercial-legal` | 2 | [contract-intake](workflows/contract-intake.md) |
 | Data subject access request export | Legal / `privacy-ops` | 2 | [dsar-export](workflows/dsar-export.md) |
 | Consent change propagation | Marketing / `marketing-ops` | 2 | [consent-propagation](workflows/consent-propagation.md) |
+| CRM ↔ billing sync | RevOps / `revops-systems` | 2 | [crm-billing-sync](workflows/crm-billing-sync.md) |
 | Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Customer data-quality sweep (at scale) | RevOps / `revops-data` | 2 | [customer-data-sweep](workflows/customer-data-sweep.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |

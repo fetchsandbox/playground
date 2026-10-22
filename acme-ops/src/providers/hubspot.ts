@@ -41,11 +41,11 @@ export class HubSpotClient {
   }
 
   /** Contacts matching every filter (AND), up to `max`. */
-  async searchAll(filters: { propertyName: string; operator: "EQ" | "NEQ" | "HAS_PROPERTY" | "NOT_HAS_PROPERTY"; value?: string }[], max = 1000): Promise<HubSpotContact[]> {
+  async searchAll(filters: { propertyName: string; operator: "EQ" | "NEQ" | "HAS_PROPERTY" | "NOT_HAS_PROPERTY"; value?: string }[], max = 1000, extraProps: string[] = []): Promise<HubSpotContact[]> {
     const out: HubSpotContact[] = [];
     let after: string | undefined;
     while (out.length < max) {
-      const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", { json: { filterGroups: [{ filters }], properties: PROPS, limit: 100, after } });
+      const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", { json: { filterGroups: [{ filters }], properties: [...PROPS, ...extraProps], limit: 100, after } });
       out.push(...(body?.results ?? []));
       after = body?.paging?.next?.after;
       if (!after || !body?.results?.length) break;
