@@ -1,6 +1,6 @@
 # Enterprise operations workflow program
 
-Status: plan, 2026-10-22. Owner: FetchSandbox (dogfooding). Progress is
+Status: wave 1 and Kit v2 built (2026-10-22); FetchSandbox proofs running. Owner: FetchSandbox (dogfooding). Progress is
 tracked in [TRACKER.md](TRACKER.md); FetchSandbox gaps found so far are in
 [FETCHSANDBOX_GAPS.md](FETCHSANDBOX_GAPS.md).
 
@@ -62,7 +62,10 @@ Twin status: **Y** a FetchSandbox twin exists and is stateful enough,
 **P** a twin exists but the probes found it partial or sample-backed,
 **N** no twin (`validate_integration` → "Unknown providers").
 
-### Wave 1: the controls auditors ask about first
+### Wave 1: the controls auditors ask about first (built)
+
+All six are built with local tests against faithful fakes and FetchSandbox
+contracts; receipts and gaps are tracked in FETCHSANDBOX_GAPS.md.
 
 | Workflow | Business purpose | Providers (twin) | Engine pressure | Kit capability |
 |---|---|---|---|---|
@@ -94,7 +97,22 @@ PagerDuty P), `treasury-payment-approval` (Plaid P, Modern Treasury N),
 `customer-kyc-rescreen` (screening N, Stripe Y), `visa-and-leave-expiry`
 (HRIS N, Calendar P).
 
-## Kit v2: what "industry grade" needs from the runtime
+## Kit v2: what "industry grade" needs from the runtime (built)
+
+Built in `acme-ops/src/kit/engine.ts` as opt-in fields on a planned action,
+so existing workflows behave exactly as before (their tests are unchanged):
+`waitUntil` and `delayAfter` (durable timers), `awaitSignal` with `from`,
+`notFrom`, `distinctFrom`, `deadline` and `onDeadline` (per-item decisions,
+two-person rule), `after` and `requires` (ordering and preconditions),
+`compensate` with `onFailure: "compensate"` (sagas), `SkipAction` (decided
+not to apply), `ctx.checkpoint` (resumable agents), `audit: true` (hash-chained
+trail, `evidence` command) and `tickEvery` (EventBridge Scheduler invoking
+`{action:"tick"}` on AgentCore; `TICK_INTERVAL_MS` elsewhere). New commands:
+`signal`, `tick`, `evidence`. Covered by `acme-ops/test/kit-v2.test.ts`.
+
+Known limit: a run's actions live in one record, so very large campaigns are
+capped (500 entitlements per access-review run) until action records move to
+their own items.
 
 The current kit gives parallel read-only agents, a pure plan, gated actions
 with one approval per run, effect claims (idempotency), restart durability,
