@@ -7,25 +7,23 @@ Update this page in the same PR as the change it describes.
 
 Last updated: 2026-10-22 (after the cross-border refund and account-takeover workflows).
 
-## 1. Built (merged, and pushed without a PR)
+## 1. Built (merged, and in review)
 
 | Workflow | PR | Org · team | Providers | Receipt on `main` |
 |---|---|---|---|---|
 | [product-cancellation](workflows/product-cancellation.md) | #65, #71, #72 | Customer Experience · cx-retention | Stripe, Zendesk, Square, Slack | **verified**, 27 held ([receipt](https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a)) |
 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) | #68 | Finance · billing-ops | Stripe, HubSpot, Gmail, Asana, Slack | **verified**, 23 held ([receipt](https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437)) |
 | [privacy-erasure](workflows/privacy-erasure.md) | #68 | Legal · privacy-ops | HubSpot, Stripe, WorkOS, Gmail, Asana, Slack | **verified**, 19 held ([receipt](https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed)) |
-| [paid-order-provisioning](workflows/paid-order-provisioning.md) | not yet opened | Sales · order-ops | Stripe (signed webhooks), WorkOS, HubSpot, Gmail, Slack | **verified**, 21 held ([receipt](https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e)) |
-| [partner-payout-run](workflows/partner-payout-run.md) | not yet opened | Finance · partner-ops | Stripe (transfers), Asana, Slack | inconclusive, 15 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/15f2349205?flow=vr_5c1e5f95f6124277a0a7de409adb8344)) |
-| [cross-border-refund](workflows/cross-border-refund.md) | not yet opened | Customer Experience · global-support | Zendesk, Stripe (multi-currency), Slack | inconclusive, 26 held, 4 unmeasured ([receipt](https://fetchsandbox.com/runs/1f4adfc8be?flow=vr_99c5689f49494f759adad1f473cc1875)) |
-| [account-takeover-containment](workflows/account-takeover-containment.md) | not yet opened | IT · it-security | WorkOS, Stripe, Asana, Slack | inconclusive, 20 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0)) |
+| [paid-order-provisioning](workflows/paid-order-provisioning.md) | #74 | Sales · order-ops | Stripe (signed webhooks), WorkOS, HubSpot, Gmail, Slack | **verified**, 21 held ([receipt](https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e)) |
+| [partner-payout-run](workflows/partner-payout-run.md) | #74 | Finance · partner-ops | Stripe (transfers), Asana, Slack | inconclusive, 15 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/15f2349205?flow=vr_5c1e5f95f6124277a0a7de409adb8344)) |
+| [cross-border-refund](workflows/cross-border-refund.md) | #74 | Customer Experience · global-support | Zendesk, Stripe (multi-currency), Slack | inconclusive, 26 held, 4 unmeasured ([receipt](https://fetchsandbox.com/runs/1f4adfc8be?flow=vr_99c5689f49494f759adad1f473cc1875)) |
+| [account-takeover-containment](workflows/account-takeover-containment.md) | #74 | IT · it-security | WorkOS, Stripe, Asana, Slack | inconclusive, 20 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0)) |
 
 The other 19 Acme workflows predate this tracker (PRs #44–#61); see the
 [catalog](WORKFLOWS.md). Overall: 26 workflows, 7 verified, 19 inconclusive
 because of declared twin or environment gaps, 0 receipts with a violated check.
-"Not yet opened" rows are on pushed branches without a PR:
-`claude/acme-ops-event-and-payout-workflows` (paid-order-provisioning,
-partner-payout-run) and `claude/acme-ops-crossborder-and-ato`, stacked on it
-(cross-border-refund, account-takeover-containment).
+The four #74 workflows are in one PR from `claude/acme-ops-crossborder-and-ato`;
+each is still its own app (workflow file, runtime, stack, contract, receipt).
 
 ## 2. Re-verification of existing workflows (2026-10-19)
 
