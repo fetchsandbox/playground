@@ -46,6 +46,11 @@ const refund = (caseId, status, count = 1, extra = []) => action(`stripe.refund:
 const onTwin = (caseId, count, extra = []) => ({ provider: "stripe", collection: "refunds", assertion: { select: "records[*]", count, required: true, where: [eq("payment_intent", pi(caseId)), ...extra] } });
 const twin = (c, ...assertions) => ({ ...c, provider_assertions: assertions });
 const operatorRefund = (caseId) => ({ provider_input: { actor: "external_operator", provider: "stripe", method: "POST", path: "/v1/refunds", body: { charge: `SEEDED_CHARGE_${caseId}` } } });
+/**
+ * A leaf assertion is observed under repeat, which drives the actions again; an
+ * operator's full refund can't be made twice, so these checks are driven once.
+ */
+const once = (assertion) => ({ all_of: [assertion] });
 /** A read-only app call, so a check can start with the operator's provider write. */
 const describe = { method: "POST", path: "/invocations", body: { action: "describe" }, expect_status: 200 };
 const reply = (caseId, status, count = 1) => action(`zendesk.reply:${ticket(caseId)}`, status, count);
@@ -101,9 +106,9 @@ export const checks = [
   ),
   twin(check("duplicate_start", "A re-delivered request refunds once", [ask("duplicate_start"), startAgain("duplicate_start", request("duplicate_start"))], runs([refund("duplicate_start", "applied", 1, [eq("attempts", 1)]), reply("duplicate_start", "applied")])), onTwin("duplicate_start", 1)),
   twin(check("concurrent_start", "Four simultaneous deliveries of one request refund once", [ask("concurrent_start"), startAgain("concurrent_start", request("concurrent_start"), 1, 4)], runs([refund("concurrent_start", "applied", 1, [eq("attempts", 1)]), reply("concurrent_start", "applied")])), onTwin("concurrent_start", 1)),
-  twin(check("operator_refund_first", "A payment an operator already refunded in full gets nothing more", [describe, operatorRefund("operator_refund_first"), ask("operator_refund_first")], review("operator_refund_first", "nothing left to refund on this payment")), onTwin("operator_refund_first", 1)),
+  twin(check("operator_refund_first", "A payment an operator already refunded in full gets nothing more", [describe, operatorRefund("operator_refund_first"), ask("operator_refund_first")], once(review("operator_refund_first", "nothing left to refund on this payment"))), onTwin("operator_refund_first", 1)),
   twin(
-    check("operator_refund_while_parked", "An operator's full refund while approval is parked stops the approved refund and its reply", [ask("operator_refund_while_parked"), operatorRefund("operator_refund_while_parked"), command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("outcome", "partial"), refund("operator_refund_while_parked", "failed"), reply("operator_refund_while_parked", "failed")])),
+    check("operator_refund_while_parked", "An operator's full refund while approval is parked stops the approved refund and its reply", [ask("operator_refund_while_parked"), operatorRefund("operator_refund_while_parked"), command("decide", 1, { decision: "approve", userId: APPROVER })], once(runs([eq("outcome", "partial"), refund("operator_refund_while_parked", "failed"), reply("operator_refund_while_parked", "failed")]))),
     onTwin("operator_refund_while_parked", 1),
   ),
   twin(faulted("stripe_auth_failure", "Without Stripe nothing is refunded; the ticket gets a note and Slack a warning", "stripe", "auth_failure", [agent("payment-check", "failed"), eq("output.mode", "blocked"), actionKind("stripe.refund", null, 0), note("stripe_auth_failure"), action("slack.post_refund", "applied")]), onTwin("stripe_auth_failure", 0)),
