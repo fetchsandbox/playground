@@ -112,6 +112,22 @@ export class NetSuiteClient {
     return (await this.http.request<NetSuitePurchaseOrder>("GET", `/services/rest/record/v1/purchaseOrder/${encodeURIComponent(id)}`, { query: { expandSubResources: "true" } })).body;
   }
 
+  /** Purchase orders are found again by external id (the purchase request), so a retry never raises two. */
+  async findPurchaseOrder(externalId: string): Promise<{ id: string; tranId?: string } | undefined> {
+    const { body } = await this.http.request<any>("GET", "/services/rest/record/v1/purchaseOrder", { query: { q: `externalId IS "${externalId}"`, limit: 5 } });
+    const item = body?.items?.[0];
+    return item ? { id: String(item.id), tranId: item.tranId } : undefined;
+  }
+
+  async createPurchaseOrder(po: { externalId: string; vendorId: string; department: string; memo: string; currency: string; lines: { description: string; amount: number; account: string }[] }): Promise<{ id: string }> {
+    const res = await this.http.request<any>("POST", "/services/rest/record/v1/purchaseOrder", {
+      json: { externalId: po.externalId, entity: { id: po.vendorId }, department: { id: po.department }, memo: po.memo, currency: { refName: po.currency.toUpperCase() }, expense: { items: po.lines.map((l) => ({ account: { id: l.account }, amount: l.amount, memo: l.description, department: { id: po.department } })) } },
+    });
+    const id = ((res.headers?.location as string | undefined) ?? "").split("/").pop() || res.body?.id;
+    if (!id) throw new Error("NetSuite returned no purchase order id");
+    return { id: String(id) };
+  }
+
   /** Journal entries are found again by external id, so a retry never posts twice. */
   async findJournal(externalId: string): Promise<{ id: string } | undefined> {
     const rows = await this.suiteql<{ id: string | number }>(`SELECT id FROM transaction WHERE type = 'Journal' AND externalid = '${externalId.replaceAll("'", "''")}'`);
@@ -150,6 +166,7 @@ export interface NetSuiteVendor {
   phone?: string | null;
   dateCreated?: string;
   /** Custom fields ACME keeps on the vendor record. */
+  isInactive?: boolean | null;
   custentity_acme_payment_hold?: boolean | null;
   custentity_acme_hold_reason?: string | null;
   custentity_acme_bank_last4?: string | null;

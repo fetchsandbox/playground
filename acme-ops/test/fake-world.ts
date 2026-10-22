@@ -391,6 +391,24 @@ export async function startWorld() {
       const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
       return send(200, { items: N.salesOrders.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id })) });
     }
+    if (path === "/services/rest/record/v1/purchaseOrder") {
+      const P = state.netsuite.purchaseOrders;
+      if (req.method === "POST") {
+        const po = { id: String(++seq), tranId: `PO${seq}`, ...body, total: (body.expense?.items ?? []).reduce((t: number, l: any) => t + l.amount, 0) };
+        P.push(po);
+        res.writeHead(204, { location: `/services/rest/record/v1/purchaseOrder/${po.id}` });
+        return res.end();
+      }
+      const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
+      return send(200, { items: P.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id, tranId: x.tranId })) });
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /type = 'PurchOrd'/.test(body.q)) {
+      const entity = /entity = (\d+)/.exec(body.q)?.[1];
+      const dept = /department = (\d+)/.exec(body.q)?.[1];
+      const total = /foreigntotal = ([\d.]+)/.exec(body.q)?.[1];
+      const rows = state.netsuite.purchaseOrders.filter((p) => (!entity || p.entity?.id === entity) && (!dept || p.department?.id === dept) && (!total || p.total === Number(total)));
+      return send(200, { items: /SUM\(/.test(body.q) ? [{ amount: rows.reduce((t, p) => t + (p.total ?? 0), 0) }] : rows.map((p) => ({ id: p.id, tranid: p.tranId })) });
+    }
     if ((r = m(/^\/services\/rest\/record\/v1\/(vendorBill|purchaseOrder)\/([^/]+)$/))) {
       const list = r[1] === "vendorBill" ? state.netsuite.vendorBills : state.netsuite.purchaseOrders;
       const rec = list.find((x) => x.id === r![2]);
