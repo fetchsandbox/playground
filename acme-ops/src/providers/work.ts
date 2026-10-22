@@ -148,6 +148,28 @@ export class GitHubClient {
   async setLabels(repo: string, n: number, labels: string[]): Promise<GitHubIssue> {
     return (await this.http.request<GitHubIssue>("PATCH", `/repos/${repo}/issues/${n}`, { json: { labels } })).body;
   }
+
+  /** Organization members with a role (admin | member), following Link pagination. */
+  async listOrgMembers(org: string, role: "admin" | "member", max = 5_000): Promise<{ login: string; id: number }[]> {
+    const out: { login: string; id: number }[] = [];
+    for (let page = 1; out.length < max; page++) {
+      const { body } = await this.http.request<{ login: string; id: number }[]>("GET", `/orgs/${encodeURIComponent(org)}/members`, { query: { role, per_page: 100, page } });
+      const rows = Array.isArray(body) ? body : [];
+      out.push(...rows);
+      if (rows.length < 100) break;
+    }
+    return out.slice(0, max);
+  }
+
+  async getOrgMembership(org: string, username: string): Promise<{ role: string; state: string } | undefined> {
+    const res = await this.http.request<{ role: string; state: string }>("GET", `/orgs/${encodeURIComponent(org)}/memberships/${encodeURIComponent(username)}`, { allow: [404] });
+    return res.status === 404 ? undefined : res.body;
+  }
+
+  /** Removes the user from the organization (and its teams and repositories). */
+  async removeOrgMember(org: string, username: string): Promise<void> {
+    await this.http.request("DELETE", `/orgs/${encodeURIComponent(org)}/memberships/${encodeURIComponent(username)}`);
+  }
 }
 
 /** Twilio Programmable Messaging: SMS to site contacts. */

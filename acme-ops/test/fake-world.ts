@@ -65,6 +65,7 @@ export function seedState() {
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
+    github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
     netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[] },
     plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
     verify: { verifications: [] as any[] },
@@ -319,7 +320,8 @@ export async function startWorld() {
 
     // ---- Slack
     if (req.method === "POST" && path === "/api/chat.postMessage") {
-      if (!state.slack.channels.has(body.channel)) return send(200, { ok: false, error: "channel_not_found" });
+      // A user id is a direct message (Slack opens the DM).
+      if (!state.slack.channels.has(body.channel) && !/^U[A-Z0-9_]+$/.test(body.channel)) return send(200, { ok: false, error: "channel_not_found" });
       const msg = { channel: body.channel, text: body.text, ts: `${Date.now()}.${++seq}`, ...(body.thread_ts ? { thread_ts: body.thread_ts } : {}) };
       state.slack.messages.push(msg);
       return send(200, { ok: true, channel: msg.channel, ts: msg.ts });
@@ -391,6 +393,24 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/shipments\/([^/]+)$/))) {
       const sh = state.easypost.shipments.find((x) => x.id === r![1]);
       return sh ? send(200, sh) : send(404, { error: { code: "NOT_FOUND" } });
+    }
+
+    // ---- GitHub organizations
+    if (req.method === "GET" && (r = m(/^\/orgs\/([^/]+)\/members$/))) {
+      const page = Number(q.get("page") ?? 1);
+      const per = Number(q.get("per_page") ?? 30);
+      const rows = state.github.members.filter((x) => x.org === r![1] && (!q.get("role") || q.get("role") === "all" || x.role === q.get("role")));
+      return send(200, rows.slice((page - 1) * per, page * per).map(({ login, id }) => ({ login, id })));
+    }
+    if ((r = m(/^\/orgs\/([^/]+)\/memberships\/([^/]+)$/))) {
+      const mem = state.github.members.find((x) => x.org === r![1] && x.login === r![2]);
+      if (!mem) return send(404, { message: "Not Found" });
+      if (req.method === "DELETE") {
+        state.github.members = state.github.members.filter((x) => x !== mem);
+        res.writeHead(204);
+        return res.end();
+      }
+      return send(200, { role: mem.role, state: "active" });
     }
 
     // ---- Plaid
@@ -565,7 +585,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github"];
 
   return {
     state,
