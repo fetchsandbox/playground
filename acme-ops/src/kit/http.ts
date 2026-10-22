@@ -24,6 +24,8 @@ export interface RequestOptions {
 export interface HttpResult<T> {
   status: number;
   body: T;
+  /** Response headers, lowercased (e.g. `location` for APIs that answer 204 + Location). */
+  headers?: Record<string, string>;
 }
 
 function retryAfterMs(res: Response): number | undefined {
@@ -118,7 +120,7 @@ export class ProviderHttp {
     } catch {
       parsed = { raw: text.slice(0, 500) };
     }
-    if (res.ok || opts.allow?.includes(res.status)) return { status: res.status, body: parsed as T };
+    if (res.ok || opts.allow?.includes(res.status)) return { status: res.status, body: parsed as T, headers: Object.fromEntries(res.headers) };
     const code = providerCode(parsed, res.status);
     const retryable = res.status === 429 || res.status >= 500;
     throw new ProviderError(this.provider, res.status, code, retryable, `${method} ${path} → ${res.status} ${code}`, retryable ? retryAfterMs(res) : undefined);

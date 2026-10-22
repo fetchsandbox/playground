@@ -5,6 +5,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 WHY={
 'account-takeover-containment':'IT Security needs to contain a suspected account takeover within minutes, holding money movement and removing admin access, without locking a customer organization out of its last admin or acting on an unreadable directory.',
 'access-jml':'IT needs to grant the correct employee access and remove it when employment changes, while keeping privileged changes under human control.',
+'ai-support-triage':'Support needs every new ticket triaged in seconds with a language model, without letting the model lower an outage priority, promise money, or send a reply a person should have checked.',
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',

@@ -13,6 +13,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Workflow | Department / team | Roles | Business guide |
 |---|---|---:|---|
 | Account takeover containment | IT / `it-security` | 3 | [account-takeover-containment](workflows/account-takeover-containment.md) |
+| AI support triage (LLM, guarded) | Support / `support-ops` | 3 | [ai-support-triage](workflows/ai-support-triage.md) |
 | Joiner, mover, leaver access | IT / `it-identity` | 2 | [access-jml](workflows/access-jml.md) |
 | Churn-risk sweep | Customer Success / `cs-ops` | 6 | [churn-risk-sweep](workflows/churn-risk-sweep.md) |
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |

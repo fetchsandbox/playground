@@ -61,6 +61,8 @@ export function seedState() {
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
+    /** Scripted model answers, used in order; then a how-to default. */
+    openai: { replies: [] as { content: string; role?: string }[], calls: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
   };
 }
@@ -295,6 +297,13 @@ export async function startWorld() {
       return send(200, { ok: true, channel: msg.channel, ts: msg.ts });
     }
 
+    // ---- OpenAI
+    if (req.method === "POST" && path === "/chat/completions") {
+      state.openai.calls.push(body);
+      const r = state.openai.replies.shift() ?? { content: JSON.stringify({ category: "how_to", priority: "normal", summary: "Asks how to export a report", reply: "Hello! You can export reports from Settings > Exports; see https://docs.acme.example/exports.", confidence: 0.92 }) };
+      return send(200, { id: id("chatcmpl"), object: "chat.completion", model: body.model, choices: [{ index: 0, finish_reason: "stop", message: { role: r.role ?? "assistant", content: r.content } }] });
+    }
+
     // ---- Zendesk
     const Z = state.zendesk;
     if (req.method === "POST" && path === "/api/v2/tickets.json") {
@@ -440,7 +449,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost"];
 
   return {
     state,

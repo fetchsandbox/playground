@@ -1,5 +1,6 @@
 import { zendeskAuthorization } from "./zendesk-oauth";
 import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
+import { EasyPostClient, NetSuiteClient, OpenAIClient, ShopifyClient } from "./commerce";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
@@ -23,8 +24,12 @@ export type ProviderName =
   | "notion"
   | "box"
   | "screening"
-  | "square";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square"];
+  | "square"
+  | "openai"
+  | "shopify"
+  | "netsuite"
+  | "easypost";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -45,6 +50,14 @@ export interface Providers {
   screening?: ScreeningClient;
   /** Gift cards (Square Gift Cards API). */
   square?: SquareClient;
+  /** Language model (OpenAI Chat Completions). */
+  openai?: OpenAIClient;
+  /** Storefront orders and fulfillments (Shopify Admin REST). */
+  shopify?: ShopifyClient;
+  /** ERP sales orders (NetSuite SuiteTalk REST). */
+  netsuite?: NetSuiteClient;
+  /** Shipping labels and tracking (EasyPost). */
+  easypost?: EasyPostClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -63,6 +76,10 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   box: "https://api.box.com/2.0",
   screening: "https://data.trade.gov",
   square: "https://connect.squareup.com",
+  openai: "https://api.openai.com/v1",
+  shopify: undefined, // https://<shop>.myshopify.com — set SHOPIFY_BASE_URL
+  netsuite: undefined, // https://<account>.suitetalk.api.netsuite.com — set NETSUITE_BASE_URL
+  easypost: "https://api.easypost.com/v2",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -82,6 +99,10 @@ const PREFIX: Record<ProviderName, string[]> = {
   box: ["BOX"],
   screening: ["TRADE_GOV", "SCREENING"],
   square: ["SQUARE"],
+  openai: ["OPENAI"],
+  shopify: ["SHOPIFY", "SHOPIFY_ADMIN"],
+  netsuite: ["NETSUITE"],
+  easypost: ["EASYPOST"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -114,6 +135,7 @@ export function endpointsFromEnv(env: NodeJS.ProcessEnv = process.env): Partial<
       endpoint.authorization = `Basic ${Buffer.from(`${env.TWILIO_ACCOUNT_SID ?? ""}:${token}`).toString("base64")}`;
     }
     if (p === "pagerduty" && baseUrl === DEFAULT_BASE.pagerduty) endpoint.authorization = `Token token=${token}`;
+    if (p === "easypost" && baseUrl === DEFAULT_BASE.easypost) endpoint.authorization = `Basic ${Buffer.from(`${token}:`).toString("base64")}`;
     out[p] = endpoint;
   }
   return out;
@@ -149,6 +171,10 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       box: h.box && new BoxClient(h.box),
       screening: h.screening && new ScreeningClient(h.screening),
       square: h.square && new SquareClient(h.square),
+      openai: h.openai && new OpenAIClient(h.openai, env.OPENAI_MODEL ?? "gpt-4o-mini"),
+      shopify: h.shopify && new ShopifyClient(h.shopify, env.SHOPIFY_API_VERSION ?? "2024-10"),
+      netsuite: h.netsuite && new NetSuiteClient(h.netsuite),
+      easypost: h.easypost && new EasyPostClient(h.easypost),
     };
   };
 }
