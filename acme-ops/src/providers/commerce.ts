@@ -90,6 +90,62 @@ export class NetSuiteClient {
   async getSalesOrder(id: string): Promise<{ id: string; externalId?: string; status?: { id?: string } }> {
     return (await this.http.request<any>("GET", `/services/rest/record/v1/salesOrder/${encodeURIComponent(id)}`)).body;
   }
+
+  async getVendor(id: string): Promise<NetSuiteVendor> {
+    return (await this.http.request<NetSuiteVendor>("GET", `/services/rest/record/v1/vendor/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** PATCH merges the fields sent; NetSuite answers 204. */
+  async updateVendor(id: string, fields: Record<string, unknown>): Promise<void> {
+    await this.http.request("PATCH", `/services/rest/record/v1/vendor/${encodeURIComponent(id)}`, { json: fields });
+  }
+
+  /** SuiteQL (POST /services/rest/query/v1/suiteql), first page. */
+  async suiteql<T = Record<string, unknown>>(q: string): Promise<T[]> {
+    const { body } = await this.http.request<{ items?: T[] }>("POST", "/services/rest/query/v1/suiteql", { json: { q }, headers: { Prefer: "transient" }, query: { limit: 1000 } });
+    return body?.items ?? [];
+  }
+}
+
+export interface NetSuiteVendor {
+  id: string;
+  companyName?: string;
+  legalName?: string;
+  email?: string | null;
+  phone?: string | null;
+  dateCreated?: string;
+  /** Custom fields ACME keeps on the vendor record. */
+  custentity_acme_payment_hold?: boolean | null;
+  custentity_acme_hold_reason?: string | null;
+  custentity_acme_bank_last4?: string | null;
+  custentity_acme_bank_token?: string | null;
+  custentity_acme_bank_changed_at?: string | null;
+}
+
+/** Plaid Identity Match (https://plaid.com/docs/api/products/identity/#identitymatch): does the account owner match? */
+export class PlaidClient {
+  constructor(readonly http: ProviderHttp, readonly clientId = "", readonly secret = "") {}
+
+  async identityMatch(accessToken: string, legalName: string): Promise<{ accountId: string; mask: string | null; nameScore: number | null }[]> {
+    const { body } = await this.http.request<any>("POST", "/identity/match", { json: { client_id: this.clientId || undefined, secret: this.secret || undefined, access_token: accessToken, user: { legal_name: legalName } } });
+    return (body?.accounts ?? []).map((a: any) => ({ accountId: a.account_id, mask: a.mask ?? null, nameScore: a.legal_name?.score ?? null }));
+  }
+}
+
+/** Twilio Verify (https://www.twilio.com/docs/verify/api): a one-time code by voice call or SMS. */
+export class TwilioVerifyClient {
+  constructor(readonly http: ProviderHttp, readonly serviceSid: string) {}
+
+  async start(to: string, channel: "call" | "sms"): Promise<{ sid: string; status: string; to: string }> {
+    const { body } = await this.http.request<any>("POST", `/v2/Services/${encodeURIComponent(this.serviceSid)}/Verifications`, { form: { To: to, Channel: channel } });
+    return { sid: body.sid, status: body.status, to: body.to };
+  }
+
+  /** The code the supplier read back to AP. */
+  async check(to: string, code: string): Promise<{ status: string; valid: boolean }> {
+    const { body } = await this.http.request<any>("POST", `/v2/Services/${encodeURIComponent(this.serviceSid)}/VerificationCheck`, { form: { To: to, Code: code } });
+    return { status: body.status, valid: !!body.valid };
+  }
 }
 
 /** EasyPost shipping (https://docs.easypost.com/docs/shipments). Base URL ends in /v2. */

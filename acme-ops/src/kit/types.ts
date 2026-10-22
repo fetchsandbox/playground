@@ -66,6 +66,10 @@ export interface PlannedAction<I> {
   awaitSignal?: AwaitSignal;
   /** Undo for this effect. Called in reverse order when a later action with onFailure "compensate" fails. */
   compensate?(ctx: ActionContext<I>, receipt: ActionReceipt): Promise<ActionReceipt | void>;
+  /** Waits until these actions are settled (applied, rejected, skipped, failed or compensated). */
+  after?: string[];
+  /** Needs these actions applied: waits for them, and is skipped as soon as one settles any other way. */
+  requires?: string[];
   /** "compensate": if this action fails, stop the run and undo every applied action that can be undone. */
   onFailure?: "continue" | "compensate";
 }
@@ -75,6 +79,8 @@ export interface AwaitSignal {
   from?: string[];
   /** Users who may never send it, e.g. the requester or whoever set the record up (segregation of duties). */
   notFrom?: string[];
+  /** The sender must differ from whoever signalled these actions (two-person rule). */
+  distinctFrom?: string[];
   /** ISO time after which the default applies. */
   deadline?: string;
   /** What happens at the deadline without a signal. */

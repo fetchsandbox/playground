@@ -65,7 +65,10 @@ export function seedState() {
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
-    netsuite: { salesOrders: [] as any[] },
+    netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[] },
+    plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
+    verify: { verifications: [] as any[] },
+    screening: { entries: [] as { name: string; source: string; score?: number }[] },
     easypost: { shipments: [] as any[], rates: [{ carrier: "USPS", service: "Ground", rate: "7.40", currency: "USD" }, { carrier: "UPS", service: "Ground", rate: "9.10", currency: "USD" }] as any[] },
     /** Scripted model answers, used in order; then a how-to default. */
     openai: { replies: [] as { content: string; role?: string }[], calls: [] as any[] },
@@ -350,6 +353,21 @@ export async function startWorld() {
       const ext = /externalId IS "([^"]+)"/.exec(q.get("q") ?? "")?.[1];
       return send(200, { items: N.salesOrders.filter((x) => !ext || x.externalId === ext).map((x) => ({ id: x.id })) });
     }
+    if ((r = m(/^\/services\/rest\/record\/v1\/vendor\/([^/]+)$/))) {
+      const v = state.netsuite.vendors.find((x) => x.id === r![1]);
+      if (!v) return send(404, { title: "Record not found" });
+      if (req.method === "PATCH") {
+        Object.assign(v, body);
+        res.writeHead(204);
+        return res.end();
+      }
+      return send(200, v);
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql") {
+      const entity = /entity = (\d+)/.exec(body.q)?.[1];
+      const until = /TO_DATE\('([\d-]+)'/.exec(body.q)?.[1];
+      return send(200, { items: state.netsuite.bills.filter((b) => (!entity || b.entity === entity) && b.status === "open" && (!until || b.duedate <= until)).map((b) => ({ amount: b.amount })) });
+    }
     if (req.method === "GET" && (r = m(/^\/services\/rest\/record\/v1\/salesOrder\/([^/]+)$/))) {
       const so = state.netsuite.salesOrders.find((x) => x.id === r![1]);
       return so ? send(200, so) : send(404, { title: "Not Found" });
@@ -373,6 +391,26 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/shipments\/([^/]+)$/))) {
       const sh = state.easypost.shipments.find((x) => x.id === r![1]);
       return sh ? send(200, sh) : send(404, { error: { code: "NOT_FOUND" } });
+    }
+
+    // ---- Plaid
+    if (req.method === "POST" && path === "/identity/match") {
+      const accts = state.plaid.accounts[body.access_token];
+      if (!accts) return send(400, { error_type: "INVALID_INPUT", error_code: "INVALID_ACCESS_TOKEN" });
+      return send(200, { accounts: accts });
+    }
+
+    // ---- Twilio Verify
+    if (req.method === "POST" && (r = m(/^\/v2\/Services\/([^/]+)\/Verifications$/))) {
+      const v = { sid: id("VE"), to: body.To, channel: body.Channel, status: "pending" };
+      state.verify.verifications.push(v);
+      return send(201, v);
+    }
+
+    // ---- Trade.gov Consolidated Screening List
+    if (req.method === "GET" && path === "/consolidated_screening_list/v1/search") {
+      const name = (q.get("name") ?? "").toLowerCase();
+      return send(200, { results: state.screening.entries.filter((e) => name && e.name.toLowerCase().includes(name)) });
     }
 
     // ---- OpenAI
@@ -527,7 +565,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening"];
 
   return {
     state,

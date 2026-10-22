@@ -20,6 +20,11 @@ export class FatalError extends Error {
   override name = "FatalError";
 }
 
+/** Kit v2: the action decided at run time that it doesn't apply (e.g. its precondition was rejected). Recorded as skipped. */
+export class SkipAction extends Error {
+  override name = "SkipAction";
+}
+
 export function isRetryable(err: unknown): boolean {
   return err instanceof ProviderError && err.retryable;
 }

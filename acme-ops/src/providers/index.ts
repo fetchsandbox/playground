@@ -1,6 +1,6 @@
 import { zendeskAuthorization } from "./zendesk-oauth";
 import { type ProviderEndpoint, ProviderHttp } from "../kit/http";
-import { EasyPostClient, NetSuiteClient, OpenAIClient, ShopifyClient } from "./commerce";
+import { EasyPostClient, NetSuiteClient, OpenAIClient, PlaidClient, ShopifyClient, TwilioVerifyClient } from "./commerce";
 import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
@@ -28,8 +28,10 @@ export type ProviderName =
   | "openai"
   | "shopify"
   | "netsuite"
-  | "easypost";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost"];
+  | "easypost"
+  | "plaid"
+  | "twilio_verify";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -58,6 +60,10 @@ export interface Providers {
   netsuite?: NetSuiteClient;
   /** Shipping labels and tracking (EasyPost). */
   easypost?: EasyPostClient;
+  /** Bank account ownership (Plaid Identity Match). */
+  plaid?: PlaidClient;
+  /** Phone callbacks with one-time codes (Twilio Verify). */
+  twilio_verify?: TwilioVerifyClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -80,6 +86,8 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   shopify: undefined, // https://<shop>.myshopify.com — set SHOPIFY_BASE_URL
   netsuite: undefined, // https://<account>.suitetalk.api.netsuite.com — set NETSUITE_BASE_URL
   easypost: "https://api.easypost.com/v2",
+  plaid: "https://production.plaid.com",
+  twilio_verify: "https://verify.twilio.com",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -103,6 +111,8 @@ const PREFIX: Record<ProviderName, string[]> = {
   shopify: ["SHOPIFY", "SHOPIFY_ADMIN"],
   netsuite: ["NETSUITE"],
   easypost: ["EASYPOST"],
+  plaid: ["PLAID"],
+  twilio_verify: ["TWILIO_VERIFY"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -175,6 +185,8 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       shopify: h.shopify && new ShopifyClient(h.shopify, env.SHOPIFY_API_VERSION ?? "2024-10"),
       netsuite: h.netsuite && new NetSuiteClient(h.netsuite),
       easypost: h.easypost && new EasyPostClient(h.easypost),
+      plaid: h.plaid && new PlaidClient(h.plaid, env.PLAID_CLIENT_ID ?? "", env.PLAID_SECRET ?? ""),
+      twilio_verify: h.twilio_verify && new TwilioVerifyClient(h.twilio_verify, env.TWILIO_VERIFY_SERVICE_SID ?? "VA_ACME_DEMO"),
     };
   };
 }

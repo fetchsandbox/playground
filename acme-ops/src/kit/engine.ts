@@ -3,7 +3,7 @@ import { z } from "zod";
 import { checkpoint, validateReviewed, sameScope, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
-import { errorCode, errorMessage } from "./errors";
+import { errorCode, errorMessage, SkipAction } from "./errors";
 import type { Logger } from "./log";
 import type { Item, KvStore } from "./store";
 import {
@@ -375,9 +375,10 @@ export class Engine<I> {
       if (!rec || rec.status === "applied" || rec.status === "skipped" || rec.status === "rejected" || rec.status === "compensated") continue;
 
       // Kit v2: a timer that isn't due, or a signal that hasn't come, leaves the action waiting.
-      const gateState = this.readiness(p, rec);
+      const gateState = this.readiness(p, rec, run.actions);
       if (gateState !== "ready") {
-        if (gateState.status !== rec.status || gateState.signal) await this.updateAction(runId, p.id, { status: gateState.status, ...(gateState.signal ? { signal: gateState.signal } : {}), ...(gateState.error ? { error: gateState.error, errorCode: "signal_deadline" } : {}) });
+        const why = gateState.error ? (gateState.status === "skipped" ? { detail: { reason: gateState.error } } : { error: gateState.error, errorCode: "signal_deadline" }) : {};
+        if (gateState.status !== rec.status || gateState.signal) await this.updateAction(runId, p.id, { status: gateState.status, ...(gateState.signal ? { signal: gateState.signal } : {}), ...why });
         if (gateState.status === "failed" && p.onFailure === "compensate") return this.compensateRun(runId, ctx, planned, p.id);
         // A deadline that defaults to approve runs the action now; anything else keeps waiting.
         if (gateState.signal?.value !== "approve") continue;
@@ -409,6 +410,12 @@ export class Engine<I> {
         await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "applied", ref: receipt.ref, detail: receipt.detail ?? {} });
         await this.updateAction(runId, p.id, { status: "applied", ref: receipt.ref, detail: receipt.detail, appliedAt: new Date(this.now()).toISOString() });
       } catch (err) {
+        if (err instanceof SkipAction) {
+          // Decided not to apply: final, not retried.
+          await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "skipped" });
+          await this.updateAction(runId, p.id, { status: "skipped", detail: { reason: err.message } });
+          continue;
+        }
         // Release the claim so a later resume can retry this one effect.
         await this.deps.store.delete(claimKey);
         ctx.log.warn("action failed", { action: p.id, err: errorMessage(err) });
@@ -423,9 +430,16 @@ export class Engine<I> {
    * Kit v2 gate for timers and signals. "ready" runs the action; otherwise the
    * status it should show. A deadline without a signal applies the action's default.
    */
-  private readiness(p: PlannedAction<I>, rec: ActionRecord): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string } {
+  private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string } {
     const now = this.now();
     if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
+    if (p.after?.some((id) => { const dep = all.find((a) => a.id === id); return dep && !SETTLED.has(dep.status); })) return { status: "scheduled" };
+    for (const id of p.requires ?? []) {
+      const dep = all.find((a) => a.id === id);
+      if (!dep) continue;
+      if (!SETTLED.has(dep.status)) return { status: "scheduled" };
+      if (dep.status !== "applied") return { status: "skipped", error: `${id} was ${dep.status}` };
+    }
     if (!p.awaitSignal) return "ready";
     const sig = rec.signal;
     if (sig) return sig.value === "approve" ? "ready" : { status: "rejected" };
@@ -717,7 +731,8 @@ export class Engine<I> {
     const rec = run.actions.find((a) => a.id === cmd.actionId);
     if (!p || !rec || !p.awaitSignal) return { status: 404, body: { result: "no_such_signal", runId: cmd.runId, actionId: cmd.actionId } };
     const w = p.awaitSignal;
-    if ((w.from?.length && !w.from.includes(cmd.userId)) || w.notFrom?.includes(cmd.userId)) {
+    const sameAsOther = w.distinctFrom?.some((id) => run.actions.find((a) => a.id === id)?.signal?.by === cmd.userId);
+    if ((w.from?.length && !w.from.includes(cmd.userId)) || w.notFrom?.includes(cmd.userId) || sameAsOther) {
       await this.mutate(cmd.runId, (r) => this.event(r, `signal for ${cmd.actionId} by ${cmd.userId} refused`));
       return { status: 403, body: { ...this.view((await this.load(cmd.runId))!), result: "forbidden" } };
     }
@@ -874,6 +889,8 @@ interface AuditEntry {
 
 const genesis = (runId: string) => createHash("sha256").update(`audit:${runId}`).digest("hex");
 const chain = (prev: string, e: { seq: number; at: string; msg: string }) => createHash("sha256").update(prev).update(JSON.stringify(e)).digest("hex");
+
+const SETTLED = new Set<ActionStatus>(["applied", "rejected", "skipped", "failed", "compensated"]);
 
 function isWaiting(a: ActionRecord) {
   return a.status === "scheduled" || a.status === "awaiting_signal";
