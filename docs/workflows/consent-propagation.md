@@ -19,7 +19,7 @@ The runtime accepts the `start` command through `POST /invocations`. The baselin
   "input": {
     "eventId": "evt_baseline",
     "email": "consent-baseline@pref.example",
-    "occurredAt": "2026-10-22T20:30:12.736Z",
+    "occurredAt": "2026-10-22T12:00:00.000Z",
     "source": "preference_center",
     "changes": [
       {

@@ -23,6 +23,9 @@ export const DIMENSIONS = [
   "cleanup_and_isolation",
 ];
 
+/** "Now" for contract inputs: the real time during a proof (relay-proof sets PROOF_NOW), a fixed date for generated docs. */
+export const proofNow = () => Date.parse(process.env.PROOF_NOW ?? "2026-10-22T12:00:00.000Z");
+
 export const runsPath = (caseId) => `/verify/runs/{{run_id}}/cases/${caseId}/runs`;
 
 const labels = (caseId) => ({ fs_run: "{{run_id}}", fs_case: caseId });

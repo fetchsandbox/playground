@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "./lib.mjs";
+import { action, actionKind, agent, all, check, eq, runs, start, asCase, proofNow } from "./lib.mjs";
 
 // Executable expectations for consent propagation (event-time ordering guard,
 // read-back verification on a Kit v2 delayAfter timer). HubSpot, Stripe and
@@ -7,8 +7,8 @@ import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "
 // twin refuses (custom properties, the subscription API) is recorded.
 const PRIVACY = "C0PRIVACY01";
 const SUBSCRIPTION = "4242";
-const NOW = new Date().toISOString();
-const LATER = new Date(Date.now() + 3_600_000).toISOString();
+const NOW = new Date(proofNow()).toISOString();
+const LATER = new Date(proofNow() + 3_600_000).toISOString();
 const email = (c) => `consent-${c.replaceAll("_", "-")}@pref.example`;
 const input = (c, over = {}) => ({ eventId: `evt_${c}`.slice(0, 68), email: email(c), occurredAt: NOW, source: "preference_center", changes: [{ purpose: "marketing_email", state: "withdrawn" }, { purpose: "sale_or_share", state: "withdrawn" }], marketingSubscriptionId: SUBSCRIPTION, privacyChannel: PRIVACY, ...over });
 const change = (c, over) => start(c, input(c, over));

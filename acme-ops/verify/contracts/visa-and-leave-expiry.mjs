@@ -1,4 +1,4 @@
-import { action, actionKind, agent, check, eq, runs, start, asCase } from "./lib.mjs";
+import { action, actionKind, agent, check, eq, runs, start, asCase, proofNow } from "./lib.mjs";
 
 // Executable expectations for work-authorization and leave dates (Notion HR
 // register rows, Kit v2 timers that stand down when the row changes, Asana
@@ -8,7 +8,7 @@ import { action, actionKind, agent, check, eq, runs, start, asCase } from "./lib
 // the inputs. Properties the twin refuses are recorded.
 const HR = "C0HRCOMPL01";
 const DAY = 86_400_000;
-const date = (days) => new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
+const date = (days) => new Date(proofNow() + days * DAY).toISOString().slice(0, 10);
 const page = (c) => `00000000000000000000000000${String(Object.keys(FIXTURES).indexOf(c)).padStart(6, "0")}`;
 const input = (c, over = {}) => ({ eventId: `evt_${c}`.slice(0, 68), pageId: page(c), hrChannel: HR, hrCalendarId: "hr@acme.example", ...over });
 const changed = (c, over) => start(c, input(c, over));

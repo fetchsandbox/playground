@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, proofNow } from "./lib.mjs";
 
 // Executable expectations for a data subject access request export (Kit v2
 // signals and deadline timers). HubSpot, Stripe, Zendesk, Box, Gmail, Asana and
@@ -6,7 +6,7 @@ import { action, actionKind, agent, all, check, command, eq, runs, start } from 
 // HubSpot, Stripe and Zendesk; what a twin refuses is recorded, not hidden.
 const PRIVACY = "C0PRIVACY01";
 // Received at proof time, so the statutory deadline (and its escalation) is 27+ days away unless the verifier moves the clock.
-const RECEIVED = new Date().toISOString();
+const RECEIVED = new Date(proofNow()).toISOString();
 const email = (c) => `subject-${c.replaceAll("_", "-")}@dsar.example`;
 const input = (c, over = {}) => ({ requestId: `DSAR-${c.replaceAll("_", "-")}`.slice(0, 45), subject: { email: email(c), name: "Sam Subject" }, regulation: "gdpr", receivedAt: RECEIVED, privacyChannel: PRIVACY, exportFolderId: "0", verifiers: ["U_VERIFIER", "U_ANALYST"], analysts: ["U_ANALYST", "U_ANALYST_2"], ...over });
 const request = (c, over) => start(c, input(c, over));

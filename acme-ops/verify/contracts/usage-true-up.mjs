@@ -1,4 +1,4 @@
-import { action, actionKind, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
+import { action, actionKind, agent, all, check, command, eq, runs, start, asCase, proofNow } from "./lib.mjs";
 
 // Executable expectations for the committed-use true-up (Stripe billing meters,
 // draft invoices and invoice items with idempotency keys, Kit v2 default-approve
@@ -8,8 +8,8 @@ import { action, actionKind, agent, all, check, command, eq, runs, start, asCase
 // then swaps CUS_<check> and the meter id into the inputs. Whatever the twin
 // refuses (meters, meter events, subscription metadata) is recorded.
 const REVOPS = "C0REVOPS001";
-const START = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-const END = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+const START = new Date(proofNow() - 86_400_000).toISOString().slice(0, 10);
+const END = new Date(proofNow() + 86_400_000).toISOString().slice(0, 10);
 const cus = (c) => `cus_SEED_${c}`;
 const input = (c, over = {}) => ({ trueUpId: `TU-${c.replaceAll("_", "-")}`.slice(0, 43), meterId: "mtr_SEED", periodStart: START, periodEnd: END, customers: [cus(c)], revopsChannel: REVOPS, owners: { [cus(c)]: "U_AE" }, billingLeads: ["U_BILLING_LEAD"], ...over });
 const run = (c, over) => start(c, input(c, over));

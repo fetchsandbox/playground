@@ -31,6 +31,8 @@ if (!workflow) {
   console.error("usage: node verify/relay-proof.mjs <support-escalation|revenue-reconciliation|churn-risk-sweep|onboarding-kickoff>");
   process.exit(2);
 }
+// Contracts date their inputs from PROOF_NOW: the real time in a proof, a fixed date in generated docs.
+process.env.PROOF_NOW ??= new Date().toISOString();
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
 // PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.

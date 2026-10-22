@@ -1,4 +1,4 @@
-import { action, agent, all, check, command, eq, runs, start, asCase } from "./lib.mjs";
+import { action, agent, all, check, command, eq, runs, start, asCase, proofNow } from "./lib.mjs";
 
 // Executable expectations for treasury payment approval (dual control as Kit v2
 // signals with segregation of duties, cut-off deadline, idempotent payment
@@ -8,7 +8,7 @@ import { action, agent, all, check, command, eq, runs, start, asCase } from "./l
 // this receipt measures how much of a payment control can be proven without a
 // payment-operations twin.
 const TREASURY = "C0TREASURY1";
-const VALUE_DATE = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+const VALUE_DATE = new Date(proofNow() + 86_400_000).toISOString().slice(0, 10);
 const input = (c, over = {}) => ({ paymentId: `PAY-${c.replaceAll("_", "-")}`.slice(0, 44), type: "wire", amount: 40_000_00, currency: "usd", originatingAccountId: "ia_ops", receivingAccountId: "ea_northwind", purpose: "Invoice NW-1182", valueDate: VALUE_DATE, maker: "U_MAKER", approvers: { treasury: ["U_TREAS", "U_MAKER", "U_TREAS_2"], cfo: ["U_CFO", "U_TREAS"] }, dailyLimit: 1_000_000_00, treasuryChannel: TREASURY, ...over });
 const pay = (c, over) => start(c, input(c, over));
 const id = (c, k) => `${k}:${input(c).paymentId}`;

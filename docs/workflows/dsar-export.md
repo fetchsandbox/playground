@@ -23,7 +23,7 @@ The runtime accepts the `start` command through `POST /invocations`. The baselin
       "name": "Sam Subject"
     },
     "regulation": "gdpr",
-    "receivedAt": "2026-10-22T20:30:12.811Z",
+    "receivedAt": "2026-10-22T12:00:00.000Z",
     "privacyChannel": "C0PRIVACY01",
     "exportFolderId": "0",
     "verifiers": [
