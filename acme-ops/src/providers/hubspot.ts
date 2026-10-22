@@ -18,9 +18,9 @@ const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "h
 export class HubSpotClient {
   constructor(readonly http: ProviderHttp) {}
 
-  async findByEmail(email: string): Promise<HubSpotContact | undefined> {
+  async findByEmail(email: string, extraProps: string[] = []): Promise<HubSpotContact | undefined> {
     const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", {
-      json: { filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: email }] }], properties: PROPS, limit: 10 },
+      json: { filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: email }] }], properties: [...PROPS, ...extraProps], limit: 10 },
     });
     return (body?.results ?? []).find((c) => !c.archived && c.properties.email?.toLowerCase() === email.toLowerCase());
   }
@@ -53,8 +53,22 @@ export class HubSpotClient {
     return out.slice(0, max);
   }
 
-  async get(id: string): Promise<HubSpotContact> {
-    return (await this.http.request<HubSpotContact>("GET", `/crm/v3/objects/contacts/${encodeURIComponent(id)}`, { query: { properties: PROPS.join(",") } })).body;
+  async get(id: string, extraProps: string[] = []): Promise<HubSpotContact> {
+    return (await this.http.request<HubSpotContact>("GET", `/crm/v3/objects/contacts/${encodeURIComponent(id)}`, { query: { properties: [...PROPS, ...extraProps].join(",") } })).body;
+  }
+
+  /** Email subscription statuses (Communication Preferences v3). */
+  async subscriptionStatuses(email: string): Promise<{ id: string; status: string }[]> {
+    const { body } = await this.http.request<any>("GET", `/communication-preferences/v3/status/email/${encodeURIComponent(email)}`);
+    return (body?.subscriptionStatuses ?? []).map((s: any) => ({ id: String(s.id), status: String(s.status) }));
+  }
+
+  /** Opts the address out of one subscription type, or back in under a legal basis. */
+  async setSubscription(email: string, subscriptionId: string, subscribed: boolean, legalBasisExplanation: string): Promise<{ id: string; status: string }> {
+    const { body } = await this.http.request<any>("POST", `/communication-preferences/v3/${subscribed ? "subscribe" : "unsubscribe"}`, {
+      json: { emailAddress: email, subscriptionId, legalBasis: "CONSENT_WITH_NOTICE", legalBasisExplanation },
+    });
+    return { id: String(body?.id ?? subscriptionId), status: String(body?.status ?? (subscribed ? "SUBSCRIBED" : "NOT_SUBSCRIBED")) };
   }
 
   async update(id: string, properties: Record<string, string>): Promise<HubSpotContact> {

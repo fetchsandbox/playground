@@ -59,7 +59,7 @@ export function seedState() {
       /** Lose this many transfer responses after the transfer was created (the effect happens, the reply doesn't). */
       loseTransferResponses: 0,
     },
-    hubspot: { contacts: [] as any[] },
+    hubspot: { contacts: [] as any[], subscriptions: new Map<string, string>() },
     gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
@@ -309,6 +309,17 @@ export async function startWorld() {
     if (req.method === "POST" && path === "/crm/v3/objects/contacts/gdpr-delete") {
       H.contacts = H.contacts.filter((c) => c.id !== String(body.objectId));
       return send(204, {});
+    }
+    if (req.method === "GET" && (r = m(/^\/communication-preferences\/v3\/status\/email\/([^/]+)$/))) {
+      const email = decodeURIComponent(r[1]!);
+      return send(200, { recipient: email, subscriptionStatuses: [...H.subscriptions].filter(([k]) => k.startsWith(`${email}|`)).map(([k, status]) => ({ id: k.split("|")[1], status })) });
+    }
+    if (req.method === "POST" && (r = m(/^\/communication-preferences\/v3\/(subscribe|unsubscribe)$/))) {
+      const k = `${body.emailAddress}|${body.subscriptionId}`;
+      const status = r[1] === "subscribe" ? "SUBSCRIBED" : "NOT_SUBSCRIBED";
+      if (H.subscriptions.get(k) === status) return send(400, { status: "error", message: `${body.emailAddress} is already ${status.toLowerCase()}` });
+      H.subscriptions.set(k, status);
+      return send(200, { id: body.subscriptionId, status });
     }
     if ((r = m(/^\/crm\/v3\/objects\/contacts\/(\d+)$/))) {
       const c = H.contacts.find((x) => x.id === r![1]);
