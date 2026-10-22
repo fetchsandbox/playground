@@ -23,7 +23,31 @@ before relying on a "not supported" line.
   against a validation session's twin) so a failing check can be traced to the
   twin behaviour that caused it.
 
+## How a gap is classified
+
+Every check that FetchSandbox could not prove is given exactly one cause,
+with evidence. The clients are first audited against the vendors' own API
+references ([PROVIDER_SPEC_AUDIT.md](PROVIDER_SPEC_AUDIT.md)), so a twin is
+measured against the real API, never against our assumptions about it.
+
+| Class | Meaning | Evidence that decides it |
+|---|---|---|
+| **Twin missing** | The provider isn't in the FetchSandbox catalog | `list_specs` or `validate_integration` → "Unknown providers" |
+| **Twin spec divergence** | The twin answers a documented call differently from the vendor (shape, type, version, status) | Runtime log `SpecDeviation` or `provider spec deviation`, quoted against the vendor doc |
+| **Operation not in twin** | The twin exists, but the documented operation is absent, returns 501 "not simulated", or returns samples instead of state | The twin's response, and the twin's published spec (endpoint count) |
+| **Engine / verifier** | FetchSandbox lacks a capability the check needs | The capability, for example the clock during an attempt, webhook-to-check correlation, operator input, or tunnel allowance |
+| **Our fixture or contract** | We didn't seed or declare something the twin supports | The contract or seed, fixed and re-run |
+| **Our bug** | A runtime or contract error | Fixed, with commit |
+
 ## Results
+
+> **Measured before the spec audit.** These eleven receipts ran at
+> ed90f18 / af7aa6f, before the clients were corrected to the vendor references
+> (4ac41d8). Their failure causes stand as historical evidence, but two rows
+> are invalid as twin measurements: order-to-cash ran Shopify at the retired
+> `2020-04` (the twin's newest), and change-management-gate never gave the app
+> Datadog credentials. All twenty-four workflows are being re-proven at 4ac41d8;
+> rows are replaced with the classified results as they land.
 
 Each row is one checked-in receipt (`acme-ops/verify/receipts/<workflow>.json`,
 app version in the receipt). "Proved" lists what FetchSandbox measured as held;
@@ -79,13 +103,15 @@ or unmeasured into measured.
 | R12 | **Correlate webhook-started runs to a check.** Pass the check id on signed deliveries (e.g. an `X-FetchSandbox-Case` header beside `X-Flow-Run-Id`) so runtimes can label event-started runs for observation. | failed-payment-dunning event path; any webhook-first workflow | event-started runs carry only `X-Flow-Run-Id`; the dunning contract had to start the stage directly | A signed `invoice.payment_failed` delivery's run appears in that check's runs view |
 | R13 | **Bigger or clearer tunnel allowance.** Back-to-back proofs (or a proof after a failed seed) hit "Managed tunnel capacity reached … allowance for your IP" for tens of minutes. | every proof loop | observed repeatedly on 2026-10-22 | A second proof can start within a minute of the previous one ending |
 | R14 | **Missing twins named by earlier receipts:** restricted-party screening (Trade.gov CSL), Statuspage, Salesforce CPQ, Google Workspace Admin / SCIM, license-cost data; and faithful read-backs on Box search, Notion database query, Asana task listing, Calendar `events.get`, PagerDuty notes, Stripe credit notes, transfer reversals and invoice lines. | the saved receipts linked from each guide in `docs/workflows/` | each receipt's explanation | per twin |
-| R15 | **Runtime clock control.** A contract step that advances the runtime's clock (e.g. the verifier calls a declared `POST /verify/clock {advance_ms}` on the app, or sends an `X-FetchSandbox-Now` header the runtime may honour on `tick`), recorded in the receipt like any other step. | every "(needs clock control)" check: dunning day 14/21, access-review deadlines, offboarding last day, month-end reminder, lead SLA, vulnerability SLA, contract chase/void, DSAR deadline, consent read-back, PO lapse, SLA breach, payment cut-off, true-up notice window, KYC SAR deadline, late receipts, delivery re-check, payroll deadline, visa/leave dates | the verifier has no time step; durable timers measured days out can only be proven locally | A check can say "advance 15 days, then tick" and observe the timer's effect in saved state |
+| R15 | **Runtime clock control during an attempt.** FetchSandbox has an owner-only `/__fetchsandbox/fixtures/time` fixture step, but it is "unavailable during active attempts" and moves only twin time. A check needs a step that advances the *runtime's* clock mid-attempt (e.g. the verifier calls a declared `POST /verify/clock {advance_ms}` on the app, or sends an `X-FetchSandbox-Now` header the runtime may honour on `tick`), recorded in the receipt like any other step. | every "(needs clock control)" check: dunning day 14/21, access-review deadlines, offboarding last day, month-end reminder, lead SLA, vulnerability SLA, contract chase/void, DSAR deadline, consent read-back, PO lapse, SLA breach, payment cut-off, true-up notice window, KYC SAR deadline, late receipts, delivery re-check, payroll deadline, visa/leave dates | the verifier has no time step; durable timers measured days out can only be proven locally | A check can say "advance 15 days, then tick" and observe the timer's effect in saved state |
 | R16 | **Payroll twin (Gusto first).** Employees with terminations, regular and off-cycle payrolls with per-employee compensation, `version`-guarded updates, submit. | employee-offboarding final pay; payroll-anomaly-review | "Unknown providers: gusto" | A termination and its off-cycle payroll can be asserted on the twin |
 | R17 | **Payment-operations twin (Modern Treasury).** Counterparties, external accounts with verification status, payment orders with Idempotency-Key, status transitions (approved → sent → completed / returned). | treasury-payment-approval | no twin | One payment order per idempotency key, and a seeded return observed a day later |
-| R18 | **GitHub org, pull request, checks, deployments and Dependabot fixtures.** `GET /orgs/{org}/members`, membership delete; seeded pull requests with reviews and check runs; deployments with statuses; Dependabot alerts and their dismissal. | user-access-review GitHub leg; change-management-gate; vulnerability-remediation | `/orgs/acme/members` → "Unknown method"; `/repos/acme/checkout/pulls/1` → 404 | A contract can seed a PR with an approving review and passing checks and observe the deployment it causes |
+| R18 | **GitHub twin beyond repos, pulls, issues and users.** The twin's spec has 15 endpoints. Missing operations: org members and memberships, reviews, check runs, deployments and statuses, and Dependabot alerts (list with cursor pagination, dismiss and reopen). | user-access-review GitHub leg; change-management-gate; vulnerability-remediation | `list_specs`: github 15 endpoints (repos, pulls, issues, users); `/orgs/acme/members` → "Unknown method". The 404 on `pulls/1` was our unseeded fixture, not a twin gap | A contract can seed a PR with an approving review and passing checks and observe the deployment it causes |
 | R19 | **E-signature twin (DocuSign).** Envelopes with a custom field, status changes, reminders, void. | contract-intake | "Unknown providers: docusign" | An envelope is created once per contract id and voided at 30 days |
 | R20 | **Field fidelity and robustness on existing twins.** Stripe payout `arrival_date` as epoch seconds; Plaid tokens in Plaid's format; Stripe customer create under 8 concurrent requests without a non-JSON "upstream connect error". | month-end-close `payouts_read`; customer-data-sweep seeding | observed 2026-10-22 | Seeding 250 customers 8-wide succeeds and payout dates parse as Stripe documents them |
-| R21 | **Observability twin (Datadog).** Monitors with states and metric queries a contract can script (healthy vs degraded after a deploy). | change-management-gate watch and rollback | "Unknown providers: datadog" | A degraded monitor after deploy makes the runtime roll back, observed on GitHub deployments |
+| R21 | **Scriptable Datadog monitor and metric state.** A Datadog twin exists (235 endpoints). Whether a contract can make a monitor degrade after a deploy is being measured; the first receipt never gave the app Datadog credentials (our runner, fixed). | change-management-gate watch and rollback | Re-run at 4ac41d8 | A degraded monitor after deploy makes the runtime roll back, observed on GitHub deployments |
+| R22 | **HubSpot beyond contacts.** The twin's spec has 13 endpoints (contacts only). Missing: Communication Preferences (subscription status, subscribe and unsubscribe), companies and deals. | consent-propagation subscription leg | `list_specs`: hubspot 13 endpoints | The marketing subscription is turned off on the twin and read back |
+| R23 | **Version-faithful twins.** Twins should honour the vendor's version header and serve supported versions: `Stripe-Version` (pinned clients), Shopify Admin versions inside the support window, `X-GitHub-Api-Version`, `Notion-Version`, `X-Gusto-API-Version`. | every pinned client | Shopify twin: 2020-01…2021-01 only; whether the Stripe twin honours `Stripe-Version` is being measured | A pinned client gets that version's shapes |
 
 ## Engine and contract findings (not twin data)
 
@@ -93,6 +119,13 @@ or unmeasured into measured.
   a one-shot operator write (a full refund) then returns 400 on the second
   drive. Wrap such checks in `all_of` to drive them once.
 - The first check must be plain HTTP (no signed event).
+- Our own runner and contract mistakes found while classifying, all fixed:
+  the relay runner had no Datadog mapping; employee-offboarding didn't
+  declare GitHub; order-to-cash pinned Shopify to the twin's retired version;
+  test fakes copied our wrong calls. Five older contracts
+  (churn-risk-sweep, onboarding-kickoff, returns-warranty,
+  revenue-reconciliation, support-escalation) still declare Zendesk as having
+  no twin, though one exists now (left for the owner: existing workflows).
 - Accepted blocked categories are `setup_missing` and `observation_missing`;
   `capability_missing` and `fixture_unsupported` are refused.
 - `errorCode` can't be observed as a required field; provider-state filters
