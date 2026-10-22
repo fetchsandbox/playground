@@ -326,6 +326,27 @@ export class BoxClient {
     return (body?.entries ?? []).filter((e: BoxFile) => e?.type === "file");
   }
 
+  async getFile(fileId: string): Promise<{ id: string; name: string; extension?: string; size?: number }> {
+    return (await this.http.request<any>("GET", `/files/${encodeURIComponent(fileId)}`, { query: { fields: "name,extension,size" } })).body;
+  }
+
+  /** Box's extracted-text representation of a document (PDF, DOCX), or null when Box hasn't produced one. */
+  async extractedText(fileId: string): Promise<string | null> {
+    const { body } = await this.http.request<any>("GET", `/files/${encodeURIComponent(fileId)}`, { query: { fields: "representations" }, headers: { "x-rep-hints": "[extracted_text]" } });
+    const rep = body?.representations?.entries?.find((e: any) => e.representation === "extracted_text");
+    const url: string | undefined = rep?.content?.url_template?.replace("{+asset_path}", "");
+    if (!url || rep?.status?.state !== "success") return null;
+    const path = url.replace(/^https?:\/\/[^/]+(\/2\.0)?/, "");
+    const res = await this.http.request<any>("GET", path);
+    return typeof res.body === "string" ? res.body : (res.body?.raw ?? JSON.stringify(res.body ?? ""));
+  }
+
+  /** The file's bytes, base64 (for e-signature envelopes). */
+  async downloadBase64(fileId: string): Promise<string> {
+    const res = await this.http.request<any>("GET", `/files/${encodeURIComponent(fileId)}/content`);
+    return Buffer.from(typeof res.body === "string" ? res.body : (res.body?.raw ?? JSON.stringify(res.body ?? "")), "utf8").toString("base64");
+  }
+
   async createSharedLink(fileId: string, expiresAt: string): Promise<{ url: string }> {
     const { body } = await this.http.request<any>("PUT", `/files/${encodeURIComponent(fileId)}`, {
       query: { fields: "shared_link" },
@@ -367,5 +388,41 @@ export class DatadogClient {
     const points: [number, number | null][] = body?.series?.[0]?.pointlist ?? [];
     const last = [...points].reverse().find((p) => p[1] !== null);
     return last ? last[1] : null;
+  }
+}
+
+/** DocuSign eSignature REST v2.1 (https://developers.docusign.com/docs/esign-rest-api/reference/). Base URL ends in /restapi. */
+export class DocuSignClient {
+  constructor(readonly http: ProviderHttp, readonly accountId: string) {}
+
+  async createEnvelope(e: { subject: string; documentBase64: string; documentName: string; signers: { email: string; name: string }[]; externalId: string }): Promise<{ envelopeId: string; status: string }> {
+    const { body } = await this.http.request<any>("POST", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes`, {
+      json: {
+        emailSubject: e.subject,
+        documents: [{ documentBase64: e.documentBase64, name: e.documentName, fileExtension: "pdf", documentId: "1" }],
+        recipients: { signers: e.signers.map((s, i) => ({ email: s.email, name: s.name, recipientId: String(i + 1), routingOrder: String(i + 1) })) },
+        customFields: { textCustomFields: [{ name: "acme_external_id", value: e.externalId, show: "false" }] },
+        status: "sent",
+      },
+    });
+    return { envelopeId: body.envelopeId, status: body.status };
+  }
+
+  async getEnvelope(id: string): Promise<{ envelopeId: string; status: string; completedDateTime?: string | null }> {
+    return (await this.http.request<any>("GET", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Envelopes carrying our external id (so a retry never sends twice). */
+  async findByExternalId(externalId: string, fromDate: string): Promise<{ envelopeId: string; status: string }[]> {
+    const { body } = await this.http.request<any>("GET", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes`, { query: { from_date: fromDate, custom_field: `acme_external_id=${externalId}` } });
+    return body?.envelopes ?? [];
+  }
+
+  async remind(id: string): Promise<void> {
+    await this.http.request("PUT", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes/${encodeURIComponent(id)}/recipients`, { query: { resend_envelope: "true" }, json: {} });
+  }
+
+  async void(id: string, reason: string): Promise<void> {
+    await this.http.request("PUT", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes/${encodeURIComponent(id)}`, { json: { status: "voided", voidedReason: reason } });
   }
 }

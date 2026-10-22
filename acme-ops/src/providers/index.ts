@@ -6,7 +6,7 @@ import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
 import { SquareClient } from "./square";
 import { StripeClient } from "./stripe";
-import { AsanaClient, BoxClient, DatadogClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
+import { AsanaClient, BoxClient, DatadogClient, DocuSignClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
 
 export type ProviderName =
@@ -32,8 +32,9 @@ export type ProviderName =
   | "plaid"
   | "twilio_verify"
   | "gusto"
-  | "datadog";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog"];
+  | "datadog"
+  | "docusign";
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -70,6 +71,8 @@ export interface Providers {
   gusto?: GustoClient;
   /** Monitors and metrics (Datadog). */
   datadog?: DatadogClient;
+  /** E-signature (DocuSign eSignature). */
+  docusign?: DocuSignClient;
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
@@ -96,6 +99,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   twilio_verify: "https://verify.twilio.com",
   gusto: "https://api.gusto.com",
   datadog: "https://api.datadoghq.com",
+  docusign: "https://na1.docusign.net/restapi",
 };
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
@@ -123,6 +127,7 @@ const PREFIX: Record<ProviderName, string[]> = {
   twilio_verify: ["TWILIO_VERIFY"],
   gusto: ["GUSTO"],
   datadog: ["DATADOG", "DD"],
+  docusign: ["DOCUSIGN"],
 };
 
 function pick(env: NodeJS.ProcessEnv, names: string[]): string | undefined {
@@ -198,6 +203,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       plaid: h.plaid && new PlaidClient(h.plaid, env.PLAID_CLIENT_ID ?? "", env.PLAID_SECRET ?? ""),
       twilio_verify: h.twilio_verify && new TwilioVerifyClient(h.twilio_verify, env.TWILIO_VERIFY_SERVICE_SID ?? "VA_ACME_DEMO"),
       gusto: h.gusto && new GustoClient(h.gusto, env.GUSTO_COMPANY_ID ?? "acme-company"),
+      docusign: h.docusign && new DocuSignClient(h.docusign, env.DOCUSIGN_ACCOUNT_ID ?? "acme-account"),
       datadog: h.datadog && new DatadogClient(h.datadog, env.DATADOG_APP_KEY ?? env.DD_APPLICATION_KEY ?? ""),
     };
   };

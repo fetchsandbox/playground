@@ -68,6 +68,8 @@ export function seedState() {
     asana: { tasks: [] as any[] },
     shopify: { orders: [] as any[], fulfillments: [] as any[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[] },
+    box: { files: [] as { id: string; name: string; text: string | null }[] },
+    docusign: { envelopes: [] as any[] },
     dependabot: [] as { repo: string; number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; dismissed_reason?: string }[],
     issues: [] as { repo: string; number: number; title: string; body?: string; state: string; labels: string[]; comments: string[] }[],
     gh: { pulls: [] as any[], reviews: [] as any[], checkRuns: [] as any[], deployments: [] as any[], statuses: [] as any[] },
@@ -497,6 +499,44 @@ export async function startWorld() {
       return send(202, p);
     }
 
+    // ---- Box
+    if (req.method === "GET" && (r = m(/^\/files\/(\d+)$/))) {
+      const f = state.box.files.find((x) => x.id === r![1]);
+      if (!f) return send(404, { type: "error", code: "not_found" });
+      if ((q.get("fields") ?? "").includes("representations")) {
+        return send(200, { id: f.id, representations: { entries: f.text === null ? [] : [{ representation: "extracted_text", status: { state: "success" }, content: { url_template: `${base}/internal_files/${f.id}/versions/1/representations/extracted_text/content/{+asset_path}` } }] } });
+      }
+      return send(200, { id: f.id, name: f.name, extension: "pdf" });
+    }
+    if (req.method === "GET" && (r = m(/^\/internal_files\/(\d+)\/versions\/1\/representations\/extracted_text\/content\/$/))) {
+      const f = state.box.files.find((x) => x.id === r![1]);
+      res.writeHead(200, { "content-type": "text/plain" });
+      return res.end(f?.text ?? "");
+    }
+    if (req.method === "GET" && (r = m(/^\/files\/(\d+)\/content$/))) {
+      res.writeHead(200, { "content-type": "application/pdf" });
+      return res.end("%PDF-1.4 fake");
+    }
+
+    // ---- DocuSign
+    if ((r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes$/))) {
+      if (req.method === "POST") {
+        const ext = body.customFields?.textCustomFields?.find((f: any) => f.name === "acme_external_id")?.value;
+        const env = { envelopeId: id("env"), status: "sent", externalId: ext, signers: body.recipients.signers, reminders: 0 };
+        state.docusign.envelopes.push(env);
+        return send(201, { envelopeId: env.envelopeId, status: "sent" });
+      }
+      const cf = (q.get("custom_field") ?? "").split("=")[1];
+      return send(200, { envelopes: state.docusign.envelopes.filter((e) => !cf || e.externalId === cf) });
+    }
+    if ((r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes\/([^/]+)(\/recipients)?$/))) {
+      const env = state.docusign.envelopes.find((e) => e.envelopeId === r![2]);
+      if (!env) return send(404, { errorCode: "ENVELOPE_DOES_NOT_EXIST" });
+      if (req.method === "PUT" && r[3]) env.reminders++;
+      else if (req.method === "PUT") Object.assign(env, { status: body.status, voidedReason: body.voidedReason });
+      return send(200, env);
+    }
+
     // ---- GitHub Dependabot alerts and issues
     if (req.method === "GET" && (r = m(/^\/repos\/([^/]+\/[^/]+)\/dependabot\/alerts$/))) {
       const page = Number(q.get("page") ?? 1);
@@ -762,7 +802,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign"];
 
   return {
     state,
