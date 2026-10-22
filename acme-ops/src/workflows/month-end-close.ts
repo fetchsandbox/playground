@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SkipAction } from "../kit/errors";
+import { FatalError, SkipAction } from "../kit/errors";
 import type { PlannedAction, WorkflowDef } from "../kit/types";
 import { Approvers, ChannelId, money, out } from "./shared";
 
@@ -99,8 +99,14 @@ export const monthEndClose: WorkflowDef<Input> = {
         const payouts = (await providers.stripe!.listPayouts(Date.parse(b.start) / 1000, Date.parse(b.next) / 1000)).filter((p) => p.status === "paid");
         const data: Payout[] = [];
         for (const p of payouts) {
+          // Stripe sends epoch seconds; some Stripe-compatible backends send ISO strings. Anything else can't be reconciled.
+          const at = typeof p.arrival_date === "number" ? p.arrival_date * 1000 : Date.parse(String(p.arrival_date));
+          if (!Number.isFinite(at)) throw new FatalError(`payout ${p.id} has no usable arrival_date (${JSON.stringify(p.arrival_date)})`);
+          const arrival = new Date(at).toISOString().slice(0, 10);
+          // The list filter is re-applied here: a backend that ignores arrival_date[gte/lt] must not pull other months in.
+          if (arrival < b.start.slice(0, 10) || arrival >= b.next.slice(0, 10)) continue;
           const txns = await providers.stripe!.payoutTransactions(p.id);
-          data.push({ id: p.id, amountMinor: p.amount, arrival: new Date(p.arrival_date * 1000).toISOString().slice(0, 10), feesMinor: txns.reduce((s, t) => s + (t.fee ?? 0), 0) });
+          data.push({ id: p.id, amountMinor: p.amount, arrival, feesMinor: txns.reduce((s, t) => s + (t.fee ?? 0), 0) });
         }
         return { summary: `${data.length} payout(s), ${money(data.reduce((s, p) => s + p.amountMinor, 0), "usd")}`, data };
       },

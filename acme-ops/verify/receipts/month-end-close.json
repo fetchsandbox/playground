@@ -5,65 +5,65 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-month-end-close-1.0.0-ed90f18",
-  "session_id": "vs_c89065a9bea0",
-  "run_id": "vr_e5bf076602de49a5bb919481ac27a19f",
-  "receipt_url": "https://fetchsandbox.com/runs/60f23ff579?flow=vr_e5bf076602de49a5bb919481ac27a19f",
+  "app_version": "acme-ops-month-end-close-1.0.0-af7aa6f",
+  "session_id": "vs_d46eb9271d42",
+  "run_id": "vr_62a0e417b56e4d1db37235c4d4dca434",
+  "receipt_url": "https://fetchsandbox.com/runs/c1b8d6c96d?flow=vr_62a0e417b56e4d1db37235c4d4dca434",
   "status": null,
-  "verdict": "inconclusive",
+  "verdict": "failing",
   "app_verified": false,
   "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "unmeasured",
-      "explanation": "app action expected HTTP 200, received 400"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "payouts_read",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "bank_feed_read",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "payouts_reconciled",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "fee_journal_on_approval",
       "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "explanation": "app action expected HTTP 200, received 404"
     },
     {
       "id": "accrual_reverses_next_period",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "signoff_locks_period",
       "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "explanation": "app action expected HTTP 200, received 404"
     },
     {
       "id": "reminder_while_open",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "stripe_unreadable_blocks",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     }
   ],
-  "recorded_at": "2026-10-22T16:44:57.372Z"
+  "recorded_at": "2026-10-22T16:50:20.563Z"
 }
