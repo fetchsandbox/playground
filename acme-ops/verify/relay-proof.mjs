@@ -229,6 +229,10 @@ if (!tunnel?.app_base_url) {
   await finish(2);
 }
 log("relay", tunnel.app_base_url);
+// Anything thrown from here on (a seed refused by a twin, a relay error) must
+// still close the tunnel: a leaked tunnel blocks the next proof for a long time.
+process.on("uncaughtException", (err) => { console.error("FATAL", err?.stack ?? err); void finish(4); });
+process.on("unhandledRejection", (err) => { console.error("FATAL", err?.stack ?? err); void finish(4); });
 
 const session = await mcp.call("validate_integration", { providers: contract.providers, app_base_url: tunnel.app_base_url });
 save("session", session);

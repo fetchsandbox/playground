@@ -89,11 +89,13 @@ async function seed(legs, log) {
     const sub = await call("POST", "/v1/subscriptions", { customer: cus.body.id, "items[0][price]": price.body.id });
     trail.push(`subscription ${sub.body.status}`);
     await call("POST", "/v1/invoiceitems", { customer: cus.body.id, amount: "60000", currency: "usd", description: "Business plan" });
-    const base = { customer: cus.body.id, collection_method: "charge_automatically", auto_advance: "true" };
-    let inv = await call("POST", "/v1/invoices", { ...base, ...(sub.body.id ? { subscription: sub.body.id } : {}) });
-    if (!inv.body.id && sub.body.id) {
-      trail.push(`invoice with subscription ${inv.status} ${inv.body.error?.message ?? ""}`.trim());
-      inv = await call("POST", "/v1/invoices", base);
+    // Ask for the invoice a real account has, then drop options the twin refuses, recording each refusal.
+    const base = { customer: cus.body.id, collection_method: "charge_automatically" };
+    let inv = { status: 0, body: {} };
+    for (const extra of [{ auto_advance: "true", ...(sub.body.id ? { subscription: sub.body.id } : {}) }, { auto_advance: "true" }, {}]) {
+      inv = await call("POST", "/v1/invoices", { ...base, ...extra });
+      if (inv.body.id) break;
+      trail.push(`invoice ${JSON.stringify(extra)} → ${inv.status} ${inv.body.error?.message ?? ""}`.trim());
     }
     if (!inv.body.id) throw new Error(`seed invoice ${caseId} → ${inv.status} ${JSON.stringify(inv.body).slice(0, 200)}`);
     const fin = await call("POST", `/v1/invoices/${inv.body.id}/finalize`, {});
