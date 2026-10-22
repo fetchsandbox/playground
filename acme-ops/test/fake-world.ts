@@ -70,7 +70,7 @@ export function seedState() {
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
     shopify: { drafts: [] as any[], orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
-    gusto: { terminations: [] as any[], payrolls: [] as any[] },
+    gusto: { terminations: [] as any[], payrolls: [] as any[], employees: [] as any[] },
     box: { files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; sharedLink?: { url: string; unshared_at: string } }[] },
     docusign: { envelopes: [] as any[] },
     dependabot: [] as { repo: string; number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; dismissed_reason?: string }[],
@@ -606,6 +606,21 @@ export async function startWorld() {
         return send(201, p);
       }
       return send(200, state.gusto.payrolls);
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/companies\/([^/]+)\/employees$/))) return send(200, state.gusto.employees);
+    if ((r = m(/^\/v1\/companies\/([^/]+)\/payrolls\/([^/]+)$/))) {
+      const p = state.gusto.payrolls.find((x) => x.uuid === r![2]);
+      if (!p) return send(404, { errors: [{ category: "not_found" }] });
+      if (req.method === "PUT") {
+        if (p.processed) return send(422, { errors: [{ category: "invalid_operation", message: "Payroll already processed" }] });
+        if (body.version !== p.version) return send(409, { errors: [{ category: "invalid_attribute_value", error_key: "version" }] });
+        for (const c of body.employee_compensations ?? []) {
+          const cur = p.employee_compensations.find((x: any) => x.employee_uuid === c.employee_uuid);
+          if (cur) cur.excluded = c.excluded;
+        }
+        p.version = `v${++seq}`;
+      }
+      return send(200, p);
     }
     if (req.method === "PUT" && (r = m(/^\/v1\/companies\/([^/]+)\/payrolls\/([^/]+)\/submit$/))) {
       const p = state.gusto.payrolls.find((x) => x.uuid === r![2]);

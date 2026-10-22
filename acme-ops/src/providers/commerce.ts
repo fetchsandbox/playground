@@ -246,6 +246,18 @@ export interface NetSuitePurchaseOrder {
   item?: { items: { line: number; item: { id: string }; quantity: number; quantityReceived: number; quantityBilled: number; rate: number }[] };
 }
 
+export interface GustoPayroll {
+  uuid?: string;
+  payroll_uuid?: string;
+  version?: string;
+  processed?: boolean;
+  off_cycle?: boolean;
+  check_date?: string;
+  payroll_deadline?: string;
+  pay_period?: { start_date?: string; end_date?: string };
+  employee_compensations?: { employee_uuid: string; gross_pay?: string | null; net_pay?: string | null; excluded?: boolean }[];
+}
+
 /** Plaid Identity Match (https://plaid.com/docs/api/products/identity/#identitymatch): does the account owner match? */
 export class PlaidClient {
   constructor(readonly http: ProviderHttp, readonly clientId = "", readonly secret = "") {}
@@ -336,6 +348,25 @@ export class GustoClient {
     const created = (await this.http.request<any>("POST", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls`, { json: { off_cycle: true, off_cycle_reason: "Dismissed employee", start_date: p.startDate, end_date: p.endDate, check_date: p.checkDate, employee_uuids: [p.employeeId] } })).body;
     await this.http.request("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(created.uuid ?? created.payroll_uuid)}/submit`, { json: {} });
     return { uuid: created.uuid ?? created.payroll_uuid, check_date: created.check_date ?? p.checkDate, processed: true };
+  }
+
+  /** One payroll with per-employee compensation (gross and net pay as decimal strings). */
+  async getPayroll(id: string): Promise<GustoPayroll> {
+    return (await this.http.request<GustoPayroll>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(id)}`, { query: { include: "taxes,benefits,deductions" } })).body;
+  }
+
+  /** Excludes employees from an unprocessed payroll; `version` guards concurrent edits (409 on mismatch). */
+  async excludeEmployees(id: string, version: string, employeeIds: string[]): Promise<GustoPayroll> {
+    return (await this.http.request<GustoPayroll>("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(id)}`, { json: { version, employee_compensations: employeeIds.map((u) => ({ employee_uuid: u, excluded: true })) } })).body;
+  }
+
+  async submitPayroll(id: string): Promise<void> {
+    await this.http.request("PUT", `/v1/companies/${encodeURIComponent(this.companyId)}/payrolls/${encodeURIComponent(id)}/submit`, { json: {} });
+  }
+
+  async listEmployees(): Promise<{ uuid: string; first_name?: string; last_name?: string; terminated?: boolean; terminations?: { effective_date: string }[]; jobs?: { hire_date?: string }[] }[]> {
+    const { body } = await this.http.request<any>("GET", `/v1/companies/${encodeURIComponent(this.companyId)}/employees`, { query: { per: 500 } });
+    return Array.isArray(body) ? body : [];
   }
 
   async listPayrolls(startDate: string): Promise<{ uuid: string; off_cycle?: boolean; check_date?: string; employee_compensations?: { employee_uuid: string }[] }[]> {
