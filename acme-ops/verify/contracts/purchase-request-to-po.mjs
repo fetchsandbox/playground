@@ -1,4 +1,4 @@
-import { action, agent, all, check, command, eq, runs, start } from "./lib.mjs";
+import { action, agent, all, asCase, check, command, eq, runs, start } from "./lib.mjs";
 
 // Executable expectations for purchase request → PO (delegation-of-authority
 // chain as Kit v2 signals with segregation of duties, reminder and lapse
@@ -14,7 +14,9 @@ const id = (c, k) => `${k}:${input(c).requestId}`;
 const approve = (c, role, userId, step, status = 200) => command("signal", step, { actionId: id(c, `approve.${role}`), value: "approve", userId }, status);
 
 export const checks = [
-  check("baseline", "A purchase request is announced to procurement with its approval chain", [request("baseline")], runs([action("slack.post_request", "applied")])),
+  check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [request("baseline")], runs([], 1)),
+  // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
+  check("baseline_effects", "A purchase request is announced to procurement with its approval chain", [asCase("baseline_effects", request("baseline"))], runs([action("slack.post_request", "applied")])),
   check("vendor_and_budget_read", "Vendor status, committed spend, duplicates and sanctions are read before any approval", [request("vendor_and_budget_read")], runs([agent("vendor", "ok"), agent("budget", "ok"), agent("duplicates", "ok"), agent("screening", "ok"), eq("output.mode", "approval")])),
   check("chain_by_amount", "A 12,000 request needs the manager, then finance", [request("chain_by_amount")], runs([eq("output.approvalPath", "manager > finance"), action(id("chain_by_amount", "approve.manager"), "awaiting_signal")])),
   check("requester_cannot_approve", "The requester can't approve their own request", [request("requester_cannot_approve"), approve("requester_cannot_approve", "manager", "U_REQ", 1, 403)], runs([action(id("requester_cannot_approve", "approve.manager"), "awaiting_signal")])),
@@ -36,7 +38,7 @@ export default {
   },
   checks,
   coverage: {
-    baseline: ["baseline"],
+    baseline: ["baseline", "baseline_effects"],
     identity_and_access: ["requester_cannot_approve", "no_repeat_approver"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: ["chain_by_amount"],
