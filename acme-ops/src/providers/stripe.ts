@@ -336,6 +336,16 @@ export class StripeClient {
     return (await this.http.request<any>("GET", "/v1/payment_methods", { query: { customer, type: "card", limit: 20 } })).body?.data ?? [];
   }
 
+  /** Payouts that arrived in [from, to) (epoch seconds). */
+  listPayouts(fromSec: number, toSec: number) {
+    return this.listAll<{ id: string; amount: number; currency: string; arrival_date: number; status: string }>("/v1/payouts", { "arrival_date[gte]": fromSec, "arrival_date[lt]": toSec }, 1_000);
+  }
+
+  /** Balance transactions settled in a payout (charges, refunds, fees). */
+  payoutTransactions(payout: string) {
+    return this.listAll<{ id: string; amount: number; fee: number; type: string; currency: string }>("/v1/balance_transactions", { payout }, 10_000);
+  }
+
   async listBalanceTransactions(customer: string) {
     return (await this.http.request<any>("GET", `/v1/customers/${encodeURIComponent(customer)}/balance_transactions`, { query: { limit: 100 } })).body?.data ?? [];
   }

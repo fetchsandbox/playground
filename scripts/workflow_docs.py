@@ -22,6 +22,7 @@ WHY={
 'incident-comms':'IT Operations needs to identify affected customers and keep responders informed without sending an unreviewed outage statement.',
 'invoice-three-way-match':'Accounts Payable needs every supplier bill matched to what was ordered and received before it is paid, with people spending time only on real exceptions and duplicates never paid twice.',
 'license-reclaim':'IT Asset Management needs to recover unused seats after a warning and grace period, with approval before removing access.',
+'month-end-close':'Controllership needs the books closed on schedule: cash reconciled to the bank, journals proposed and approved by a controller, and the period locked only after sign-off, with a trail auditors accept.',
 'onboarding-kickoff':'Sales needs a reliable closed-won handoff that connects CRM, billing, support and kickoff preparation without silently creating a second subscription.',
 'order-status':'Customer Experience needs to answer delivery questions from billing and fulfillment records, and obtain approval before changing a promised date.',
 'order-to-cash':'Operations needs every paid storefront order booked in the ERP before a label is bought, shipped once, and tracked for the customer, holding anything unpaid or incomplete.',

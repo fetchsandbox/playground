@@ -112,6 +112,29 @@ export class NetSuiteClient {
     return (await this.http.request<NetSuitePurchaseOrder>("GET", `/services/rest/record/v1/purchaseOrder/${encodeURIComponent(id)}`, { query: { expandSubResources: "true" } })).body;
   }
 
+  /** Journal entries are found again by external id, so a retry never posts twice. */
+  async findJournal(externalId: string): Promise<{ id: string } | undefined> {
+    const rows = await this.suiteql<{ id: string | number }>(`SELECT id FROM transaction WHERE type = 'Journal' AND externalid = '${externalId.replaceAll("'", "''")}'`);
+    return rows[0] ? { id: String(rows[0].id) } : undefined;
+  }
+
+  async createJournal(j: { externalId: string; tranDate: string; memo: string; reversalDate?: string; lines: { account: string; debit?: number; credit?: number; memo?: string }[] }): Promise<{ id: string }> {
+    const res = await this.http.request<any>("POST", "/services/rest/record/v1/journalEntry", {
+      json: { externalId: j.externalId, tranDate: j.tranDate, memo: j.memo, ...(j.reversalDate ? { reversalDate: j.reversalDate, reversalDefer: false } : {}), line: { items: j.lines.map((l) => ({ account: { id: l.account }, debit: l.debit, credit: l.credit, memo: l.memo })) } },
+    });
+    const id = ((res.headers?.location as string | undefined) ?? "").split("/").pop() || res.body?.id;
+    if (!id) throw new Error("NetSuite returned no journal id");
+    return { id: String(id) };
+  }
+
+  /** Locks an accounting period for AP, AR and all postings. */
+  async lockPeriod(periodName: string): Promise<{ id: string }> {
+    const [p] = await this.suiteql<{ id: string | number }>(`SELECT id FROM accountingperiod WHERE periodname = '${periodName.replaceAll("'", "''")}'`);
+    if (!p) throw new Error(`no accounting period "${periodName}"`);
+    await this.http.request("PATCH", `/services/rest/record/v1/accountingPeriod/${p.id}`, { json: { apLocked: true, arLocked: true, allLocked: true } });
+    return { id: String(p.id) };
+  }
+
   /** SuiteQL (POST /services/rest/query/v1/suiteql), first page. */
   async suiteql<T = Record<string, unknown>>(q: string): Promise<T[]> {
     const { body } = await this.http.request<{ items?: T[] }>("POST", "/services/rest/query/v1/suiteql", { json: { q }, headers: { Prefer: "transient" }, query: { limit: 1000 } });
@@ -155,6 +178,19 @@ export interface NetSuitePurchaseOrder {
 /** Plaid Identity Match (https://plaid.com/docs/api/products/identity/#identitymatch): does the account owner match? */
 export class PlaidClient {
   constructor(readonly http: ProviderHttp, readonly clientId = "", readonly secret = "") {}
+
+  /** Bank transactions in [startDate, endDate]; Plaid amounts are positive for money out, negative for money in. */
+  async transactions(accessToken: string, startDate: string, endDate: string): Promise<{ transaction_id: string; amount: number; date: string; name: string; iso_currency_code: string | null }[]> {
+    const out: any[] = [];
+    for (let offset = 0; ; ) {
+      const { body } = await this.http.request<any>("POST", "/transactions/get", { json: { client_id: this.clientId || undefined, secret: this.secret || undefined, access_token: accessToken, start_date: startDate, end_date: endDate, options: { count: 500, offset } } });
+      const page = body?.transactions ?? [];
+      out.push(...page);
+      offset += page.length;
+      if (!page.length || offset >= (body?.total_transactions ?? 0)) break;
+    }
+    return out;
+  }
 
   async identityMatch(accessToken: string, legalName: string): Promise<{ accountId: string; mask: string | null; nameScore: number | null }[]> {
     const { body } = await this.http.request<any>("POST", "/identity/match", { json: { client_id: this.clientId || undefined, secret: this.secret || undefined, access_token: accessToken, user: { legal_name: legalName } } });

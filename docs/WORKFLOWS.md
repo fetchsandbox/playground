@@ -31,6 +31,7 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | Incident communications | IT / `it-operations` | 2 | [incident-comms](workflows/incident-comms.md) |
 | Invoice three-way match | Finance / `accounts-payable` | 1 | [invoice-three-way-match](workflows/invoice-three-way-match.md) |
 | SaaS license reclaim | IT / `it-asset-mgmt` | 1 | [license-reclaim](workflows/license-reclaim.md) |
+| Month-end close | Finance / `controllership` | 4 | [month-end-close](workflows/month-end-close.md) |
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
 | Order to cash with shipping | Operations / `fulfillment-ops` | 3 | [order-to-cash](workflows/order-to-cash.md) |

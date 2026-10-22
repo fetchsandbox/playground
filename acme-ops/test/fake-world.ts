@@ -47,6 +47,8 @@ export function seedState() {
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
       paymentMethods: [] as any[],
+      payouts: [] as any[],
+      payoutTxns: [] as any[],
       /** Behave like a backend that ignores starting_after. */
       ignoreCursor: false,
       disputes: [] as any[],
@@ -70,8 +72,8 @@ export function seedState() {
     pagerduty: { incidents: [] as any[] },
     datadog: { monitors: [] as any[], errorRate: 0.4 },
     github: { members: [] as { org: string; login: string; id: number; role: "admin" | "member" }[] },
-    netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[], vendorBills: [] as any[], purchaseOrders: [] as any[] },
-    plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]> },
+    netsuite: { salesOrders: [] as any[], vendors: [] as any[], bills: [] as any[], vendorBills: [] as any[], purchaseOrders: [] as any[], journals: [] as any[], periods: [] as any[], unbilledReceipts: 0 },
+    plaid: { accounts: {} as Record<string, { account_id: string; mask: string; legal_name: { score: number } }[]>, transactions: {} as Record<string, any[]> },
     verify: { verifications: [] as any[] },
     screening: { entries: [] as { name: string; source: string; score?: number }[] },
     easypost: { shipments: [] as any[], rates: [{ carrier: "USPS", service: "Ground", rate: "7.40", currency: "USD" }, { carrier: "UPS", service: "Ground", rate: "9.10", currency: "USD" }] as any[] },
@@ -261,6 +263,14 @@ export async function startWorld() {
       const t = S.transfers.find((x) => x.id === r![1]);
       return t ? send(200, t) : send(404, { error: { code: "resource_missing" } });
     }
+    if (req.method === "GET" && path === "/v1/payouts") {
+      const gte = Number(q.get("arrival_date[gte]") ?? 0);
+      const lt = Number(q.get("arrival_date[lt]") ?? Infinity);
+      return send(200, { data: S.payouts.filter((p) => p.arrival_date >= gte && p.arrival_date < lt), has_more: false });
+    }
+    if (req.method === "GET" && path === "/v1/balance_transactions") {
+      return send(200, { data: S.payoutTxns.filter((t) => t.payout === q.get("payout")), has_more: false });
+    }
     if (req.method === "GET" && path === "/v1/disputes") return send(200, { data: S.disputes, has_more: false });
     if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {
       const rf = S.refunds.find((x) => x.id === r![1]);
@@ -379,6 +389,30 @@ export async function startWorld() {
         return res.end();
       }
       return send(200, v);
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /type = 'Journal'/.test(body.q)) {
+      const ext = /externalid = '([^']*)'/.exec(body.q)?.[1];
+      return send(200, { items: state.netsuite.journals.filter((j) => j.externalId === ext).map((j) => ({ id: j.id })) });
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /FROM accountingperiod/.test(body.q)) {
+      const name = /periodname = '([^']*)'/.exec(body.q)?.[1];
+      return send(200, { items: state.netsuite.periods.filter((x) => x.periodName === name).map((x) => ({ id: x.id })) });
+    }
+    if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /isbilled = 'F'/.test(body.q)) {
+      return send(200, { items: [{ amount: state.netsuite.unbilledReceipts }] });
+    }
+    if (req.method === "POST" && path === "/services/rest/record/v1/journalEntry") {
+      const j = { id: String(++seq), ...body };
+      state.netsuite.journals.push(j);
+      res.writeHead(204, { location: `/services/rest/record/v1/journalEntry/${j.id}` });
+      return res.end();
+    }
+    if (req.method === "PATCH" && (r = m(/^\/services\/rest\/record\/v1\/accountingPeriod\/([^/]+)$/))) {
+      const per = state.netsuite.periods.find((x) => x.id === r![1]);
+      if (!per) return send(404, {});
+      Object.assign(per, body);
+      res.writeHead(204);
+      return res.end();
     }
     if (req.method === "POST" && path === "/services/rest/query/v1/suiteql" && /approvalstatus = 1/.test(body.q)) {
       return send(200, { items: state.netsuite.vendorBills.filter((b) => b.approvalStatus?.id === "1").map((b) => ({ id: b.id })) });
@@ -516,6 +550,13 @@ export async function startWorld() {
       const accts = state.plaid.accounts[body.access_token];
       if (!accts) return send(400, { error_type: "INVALID_INPUT", error_code: "INVALID_ACCESS_TOKEN" });
       return send(200, { accounts: accts });
+    }
+
+    if (req.method === "POST" && path === "/transactions/get") {
+      const all = (state.plaid.transactions[body.access_token] ?? []).filter((t) => t.date >= body.start_date && t.date <= body.end_date);
+      const off = body.options?.offset ?? 0;
+      const count = body.options?.count ?? 100;
+      return send(200, { transactions: all.slice(off, off + count), total_transactions: all.length });
     }
 
     // ---- Twilio Verify
