@@ -38,7 +38,7 @@ async function seed(legs, log) {
     const e = email(chk.id);
     made += await post(legs.hubspot, "/crm/v3/objects/contacts", { properties: { email: e, firstname: "Sam" } });
     made += await post(legs.stripe, "/v1/customers", { email: e, name: "Sam Subject" }, true);
-    made += await post(legs.zendesk, "/api/v2/tickets.json", { ticket: { subject: "Billing question", comment: { body: "Why was I charged twice?" }, requester: { email: e, name: "Sam Subject" } } });
+    made += await post(legs.zendesk, "/api/v2/tickets.json", { ticket: { subject: "Billing question", comment: { body: "Why was I charged twice?", public: true }, requester: { email: e, name: "Sam Subject" } } });
   }
   log("seed", made, "records;", trail.slice(0, 6).join("; "));
   return { made, trail };

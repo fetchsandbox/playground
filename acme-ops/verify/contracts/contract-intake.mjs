@@ -36,7 +36,8 @@ async function seed(legs, log) {
   try { json = JSON.parse(text); } catch {}
   const id = json?.entries?.[0]?.id;
   trail.push(`upload ${res.status}${id ? ` file ${id}` : ` ${text.slice(0, 200)}`}`);
-  if (id) for (const [i, c] of checks.entries()) checks[i] = JSON.parse(JSON.stringify(c).replaceAll('"boxFileId":"1"', `"boxFileId":"${id}"`));
+  // The baseline keeps its placeholder id so it measures a recorded run whatever the twin returns.
+  if (id) for (const [i, c] of checks.entries()) if (c.id !== "baseline") checks[i] = JSON.parse(JSON.stringify(c).replaceAll('"boxFileId":"1"', `"boxFileId":"${id}"`));
   log("seed", trail.join("; "));
   return { trail };
 }

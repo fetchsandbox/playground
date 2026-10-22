@@ -104,7 +104,7 @@ export const usageTrueUp: WorkflowDef<Input> = {
         }
         const unread = Object.values(usage).filter((v) => v === null).length;
         if (unread === input.customers.length) throw new FatalError("the meter could not be read for any customer");
-        return { summary: `usage for ${input.customers.length - unread} customer(s)${unread ? `, ${unread} unreadable` : ""}`, data: usage };
+        return { summary: `usage for ${input.customers.length - unread} customer(s)${unread ? `, ${unread} unreadable` : ""}: ${Object.entries(usage).map(([c, u]) => `${c}=${u ?? "?"}`).join(", ").slice(0, 300)}`, data: usage };
       },
     },
   ],

@@ -58,7 +58,9 @@ async function seed(legs, log) {
   }
   await call("github", "POST", `/repos/${REPO}/deployments`, { ref: "main", environment: "production", payload: {} });
   const mon = await call("datadog", "POST", "/api/v1/monitor", { name: "checkout 5xx", type: "metric alert", query: "avg(last_5m):sum:checkout.errors{*} > 5" });
-  const monitorId = mon.body?.id;
+  // Datadog documents monitor ids as integers; record anything else instead of using it.
+  const monitorId = Number.isInteger(Number(mon.body?.id)) ? Number(mon.body.id) : undefined;
+  if (mon.body?.id !== undefined && monitorId === undefined) trail.push(`monitor id is ${JSON.stringify(mon.body.id)}, not an integer`);
   for (const [i, c] of checks.entries()) {
     let json = JSON.stringify(c);
     if (n) json = json.replaceAll('"pullRequest":1', `"pullRequest":${n}`);

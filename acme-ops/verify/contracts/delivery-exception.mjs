@@ -7,7 +7,8 @@ import { action, actionKind, agent, all, check, eq, runs, start, asCase } from "
 // every branch depends on, so those branches are measured as gaps. seed()
 // creates each check's order in the Shopify twin.
 const OPS = "C0FULFIL001";
-const order = (c) => `ORDER_${c}`;
+// Numeric placeholders (Shopify order ids are integers), replaced by seeded ids when seeding works.
+const order = (c) => `9000${String(Math.abs([...c].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7))).padStart(10, "0")}`;
 const input = (c, over = {}) => ({ eventId: `evt_${c}`.slice(0, 68), trackerId: `trk_${c}`, orderId: order(c), opsChannel: OPS, approvers: ["U_LEAD"], ...over });
 const event = (c, over) => start(c, input(c, over));
 

@@ -46,7 +46,7 @@ async function seed(legs, log) {
   let made = 0;
   for (const [c, rows] of Object.entries(FIXTURES)) {
     for (const [i, row] of rows.entries()) {
-      const t = await call("POST", "/api/v2/tickets.json", { ticket: { subject: `SLA ${c} ${i}`, priority: row.priority, status: row.status ?? "open", tags: [scope(c), ...(row.enterprise ? ["tier_enterprise"] : [])], comment: { body: "Customer question" }, requester: { email: `${c.replaceAll("_", "-")}-${i}@sla.example`, name: "Customer" } } });
+      const t = await call("POST", "/api/v2/tickets.json", { ticket: { subject: `SLA ${c} ${i}`, priority: row.priority, status: row.status ?? "open", tags: [scope(c), ...(row.enterprise ? ["tier_enterprise"] : [])], comment: { body: "Customer question", public: true }, requester: { email: `${c.replaceAll("_", "-")}-${i}@sla.example`, name: "Customer" } } });
       const id = t?.ticket?.id;
       if (!id) continue;
       made++;
