@@ -640,7 +640,14 @@ export async function startWorld() {
 
     // ---- PagerDuty
     if (req.method === "GET" && path === "/incidents") {
-      return send(200, { incidents: state.pagerduty.incidents, more: false });
+      return send(200, { incidents: state.pagerduty.incidents.filter((i) => i.status !== "resolved"), more: false });
+    }
+    if (req.method === "POST" && path === "/incidents") {
+      const inc = body.incident;
+      if (state.pagerduty.incidents.some((i) => i.incident_key === inc.incident_key && i.status !== "resolved")) return send(400, { error: { message: "Open incident with matching dedup key already exists on this service", code: 2001 } });
+      const created = { id: id("PINC"), status: "triggered", urgency: inc.urgency, title: inc.title, incident_key: inc.incident_key, service: inc.service, from: req.headers.from };
+      state.pagerduty.incidents.push(created);
+      return send(201, { incident: created });
     }
 
     // ---- Datadog
@@ -714,6 +721,13 @@ export async function startWorld() {
       return send(201, { ticket: t });
     }
     if (req.method === "GET" && path === "/api/v2/tickets.json") {
+      if (q.get("page[size]")) {
+        const size = Number(q.get("page[size]"));
+        const start = Number(q.get("page[after]") ?? 0);
+        const page = Z.tickets.slice(start, start + size);
+        const more = start + size < Z.tickets.length;
+        return send(200, { tickets: page, meta: { has_more: more, after_cursor: more ? String(start + size) : null } });
+      }
       return send(200, { tickets: Z.tickets.filter((t) => !q.get("external_id") || t.external_id === q.get("external_id")) });
     }
     if (req.method === "GET" && (r = m(/^\/api\/v2\/tickets\/(\d+)\/comments\.json$/))) {

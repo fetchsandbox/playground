@@ -259,7 +259,7 @@ export class PagerDutyClient {
   ) {}
 
   /** Open (triggered or acknowledged) incidents on these services. */
-  async openIncidents(serviceIds: string[]): Promise<{ id: string; urgency: string; status: string; title?: string; priority?: { summary?: string } | null }[]> {
+  async openIncidents(serviceIds: string[]): Promise<{ id: string; urgency: string; status: string; title?: string; incident_key?: string | null; priority?: { summary?: string } | null }[]> {
     const { body } = await this.http.request<any>("GET", "/incidents", { query: { "service_ids[]": serviceIds.join(","), "statuses[]": "triggered,acknowledged", limit: 100 } });
     return (body?.incidents ?? []).filter((i: any) => !serviceIds.length || serviceIds.includes(i.service?.id));
   }
@@ -268,6 +268,15 @@ export class PagerDutyClient {
   async onCall(escalationPolicyId: string): Promise<{ user: { id: string; summary?: string } }[]> {
     const { body } = await this.http.request<any>("GET", "/oncalls", { query: { "escalation_policy_ids[]": escalationPolicyId, earliest: "true" } });
     return body?.oncalls ?? [];
+  }
+
+  /** Opens an incident; `incident_key` de-duplicates a re-sent page while the first is open. */
+  async createIncident(i: { serviceId: string; title: string; incidentKey: string; details: string; urgency: "high" | "low" }): Promise<{ id: string; status: string }> {
+    const { body } = await this.http.request<any>("POST", "/incidents", {
+      json: { incident: { type: "incident", title: i.title, service: { id: i.serviceId, type: "service_reference" }, urgency: i.urgency, incident_key: i.incidentKey, body: { type: "incident_body", details: i.details } } },
+      headers: { From: this.fromEmail },
+    });
+    return { id: String(body?.incident?.id), status: String(body?.incident?.status) };
   }
 
   async addNote(incidentId: string, content: string): Promise<{ id: string }> {
