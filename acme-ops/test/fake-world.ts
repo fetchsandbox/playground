@@ -284,8 +284,15 @@ export async function startWorld() {
     // ---- HubSpot
     const H = state.hubspot;
     if (req.method === "POST" && path === "/crm/v3/objects/contacts/search") {
-      const f = body.filterGroups?.[0]?.filters?.[0];
-      const results = H.contacts.filter((c) => String(c.properties[f.propertyName] ?? "").toLowerCase() === String(f.value).toLowerCase());
+      const filters: any[] = body.filterGroups?.[0]?.filters ?? [];
+      const ok = (c: any, f: any) => {
+        const v = c.properties[f.propertyName];
+        if (f.operator === "HAS_PROPERTY") return v !== undefined && v !== null && v !== "";
+        if (f.operator === "NOT_HAS_PROPERTY") return v === undefined || v === null || v === "";
+        const eq = String(v ?? "").toLowerCase() === String(f.value).toLowerCase();
+        return f.operator === "NEQ" ? !eq : eq;
+      };
+      const results = H.contacts.filter((c) => filters.every((f) => ok(c, f)));
       return send(200, { total: results.length, results });
     }
     if (req.method === "POST" && path === "/crm/v3/objects/contacts") {

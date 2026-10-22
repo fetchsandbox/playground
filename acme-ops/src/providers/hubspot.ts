@@ -12,7 +12,7 @@ interface SearchResponse {
   paging?: { next?: { after: string } };
 }
 
-const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "hs_lead_status", "hubspot_owner_id"];
+const PROPS = ["email", "firstname", "lastname", "company", "lifecyclestage", "hs_lead_status", "hubspot_owner_id", "hs_email_domain", "country", "numberofemployees", "notes_last_contacted", "createdate"];
 
 /** HubSpot CRM v3 contacts. Email is the unique key; a 409 on create names the existing id. */
 export class HubSpotClient {
@@ -38,6 +38,19 @@ export class HubSpotClient {
       if (!after || !body?.results?.length) break;
     }
     return out;
+  }
+
+  /** Contacts matching every filter (AND), up to `max`. */
+  async searchAll(filters: { propertyName: string; operator: "EQ" | "NEQ" | "HAS_PROPERTY" | "NOT_HAS_PROPERTY"; value?: string }[], max = 1000): Promise<HubSpotContact[]> {
+    const out: HubSpotContact[] = [];
+    let after: string | undefined;
+    while (out.length < max) {
+      const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/contacts/search", { json: { filterGroups: [{ filters }], properties: PROPS, limit: 100, after } });
+      out.push(...(body?.results ?? []));
+      after = body?.paging?.next?.after;
+      if (!after || !body?.results?.length) break;
+    }
+    return out.slice(0, max);
   }
 
   async get(id: string): Promise<HubSpotContact> {
