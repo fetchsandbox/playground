@@ -221,7 +221,8 @@ export const purchaseRequestToPo: WorkflowDef<Input> = {
     const hits = out<string[]>(results, "screening");
     if (!vendor || !vendor.usable || !hits || hits.length || !budget) return { mode: "stopped" };
     const overBudget = input.amount > budget.remaining;
-    return { mode: "approval", chain: chain(input.amount, overBudget), overBudget, possibleDuplicates: out<string[]>(results, "duplicates")?.length ?? null };
+    const c = chain(input.amount, overBudget);
+    return { mode: "approval", chain: c, approvalPath: c.join(" > "), overBudget, possibleDuplicates: out<string[]>(results, "duplicates")?.length ?? null };
   },
 
   catalog: [

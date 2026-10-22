@@ -42,7 +42,7 @@ describe("purchase-request-to-po runs", () => {
   it("manager then finance approve, the PO is raised once and the requester gets its number", async () => {
     const e = w.engine(purchaseRequestToPo, { now: () => NOW });
     const r = await e.handle({ action: "start", runId: "p", input: input(), requestedBy: user });
-    expect(r.body.output).toEqual({ mode: "approval", chain: ["manager", "finance"], overBudget: false, possibleDuplicates: 0 });
+    expect(r.body.output).toEqual({ mode: "approval", chain: ["manager", "finance"], approvalPath: "manager > finance", overBudget: false, possibleDuplicates: 0 });
     expect((await e.handle(sig("manager", "U_REQ"))).status).toBe(403);
     await e.handle(sig("manager", "U_MGR"));
     // Someone who already approved this request can't approve it again in another role.
@@ -66,7 +66,7 @@ describe("purchase-request-to-po runs", () => {
     w.state.netsuite.purchaseOrders.push({ id: "77", tranId: "PO77", entity: { id: "301" }, department: { id: "7" }, total: 99500 });
     w.state.netsuite.purchaseOrders.push({ id: "78", tranId: "PO78", entity: { id: "301" }, department: { id: "9" }, total: 900 });
     const r = await w.engine(purchaseRequestToPo, { now: () => NOW }).handle({ action: "start", runId: "p", input: input({ amount: 900_00 }), requestedBy: user });
-    expect(r.body.output).toEqual({ mode: "approval", chain: ["manager", "finance"], overBudget: true, possibleDuplicates: 1 });
+    expect(r.body.output).toEqual({ mode: "approval", chain: ["manager", "finance"], approvalPath: "manager > finance", overBudget: true, possibleDuplicates: 1 });
     expect(w.state.slack.messages[0].text).toMatch(/Over budget: \$500\.00 left\. :warning: Possible duplicate of PO78/);
   });
 
