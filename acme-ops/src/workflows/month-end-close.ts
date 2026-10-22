@@ -29,8 +29,8 @@ const Input = z.object({
   period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "YYYY-MM"),
   /** NetSuite accounting period name, e.g. "Oct 2026". */
   periodName: z.string().min(3).max(40),
-  /** Plaid access token of the operating account Stripe pays out to. */
-  bankAccessToken: z.string().regex(/^access-[\w-]{6,120}$/),
+  /** Plaid access token of the operating account Stripe pays out to (opaque; Plaid documents no format). */
+  bankAccessToken: z.string().min(8).max(200).regex(/^\S+$/),
   closeChannel: ChannelId,
   closeWorkspace: z.string().min(1).default("acme-close"),
   /** Controllers: approve journals and sign off. */

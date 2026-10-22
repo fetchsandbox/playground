@@ -1,0 +1,69 @@
+{
+  "workflow": "failed-payment-dunning",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-failed-payment-dunning-1.0.0-ed90f18",
+  "session_id": "vs_f49bfc2ce12e",
+  "run_id": "vr_57ce9995377240f6a27b6726106fa7b2",
+  "receipt_url": "https://fetchsandbox.com/runs/38ef7d3cb1?flow=vr_57ce9995377240f6a27b6726106fa7b2",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "first_failure_card_update_notice",
+      "status": "unmeasured",
+      "explanation": "required observation 'attempt_count' is missing"
+    },
+    {
+      "id": "second_failure_tries_backup_card",
+      "status": "unmeasured",
+      "explanation": "required observation 'attempt_count' is missing"
+    },
+    {
+      "id": "final_notice_after_14_days",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    },
+    {
+      "id": "cancellation_needs_approval",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    },
+    {
+      "id": "repeated_failure_no_second_notice",
+      "status": "violated",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 0; runs[*]: expected exactly 1, found 2"
+    },
+    {
+      "id": "paid_invoice_contacts_nobody",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_invoice_contacts_nobody",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T16:18:53.623Z"
+}

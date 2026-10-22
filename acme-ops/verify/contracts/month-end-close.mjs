@@ -49,6 +49,8 @@ async function seed(legs, log) {
   const pub = await plaid("/sandbox/public_token/create", { institution_id: "ins_109508", initial_products: ["transactions"] });
   const ex = pub.public_token ? await plaid("/item/public_token/exchange", { public_token: pub.public_token }) : {};
   const token = ex.access_token ?? null;
+  // Record the token's shape (letters → a, digits → 9), never the token.
+  if (token) trail.push(`access_token shape ${String(token).replace(/[A-Za-z]/g, "a").replace(/\d/g, "9").slice(0, 60)}`);
   if (token) {
     const tx = await plaid("/transactions/get", { access_token: token, start_date: "2026-10-01", end_date: "2026-11-03" });
     trail.push(`plaid transactions: ${tx.transactions?.length ?? 0}, stripe deposits: ${(tx.transactions ?? []).filter((t) => /stripe/i.test(t.name ?? "")).length}`);
