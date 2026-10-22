@@ -47,13 +47,19 @@ export function seedState() {
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
       disputes: [] as any[],
+      accounts: [] as any[],
+      transfers: [] as any[],
+      /** Idempotency-Key → transfer, as real Stripe keeps for 24h. */
+      transferKeys: new Map<string, any>(),
+      /** Lose this many transfer responses after the transfer was created (the effect happens, the reply doesn't). */
+      loseTransferResponses: 0,
     },
     hubspot: { contacts: [] as any[] },
     gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
-    workos: { users: [] as any[], memberships: [] as any[] },
+    workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
   };
@@ -121,6 +127,8 @@ export async function startWorld() {
     }
     if ((r = m(/^\/v1\/customers\/([^/]+)\/balance_transactions(?:\/([^/]+))?$/))) {
       if (req.method === "POST") {
+        const owner = S.customers.find((x) => x.id === r![1]);
+        if (owner?.currency && owner.currency.toLowerCase() !== String(body.currency).toLowerCase()) return send(400, { error: { type: "invalid_request_error", code: "currency_mismatch", message: "Customer balance currency differs" } });
         const tx = { id: id("cbtxn"), customer: r[1], amount: Number(body.amount), currency: body.currency, description: body.description, metadata: meta() };
         S.balanceTxns.push(tx);
         return send(200, tx);
@@ -171,9 +179,17 @@ export async function startWorld() {
     if (req.method === "GET" && path === "/v1/payment_intents") {
       return send(200, { data: S.paymentIntents.filter((p) => !q.get("customer") || p.customer === q.get("customer")), has_more: false });
     }
-    if (req.method === "GET" && (r = m(/^\/v1\/payment_intents\/([^/]+)$/))) {
+    if (req.method === "POST" && path === "/v1/payment_intents") {
+      const declined = String(body.payment_method).includes("Declined");
+      const p = { id: id("pi"), customer: body.customer, amount: Number(body.amount), amount_received: declined ? 0 : Number(body.amount), currency: body.currency, status: declined ? "requires_payment_method" : "succeeded", latest_charge: declined ? null : id("ch"), created: Math.floor(Date.now() / 1000), description: body.description, metadata: meta() };
+      S.paymentIntents.push(p);
+      return send(200, p);
+    }
+    if ((r = m(/^\/v1\/payment_intents\/([^/]+)$/))) {
       const p = S.paymentIntents.find((x) => x.id === r![1]);
-      return p ? send(200, p) : send(404, { error: { code: "resource_missing" } });
+      if (!p) return send(404, { error: { code: "resource_missing" } });
+      if (req.method === "POST") p.metadata = { ...p.metadata, ...meta() };
+      return send(200, p);
     }
     if (req.method === "POST" && path === "/v1/refunds") {
       const pi = S.paymentIntents.find((x) => x.id === body.payment_intent);
@@ -183,6 +199,32 @@ export async function startWorld() {
       const rf = { id: id("re"), amount: Number(body.amount), currency: pi.currency, charge: pi.latest_charge, payment_intent: pi.id, status: "succeeded", metadata: meta() };
       S.refunds.push(rf);
       return send(200, rf);
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/accounts\/([^/]+)$/))) {
+      const a = S.accounts.find((x) => x.id === r![1]);
+      return a ? send(200, a) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "POST" && path === "/v1/transfers") {
+      const key = String(req.headers["idempotency-key"] ?? "");
+      let t = key ? S.transferKeys.get(key) : undefined;
+      if (!t) {
+        t = { id: id("tr"), amount: Number(body.amount), currency: body.currency, destination: body.destination, transfer_group: body.transfer_group, metadata: meta(), reversed: false, amount_reversed: 0 };
+        S.transfers.push(t);
+        if (key) S.transferKeys.set(key, t);
+      }
+      if (S.loseTransferResponses > 0) {
+        S.loseTransferResponses--;
+        req.socket.destroy();
+        return;
+      }
+      return send(200, t);
+    }
+    if (req.method === "GET" && path === "/v1/transfers") {
+      return send(200, { data: S.transfers.filter((t) => !q.get("transfer_group") || t.transfer_group === q.get("transfer_group")), has_more: false });
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/transfers\/([^/]+)$/))) {
+      const t = S.transfers.find((x) => x.id === r![1]);
+      return t ? send(200, t) : send(404, { error: { code: "resource_missing" } });
     }
     if (req.method === "GET" && path === "/v1/disputes") return send(200, { data: S.disputes, has_more: false });
     if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {
@@ -283,6 +325,10 @@ export async function startWorld() {
       }
       return send(200, { ticket: t });
     }
+    if (req.method === "GET" && (r = m(/^\/api\/v2\/users\/(\d+)\.json$/))) {
+      const u = Z.users.find((x) => String(x.id) === r![1]) ?? Z.tickets.filter((t) => String(t.requester_id) === r![1]).map((t) => ({ id: t.requester_id, email: t.requester_email, name: t.requester_name }))[0];
+      return u ? send(200, { user: u }) : send(404, { error: "RecordNotFound" });
+    }
     if (req.method === "GET" && path === "/api/v2/search.json") {
       const query = q.get("query") ?? "";
       const tag = /tags:(\S+)/.exec(query)?.[1];
@@ -307,6 +353,34 @@ export async function startWorld() {
     if (req.method === "GET" && path === "/user_management/users") {
       return send(200, { data: W.users.filter((u) => !q.get("email") || u.email === q.get("email")), list_metadata: {} });
     }
+    if (req.method === "POST" && path === "/user_management/users") {
+      const u = { id: id("user"), ...body };
+      W.users.push(u);
+      return send(201, u);
+    }
+    if (req.method === "POST" && path === "/user_management/organization_memberships") {
+      const mem = { id: id("om"), user_id: body.user_id, organization_id: body.organization_id, role: { slug: body.role_slug }, status: "active" };
+      W.memberships.push(mem);
+      return send(201, mem);
+    }
+    if ((r = m(/^\/user_management\/organization_memberships\/([^/]+)$/))) {
+      const mem = W.memberships.find((x) => x.id === r![1]);
+      if (!mem) return send(404, { code: "entity_not_found" });
+      if (req.method === "DELETE") {
+        W.memberships = W.memberships.filter((x) => x.id !== mem.id);
+        return send(204, {});
+      }
+      return send(200, mem);
+    }
+    if (req.method === "GET" && (r = m(/^\/user_management\/users\/([^/]+)\/sessions$/))) {
+      return send(200, { data: W.sessions.filter((x) => x.user_id === r![1] && !x.revoked), list_metadata: {} });
+    }
+    if (req.method === "POST" && path === "/user_management/sessions/revoke") {
+      const ses = W.sessions.find((x) => x.id === body.session_id);
+      if (!ses) return send(404, { code: "entity_not_found" });
+      ses.revoked = true;
+      return send(200, {});
+    }
     if ((r = m(/^\/user_management\/users\/([^/]+)$/))) {
       const u = W.users.find((x) => x.id === r![1]);
       if (!u) return send(404, { code: "entity_not_found" });
@@ -318,7 +392,8 @@ export async function startWorld() {
       return send(200, u);
     }
     if (req.method === "GET" && path === "/user_management/organization_memberships") {
-      return send(200, { data: W.memberships.filter((x) => x.user_id === q.get("user_id")), list_metadata: {} });
+      const org = q.get("organization_id");
+      return send(200, { data: W.memberships.filter((x) => (org ? x.organization_id === org : x.user_id === q.get("user_id"))), list_metadata: {} });
     }
 
     // ---- Asana

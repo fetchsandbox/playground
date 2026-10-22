@@ -5,6 +5,7 @@ import { errorMessage } from "./errors";
 import type { Logger } from "./log";
 import {controlEnvelope,type ControlConfig} from "./looplabs-control";
 import type {KvStore} from "./store";
+import { handleStripeWebhook } from "./webhooks";
 
 const MAX_BODY = 1_000_000;
 
@@ -38,7 +39,11 @@ export interface ServerOptions {
   verifierToken?: string;
   /** Correlation headers applied when the request carries none (e.g. X_FLOW_RUN_ID). */
   defaultCorrelation?: Record<string, string>;
+  /** Signing secret of the Stripe webhook endpoint (whsec_...). Without it, Stripe events are refused. */
+  stripeWebhookSecret?: string;
 }
+
+const STRIPE_WEBHOOK_PATH = "/webhooks/stripe";
 
 /**
  * AgentCore Runtime HTTP contract: POST /invocations and GET /ping on :8080.
@@ -60,7 +65,27 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
       res.end(JSON.stringify(body));
     };
     const path = (req.url ?? "/").split("?")[0]!;
+    const correlationOf = (headers: Record<string, unknown>) => {
+      const correlation: Record<string, string> = { ...opts.defaultCorrelation };
+      for (const h of CORRELATION_HEADERS) {
+        const v = headers[h];
+        if (typeof v === "string" && v) correlation[h] = v;
+      }
+      return correlation;
+    };
+    const stripeEvent = (raw: string, headers: Record<string, unknown>) =>
+      handleStripeWebhook(engine, raw, Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), typeof v === "string" ? v : undefined])), {
+        secret: opts.stripeWebhookSecret,
+        correlation: correlationOf(Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]))),
+        log,
+      });
     try {
+      // Stripe delivers straight to this route (local runs, the FetchSandbox relay)...
+      if (req.method === "POST" && path === STRIPE_WEBHOOK_PATH) {
+        const reply = await stripeEvent(await readBody(req), req.headers);
+        return send(reply.status, reply.body);
+      }
+
       if (req.method === "GET" && path === "/ping") {
         const status = engine.busy ? "HealthyBusy" : "Healthy";
         if (status !== lastStatus) {
@@ -76,6 +101,13 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
           json = JSON.parse(await readBody(req));
         } catch (err) {
           return send((err as { status?: number }).status ?? 400, { error: "body must be a JSON command" });
+        }
+        // ...or, on AgentCore (which only routes /invocations), a webhook adapter forwards
+        // the untouched request as {method, path, headers, raw_body} and relays the reply.
+        const env = json as { method?: unknown; path?: unknown; headers?: unknown; raw_body?: unknown };
+        if (env && typeof env === "object" && env.path === STRIPE_WEBHOOK_PATH && env.method === "POST" && typeof env.raw_body === "string" && env.headers && typeof env.headers === "object") {
+          const reply = await stripeEvent(env.raw_body, env.headers as Record<string, unknown>);
+          return send(200, { status: reply.status, body: Buffer.from(JSON.stringify(reply.body)).toString("base64"), headers: { "content-type": "application/json" } });
         }
         if(opts.control && json && typeof json === "object" && ("raw_body" in json || "path" in json)) return send(200,await controlEnvelope(engine,opts.control.store,opts.control.config,json));
         const parsed = CommandSchema.safeParse(json);

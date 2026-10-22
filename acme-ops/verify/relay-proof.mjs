@@ -170,6 +170,8 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     HOST: "127.0.0.1",
     STATE_FILE: stateFile,
     PROVIDER_RETRIES: "2",
+    // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
+    ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
@@ -253,6 +255,8 @@ const application_config = {
   coverage_review: coverage(contract.coverage, contract.checks),
   scope_review: contract.scope_review ?? scope(contract.checks, contract.evidence),
   checks: contract.checks,
+  // Optional contract-specific config, e.g. event_destinations for signed webhooks.
+  ...(contract.applicationConfig ?? {}),
 };
 save("application_config", application_config);
 const cfg = await settle(mcp, await mcp.call("validate_integration", { session_id: sid, suite: "application_workflow_v1", application_config }), "configure");
@@ -264,7 +268,7 @@ if (!runId) {
 }
 log("run", runId);
 
-const creds = await settle(mcp, await mcp.call("install_test_credentials", { session_id: sid, run_id: runId }), "credentials");
+const creds = await settle(mcp, await mcp.call("install_test_credentials", { session_id: sid, run_id: runId, ...(contract.envMapping ? { env_mapping: contract.envMapping } : {}) }), "credentials");
 save("credentials", { variable_names: creds.variable_names, expires_in_seconds: creds.expires_in_seconds });
 credentialFile = creds.credential_file;
 if (!credentialFile) {

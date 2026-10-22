@@ -50,6 +50,7 @@ const server = createAgentServer(engine as Engine<unknown>, log, {
   ...(control?{control:{config:control,store}}:{}),
   verifierToken: process.env.FETCHSANDBOX_VERIFIER_TOKEN || undefined,
   defaultCorrelation: process.env.X_FLOW_RUN_ID ? { "x-flow-run-id": process.env.X_FLOW_RUN_ID } : {},
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || undefined,
 });
 const port = Number(process.env.PORT ?? 8080);
 server.listen(port, process.env.HOST ?? "0.0.0.0", () =>

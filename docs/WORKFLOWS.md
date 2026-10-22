@@ -6,14 +6,18 @@ The repository is public and MIT-licensed; your own provider accounts, credentia
 
 ## Acme workflows on main
 
+Progress, twin research and pending work are tracked in [TRACKER.md](TRACKER.md).
+
 Each guide includes a business need, department/team, agent roles, input, writes, approval gates, setup, declared scenarios and the exact historical receipt status.
 
 | Workflow | Department / team | Roles | Business guide |
 |---|---|---:|---|
+| Account takeover containment | IT / `it-security` | 3 | [account-takeover-containment](workflows/account-takeover-containment.md) |
 | Joiner, mover, leaver access | IT / `it-identity` | 2 | [access-jml](workflows/access-jml.md) |
 | Churn-risk sweep | Customer Success / `cs-ops` | 6 | [churn-risk-sweep](workflows/churn-risk-sweep.md) |
 | Collections and credit hold | Finance / `ar-collections` | 2 | [collections-credit-hold](workflows/collections-credit-hold.md) |
 | Compliance documents on request | Quality / `quality-compliance` | 4 | [compliance-docs](workflows/compliance-docs.md) |
+| Cross-border refund (multi-currency) | Customer Experience / `global-support` | 3 | [cross-border-refund](workflows/cross-border-refund.md) |
 | Distributor rebate and point-of-sale claims | Finance / `channel-finance` | 3 | [distributor-claims](workflows/distributor-claims.md) |
 | Duplicate charge remediation | Finance / `billing-ops` | 4 | [duplicate-charge-remediation](workflows/duplicate-charge-remediation.md) |
 | Export screening and order hold | Trade Compliance / `trade-compliance` | 3 | [export-screening](workflows/export-screening.md) |
@@ -22,6 +26,8 @@ Each guide includes a business need, department/team, agent roles, input, writes
 | SaaS license reclaim | IT / `it-asset-mgmt` | 1 | [license-reclaim](workflows/license-reclaim.md) |
 | Onboarding kickoff | Sales / `sales-ops` | 5 | [onboarding-kickoff](workflows/onboarding-kickoff.md) |
 | Order status and expedite | Customer Experience / `cx-service` | 4 | [order-status](workflows/order-status.md) |
+| Paid order provisioning (Stripe events) | Sales / `order-ops` | 3 | [paid-order-provisioning](workflows/paid-order-provisioning.md) |
+| Partner payout run | Finance / `partner-ops` | 3 | [partner-payout-run](workflows/partner-payout-run.md) |
 | Product change and end-of-life notices | Engineering / `product-engineering` | 3 | [pcn-eol-notice](workflows/pcn-eol-notice.md) |
 | Privacy erasure request (GDPR / CCPA) | Legal / `privacy-ops` | 4 | [privacy-erasure](workflows/privacy-erasure.md) |
 | Product cancellation and refund | Customer Experience / `cx-retention` | 4 | [product-cancellation](workflows/product-cancellation.md) |

@@ -106,6 +106,21 @@ export class WorkOSClient {
   async deleteMembership(id: string): Promise<void> {
     await this.http.request("DELETE", `/user_management/organization_memberships/${encodeURIComponent(id)}`);
   }
+
+  async listOrganizationMemberships(organizationId: string): Promise<WorkOSMembership[]> {
+    const { body } = await this.http.request<any>("GET", "/user_management/organization_memberships", { query: { organization_id: organizationId, limit: 100 } });
+    return Array.isArray(body?.data) ? body.data.filter((m: WorkOSMembership) => m.organization_id === organizationId) : [];
+  }
+
+  /** Active sessions of one user. */
+  async listSessions(userId: string): Promise<{ id: string }[]> {
+    const { body } = await this.http.request<any>("GET", `/user_management/users/${encodeURIComponent(userId)}/sessions`, { query: { limit: 100 } });
+    return body?.data ?? [];
+  }
+
+  async revokeSession(sessionId: string): Promise<void> {
+    await this.http.request("POST", "/user_management/sessions/revoke", { json: { session_id: sessionId } });
+  }
 }
 
 /** GitHub issues: ACME engineering's change records (PCN / EOL) and IT requests. */

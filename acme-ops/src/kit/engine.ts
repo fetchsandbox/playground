@@ -118,6 +118,11 @@ export class Engine<I> {
     return this.inflight.size > 0;
   }
 
+  /** Provider clients for a webhook mapper, stamped with the delivery's correlation headers. */
+  providersFor(correlation: Record<string, string>) {
+    return this.deps.providers(correlation);
+  }
+
   async idle() {
     await Promise.allSettled([...this.inflight]);
   }
