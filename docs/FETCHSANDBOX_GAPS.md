@@ -25,7 +25,37 @@ before relying on a "not supported" line.
 
 ## Results
 
-_Receipts for failed-payment-dunning, customer-data-sweep and order-to-cash are still running (FetchSandbox tunnel allowance); ai-support-triage: 18 held, 3 violated (the model checks), receipt https://fetchsandbox.com/runs/8b707a425c?flow=vr_7609225e94cb4126a1649d0772bd8bb1. This section is completed when the remaining receipts land._
+Each row is one checked-in receipt (`acme-ops/verify/receipts/<workflow>.json`,
+app version in the receipt). "Proved" lists what FetchSandbox measured as held;
+"Not proved" names the check ids that were violated or unmeasured and the cause
+traced in the runtime log. A violated check here is a **FetchSandbox gap unless
+the cause column says otherwise**; the same checks pass locally against the fake.
+
+| Workflow | App version | Held / violated / unmeasured | Proved on twins | Not proved, and why | Needs |
+|---|---|---|---|---|---|
+| ai-support-triage | 3abd028 | 18 / 3 / 0 | Zendesk read and tagging, Slack, rate-limit and auth faults, guarded fallbacks | `model_answers_how_to`, `model_classifies_billing`, `model_answer_validated`: the OpenAI twin answers `"Sample content"` as role `system` | R1 |
+| cross-border-refund | 78468f6 | 26 / 0 / 4 | Stripe refunds with idempotency, approval gates, Zendesk notes, faults | `locale_from_zendesk`, `tax_portion_refund`, `settlement_fx_readback`, `takeover_hold_while_parked` | R7, R9, R10 |
+| account-takeover-containment | 40b5cbb | 20 / 0 / 2 | WorkOS reads, Stripe holds, approval, faults | `sessions_revoked` and membership deactivation | R8 |
+| failed-payment-dunning | ed90f18 | 5 / 3 / 2 | Stage entry, Slack, invoice-not-found and auth faults | `first_failure_card_update_notice`, `second_failure_tries_backup_card` (no `attempt_count`), `final_notice_after_14_days`, `cancellation_needs_approval`, `repeated_failure_no_second_notice`: invoices can't be open/failed, no time | R2, R15 |
+| order-to-cash | ed90f18 | 6 / 4 / 0 | Shopify order read (2020-04), cancelled and unpaid orders skipped, Shopify 429 | `sales_order_booked_in_erp`, `label_bought_under_limit`, `customer_gets_tracking`, `shipped_order_not_shipped_again`: no NetSuite or EasyPost twin | R4, R5, R6 |
+| supplier-bank-change | ed90f18 | 4 / 5 / 4 | Intake, invalid input, Slack fault | `payments_held_while_verifying`, `callback_to_number_on_file`, `ownership_checked_with_plaid`, `sanctions_screened`, `callback_deadline_rejects`; the four signal checks got 404 because nothing was planned: the vendor record lives in NetSuite and screening has no twin | R4, R14, R15 |
+| user-access-review | ed90f18 | 8 / 4 / 0 | WorkOS org memberships per entitlement, owner and self-review rules, Asana evidence, faults | `campaign_covers_every_system`, `github_member_revoked` (GitHub twin: `GET /orgs/{org}/members` → "Unknown method"), `deadline_revokes_unreviewed_admin`, `reminder_only_for_open_items` (need time) | R15, R18 |
+| employee-offboarding | ed90f18 | 5 / 5 / 0 | WorkOS inventory, EasyPost-free paths, Slack | `termination_filed`, `payroll_approval_pays`, `deadline_pays_without_approval`, `rescission_undoes_termination`: no Gusto twin; `access_removed_after_last_day`: needs time and WorkOS deactivation | R8, R15, R16 |
+| invoice-three-way-match | ed90f18 | 4 / 5 / 1 | Batch intake, invalid input, Slack | `bills_read_from_erp`, `clean_match_auto_approved`, `variance_needs_ap_approval`, `over_billed_held`, `duplicate_never_approved`; `entering_clerk_cannot_approve` 404 (nothing planned): every bill, PO and receipt is in NetSuite | R4 |
+| change-management-gate | ed90f18 | 5 / 5 / 1 | Intake, freeze and author rules where no GitHub data is needed, faults | `change_facts_read`, `standard_change_deploys`, `normal_change_needs_cab`, `healthy_watch_marks_success`, `degraded_watch_rolls_back`: the GitHub twin has no pull request, check runs or deployments to read (`GET /repos/acme/checkout/pulls/1` → 404) and Datadog has no twin; `author_cannot_approve` 404 follows | R18, R21 |
+| month-end-close | af7aa6f | 4 / 4 / 2 | Plaid sandbox link and transactions, Stripe auth fault, invalid input | `payouts_read`, `payouts_reconciled`: the Stripe twin's payout `arrival_date` isn't epoch seconds (the runtime threw; fixed afterwards in 43ddbe8, not yet re-proven); `accrual_reverses_next_period`, `fee_journal_on_approval`, `signoff_locks_period`: NetSuite; `reminder_while_open`: time | R4, R15, R20 |
+
+_Wave 2 and 3 receipts (customer-data-sweep, lead-routing-sla, vulnerability-remediation, contract-intake, dsar-export, consent-propagation, crm-billing-sync, purchase-request-to-po, support-sla-breach, treasury-payment-approval, usage-true-up, customer-kyc-rescreen; then inventory-replenishment, delivery-exception, payroll-anomaly-review, visa-and-leave-expiry) are queued; rows are added as they land._
+
+### Corrections found by the proofs (our bugs, not FetchSandbox's)
+
+- month-end-close validated Plaid access tokens against the documented
+  `access-<env>-<id>` shape; the twin's tokens look like `aaa_9a99a99999aa9999`.
+  Plaid calls tokens opaque, so the runtime now accepts any non-blank token.
+  The first receipt (ed90f18) failed every check at baseline for this reason.
+- support-sla-breach (local tests, before any proof): overlapping sweeps both
+  read "not tagged" and alerted twice. Fixed with a Zendesk `safe_update`
+  compare-and-swap claim per step.
 
 ## Requirements for FetchSandbox
 
@@ -48,7 +78,14 @@ or unmeasured into measured.
 | R11 | **Measure response loss through a proxy.** Witness the client's abort even when the client sits behind an egress proxy (or offer a mode that observes the retry by Idempotency-Key instead of the TCP disconnect). | partner-payout-run `lost_response_same_transfer` | "disconnect witnesses=0" from this cloud sandbox | The same check holds from a proxied runtime |
 | R12 | **Correlate webhook-started runs to a check.** Pass the check id on signed deliveries (e.g. an `X-FetchSandbox-Case` header beside `X-Flow-Run-Id`) so runtimes can label event-started runs for observation. | failed-payment-dunning event path; any webhook-first workflow | event-started runs carry only `X-Flow-Run-Id`; the dunning contract had to start the stage directly | A signed `invoice.payment_failed` delivery's run appears in that check's runs view |
 | R13 | **Bigger or clearer tunnel allowance.** Back-to-back proofs (or a proof after a failed seed) hit "Managed tunnel capacity reached … allowance for your IP" for tens of minutes. | every proof loop | observed repeatedly on 2026-10-22 | A second proof can start within a minute of the previous one ending |
-| R14 | **Missing twins named by earlier receipts:** restricted-party screening (Trade.gov CSL), Statuspage, Salesforce CPQ, Google Workspace Admin / SCIM, license-cost data; and faithful read-backs on Box search, Notion database query, Asana task listing, Calendar `events.get`, PagerDuty notes, Stripe credit notes, transfer reversals and invoice lines. | see the earlier-receipts table below | each receipt's explanation | per twin |
+| R14 | **Missing twins named by earlier receipts:** restricted-party screening (Trade.gov CSL), Statuspage, Salesforce CPQ, Google Workspace Admin / SCIM, license-cost data; and faithful read-backs on Box search, Notion database query, Asana task listing, Calendar `events.get`, PagerDuty notes, Stripe credit notes, transfer reversals and invoice lines. | the saved receipts linked from each guide in `docs/workflows/` | each receipt's explanation | per twin |
+| R15 | **Runtime clock control.** A contract step that advances the runtime's clock (e.g. the verifier calls a declared `POST /verify/clock {advance_ms}` on the app, or sends an `X-FetchSandbox-Now` header the runtime may honour on `tick`), recorded in the receipt like any other step. | every "(needs clock control)" check: dunning day 14/21, access-review deadlines, offboarding last day, month-end reminder, lead SLA, vulnerability SLA, contract chase/void, DSAR deadline, consent read-back, PO lapse, SLA breach, payment cut-off, true-up notice window, KYC SAR deadline, late receipts, delivery re-check, payroll deadline, visa/leave dates | the verifier has no time step; durable timers measured days out can only be proven locally | A check can say "advance 15 days, then tick" and observe the timer's effect in saved state |
+| R16 | **Payroll twin (Gusto first).** Employees with terminations, regular and off-cycle payrolls with per-employee compensation, `version`-guarded updates, submit. | employee-offboarding final pay; payroll-anomaly-review | "Unknown providers: gusto" | A termination and its off-cycle payroll can be asserted on the twin |
+| R17 | **Payment-operations twin (Modern Treasury).** Counterparties, external accounts with verification status, payment orders with Idempotency-Key, status transitions (approved → sent → completed / returned). | treasury-payment-approval | no twin | One payment order per idempotency key, and a seeded return observed a day later |
+| R18 | **GitHub org, pull request, checks, deployments and Dependabot fixtures.** `GET /orgs/{org}/members`, membership delete; seeded pull requests with reviews and check runs; deployments with statuses; Dependabot alerts and their dismissal. | user-access-review GitHub leg; change-management-gate; vulnerability-remediation | `/orgs/acme/members` → "Unknown method"; `/repos/acme/checkout/pulls/1` → 404 | A contract can seed a PR with an approving review and passing checks and observe the deployment it causes |
+| R19 | **E-signature twin (DocuSign).** Envelopes with a custom field, status changes, reminders, void. | contract-intake | "Unknown providers: docusign" | An envelope is created once per contract id and voided at 30 days |
+| R20 | **Field fidelity and robustness on existing twins.** Stripe payout `arrival_date` as epoch seconds; Plaid tokens in Plaid's format; Stripe customer create under 8 concurrent requests without a non-JSON "upstream connect error". | month-end-close `payouts_read`; customer-data-sweep seeding | observed 2026-10-22 | Seeding 250 customers 8-wide succeeds and payout dates parse as Stripe documents them |
+| R21 | **Observability twin (Datadog).** Monitors with states and metric queries a contract can script (healthy vs degraded after a deploy). | change-management-gate watch and rollback | "Unknown providers: datadog" | A degraded monitor after deploy makes the runtime roll back, observed on GitHub deployments |
 
 ## Engine and contract findings (not twin data)
 
