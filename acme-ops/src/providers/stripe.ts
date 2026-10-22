@@ -8,6 +8,15 @@ export interface StripeCustomer {
   address?: Record<string, string | null> | null;
   created?: number;
 }
+export interface StripeConnectedAccount {
+  id: string;
+  country?: string | null;
+  business_profile?: { name?: string | null } | null;
+  company?: { name?: string | null } | null;
+  individual?: { first_name?: string | null; last_name?: string | null } | null;
+  settings?: { payouts?: { schedule?: { interval?: string } } } | null;
+  metadata?: Record<string, string>;
+}
 export interface StripePrice {
   id: string;
   active: boolean;
@@ -251,6 +260,26 @@ export class StripeClient {
 
   async getAccount(id: string): Promise<{ id: string; capabilities?: Record<string, string> | null; requirements?: { disabled_reason?: string | null } | null; payouts_enabled?: boolean | null }> {
     return (await this.http.request<any>("GET", `/v1/accounts/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Connected accounts (Connect), for sweeps across a platform's partners. */
+  listAccounts(max = 2000) {
+    return this.listAll<StripeConnectedAccount>("/v1/accounts", {}, max);
+  }
+
+  async getConnectedAccount(id: string): Promise<StripeConnectedAccount> {
+    return (await this.http.request<StripeConnectedAccount>("GET", `/v1/accounts/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Sets a connected account's payout schedule (manual holds funds on the balance). */
+  async setPayoutSchedule(id: string, interval: string): Promise<StripeConnectedAccount> {
+    return (await this.http.request<StripeConnectedAccount>("POST", `/v1/accounts/${encodeURIComponent(id)}`, { form: { "settings[payouts][schedule][interval]": interval } })).body;
+  }
+
+  async updateAccountMetadata(id: string, metadata: Record<string, string>): Promise<StripeConnectedAccount> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeConnectedAccount>("POST", `/v1/accounts/${encodeURIComponent(id)}`, { form })).body;
   }
 
   listTransfers(transferGroup: string) {

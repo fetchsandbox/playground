@@ -245,6 +245,15 @@ export async function startWorld() {
       S.refunds.push(rf);
       return send(200, rf);
     }
+    if (req.method === "GET" && path === "/v1/accounts") return send(200, { data: S.accounts, has_more: false });
+    if (req.method === "POST" && (r = m(/^\/v1\/accounts\/([^/]+)$/))) {
+      const a = S.accounts.find((x) => x.id === r![1]);
+      if (!a) return send(404, { error: { code: "resource_missing" } });
+      const interval = body["settings[payouts][schedule][interval]"];
+      if (interval) a.settings = { ...a.settings, payouts: { schedule: { interval } } };
+      a.metadata = { ...a.metadata, ...meta() };
+      return send(200, a);
+    }
     if (req.method === "GET" && (r = m(/^\/v1\/accounts\/([^/]+)$/))) {
       const a = S.accounts.find((x) => x.id === r![1]);
       return a ? send(200, a) : send(404, { error: { code: "resource_missing" } });
