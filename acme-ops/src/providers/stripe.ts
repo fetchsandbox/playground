@@ -329,6 +329,38 @@ export class StripeClient {
     ).body;
   }
 
+  /** Total usage a billing meter recorded for one customer in [startSec, endSec) (meter event summaries). */
+  async meterUsage(meterId: string, customer: string, startSec: number, endSec: number): Promise<number> {
+    let total = 0;
+    let after: string | undefined;
+    for (;;) {
+      const { body } = await this.http.request<{ data: { id: string; aggregated_value: number }[]; has_more: boolean }>("GET", `/v1/billing/meters/${encodeURIComponent(meterId)}/event_summaries`, { query: { customer, start_time: startSec, end_time: endSec, limit: 100, starting_after: after } });
+      const page = body?.data ?? [];
+      total += page.reduce((t, s) => t + Number(s.aggregated_value ?? 0), 0);
+      if (!body?.has_more || !page.length) return total;
+      after = page[page.length - 1]!.id;
+    }
+  }
+
+  /** Draft invoice sent by email (not charged automatically), left in draft until finalized. */
+  async createDraftInvoice(customer: string, description: string, daysUntilDue: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeInvoice> {
+    const form: Record<string, string> = { customer, description, collection_method: "send_invoice", days_until_due: String(daysUntilDue), auto_advance: "false", pending_invoice_items_behavior: "exclude" };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeInvoice>("POST", "/v1/invoices", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async addInvoiceLine(invoice: string, customer: string, price: string, quantity: number, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {
+    return (await this.http.request<any>("POST", "/v1/invoiceitems", { form: { customer, invoice, price, quantity: String(quantity), description }, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async finalizeInvoice(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/finalize`, { form: { auto_advance: "false" } })).body;
+  }
+
+  async sendInvoice(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/send`, { form: {} })).body;
+  }
+
   /** Retries an open invoice now, optionally with another saved payment method. Declines come back as 402 card errors. */
   async payInvoice(id: string, paymentMethod: string | undefined, idempotencyKey: string): Promise<StripeInvoice> {
     return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/pay`, { form: { payment_method: paymentMethod, off_session: "true" }, headers: { "Idempotency-Key": idempotencyKey } })).body;

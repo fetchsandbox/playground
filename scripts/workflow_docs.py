@@ -11,6 +11,7 @@ WHY={
 'churn-risk-sweep':'Customer Success needs an explainable shortlist of accounts to contact before renewal, using billing, CRM, support and inbox evidence instead of one isolated score.',
 'collections-credit-hold':'Finance needs consistent overdue-invoice follow-up while protecting disputed accounts from an inappropriate credit hold.',
 'compliance-docs':'Quality needs to answer product-document requests using the approved library, and route missing evidence to a person before sharing externally.',
+'usage-true-up':'Billing must invoice every committed-use customer for what they used beyond their contract, exactly once, with notice and a chance to dispute, and never guess when a contract is incomplete.',
 'treasury-payment-approval':'Treasury must never send money on one person\'s say-so, to an unverified or sanctioned beneficiary, twice, or after the value date has been missed, and must know the next day if a payment came back.',
 'support-sla-breach':'Support leaders need every unanswered ticket chased before its first-response target, breaches surfaced the moment they happen, and enterprise customers escalated to on-call, without duplicate alerts from overlapping sweeps.',
 'purchase-request-to-po':'Finance needs every purchase approved by the right people for its amount and budget, never by the requester, with a purchase order raised exactly once and nothing bought from a held or sanctioned vendor.',

@@ -52,6 +52,9 @@ export function seedState() {
       /** Behave like a backend that ignores starting_after. */
       ignoreCursor: false,
       disputes: [] as any[],
+      meterEvents: [] as { meter: string; customer: string; ts: number; value: number }[],
+      invoiceItems: [] as any[],
+      keys: new Map<string, any>(),
       accounts: [] as any[],
       transfers: [] as any[],
       /** Idempotency-Key → transfer, as real Stripe keeps for 24h. */
@@ -280,6 +283,46 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/v1\/refunds\/([^/]+)$/))) {
       const rf = S.refunds.find((x) => x.id === r![1]);
       return rf ? send(200, rf) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "GET" && (r = m(/^\/v1\/billing\/meters\/([^/]+)\/event_summaries$/))) {
+      const [from, to] = [Number(q.get("start_time")), Number(q.get("end_time"))];
+      const v = S.meterEvents.filter((e) => e.meter === r![1] && e.customer === q.get("customer") && e.ts >= from && e.ts < to).reduce((t, e) => t + e.value, 0);
+      return send(200, { data: [{ id: id("mtrusg"), aggregated_value: v }], has_more: false });
+    }
+    if (req.method === "POST" && path === "/v1/invoices") {
+      const key = String(req.headers["idempotency-key"] ?? "");
+      if (key && S.keys.has(key)) return send(200, S.keys.get(key));
+      const inv = { id: id("in"), customer: body.customer, status: "draft", amount_due: 0, amount_remaining: 0, currency: "usd", description: body.description, collection_method: body.collection_method, metadata: meta(), lines: { data: [] as any[] } };
+      S.invoices.push(inv);
+      if (key) S.keys.set(key, inv);
+      return send(200, inv);
+    }
+    if (req.method === "POST" && path === "/v1/invoiceitems") {
+      const key = String(req.headers["idempotency-key"] ?? "");
+      if (key && S.keys.has(key)) return send(200, S.keys.get(key));
+      const inv = S.invoices.find((i) => i.id === body.invoice);
+      if (!inv || inv.status !== "draft") return send(400, { error: { code: "invoice_not_editable" } });
+      const price = S.prices.find((p) => p.id === body.price);
+      if (!price) return send(400, { error: { code: "resource_missing", param: "price" } });
+      const item = { id: id("ii"), invoice: inv.id, customer: body.customer, price: price.id, quantity: Number(body.quantity), amount: price.unit_amount * Number(body.quantity), description: body.description };
+      S.invoiceItems.push(item);
+      inv.lines.data.push(item);
+      inv.amount_due += item.amount;
+      inv.amount_remaining += item.amount;
+      if (key) S.keys.set(key, item);
+      return send(200, item);
+    }
+    if (req.method === "POST" && (r = m(/^\/v1\/invoices\/([^/]+)\/(finalize|send)$/))) {
+      const inv = S.invoices.find((i) => i.id === r![1]);
+      if (!inv) return send(404, { error: { code: "resource_missing" } });
+      if (r[2] === "finalize") {
+        if (inv.status !== "draft") return send(400, { error: { code: "invoice_not_editable" } });
+        inv.status = "open";
+      } else {
+        if (inv.status !== "open") return send(400, { error: { code: "invoice_not_open" } });
+        inv.sent = true;
+      }
+      return send(200, inv);
     }
     if (req.method === "GET" && path === "/v1/invoices") {
       return send(200, { data: S.invoices.filter((i) => (!q.get("customer") || i.customer === q.get("customer")) && (!q.get("status") || i.status === q.get("status"))), has_more: false });
