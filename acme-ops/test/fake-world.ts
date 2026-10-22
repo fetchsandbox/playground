@@ -46,6 +46,7 @@ export function seedState() {
       products: [] as any[],
       paymentIntents: [] as any[],
       balanceTxns: [] as any[],
+      paymentMethods: [] as any[],
       disputes: [] as any[],
       accounts: [] as any[],
       transfers: [] as any[],
@@ -173,6 +174,19 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/v1\/products\/([^/]+)$/))) {
       const p = S.products.find((x) => x.id === r![1]);
       return p ? send(200, p) : send(404, { error: { code: "resource_missing" } });
+    }
+    if (req.method === "POST" && (r = m(/^\/v1\/invoices\/([^/]+)\/pay$/))) {
+      const i = S.invoices.find((x) => x.id === r![1]);
+      if (!i) return send(404, { error: { code: "resource_missing" } });
+      if (i.status !== "open") return send(400, { error: { code: "invoice_not_open" } });
+      i.attempt_count = (i.attempt_count ?? 0) + 1;
+      if (String(body.payment_method ?? "").includes("Declined")) return send(402, { error: { type: "card_error", code: "card_declined" } });
+      i.status = "paid";
+      i.amount_remaining = 0;
+      return send(200, i);
+    }
+    if (req.method === "GET" && path === "/v1/payment_methods") {
+      return send(200, { data: (S.paymentMethods ?? []).filter((p: any) => p.customer === q.get("customer")), has_more: false });
     }
     if (req.method === "GET" && (r = m(/^\/v1\/invoices\/([^/]+)$/))) {
       const i = S.invoices.find((x) => x.id === r![1]);

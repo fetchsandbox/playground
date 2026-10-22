@@ -13,6 +13,7 @@ WHY={
 'distributor-claims':'Channel Finance needs to compare requested distributor credits with the actual paid invoices, list prices and agreement before paying them.',
 'duplicate-charge-remediation':'Finance needs to refund customers who were charged twice by a billing incident, quickly and at scale, without refunding a disputed or ambiguous payment and with human approval above set limits.',
 'export-screening':'Trade Compliance needs to hold shipment when party or item screening is unclear rather than treating an unavailable check as clearance.',
+'failed-payment-dunning':'Finance needs to recover failed subscription payments with a predictable, never-repeating reminder ladder, and to cancel only after a person agrees.',
 'field-service-dispatch':'Service needs to coordinate technician time, contract coverage and site communication before committing an uncovered or after-hours visit.',
 'incident-comms':'IT Operations needs to identify affected customers and keep responders informed without sending an unreviewed outage statement.',
 'license-reclaim':'IT Asset Management needs to recover unused seats after a warning and grace period, with approval before removing access.',

@@ -42,6 +42,10 @@ export interface StripeInvoice {
   number?: string | null;
   lines?: { data: { price?: { id: string; product?: string } | null; quantity?: number; description?: string | null }[] };
   metadata?: Record<string, string>;
+  subscription?: string | null;
+  attempt_count?: number;
+  next_payment_attempt?: number | null;
+  default_payment_method?: string | null;
 }
 export interface StripeProduct {
   id: string;
@@ -315,6 +319,15 @@ export class StripeClient {
         headers: { "Idempotency-Key": idempotencyKey },
       })
     ).body;
+  }
+
+  /** Retries an open invoice now, optionally with another saved payment method. Declines come back as 402 card errors. */
+  async payInvoice(id: string, paymentMethod: string | undefined, idempotencyKey: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/pay`, { form: { payment_method: paymentMethod, off_session: "true" }, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async listCardPaymentMethods(customer: string): Promise<{ id: string; card?: { exp_month?: number; exp_year?: number; last4?: string } | null }[]> {
+    return (await this.http.request<any>("GET", "/v1/payment_methods", { query: { customer, type: "card", limit: 20 } })).body?.data ?? [];
   }
 
   async listBalanceTransactions(customer: string) {
