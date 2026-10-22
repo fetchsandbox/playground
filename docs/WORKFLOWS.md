@@ -6,7 +6,7 @@ The repository is public and MIT-licensed; your own provider accounts, credentia
 
 ## Acme workflows on main
 
-Progress, twin research and pending work are tracked in [TRACKER.md](TRACKER.md).
+Progress, twin research and pending work are tracked in [TRACKER.md](TRACKER.md); the plan for the next workflows is [ENTERPRISE_WORKFLOW_PROGRAM.md](ENTERPRISE_WORKFLOW_PROGRAM.md) and FetchSandbox gaps are in [FETCHSANDBOX_GAPS.md](FETCHSANDBOX_GAPS.md).
 
 Each guide includes a business need, department/team, agent roles, input, writes, approval gates, setup, declared scenarios and the exact historical receipt status.
 
