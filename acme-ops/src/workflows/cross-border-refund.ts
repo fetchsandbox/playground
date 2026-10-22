@@ -17,6 +17,8 @@ export const POLICY = {
   autoRefundMaxMinor: { usd: 50_000, eur: 45_000, gbp: 40_000, chf: 45_000, cad: 65_000, aud: 75_000, jpy: 75_000, krw: 650_000 } as Record<string, number>,
   /** Older payments are refunded only with approval. */
   refundWindowDays: 180,
+  /** Set on the Stripe customer by account-takeover-containment: no money moves while it is there. */
+  holdKey: "acme_ato_hold",
 } as const;
 
 /** Stripe's zero-decimal currencies: the amount is in whole units (¥500 is 500, not 50000). */
@@ -85,6 +87,8 @@ export interface Payment {
   /** The currency the customer's Stripe balance is kept in, when set. */
   balanceCurrency: string | null;
   disputed: boolean;
+  /** An account-takeover hold on the paying customer (the alert id). */
+  hold: string | null;
   /** A refund or credit this ticket already issued for this payment. */
   prior: { kind: "refund" | "store_credit"; ref: string; amountMinor: number } | null;
 }
@@ -114,6 +118,7 @@ export function decide(input: Input, ticket: Ticket | undefined, payment: Paymen
   if (!payment) return { ...base, mode: "blocked", reason: "payment could not be read" };
   if (payment.prior) return { ...base, mode: "already_done", reason: `${payment.prior.kind} ${payment.prior.ref} already issued for this ticket`, method: payment.prior.kind === "refund" ? "original_payment" : "store_credit", amountMinor: payment.prior.amountMinor };
   const review = (reason: string): Decision => ({ ...base, mode: "review", reason });
+  if (payment.hold) return review(`the account is under an account-takeover hold (${payment.hold})`);
   if (payment.status !== "succeeded") return review(`payment is ${payment.status}`);
   if (!ticket.requesterEmail || !payment.customerEmail || ticket.requesterEmail.toLowerCase() !== payment.customerEmail.toLowerCase()) return review("the ticket's requester is not the customer who paid");
   if (payment.disputed) return review("the payment is disputed; the card network decides, a refund would pay twice");
@@ -145,6 +150,12 @@ export function decide(input: Input, ticket: Ticket | undefined, payment: Paymen
 /** Refunds and credits that still count against the payment. */
 const live = (s: string) => s !== "failed" && s !== "canceled";
 
+/** Re-read at write time: a hold placed while the refund waited for approval stops it. */
+async function assertNoHold(stripe: StripeClient, customer: string | null) {
+  const hold = customer ? (await stripe.getCustomer(customer)).metadata?.[POLICY.holdKey] : undefined;
+  if (hold) throw new FatalError(`account is under an account-takeover hold (${hold})`);
+}
+
 async function refundState(stripe: StripeClient, input: Input) {
   const refunds = (await stripe.listRefundsForPaymentIntent(input.paymentIntent)).filter((r) => live(r.status));
   return { refunds, refundedMinor: refunds.reduce((s, r) => s + r.amount, 0) };
@@ -174,7 +185,7 @@ export const crossBorderRefund: WorkflowDef<Input> = {
   org: "Customer Experience",
   team: "global-support",
   description:
-    "Refund a Zendesk refund request in the currency the customer paid: the requester must be the paying customer, disputed or over-refunded payments go to a person, per-currency limits (zero- and three-decimal aware) gate approval, ticket text is never trusted for amounts, and store credit falls back to the card when the balance currency differs.",
+    "Refund a Zendesk refund request in the currency the customer paid: the requester must be the paying customer, disputed, held or over-refunded payments go to a person, per-currency limits (zero- and three-decimal aware) gate approval, ticket text is never trusted for amounts, and store credit falls back to the card when the balance currency differs.",
   input: Input,
   agents: [
     {
@@ -225,6 +236,7 @@ export const crossBorderRefund: WorkflowDef<Input> = {
           customerId: customer?.id ?? null,
           customerEmail: customer?.email ?? null,
           balanceCurrency: (customer as { currency?: string | null } | undefined)?.currency?.toLowerCase() ?? null,
+          hold: customer?.metadata?.[POLICY.holdKey] || null,
           disputed: disputes.some((x) => x.payment_intent === pi.id || (!!pi.latest_charge && x.charge === pi.latest_charge)),
           prior: priorRefund ? { kind: "refund", ref: priorRefund.id, amountMinor: priorRefund.amount } : priorCredit ? { kind: "store_credit", ref: priorCredit.id, amountMinor: -priorCredit.amount } : null,
         };
@@ -267,6 +279,7 @@ export const crossBorderRefund: WorkflowDef<Input> = {
             const { refunds, refundedMinor } = await refundState(stripe, input);
             const prior = refunds.find((r) => r.metadata?.acme_ticket === String(input.ticketId));
             if (prior) return { ref: prior.id, detail: { amountMinor: prior.amount, currency: prior.currency, reused: true } };
+            await assertNoHold(stripe, payment.customerId);
             const pi = await stripe.getPaymentIntent(input.paymentIntent);
             const remaining = (pi.amount_received ?? pi.amount) - refundedMinor - payment.creditedMinor;
             if (remaining < d.amountMinor) throw new FatalError(`${input.paymentIntent} now has ${remaining} refundable, planned ${d.amountMinor}`);
@@ -294,6 +307,7 @@ export const crossBorderRefund: WorkflowDef<Input> = {
             const credits = await creditsFor(stripe, customer, input.paymentIntent);
             const prior = credits.find((c) => c.metadata?.acme_ticket === String(input.ticketId));
             if (prior) return { ref: prior.id, detail: { amountMinor: -prior.amount, reused: true } };
+            await assertNoHold(stripe, customer);
             const { refundedMinor } = await refundState(stripe, input);
             const remaining = payment.amountMinor - refundedMinor - credits.reduce((s, c) => s - c.amount, 0);
             if (remaining < d.amountMinor) throw new FatalError(`${input.paymentIntent} now has ${remaining} refundable, planned ${d.amountMinor}`);

@@ -59,7 +59,7 @@ export function seedState() {
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
-    workos: { users: [] as any[], memberships: [] as any[] },
+    workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     asana: { tasks: [] as any[] },
     square: { locations: [{ id: "LOC_MAIN", status: "ACTIVE", currency: "USD" }] as any[], giftCards: [] as any[], activities: [] as any[] },
   };
@@ -363,9 +363,23 @@ export async function startWorld() {
       W.memberships.push(mem);
       return send(201, mem);
     }
-    if (req.method === "GET" && (r = m(/^\/user_management\/organization_memberships\/([^/]+)$/))) {
+    if ((r = m(/^\/user_management\/organization_memberships\/([^/]+)$/))) {
       const mem = W.memberships.find((x) => x.id === r![1]);
-      return mem ? send(200, mem) : send(404, { code: "entity_not_found" });
+      if (!mem) return send(404, { code: "entity_not_found" });
+      if (req.method === "DELETE") {
+        W.memberships = W.memberships.filter((x) => x.id !== mem.id);
+        return send(204, {});
+      }
+      return send(200, mem);
+    }
+    if (req.method === "GET" && (r = m(/^\/user_management\/users\/([^/]+)\/sessions$/))) {
+      return send(200, { data: W.sessions.filter((x) => x.user_id === r![1] && !x.revoked), list_metadata: {} });
+    }
+    if (req.method === "POST" && path === "/user_management/sessions/revoke") {
+      const ses = W.sessions.find((x) => x.id === body.session_id);
+      if (!ses) return send(404, { code: "entity_not_found" });
+      ses.revoked = true;
+      return send(200, {});
     }
     if ((r = m(/^\/user_management\/users\/([^/]+)$/))) {
       const u = W.users.find((x) => x.id === r![1]);
@@ -378,7 +392,8 @@ export async function startWorld() {
       return send(200, u);
     }
     if (req.method === "GET" && path === "/user_management/organization_memberships") {
-      return send(200, { data: W.memberships.filter((x) => x.user_id === q.get("user_id")), list_metadata: {} });
+      const org = q.get("organization_id");
+      return send(200, { data: W.memberships.filter((x) => (org ? x.organization_id === org : x.user_id === q.get("user_id"))), list_metadata: {} });
     }
 
     // ---- Asana

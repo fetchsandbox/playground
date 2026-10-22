@@ -22,7 +22,7 @@ describe("money in the customer's currency", () => {
 describe("refund decision", () => {
   const input = (over: object = {}) => crossBorderRefund.input.parse({ ticketId: 7, paymentIntent: "pi_jpy000001", supportChannel: "C0SUPPORT1", ...over });
   const ticket = (over: Partial<Ticket> = {}): Ticket => ({ ticketId: 7, status: "open", requesterEmail: "hana@example.jp", requesterName: "Hana", locale: null, suspicious: false, replied: false, ...over });
-  const payment = (over: Partial<Payment> = {}): Payment => ({ paymentIntent: "pi_jpy000001", status: "succeeded", currency: "jpy", amountMinor: 12_000, refundedMinor: 0, creditedMinor: 0, createdMs: NOW - DAY, customerId: "cus_h", customerEmail: "Hana@Example.jp", balanceCurrency: null, disputed: false, prior: null, ...over });
+  const payment = (over: Partial<Payment> = {}): Payment => ({ paymentIntent: "pi_jpy000001", status: "succeeded", currency: "jpy", amountMinor: 12_000, refundedMinor: 0, creditedMinor: 0, createdMs: NOW - DAY, customerId: "cus_h", customerEmail: "Hana@Example.jp", balanceCurrency: null, disputed: false, hold: null, prior: null, ...over });
 
   it("refunds the whole remainder in the payment's currency, automatically within that currency's limit", () => {
     expect(decide(input(), ticket(), payment({ refundedMinor: 2_000 }), NOW)).toMatchObject({ mode: "refund", amountMinor: 10_000, currency: "jpy", gate: "auto", method: "original_payment" });
@@ -51,6 +51,9 @@ describe("refund decision", () => {
     expect(decide(input(), ticket(), payment({ createdMs: NOW - (POLICY.refundWindowDays + 1) * DAY }), NOW).gate).toBe("approval");
     expect(decide(input(), ticket(), payment({ createdMs: null }), NOW).why).toBe("payment date unknown");
     expect(decide(input(), ticket(), payment({ prior: { kind: "refund", ref: "re_1", amountMinor: 500 } }), NOW)).toMatchObject({ mode: "already_done", amountMinor: 500 });
+  });
+  it("moves no money while the account is under an account-takeover hold", () => {
+    expect(decide(input(), ticket(), payment({ hold: "SEC-1" }), NOW)).toMatchObject({ mode: "review", reason: "the account is under an account-takeover hold (SEC-1)" });
   });
   it("fails closed when either side can't be read", () => {
     expect(decide(input(), undefined, payment(), NOW).mode).toBe("blocked");
@@ -185,6 +188,16 @@ describe("cross-border-refund runs", () => {
     expect(action(r2.body, `zendesk.reply:${TICKET}`).status).toBe("applied");
     expect(w.state.stripe.refunds.filter((x) => x.payment_intent === "pi_eur000001")).toHaveLength(1);
     expect(comments(true)).toHaveLength(1);
+  });
+
+  it("a takeover hold placed while the refund waits for approval stops it", async () => {
+    const e = w.engine(crossBorderRefund, { now: () => NOW });
+    await e.handle({ action: "start", runId: "rf", input: input({ paymentIntent: "pi_jpy000001" }), requestedBy: user });
+    w.state.stripe.customers.find((c) => c.id === "cus_jonas").metadata = { acme_ato_hold: "SEC-9" };
+    const r = await e.handle({ action: "decide", runId: "rf", decision: "approve", userId: "U_LEAD" });
+    expect(action(r.body, "stripe.refund:pi_jpy000001")).toMatchObject({ status: "failed", error: expect.stringContaining("SEC-9") });
+    expect(w.state.stripe.refunds.filter((x) => x.payment_intent === "pi_jpy000001")).toHaveLength(0);
+    expect(comments(true)).toHaveLength(0);
   });
 
   it("concurrent deliveries refund once", async () => {
