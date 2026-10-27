@@ -1,0 +1,1728 @@
+{
+  "schema_version": 1,
+  "audited_at": "2026-10-27T18:06:07.393162+00:00",
+  "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
+  "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
+  "counts": {
+    "inconclusive": 20,
+    "failing": 23,
+    "verified": 8
+  },
+  "workflows": {
+    "access-jml": {
+      "workflow": "access-jml",
+      "receipt_url": "https://fetchsandbox.com/runs/84e946ba3d?flow=vr_8d2160fd4bd847979c0d3ead96024d41",
+      "source": "acme-ops/verify/receipts/access-jml.json",
+      "checked_at": "2026-10-27T18:03:54.196008+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:57:50.569639+00:00",
+      "app_version": {
+        "value": "acme-ops-access-jml-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 16,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "privileged_role_parked",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "segregation_of_duties",
+        "leaver_deprovisioned",
+        "leaver_unknown_account",
+        "mover_grants_new_role",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "workos_auth_failure",
+        "asana_rate_limited",
+        "slack_auth_failure",
+        "restart_while_parked",
+        "app_seat_provisioning",
+        "mover_old_role_removed"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "account-takeover-containment": {
+      "workflow": "account-takeover-containment",
+      "receipt_url": "https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0",
+      "source": "acme-ops/verify/receipts/account-takeover-containment.json",
+      "checked_at": "2026-10-27T18:03:54.196273+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T01:46:06.475093+00:00",
+      "app_version": {
+        "value": "acme-ops-account-takeover-containment-1.0.0-40b5cbb",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 20,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "last_admin_parked",
+        "last_admin_approved",
+        "last_admin_rejected",
+        "approve_by_stranger_refused",
+        "medium_risk_asks_first",
+        "low_risk_monitors",
+        "refund_spike_escalates",
+        "rerun_finds_contained",
+        "duplicate_start",
+        "concurrent_start",
+        "unknown_account_nothing",
+        "restore_with_approval",
+        "restore_leaves_other_hold",
+        "workos_auth_failure",
+        "stripe_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "reconcile_reads_back",
+        "invalid_input_rejected",
+        "sessions_revoked",
+        "co_admin_left_before_removal"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "ai-support-triage": {
+      "workflow": "ai-support-triage",
+      "receipt_url": "https://fetchsandbox.com/runs/8b707a425c?flow=vr_7609225e94cb4126a1649d0772bd8bb1",
+      "source": "acme-ops/verify/receipts/ai-support-triage.json",
+      "checked_at": "2026-10-27T18:03:54.196353+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T15:19:03.074299+00:00",
+      "app_version": {
+        "value": "acme-ops-ai-support-triage-1.0.0-3abd028",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 18,
+        "violated": 3
+      },
+      "check_ids": [
+        "baseline",
+        "model_answers_how_to",
+        "model_classifies_billing",
+        "model_answer_validated",
+        "unusable_answer_falls_back",
+        "instruction_text_needs_person",
+        "outage_is_urgent",
+        "reply_released_on_approval",
+        "reply_rejected",
+        "approve_by_stranger_refused",
+        "duplicate_start",
+        "concurrent_start",
+        "openai_model_overloaded",
+        "openai_rate_limited",
+        "openai_quota_exceeded",
+        "openai_context_length_exceeded",
+        "openai_auth_failure",
+        "zendesk_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "change-management-gate": {
+      "workflow": "change-management-gate",
+      "receipt_url": "https://fetchsandbox.com/runs/3de250868c?flow=vr_55bd8d33c1bb4538a9936780cce0d10a",
+      "source": "acme-ops/verify/receipts/change-management-gate.json",
+      "checked_at": "2026-10-27T18:03:54.196452+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:10:56.132050+00:00",
+      "app_version": {
+        "value": "acme-ops-change-management-gate-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 5,
+        "violated": 5,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "change_facts_read",
+        "ops_facts_read",
+        "standard_change_deploys",
+        "normal_change_needs_cab",
+        "author_cannot_approve",
+        "healthy_watch_marks_success",
+        "degraded_watch_rolls_back",
+        "freeze_blocks",
+        "github_unreadable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "churn-risk-sweep": {
+      "workflow": "churn-risk-sweep",
+      "receipt_url": "https://fetchsandbox.com/runs/4c1386197c?flow=vr_4750363d6121468999f2717ee7fa0956",
+      "source": "acme-ops/verify/receipts/churn-risk-sweep.json",
+      "checked_at": "2026-10-27T18:03:54.196509+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T06:23:39.638913+00:00",
+      "app_version": {
+        "value": "acme-ops-churn-risk-sweep-1.0.0-dbab6f7",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 13,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "approve_by_approver",
+        "approve_by_stranger_refused",
+        "reject",
+        "healthy_book_is_quiet",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "slack_rate_limited",
+        "calendar_auth_failure",
+        "gmail_auth_failure",
+        "restart_while_parked",
+        "support_signal"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "collections-credit-hold": {
+      "workflow": "collections-credit-hold",
+      "receipt_url": "https://fetchsandbox.com/runs/05add583db?flow=vr_1fa37c3665834dee8d573aa5ab82349e",
+      "source": "acme-ops/verify/receipts/collections-credit-hold.json",
+      "checked_at": "2026-10-27T18:03:54.739085+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:55:42.791891+00:00",
+      "app_version": {
+        "value": "acme-ops-collections-credit-hold-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 13
+      },
+      "check_ids": [
+        "baseline",
+        "approve_by_stranger_refused",
+        "reject",
+        "nothing_overdue_is_quiet",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "slack_rate_limited",
+        "gmail_auth_failure",
+        "hubspot_auth_failure",
+        "restart_while_parked",
+        "approve_and_reconcile"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "compliance-docs": {
+      "workflow": "compliance-docs",
+      "receipt_url": "https://fetchsandbox.com/runs/793bb8daac?flow=vr_89a3a67d17bd49e393bbd879dacefcce",
+      "source": "acme-ops/verify/receipts/compliance-docs.json",
+      "checked_at": "2026-10-27T18:03:54.901154+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:18:08.231915+00:00",
+      "app_version": {
+        "value": "acme-ops-compliance-docs-1.0.0-0908aa5",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 9,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "unknown_part_no_reply",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "box_auth_failure",
+        "asana_rate_limited",
+        "slack_rate_limited",
+        "restart_then_redelivery",
+        "box_document_share_gated",
+        "zendesk_ticket_reply"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "consent-propagation": {
+      "workflow": "consent-propagation",
+      "receipt_url": "https://fetchsandbox.com/runs/6d12a62768?flow=vr_d6428dde89434b3096ac24e1ffe115a0",
+      "source": "acme-ops/verify/receipts/consent-propagation.json",
+      "checked_at": "2026-10-27T18:03:55.700535+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:16:20.293701+00:00",
+      "app_version": {
+        "value": "acme-ops-consent-propagation-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 4,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "subscription_turned_off",
+        "every_customer_updated",
+        "stale_event_ignored",
+        "replay_changes_nothing",
+        "verified_after_15_minutes",
+        "hubspot_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "contract-intake": {
+      "workflow": "contract-intake",
+      "receipt_url": "https://fetchsandbox.com/runs/b935d80696?flow=vr_1485871a757a4168acda54a07e32ae15",
+      "source": "acme-ops/verify/receipts/contract-intake.json",
+      "checked_at": "2026-10-27T18:03:56.470365+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:13:34.415241+00:00",
+      "app_version": {
+        "value": "acme-ops-contract-intake-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 2,
+        "unmeasured": 8
+      },
+      "check_ids": [
+        "baseline",
+        "text_extracted_from_box",
+        "model_extracts_clauses",
+        "clean_nda_sent_for_signature",
+        "unusable_answer_goes_to_lawyer",
+        "requester_cannot_approve",
+        "msa_lawyer_approval_sends",
+        "unsigned_envelope_voided",
+        "openai_overloaded_goes_to_lawyer",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "crm-billing-sync": {
+      "workflow": "crm-billing-sync",
+      "receipt_url": "https://fetchsandbox.com/runs/0a57cecd9c?flow=vr_2c28915cdd3446b8ade9092aff67beae",
+      "source": "acme-ops/verify/receipts/crm-billing-sync.json",
+      "checked_at": "2026-10-27T18:03:56.687857+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:19:30.126919+00:00",
+      "app_version": {
+        "value": "acme-ops-crm-billing-sync-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 5
+      },
+      "check_ids": [
+        "baseline",
+        "matched_by_email_linked",
+        "in_sync_not_rewritten",
+        "conflict_never_overwritten",
+        "unmatched_reported",
+        "auto_limit_respected",
+        "mass_change_needs_approval",
+        "stripe_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "cross-border-refund": {
+      "workflow": "cross-border-refund",
+      "receipt_url": "https://fetchsandbox.com/runs/1f4adfc8be?flow=vr_99c5689f49494f759adad1f473cc1875",
+      "source": "acme-ops/verify/receipts/cross-border-refund.json",
+      "checked_at": "2026-10-27T18:03:56.703418+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T01:54:15.890576+00:00",
+      "app_version": {
+        "value": "acme-ops-cross-border-refund-1.0.0-78468f6",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 26,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "jpy_zero_decimal_auto",
+        "jpy_over_limit_parked",
+        "jpy_over_limit_approved",
+        "jpy_over_limit_rejected",
+        "approve_by_stranger_refused",
+        "partial_refund",
+        "over_refund_review",
+        "currency_mismatch_review",
+        "requester_mismatch_review",
+        "disputed_payment_review",
+        "store_credit_same_currency",
+        "store_credit_currency_fallback",
+        "instruction_text_parked",
+        "rerun_moves_no_money",
+        "duplicate_start",
+        "concurrent_start",
+        "operator_refund_first",
+        "operator_refund_while_parked",
+        "takeover_hold_blocks_refund",
+        "stripe_auth_failure",
+        "zendesk_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "reconcile_reads_refund",
+        "invalid_input_rejected",
+        "locale_from_zendesk",
+        "takeover_hold_while_parked",
+        "tax_portion_refund",
+        "settlement_fx_readback"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "customer-data-sweep": {
+      "workflow": "customer-data-sweep",
+      "receipt_url": "https://fetchsandbox.com/runs/0978965681?flow=vr_e3c8446a1e2b43628bd85ab307355788",
+      "source": "additional observed run",
+      "checked_at": "2026-10-27T18:04:06.198727+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-27T03:51:45.769404+00:00",
+      "app_version": {
+        "value": "acme-ops-customer-data-sweep-1.0.0-c2ec0d5",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 8
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "full_scan_250",
+        "flag_limit_needs_approval",
+        "rerun_flags_nothing",
+        "incomplete_scan_refused",
+        "stripe_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "customer-kyc-rescreen": {
+      "workflow": "customer-kyc-rescreen",
+      "receipt_url": "https://fetchsandbox.com/runs/6c0ea91459?flow=vr_d94bf68353e54d558e1c472599f41006",
+      "source": "acme-ops/verify/receipts/customer-kyc-rescreen.json",
+      "checked_at": "2026-10-27T18:03:56.872091+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:30:44.790386+00:00",
+      "app_version": {
+        "value": "acme-ops-customer-kyc-rescreen-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 2,
+        "violated": 2,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "accounts_in_program_screened",
+        "strong_match_held",
+        "analyst_clears_false_positive",
+        "mlro_distinct_from_analyst",
+        "screening_unavailable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "delivery-exception": {
+      "workflow": "delivery-exception",
+      "receipt_url": "https://fetchsandbox.com/runs/2750a6afec?flow=vr_59e842134e84480d8beaa68bd37fe374",
+      "source": "acme-ops/verify/receipts/delivery-exception.json",
+      "checked_at": "2026-10-27T18:03:57.335113+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:16:31.462576+00:00",
+      "app_version": {
+        "value": "acme-ops-delivery-exception-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 5
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "stuck_parcel_customer_told",
+        "lost_parcel_replaced",
+        "returned_parcel_replaced",
+        "delivered_after_notice_solves_ticket",
+        "redelivered_webhook_one_ticket",
+        "tracker_unreadable_reported",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "distributor-claims": {
+      "workflow": "distributor-claims",
+      "receipt_url": "https://fetchsandbox.com/runs/229b5a3ee6?flow=vr_7df15a9babc7455c852404002f0c1f29",
+      "source": "acme-ops/verify/receipts/distributor-claims.json",
+      "checked_at": "2026-10-27T18:03:57.434142+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:47:46.823734+00:00",
+      "app_version": {
+        "value": "acme-ops-distributor-claims-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 12,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "all_denied_pays_nothing",
+        "approve_by_stranger_refused",
+        "reject",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "hubspot_auth_failure",
+        "slack_channel_not_found",
+        "restart_while_parked",
+        "approve_and_reconcile",
+        "invoice_line_validation"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "dsar-export": {
+      "workflow": "dsar-export",
+      "receipt_url": "https://fetchsandbox.com/runs/d18e6b7bda?flow=vr_898103f011f8472f969dde72d7c22bd1",
+      "source": "acme-ops/verify/receipts/dsar-export.json",
+      "checked_at": "2026-10-27T18:03:57.732386+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:22:13.010937+00:00",
+      "app_version": {
+        "value": "acme-ops-dsar-export-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 2,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "discovery_complete",
+        "verified_export_uploaded",
+        "verifier_cannot_release",
+        "release_drafts_response",
+        "deadline_escalation",
+        "support_unavailable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "duplicate-charge-remediation": {
+      "workflow": "duplicate-charge-remediation",
+      "receipt_url": "https://fetchsandbox.com/runs/942df07202?flow=vr_32045f5c19c54d8fa57cc7504523a437",
+      "source": "acme-ops/verify/receipts/duplicate-charge-remediation.json",
+      "checked_at": "2026-10-27T18:03:57.858194+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-19T14:54:28.218929+00:00",
+      "app_version": {
+        "value": "acme-ops-duplicate-charge-remediation-1.0.0-639dac1",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 23
+      },
+      "check_ids": [
+        "baseline",
+        "refund_reconciled",
+        "large_refund_parked",
+        "large_refund_approved",
+        "large_refund_rejected",
+        "approve_by_stranger_refused",
+        "rerun_refunds_nothing",
+        "ambiguous_not_refunded",
+        "different_purchase_kept",
+        "two_customers",
+        "ceiling_halts",
+        "unknown_customer",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_window_rejected",
+        "stripe_auth_failure",
+        "hubspot_rate_limited",
+        "gmail_auth_failure",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "disputed_charge_excluded",
+        "dispute_outage_fails_closed",
+        "manual_refund_race"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "employee-offboarding": {
+      "workflow": "employee-offboarding",
+      "receipt_url": "https://fetchsandbox.com/runs/6721b4e193?flow=vr_e0eba42018b34a0abbcc31f78a52085b",
+      "source": "acme-ops/verify/receipts/employee-offboarding.json",
+      "checked_at": "2026-10-27T18:03:58.234681+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T18:01:19.254505+00:00",
+      "app_version": {
+        "value": "acme-ops-employee-offboarding-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 5,
+        "violated": 5
+      },
+      "check_ids": [
+        "baseline",
+        "termination_filed",
+        "payroll_approval_pays",
+        "deadline_pays_without_approval",
+        "rescission_undoes_termination",
+        "access_removed_after_last_day",
+        "late_entry_escalated",
+        "workos_unreadable_reported",
+        "slack_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "export-screening": {
+      "workflow": "export-screening",
+      "receipt_url": "https://fetchsandbox.com/runs/ae8c32ab75?flow=vr_0630f2bf77114f0faaed8f22ece14c8a",
+      "source": "acme-ops/verify/receipts/export-screening.json",
+      "checked_at": "2026-10-27T18:03:58.452139+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:52:42.832853+00:00",
+      "app_version": {
+        "value": "acme-ops-export-screening-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 13,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "embargoed_destination_cannot_be_released",
+        "unknown_customer_still_reviewed",
+        "approve_by_stranger_refused",
+        "reject",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "asana_auth_failure",
+        "slack_channel_not_found",
+        "restart_while_parked",
+        "approve_and_reconcile",
+        "restricted_party_screening"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "failed-payment-dunning": {
+      "workflow": "failed-payment-dunning",
+      "receipt_url": "https://fetchsandbox.com/runs/198897286c?flow=vr_243352f82fcf4575922b792da8a81865",
+      "source": "acme-ops/verify/receipts/failed-payment-dunning.json",
+      "checked_at": "2026-10-27T18:03:58.632834+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T18:56:38.998537+00:00",
+      "app_version": {
+        "value": "acme-ops-failed-payment-dunning-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 5,
+        "unmeasured": 2,
+        "violated": 3
+      },
+      "check_ids": [
+        "baseline",
+        "first_failure_card_update_notice",
+        "second_failure_tries_backup_card",
+        "final_notice_after_14_days",
+        "cancellation_needs_approval",
+        "repeated_failure_no_second_notice",
+        "paid_invoice_contacts_nobody",
+        "unknown_invoice_contacts_nobody",
+        "stripe_auth_failure",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "field-service-dispatch": {
+      "workflow": "field-service-dispatch",
+      "receipt_url": "https://fetchsandbox.com/runs/11328921ab?flow=vr_6fa5507329d94f57a25f1dcdd6f271b8",
+      "source": "acme-ops/verify/receipts/field-service-dispatch.json",
+      "checked_at": "2026-10-27T18:03:58.829568+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:20:41.802977+00:00",
+      "app_version": {
+        "value": "acme-ops-field-service-dispatch-1.0.0-36fbb6e",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "after_hours_needs_approval",
+        "billable_needs_approval",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "twilio_invalid_number",
+        "calendar_auth_failure",
+        "stripe_auth_failure",
+        "asana_rate_limited",
+        "restart_while_parked",
+        "parts_reservation",
+        "calendar_booking_readback"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "incident-comms": {
+      "workflow": "incident-comms",
+      "receipt_url": "https://fetchsandbox.com/runs/dca8a1db6f?flow=vr_76c83c422ebc495b89d551339b6b736c",
+      "source": "acme-ops/verify/receipts/incident-comms.json",
+      "checked_at": "2026-10-27T18:03:58.966583+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:07:40.767546+00:00",
+      "app_version": {
+        "value": "acme-ops-incident-comms-1.0.0-df79afd",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "low_urgency_internal",
+        "resolution_notices",
+        "approve_by_commander",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "stripe_auth_failure",
+        "hubspot_rate_limited",
+        "slack_auth_failure",
+        "pagerduty_rate_limited",
+        "restart_while_parked",
+        "status_page_update",
+        "affected_by_product",
+        "pagerduty_note_readback"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "inventory-replenishment": {
+      "workflow": "inventory-replenishment",
+      "receipt_url": "https://fetchsandbox.com/runs/a456cd9e4c?flow=vr_35867ebfc10b434e938b5117c9d12c39",
+      "source": "acme-ops/verify/receipts/inventory-replenishment.json",
+      "checked_at": "2026-10-27T18:03:59.010631+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T18:41:26.366778+00:00",
+      "app_version": {
+        "value": "acme-ops-inventory-replenishment-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 6
+      },
+      "check_ids": [
+        "baseline",
+        "velocity_from_orders",
+        "stock_from_inventory_levels",
+        "open_pos_counted",
+        "below_reorder_point_po_raised",
+        "large_po_needs_buyer",
+        "late_receipt_escalated",
+        "shopify_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "invoice-three-way-match": {
+      "workflow": "invoice-three-way-match",
+      "receipt_url": "https://fetchsandbox.com/runs/cec6cff8bf?flow=vr_fbd12df7d3c54163a3711aaf0af39176",
+      "source": "acme-ops/verify/receipts/invoice-three-way-match.json",
+      "checked_at": "2026-10-27T18:03:59.333253+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:06:46.171136+00:00",
+      "app_version": {
+        "value": "acme-ops-invoice-three-way-match-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 5,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "bills_read_from_erp",
+        "clean_match_auto_approved",
+        "variance_needs_ap_approval",
+        "entering_clerk_cannot_approve",
+        "over_billed_held",
+        "duplicate_never_approved",
+        "erp_unreadable_approves_nothing",
+        "slack_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "lead-routing-sla": {
+      "workflow": "lead-routing-sla",
+      "receipt_url": "https://fetchsandbox.com/runs/7657f560d2?flow=vr_ec298074bb2e40a9906d9d41a2a32090",
+      "source": "acme-ops/verify/receipts/lead-routing-sla.json",
+      "checked_at": "2026-10-27T18:03:59.621268+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:03:55.656175+00:00",
+      "app_version": {
+        "value": "acme-ops-lead-routing-sla-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 7,
+        "violated": 2
+      },
+      "check_ids": [
+        "baseline",
+        "least_loaded_rep_assigned",
+        "enterprise_lead_one_hour_sla",
+        "account_owner_wins",
+        "owned_lead_not_rerouted",
+        "missed_sla_reassigns",
+        "hubspot_unreadable_blocks",
+        "slack_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "license-reclaim": {
+      "workflow": "license-reclaim",
+      "receipt_url": "https://fetchsandbox.com/runs/d9d39ca07c?flow=vr_b6cd213a86a14632978339bb9525293e",
+      "source": "acme-ops/verify/receipts/license-reclaim.json",
+      "checked_at": "2026-10-27T18:03:59.625945+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:00:15.584453+00:00",
+      "app_version": {
+        "value": "acme-ops-license-reclaim-1.0.0-df79afd",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "exclusions_respected",
+        "within_policy_is_quiet",
+        "warning_window",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "workos_auth_failure",
+        "slack_rate_limited",
+        "gmail_rate_limited",
+        "restart_while_parked",
+        "approve_and_reconcile",
+        "license_cost_savings"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "month-end-close": {
+      "workflow": "month-end-close",
+      "receipt_url": "https://fetchsandbox.com/runs/bf7aec0d1d?flow=vr_f88da1c718664c50bd389823c70535ac",
+      "source": "acme-ops/verify/receipts/month-end-close.json",
+      "checked_at": "2026-10-27T18:03:59.944250+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T17:19:11.423681+00:00",
+      "app_version": {
+        "value": "acme-ops-month-end-close-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 3,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "payouts_read",
+        "bank_feed_read",
+        "payouts_reconciled",
+        "fee_journal_on_approval",
+        "accrual_reverses_next_period",
+        "signoff_locks_period",
+        "reminder_while_open",
+        "stripe_unreadable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "onboarding-kickoff": {
+      "workflow": "onboarding-kickoff",
+      "receipt_url": "https://fetchsandbox.com/runs/f4c3a36343?flow=vr_34dd8797cc094b728307d526149991eb",
+      "source": "acme-ops/verify/receipts/onboarding-kickoff.json",
+      "checked_at": "2026-10-27T18:04:00.023965+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T06:15:47.869603+00:00",
+      "app_version": {
+        "value": "acme-ops-onboarding-kickoff-1.0.0-dbab6f7",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "refired_trigger_no_double_subscription",
+        "unknown_price_no_stripe_writes",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "hubspot_auth_failure",
+        "slack_not_in_channel",
+        "calendar_rate_limited",
+        "restart_while_parked",
+        "zendesk_provisioning"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "order-status": {
+      "workflow": "order-status",
+      "receipt_url": "https://fetchsandbox.com/runs/bff7380427?flow=vr_be5a26e56b3848efb4526afebc5392a5",
+      "source": "acme-ops/verify/receipts/order-status.json",
+      "checked_at": "2026-10-27T18:04:00.115936+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:13:11.699280+00:00",
+      "app_version": {
+        "value": "acme-ops-order-status-1.0.0-9e32d92",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "on_time_order_reply_only",
+        "late_order_detected",
+        "approve_by_stranger_refused",
+        "reject",
+        "restart_approve_and_reconcile",
+        "after_new_date_on_time",
+        "someone_elses_order_refused",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "asana_rate_limited",
+        "stripe_auth_failure",
+        "gmail_rate_limited",
+        "carrier_tracking",
+        "erp_order_lines"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "order-to-cash": {
+      "workflow": "order-to-cash",
+      "receipt_url": "https://fetchsandbox.com/runs/e62545113b?flow=vr_cfd2d89105c2494eafa5054ce7cd773a",
+      "source": "acme-ops/verify/receipts/order-to-cash.json",
+      "checked_at": "2026-10-27T18:04:00.692283+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:57:07.517726+00:00",
+      "app_version": {
+        "value": "acme-ops-order-to-cash-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 8
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "sales_order_booked_in_erp",
+        "label_bought_under_limit",
+        "customer_gets_tracking",
+        "shipped_order_not_shipped_again",
+        "unpaid_order_held",
+        "incomplete_address_held",
+        "cancelled_order_ignored",
+        "shopify_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "paid-order-provisioning": {
+      "workflow": "paid-order-provisioning",
+      "receipt_url": "https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e",
+      "source": "acme-ops/verify/receipts/paid-order-provisioning.json",
+      "checked_at": "2026-10-27T18:04:00.924160+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-21T16:41:58.044830+00:00",
+      "app_version": {
+        "value": "acme-ops-paid-order-provisioning-1.0.0-ba92fe0",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 21
+      },
+      "check_ids": [
+        "baseline",
+        "payment_event_provisions",
+        "provisioning_reconciled",
+        "exact_replay_once",
+        "concurrent_deliveries_once",
+        "unknown_payment_ignored",
+        "stale_event_after_refund",
+        "withheld_event_swept",
+        "late_event_after_sweep",
+        "checkout_retry_charges_once",
+        "large_charge_parked",
+        "large_charge_stranger_refused",
+        "large_charge_rejected",
+        "large_order_access_reviewed",
+        "duplicate_checkout",
+        "invalid_input_rejected",
+        "unknown_customer_not_charged",
+        "workos_auth_failure",
+        "hubspot_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "partner-payout-run": {
+      "workflow": "partner-payout-run",
+      "receipt_url": "https://fetchsandbox.com/runs/15f2349205?flow=vr_5c1e5f95f6124277a0a7de409adb8344",
+      "source": "acme-ops/verify/receipts/partner-payout-run.json",
+      "checked_at": "2026-10-27T18:04:00.987320+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-21T16:45:15.094764+00:00",
+      "app_version": {
+        "value": "acme-ops-partner-payout-run-1.0.0-ba92fe0",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 15,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "lost_response_same_transfer",
+        "rerun_pays_nothing",
+        "large_transfer_parked",
+        "large_transfer_approved",
+        "large_transfer_rejected",
+        "approve_by_stranger_refused",
+        "missing_account_skipped",
+        "ceiling_halts",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "stripe_auth_failure",
+        "asana_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "transfer_reversal_readback"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "payroll-anomaly-review": {
+      "workflow": "payroll-anomaly-review",
+      "receipt_url": "https://fetchsandbox.com/runs/460b43d7b8?flow=vr_42e0d5627b754acda8a2603350d1d9bc",
+      "source": "acme-ops/verify/receipts/payroll-anomaly-review.json",
+      "checked_at": "2026-10-27T18:04:01.044569+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:36:40.237489+00:00",
+      "app_version": {
+        "value": "acme-ops-payroll-anomaly-review-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 4,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "clean_payroll_submitted",
+        "anomalies_flagged",
+        "preparer_cannot_approve",
+        "deadline_holds_flagged_pays_rest",
+        "gusto_unavailable_never_submits",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "pcn-eol-notice": {
+      "workflow": "pcn-eol-notice",
+      "receipt_url": "https://fetchsandbox.com/runs/f58e5f23dc?flow=vr_851466eb937c45e282a501a9e2697d6c",
+      "source": "acme-ops/verify/receipts/pcn-eol-notice.json",
+      "checked_at": "2026-10-27T18:04:01.347599+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:50:31.577969+00:00",
+      "app_version": {
+        "value": "acme-ops-pcn-eol-notice-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 13
+      },
+      "check_ids": [
+        "baseline",
+        "approve_and_reconcile",
+        "unreadable_record_sends_nothing",
+        "unknown_product_sends_nothing",
+        "approve_by_stranger_refused",
+        "reject",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "github_auth_failure",
+        "asana_rate_limited",
+        "stripe_auth_failure",
+        "restart_while_parked"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "privacy-erasure": {
+      "workflow": "privacy-erasure",
+      "receipt_url": "https://fetchsandbox.com/runs/93969092e3?flow=vr_1fae88cbe29d455aa062b167be9977ed",
+      "source": "acme-ops/verify/receipts/privacy-erasure.json",
+      "checked_at": "2026-10-27T18:04:01.557713+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-19T14:54:22.434275+00:00",
+      "app_version": {
+        "value": "acme-ops-privacy-erasure-1.0.0-639dac1",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 19
+      },
+      "check_ids": [
+        "baseline",
+        "approve_erases",
+        "rejected",
+        "approve_by_stranger_refused",
+        "unverified_no_erasure",
+        "active_subscription_retains_billing",
+        "crm_only",
+        "nothing_held",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "workos_auth_failure",
+        "hubspot_rate_limited",
+        "stripe_auth_failure",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "crm_erasure_readback",
+        "privileged_account_flagged",
+        "hold_rechecked_at_write"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "product-cancellation": {
+      "workflow": "product-cancellation",
+      "receipt_url": "https://fetchsandbox.com/runs/7c141ce40b?flow=vr_1a9b707387024c149ff1ef377b55630a",
+      "source": "acme-ops/verify/receipts/product-cancellation.json",
+      "checked_at": "2026-10-27T18:04:01.797985+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-19T20:24:16.284321+00:00",
+      "app_version": {
+        "value": "acme-ops-product-cancellation-1.0.0-269e897",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 27
+      },
+      "check_ids": [
+        "baseline",
+        "store_credit_end_to_end",
+        "original_payment_end_to_end",
+        "gift_card_end_to_end",
+        "second_refund_refused",
+        "method_not_offered_clarified",
+        "contract_exception_parked",
+        "exception_approved",
+        "exception_rejected",
+        "approve_by_stranger_refused",
+        "no_refund_due",
+        "large_refund_needs_approval",
+        "unknown_customer_not_cancelled",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "stripe_auth_failure",
+        "zendesk_rate_limited",
+        "square_auth_failure",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "phone_request_opens_ticket",
+        "choice_read_from_customer_reply",
+        "prorated_credit_tier",
+        "store_credit_readback",
+        "gift_card_balance_readback",
+        "customer_email_delivery"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "purchase-request-to-po": {
+      "workflow": "purchase-request-to-po",
+      "receipt_url": "https://fetchsandbox.com/runs/f872e53438?flow=vr_a1f6960b9f7947978738aa94c733d7ba",
+      "source": "acme-ops/verify/receipts/purchase-request-to-po.json",
+      "checked_at": "2026-10-27T18:04:02.849423+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:28:01.693013+00:00",
+      "app_version": {
+        "value": "acme-ops-purchase-request-to-po-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 2,
+        "violated": 4,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "vendor_and_budget_read",
+        "chain_by_amount",
+        "requester_cannot_approve",
+        "no_repeat_approver",
+        "approved_po_raised_once",
+        "slow_approval_lapses",
+        "erp_unavailable_stops",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "returns-warranty": {
+      "workflow": "returns-warranty",
+      "receipt_url": "https://fetchsandbox.com/runs/d196fed8ac?flow=vr_e0778cfd16fd4a1db57cf35861be60d9",
+      "source": "acme-ops/verify/receipts/returns-warranty.json",
+      "checked_at": "2026-10-27T18:04:03.467213+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:10:47.668372+00:00",
+      "app_version": {
+        "value": "acme-ops-returns-warranty-1.0.0-df79afd",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "approve_by_approver",
+        "approve_by_stranger_refused",
+        "reject",
+        "unpaid_invoice_no_credit",
+        "no_credit_requested",
+        "someone_elses_invoice_refused",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "stripe_auth_failure",
+        "asana_rate_limited",
+        "slack_rate_limited",
+        "restart_while_parked",
+        "carrier_return_label",
+        "zendesk_ticket_link",
+        "credit_note_amount_readback"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "revenue-reconciliation": {
+      "workflow": "revenue-reconciliation",
+      "receipt_url": "https://fetchsandbox.com/runs/a630507692?flow=vr_deac92d8f5264a81bdfe6a17d17192ca",
+      "source": "acme-ops/verify/receipts/revenue-reconciliation.json",
+      "checked_at": "2026-10-27T18:04:03.851814+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T06:21:08.013269+00:00",
+      "app_version": {
+        "value": "acme-ops-revenue-reconciliation-1.0.0-dbab6f7",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 12,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "hubspot_auth_failure",
+        "hubspot_rate_limited",
+        "stripe_auth_failure",
+        "slack_channel_not_found",
+        "restart_while_parked",
+        "approve_and_reconcile",
+        "refund_approval_matching"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "rfq-quote": {
+      "workflow": "rfq-quote",
+      "receipt_url": "https://fetchsandbox.com/runs/451bef1458?flow=vr_9d553a7d44fe4af4b760c3f63e937ffb",
+      "source": "acme-ops/verify/receipts/rfq-quote.json",
+      "checked_at": "2026-10-27T18:04:03.868589+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:15:38.191830+00:00",
+      "app_version": {
+        "value": "acme-ops-rfq-quote-1.0.0-7a70b69",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 14,
+        "unmeasured": 2
+      },
+      "check_ids": [
+        "baseline",
+        "approval_discount_parks",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "discount_over_policy_declined",
+        "unknown_part_manual_pricing",
+        "mixed_terms_manual_pricing",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "stripe_rate_limited",
+        "hubspot_auth_failure",
+        "restart_while_parked",
+        "discount_as_stripe_coupon",
+        "salesforce_cpq"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "security-questionnaire": {
+      "workflow": "security-questionnaire",
+      "receipt_url": "https://fetchsandbox.com/runs/ecc2c079f7?flow=vr_e1ca4d13d678473b9992cd1751db6cdf",
+      "source": "acme-ops/verify/receipts/security-questionnaire.json",
+      "checked_at": "2026-10-27T18:04:03.947285+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:02:53.131858+00:00",
+      "app_version": {
+        "value": "acme-ops-security-questionnaire-1.0.0-df79afd",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 11,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "notion_auth_failure",
+        "asana_rate_limited",
+        "slack_auth_failure",
+        "restart_while_parked",
+        "answers_from_library"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "service-renewals": {
+      "workflow": "service-renewals",
+      "receipt_url": "https://fetchsandbox.com/runs/335177d131?flow=vr_aa323bfd73a1418aad16a46b2a53675e",
+      "source": "acme-ops/verify/receipts/service-renewals.json",
+      "checked_at": "2026-10-27T18:04:03.948769+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T15:45:19.861936+00:00",
+      "app_version": {
+        "value": "acme-ops-service-renewals-1.0.0-7e9260e",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 13
+      },
+      "check_ids": [
+        "baseline",
+        "uplift_within_policy_is_automatic",
+        "no_uplift_past_due",
+        "approve_by_stranger_refused",
+        "reject",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "stripe_auth_failure",
+        "asana_auth_failure",
+        "calendar_auth_failure",
+        "restart_while_parked",
+        "approve_and_reconcile"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "supplier-bank-change": {
+      "workflow": "supplier-bank-change",
+      "receipt_url": "https://fetchsandbox.com/runs/855eccad90?flow=vr_1d352154f9af49b5b8738b1d015ff7e8",
+      "source": "acme-ops/verify/receipts/supplier-bank-change.json",
+      "checked_at": "2026-10-27T18:04:04.388936+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:13:16.613734+00:00",
+      "app_version": {
+        "value": "acme-ops-supplier-bank-change-1.0.0-93f319c",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 4,
+        "violated": 5,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "payments_held_while_verifying",
+        "callback_to_number_on_file",
+        "submitter_cannot_confirm",
+        "verifier_cannot_also_approve",
+        "two_person_rule_applies_change",
+        "treasury_rejection_keeps_old_account",
+        "callback_deadline_rejects",
+        "ownership_checked_with_plaid",
+        "sanctions_screened",
+        "unreadable_vendor_blocks",
+        "slack_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "supplier-ncr": {
+      "workflow": "supplier-ncr",
+      "receipt_url": "https://fetchsandbox.com/runs/6479cad67b?flow=vr_cab530b56d13455182166ea403619f61",
+      "source": "acme-ops/verify/receipts/supplier-ncr.json",
+      "checked_at": "2026-10-27T18:04:04.670805+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T16:05:17.459132+00:00",
+      "app_version": {
+        "value": "acme-ops-supplier-ncr-1.0.0-df79afd",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 13,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "critical_hold_parked",
+        "high_reject_rate_hold",
+        "approve_and_reconcile",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "asana_auth_failure",
+        "calendar_rate_limited",
+        "gmail_auth_failure",
+        "restart_while_parked",
+        "repeat_supplier_escalation"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "support-escalation": {
+      "workflow": "support-escalation",
+      "receipt_url": "https://fetchsandbox.com/runs/a3e6951d42?flow=vr_560dd52d3f244aaba40f6d925ae8c5c7",
+      "source": "acme-ops/verify/receipts/support-escalation.json",
+      "checked_at": "2026-10-27T18:04:05.119454+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-17T06:18:27.233281+00:00",
+      "app_version": {
+        "value": "acme-ops-support-escalation-1.0.0-dbab6f7",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 15,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "approve_by_approver",
+        "approve_by_stranger_refused",
+        "reject",
+        "duplicate_start",
+        "concurrent_start",
+        "invalid_input_rejected",
+        "low_severity_not_escalated",
+        "slack_channel_not_found",
+        "slack_rate_limited",
+        "stripe_auth_failure",
+        "hubspot_auth_failure",
+        "calendar_auth_failure",
+        "gmail_rate_limited",
+        "restart_while_parked",
+        "zendesk_ticket_annotation"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "support-sla-breach": {
+      "workflow": "support-sla-breach",
+      "receipt_url": "https://fetchsandbox.com/runs/1b1c2cef6e?flow=vr_c92fbe845ccd407b86ac81b3bd23c5da",
+      "source": "acme-ops/verify/receipts/support-sla-breach.json",
+      "checked_at": "2026-10-27T18:04:05.246689+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:19:16.882587+00:00",
+      "app_version": {
+        "value": "acme-ops-support-sla-breach-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 3,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "unanswered_ticket_timed",
+        "enterprise_tier_detected",
+        "answered_ticket_not_timed",
+        "pending_ticket_paused",
+        "breach_fires_at_target",
+        "enterprise_breach_pages",
+        "zendesk_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "treasury-payment-approval": {
+      "workflow": "treasury-payment-approval",
+      "receipt_url": "https://fetchsandbox.com/runs/b1a7f4f2c1?flow=vr_61dc098b5ebb4006b791152e25b33996",
+      "source": "acme-ops/verify/receipts/treasury-payment-approval.json",
+      "checked_at": "2026-10-27T18:04:05.271220+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:25:06.980564+00:00",
+      "app_version": {
+        "value": "acme-ops-treasury-payment-approval-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 2,
+        "violated": 4,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "beneficiary_and_history_read",
+        "maker_cannot_approve",
+        "checker_releases_once",
+        "cfo_distinct_from_checker",
+        "cutoff_lapses",
+        "returned_payment_escalated",
+        "bank_unavailable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "usage-true-up": {
+      "workflow": "usage-true-up",
+      "receipt_url": "https://fetchsandbox.com/runs/aa5bb1a765?flow=vr_dcbd9eb9423c41f18d954ee4153c447a",
+      "source": "acme-ops/verify/receipts/usage-true-up.json",
+      "checked_at": "2026-10-27T18:04:05.488282+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T20:25:08.193850+00:00",
+      "app_version": {
+        "value": "acme-ops-usage-true-up-1.0.0-06c2f09",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 5,
+        "violated": 4,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "usage_read_from_meter",
+        "overage_drafted_once",
+        "under_commitment_not_billed",
+        "missing_contract_reported",
+        "owner_holds_invoice",
+        "issued_after_notice",
+        "large_overage_needs_approval",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "user-access-review": {
+      "workflow": "user-access-review",
+      "receipt_url": "https://fetchsandbox.com/runs/192682caf9?flow=vr_c14cb6f1efe04a0fbf095e93e9089086",
+      "source": "acme-ops/verify/receipts/user-access-review.json",
+      "checked_at": "2026-10-27T18:04:05.489719+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:04:06.564943+00:00",
+      "app_version": {
+        "value": "acme-ops-user-access-review-1.0.0-4ac41d8",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 8,
+        "violated": 4
+      },
+      "check_ids": [
+        "baseline",
+        "campaign_covers_every_system",
+        "owner_revokes_access",
+        "owner_keeps_access",
+        "no_self_review",
+        "outsider_cannot_decide",
+        "deadline_revokes_unreviewed_admin",
+        "reminder_only_for_open_items",
+        "github_member_revoked",
+        "workos_unreadable_blocks",
+        "slack_rate_limited",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "visa-and-leave-expiry": {
+      "workflow": "visa-and-leave-expiry",
+      "receipt_url": "https://fetchsandbox.com/runs/83716cae3a?flow=vr_a609579128f94a92a22d0ea14b5ca3fd",
+      "source": "acme-ops/verify/receipts/visa-and-leave-expiry.json",
+      "checked_at": "2026-10-27T18:04:05.790198+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:43:28.181711+00:00",
+      "app_version": {
+        "value": "acme-ops-visa-and-leave-expiry-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 2,
+        "violated": 6,
+        "unmeasured": 1
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "authorization_timers_scheduled",
+        "counsel_case_inside_90_days",
+        "renewed_row_schedules_nothing",
+        "leave_return_planned",
+        "expiry_escalates_reverification",
+        "unrelated_row_ignored",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "vulnerability-remediation": {
+      "workflow": "vulnerability-remediation",
+      "receipt_url": "https://fetchsandbox.com/runs/5825e3a8cf?flow=vr_14858015802a4bd8bc7aff4532274dff",
+      "source": "acme-ops/verify/receipts/vulnerability-remediation.json",
+      "checked_at": "2026-10-27T18:04:06.084550+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-22T19:54:03.521499+00:00",
+      "app_version": {
+        "value": "acme-ops-vulnerability-remediation-1.0.0-befeb35",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 3,
+        "violated": 3,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "baseline_effects",
+        "every_alert_tracked_once",
+        "second_sweep_creates_nothing",
+        "owner_cannot_accept_own_risk",
+        "accepted_risk_dismisses_alert",
+        "overdue_escalated",
+        "github_unreadable_blocks",
+        "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    }
+  }
+}
