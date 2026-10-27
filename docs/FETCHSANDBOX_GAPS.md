@@ -6,6 +6,39 @@ points to a receipt check or a recorded probe. Probes and runs were made on
 2026-10-22 with `fetchsandbox-mcp@0.7.30`; the twins change often, so re-probe
 before relying on a "not supported" line.
 
+## Current status overlay — October 27, 2026
+
+This report preserves the **October 22 measurements**, not a live capability
+catalog. Use the [fix and proof plan](FETCHSANDBOX_FIX_PLAN.md) for current status,
+priorities, remaining acceptance and estimated delivery windows. Do not silently
+replace the historical receipts or count an unmeasured check as a pass.
+
+- **R3 partially addressed:** backend `51284f50` includes cursor/address fixes;
+  the [October 27 customer sweep rerun](https://fetchsandbox.com/runs/0978965681?flow=vr_e3c8446a1e2b43628bd85ab307355788)
+  passed its eight declared checks, including a 250-customer segment across three
+  pages. Fixture retry/isolation changed; the eight business expectations did not.
+  Search fidelity, 5,000-record seeding benchmark and native-agent acceptance remain open.
+- **R26 partially addressed:** dashed and undashed Notion page IDs now identify
+  the same stored page in focused tests. The original visa/leave workflow has not
+  been rerun; other Notion response fidelity is not certified.
+- **R20 remains open:** the related address-form correction does not prove payout
+  epochs, Plaid token formats or the original eight-wide creation requirement.
+- Owned-validation access control, JWT ownership and cold-parse responsiveness
+  received bounded fixes. A separate persisted-sandbox reload gap is reproduced
+  and unfixed; saved receipts and live sandbox reload are different durability scopes.
+- The latest `p5_crossservice` native run against `51284f50` was **UNMEASURED**.
+  It is not native acceptance, even though the deterministic sweep receipt passed.
+
+Qualification corrections: R9's original requester `locale` payload is not a
+vendor-conformance oracle. Zendesk documents `requester.locale_id` for a new
+requester during ticket creation, and reuses an existing requester without updating
+its profile. Qualify the user-update path independently against the
+[official ticket documentation](https://developer.zendesk.com/documentation/ticketing/managing-tickets/creating-and-updating-tickets/)
+and [Users API](https://developer.zendesk.com/api-reference/ticketing/users/users/).
+R6's old API-version examples are historical reproduction inputs, not a claim that
+those versions are supported today; select and record a currently supported vendor
+version before implementing a compatibility fix.
+
 ## How this was measured
 
 - Four workflows were built specifically to exercise areas the earlier
@@ -110,7 +143,7 @@ R9, R10) and account-takeover-containment (40b5cbb: 20 / 0 / 2; R8).
 - support-sla-breach double alerts across overlapping sweeps, caught in local
   tests and fixed with a compare-and-swap claim.
 
-## Requirements for FetchSandbox
+## Requirements for FetchSandbox — original October 22 acceptance
 
 Ordered by how many enterprise workflows each unblocks. "Accept when" is the
 smallest observable behaviour that would turn the named checks from violated

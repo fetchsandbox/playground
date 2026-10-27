@@ -4,6 +4,27 @@ Start with a business need, then read the workflow guide before running it. [ADO
 This catalog describes repository availability, not the number of runtimes in a private AWS account.
 The repository is public and MIT-licensed; your own provider accounts, credentials and deployment are required.
 
+## Availability and proof are separate
+
+Audited on **October 27, 2026**, against repository revision `0da1ca6`.
+There are **51 Acme workflow definitions with 152 declared logical roles** in
+`acme-ops`. These are not 152 independent models, deployed AWS runtimes or proof
+that every workflow passes. Customer Operations is a separate package below.
+
+- **Business behavior and historical receipts:** the individual guides below.
+- **Original failure evidence:** [FetchSandbox gap report](FETCHSANDBOX_GAPS.md),
+  measured October 22; retain its failures and unmeasured checks.
+- **Current fix status, priorities, acceptance and estimated timeline:**
+  [FetchSandbox fix and proof plan](FETCHSANDBOX_FIX_PLAN.md).
+- **Builder history:** [tracker](TRACKER.md); dated counts are historical cohorts.
+
+As of this audit, no complete R1–R26 requirement has closure evidence. R3 has a
+passing 250-customer workflow rerun, with search and bulk-fixture acceptance still
+open; R26 has a deployed page-identity fix without the original workflow rerun.
+Missing or unmeasured proof is not evidence that an operation is still unsupported
+in the current release. Rediscover and remeasure before relying on an old blocker.
+The catalog does not establish production deployment or live OAuth/email delivery.
+
 ## Acme workflows on main
 
 Progress, twin research and pending work are tracked in [TRACKER.md](TRACKER.md); the plan for the next workflows is [ENTERPRISE_WORKFLOW_PROGRAM.md](ENTERPRISE_WORKFLOW_PROGRAM.md) and FetchSandbox gaps are in [FETCHSANDBOX_GAPS.md](FETCHSANDBOX_GAPS.md).
@@ -76,7 +97,7 @@ These guides describe code outside `main`; follow the source branch/PR and its s
 | Customer handoff | Customer Onboarding Operations / Customer Onboarding and Billing Operations | 5 | [Handoff](workflows/customer-handoff.md) |
 | Refund eligibility and resolution | Customer Service and Revenue Operations / Refund Assurance | 6 | [Refund operations](workflows/refund-operations.md) |
 
-[PR #68](https://github.com/fetchsandbox/playground/pull/68) proposes duplicate-charge remediation and privacy-erasure workflows. They are not included as merged or deployed examples here.
+[PR #68](https://github.com/fetchsandbox/playground/pull/68) merged on October 19, 2026. Duplicate-charge remediation and privacy-erasure are included in the main catalog above. Merge status does not establish deployment or a fresh verification result.
 
 ## Small integration apps and planted-bug exercises
 
