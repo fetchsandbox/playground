@@ -1,0 +1,271 @@
+{
+  "as_of": "2026-10-27",
+  "catalog_revision": "0da1ca6",
+  "catalog_definitions": 51,
+  "catalog_logical_roles": 152,
+  "scope": "Documentation audit, not a new workflow run or AWS inventory",
+  "backend_observed": {
+    "commit": "51284f50",
+    "built_at": "2026-10-27T03:45:33.392678+00:00",
+    "env": "unknown"
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Scripted model replies",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Return chosen schema-shaped assistant output; measure unsafe-answer refusal. Template runs do not satisfy this."
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Stripe failed-collection lifecycle",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Invoice items/amounts, failed pay and attempt counts, signed failure delivery and dunning outcomes agree."
+    },
+    {
+      "id": "R3",
+      "priority": "P1",
+      "phase": "B",
+      "label": "Pagination and bulk fixtures",
+      "status": "Partial, deployed",
+      "closure": "not established",
+      "next_acceptance": "Keep the 250-customer/three-page pass; prove query filtering and seed 5,000 records in under a minute."
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "phase": "D",
+      "label": "NetSuite order records",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Discover provider, create one external-ID sales order, read/query it and observe it in order-to-cash."
+    },
+    {
+      "id": "R5",
+      "priority": "P2",
+      "phase": "D",
+      "label": "Carrier shipping",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Buy one label, refuse duplicate buy and reconcile tracking to the correct storefront order."
+    },
+    {
+      "id": "R6",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Shopify state/version fidelity",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Pin a currently supported version; stateful orders and order-scoped fulfillment read-back, then order-to-cash rerun."
+    },
+    {
+      "id": "R7",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Independent operator writes",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Apply authorized metadata change between planning and approval; original race check observes it."
+    },
+    {
+      "id": "R8",
+      "priority": "P1",
+      "phase": "C",
+      "label": "WorkOS sessions/memberships",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Stored roles, membership transitions and user-scoped revocation read back correctly; containment rerun."
+    },
+    {
+      "id": "R9",
+      "priority": "P1",
+      "phase": "B",
+      "label": "Zendesk locale/search",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Qualify documented locale_id/user-update semantics first; locale formatting and ticket search/deduplication rerun."
+    },
+    {
+      "id": "R10",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Stripe tax/settlement",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Realistic calculated line amounts and refund exchange-rate/balance record read-back; cross-border checks."
+    },
+    {
+      "id": "R11",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Response loss behind proxy",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Witness accepted effect/lost response and exactly one effect after retry from proxied runtime."
+    },
+    {
+      "id": "R12",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Webhook/check correlation",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Signed event starts a runtime run attributable to the exact original check; no supplied-answer seeding."
+    },
+    {
+      "id": "R13",
+      "priority": "P1",
+      "phase": "A",
+      "label": "Relay allowance and cleanup",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Back-to-back proofs including failed setup release their own leases; next proof starts within one minute."
+    },
+    {
+      "id": "R14",
+      "priority": "P2",
+      "phase": "D",
+      "label": "Other missing/partial provider surfaces",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Split broad requirement into provider-specific scoped contracts; discover, execute and read back each relevant business effect."
+    },
+    {
+      "id": "R15",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Runtime clock during attempt",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Controlled test-only app clock advances mid-attempt, tick changes saved state and time step appears in receipt; production clock route disabled."
+    },
+    {
+      "id": "R16",
+      "priority": "P2",
+      "phase": "D",
+      "label": "Gusto payroll",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Version-guarded termination and off-cycle pay submit/read-back; final-pay and payroll-anomaly workflow proof."
+    },
+    {
+      "id": "R17",
+      "priority": "P2",
+      "phase": "D",
+      "label": "Modern Treasury payments",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "One payment per idempotency key, authorized transitions and later returned-payment observation."
+    },
+    {
+      "id": "R18",
+      "priority": "P1",
+      "phase": "C",
+      "label": "GitHub reviews/deployments/access",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Seed actual approvals/checks; observe deployment, membership and security-alert effects in applicable original workflows."
+    },
+    {
+      "id": "R19",
+      "priority": "P2",
+      "phase": "D",
+      "label": "DocuSign lifecycle",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "One envelope per contract, status/reminder/void state; original contract-intake time checks."
+    },
+    {
+      "id": "R20",
+      "priority": "P1",
+      "phase": "B",
+      "label": "Scalar/ID and creation fidelity",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Payout epochs, Plaid token shape and 250 creates eight-wide with bounded retry; address fix alone is insufficient."
+    },
+    {
+      "id": "R21",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Datadog degradation",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Change a monitor after deployment, observe rollback on GitHub, retain earlier missing-credential setup failure."
+    },
+    {
+      "id": "R22",
+      "priority": "P1",
+      "phase": "C",
+      "label": "HubSpot properties/consent",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Define and read back properties and subscription state; consent/CRM/lead-routing workflow reruns."
+    },
+    {
+      "id": "R23",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Pinned API versions",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Record the supported vendor version per provider, verify relevant shapes/headers; do not claim all-version parity."
+    },
+    {
+      "id": "R24",
+      "priority": "P1",
+      "phase": "B",
+      "label": "Box stored files",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "Vendor-shaped file IDs; upload then read/representation extraction on the same stored file."
+    },
+    {
+      "id": "R25",
+      "priority": "P1",
+      "phase": "C",
+      "label": "Stripe metered usage",
+      "status": "Open; current requalification pending",
+      "closure": "not established",
+      "next_acceptance": "1,300 seeded units read back as 1,300 with correct invoice linkage and usage-true-up result."
+    },
+    {
+      "id": "R26",
+      "priority": "P1",
+      "phase": "B",
+      "label": "Notion page identity/state",
+      "status": "Partial, deployed",
+      "closure": "not established",
+      "next_acceptance": "Retain dashed/undashed identity tests; run original visa/leave create/read/update checks and inspect receipt."
+    }
+  ],
+  "proof": {
+    "sweep": {
+      "receipt_url": "https://fetchsandbox.com/runs/0978965681?flow=vr_e3c8446a1e2b43628bd85ab307355788",
+      "app_declared_revision": "c2ec0d5",
+      "backend": "51284f50",
+      "passed": 8,
+      "failed": 0,
+      "unmeasured": 0,
+      "fixture_changes": [
+        "Bounded Retry-After retries",
+        "Independent baseline-effects fixture segment"
+      ],
+      "native_agent_acceptance": false
+    },
+    "native_p5": {
+      "run": "p5_crossservice-20261027T035406Z",
+      "source_revision": "148501b36",
+      "backend": "51284f50",
+      "mcp": "0.7.30",
+      "verdict": "UNMEASURED",
+      "summary": "Validation tool acceptance failed; prove_fix did not return measured acceptance. This is separate from the sweep proof."
+    }
+  }
+}

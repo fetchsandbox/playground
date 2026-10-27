@@ -5,7 +5,31 @@ FetchSandbox twins, what the twin research found, and what is still pending.
 Status reflects saved receipts and the dates shown; it is not a fresh run.
 Update this page in the same PR as the change it describes.
 
-Last updated: 2026-10-22 (after the cross-border refund and account-takeover workflows).
+Status overlay updated October 27, 2026. Sections below retain their original
+measurement dates; older totals are cohort counts, not the current catalog size.
+
+## Current catalog and gap status
+
+- Main revision `0da1ca6` contains 51 Acme workflow definitions / 152 logical roles;
+  Customer Operations remains a separate package. Documentation/schema checks do
+  not execute these workflows or count AWS deployments.
+- PR #68 merged October 19; PR #75 merged October 27. PR #74 is still open at this
+  audit; overlapping code reached main through #75, so PR state alone cannot decide
+  whether a workflow exists in main. Inspect the catalog and actual source.
+- The [fix and proof plan](FETCHSANDBOX_FIX_PLAN.md) is the current status overlay
+  for R1–R26. The [gap report](FETCHSANDBOX_GAPS.md) remains original evidence.
+- The [October 27 sweep receipt](https://fetchsandbox.com/runs/0978965681?flow=vr_e3c8446a1e2b43628bd85ab307355788)
+  records eight passed checks on app-declared `c2ec0d5` / backend `51284f50`.
+  This does not replace the older receipt committed on main, close all of R3 or
+  prove the current main revision. Fixture retries/isolation changed explicitly.
+- The latest native `p5_crossservice` result is unmeasured; no native acceptance
+  claim. The other original gap requirements have not all been requalified.
+
+## Historical October 22 builder cohort
+
+The remainder of this tracker is historical, including the 26-workflow total,
+provider tier table, absence-of-violations statement and unfinished work notes.
+Read these with their dates; they do not describe all 51 definitions now on main.
 
 ## 1. Built (merged, and in review)
 
@@ -20,7 +44,7 @@ Last updated: 2026-10-22 (after the cross-border refund and account-takeover wor
 | [account-takeover-containment](workflows/account-takeover-containment.md) | #74 | IT · it-security | WorkOS, Stripe, Asana, Slack | inconclusive, 20 held, 2 unmeasured ([receipt](https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0)) |
 
 The other 19 Acme workflows predate this tracker (PRs #44–#61); see the
-[catalog](WORKFLOWS.md). Overall: 26 workflows, 7 verified, 19 inconclusive
+[catalog](WORKFLOWS.md). For that historical cohort: 26 workflows, 7 verified, 19 inconclusive
 because of declared twin or environment gaps, 0 receipts with a violated check.
 The four #74 workflows are in one PR from `claude/acme-ops-crossborder-and-ato`;
 each is still its own app (workflow file, runtime, stack, contract, receipt).
@@ -69,7 +93,7 @@ Coverage dimensions across the contracts (counts as of 2026-10-21, 22 contracts;
 | Amount / currency / quantity | 11 | `cross-border-refund` measures EUR/GBP/JPY refunds, per-currency limits and the balance-currency fallback; tax and FX still unmeasurable; no test clocks |
 | Baseline, identity, duplicates, concurrency, restart, partial effects, reconciliation | 22 | Concurrency means one runtime, same trigger |
 
-Never measured: the Claude drafting path (the proof runner strips
+Not measured in that historical cohort: the Claude drafting path (the proof runner strips
 `ANTHROPIC_*`, so all proofs use templates), scale/pagination (twin `has_more`
 is unreliable), two workflows racing on one customer, live email/OAuth delivery.
 
