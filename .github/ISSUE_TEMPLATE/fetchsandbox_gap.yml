@@ -1,0 +1,42 @@
+name: FetchSandbox gap
+description: Something a workflow does that FetchSandbox can't prove yet.
+labels: [fetchsandbox-gap]
+body:
+  - type: input
+    id: workflow
+    attributes:
+      label: Workflow and check id
+      description: For example `usage-true-up` / `usage_read_from_meter`.
+    validations:
+      required: true
+  - type: dropdown
+    id: class
+    attributes:
+      label: Class (see docs/FETCHSANDBOX_GAPS.md)
+      options:
+        - Twin missing (provider not in the catalog)
+        - Twin spec divergence (answers differently from the vendor's API)
+        - Operation not in twin (documented operation missing, 501 or samples)
+        - Engine / verifier capability
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: vendor
+    attributes:
+      label: What the vendor's API documents
+      description: Link the vendor's API reference for the operation or field.
+    validations:
+      required: true
+  - type: textarea
+    id: twin
+    attributes:
+      label: What the twin did
+      description: The request and the twin's response or error, from the runtime log or seed (no credentials), and the receipt URL.
+    validations:
+      required: true
+  - type: textarea
+    id: accept
+    attributes:
+      label: Accept when
+      description: The smallest observable twin behaviour that would make the check measurable.

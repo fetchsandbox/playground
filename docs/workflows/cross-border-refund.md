@@ -74,6 +74,16 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `zendesk.internal_note` | zendesk | **auto** | Internal note with the decision for support agents |
 | `slack.post_refund` | slack | **auto** | Decision in the support channel |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| zendesk | `ZENDESK_SUBDOMAIN` + `ZENDESK_API_KEY` (OAuth token, or API token with `ZENDESK_EMAIL`) |  |
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

@@ -86,6 +86,25 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `slack.campaign_opened` | slack | **auto** | Campaign scope posted to GRC |
 | `asana.evidence_record` | asana | **auto** | Closing evidence record once every decision is settled |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| workos | `WORKOS_API_KEY` |  |
+| github | `GITHUB_API_KEY` (fine-grained token) | Sends `X-GitHub-Api-Version: 2022-11-28`. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+
+**Set up in the provider accounts first:**
+
+- The WorkOS organizations and GitHub organization in the input, and an Asana workspace for evidence.
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

@@ -66,6 +66,16 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `gmail.draft_warning` | gmail | **auto** | Draft (not send) a sign-in-or-lose-it warning per idle user |
 | `workos.reclaim_seat` | workos | **approval** | Delete the directory account of a seat idle past the grace period |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| workos | `WORKOS_API_KEY` |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+
 ## Setup and run
 
 From the repository root:

@@ -86,6 +86,18 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `slack.post_summary` | slack | **auto** | Post coverage of the questionnaire to Security |
 | `gmail.draft_response` | gmail | **approval** | Draft (not send) the answered questionnaire to the customer |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| notion | `NOTION_API_KEY` (integration token) | Share the database with the integration. Sends `Notion-Version: 2022-06-28`. |
+| hubspot | `HUBSPOT_API_KEY` (private-app token) | Custom contact properties must exist before the workflow writes them. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+
 ## Setup and run
 
 From the repository root:

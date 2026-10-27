@@ -96,6 +96,17 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `asana.incident_record` | asana | **auto** | Incident record with the score, actions and restore input |
 | `slack.post_alert` | slack | **auto** | Decision in the security channel |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| workos | `WORKOS_API_KEY` |  |
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

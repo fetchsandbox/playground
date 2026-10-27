@@ -68,6 +68,20 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `asana.sweep_record` | asana | **auto** | Sweep record for RevOps |
 | `slack.post_sweep` | slack | **auto** | Sweep result in the RevOps channel |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- Stripe customers in scope carry `metadata.acme_segment` equal to the input `segment`.
+
 ## Setup and run
 
 From the repository root:

@@ -68,6 +68,27 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `hr.return_check` | slack | **auto** | No return recorded the day after: check for an extension |
 | `slack.post_unreadable` | slack | **auto** | Row unreadable: nothing scheduled |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| notion | `NOTION_API_KEY` (integration token) | Share the database with the integration. Sends `Notion-Version: 2022-06-28`. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| calendar | `GOOGLE_CALENDAR_API_KEY` (OAuth access token) |  |
+
+**Set up in the provider accounts first:**
+
+- A Notion database with columns `Employee` (title), `Email` (email), `Manager email` (email), `Type` (select: `work_authorization`, `leave`), `Document` (select), `Date` (date) and `Status` (select: `active`, `renewed`, `returned`, `closed`, `reverification_overdue`), shared with the integration.
+- A Notion webhook or automation that calls `start` with the page id when a row changes.
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

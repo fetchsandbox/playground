@@ -82,6 +82,20 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `stripe.record_step` | stripe | **auto** | Record the step on the customer so the ladder never repeats or goes back |
 | `slack.escalate` | slack | **auto** | Tell finance about high-value failures, cancellations and unreadable invoices |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- A Stripe `invoice.payment_failed` webhook (or the daily sweep) that calls `start`.
+
 ## Setup and run
 
 From the repository root:

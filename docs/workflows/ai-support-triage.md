@@ -65,6 +65,16 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `zendesk.reply` | zendesk | **auto** | Public reply; automatic only for a confident, checked how-to answer, otherwise approval |
 | `slack.post_urgent` | slack | **auto** | Urgent or unreadable tickets in the support channel |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| zendesk | `ZENDESK_SUBDOMAIN` + `ZENDESK_API_KEY` (OAuth token, or API token with `ZENDESK_EMAIL`) |  |
+| openai | `OPENAI_API_KEY` (+ optional `OPENAI_MODEL`) | Model output is validated in code and never trusted for money or access decisions. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

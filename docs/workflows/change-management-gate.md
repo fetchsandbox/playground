@@ -84,6 +84,36 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `cab.post_review` | github | **auto** | Signal: CAB reviews an emergency change within 24 h |
 | `slack.post_change` | slack | **auto** | Start, block and outcome posts |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| github | `GITHUB_API_KEY` (fine-grained token) | Sends `X-GitHub-Api-Version: 2022-11-28`. |
+| pagerduty | `PAGERDUTY_API_KEY` + `PAGERDUTY_FROM_EMAIL` | `Token token=` auth; `From` is required for writes. |
+| datadog | `DATADOG_API_KEY` + `DATADOG_APP_KEY` |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- A GitHub repository using deployments, a PagerDuty service and the Datadog monitors named in the input.
+
+**Human decisions (signals).** These steps wait for a named person. Read the waiting action id from `status` (status `awaiting_signal`) and send:
+
+```json
+{ "action": "signal", "runId": "<run>", "actionId": "<waiting action id>", "value": "approve", "userId": "<approver id>", "note": "optional" }
+```
+
+Senders outside the allowed list, or excluded by segregation-of-duties rules, get HTTP 403.
+
+- `cab.approve`: a CAB approver who isn't the author approves a normal change
+- `cab.post_review`: CAB reviews an emergency change within 24 h
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 minute)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

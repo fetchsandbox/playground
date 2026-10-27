@@ -3,7 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "ACME cross-org ops workflows (support, finance, customer success, sales→CS) as independent Amazon Bedrock AgentCore runtimes",
+  "description": "ACME cross-org ops workflows (support, finance, customer success, sales\u2192CS) as independent Amazon Bedrock AgentCore runtimes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fetchsandbox/playground.git",
+    "directory": "acme-ops"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "check": "tsc --noEmit",
     "test": "vitest run",

@@ -85,6 +85,19 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `gmail.draft_completion` | gmail | **approval** | Draft the response to the requester, only after the erasures went through |
 | `slack.post_dsr` | slack | **auto** | Request status in the privacy channel (hashed subject) |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| hubspot | `HUBSPOT_API_KEY` (private-app token) | Custom contact properties must exist before the workflow writes them. |
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| workos | `WORKOS_API_KEY` |  |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

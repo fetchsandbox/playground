@@ -103,6 +103,38 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `netsuite.create_po` | netsuite | **auto** | Purchase order, once per request |
 | `slack.dm_requester` | slack | **auto** | PO number, or why there is none |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| netsuite | `NETSUITE_BASE_URL` (`https://<account>.suitetalk.api.netsuite.com`) + `NETSUITE_API_KEY` (OAuth 2.0 access token) | Tokens expire after 60 minutes; refresh them outside the runtime. |
+| screening | `TRADE_GOV_API_KEY` (developer.trade.gov subscription key) | Sent as the `subscription-key` header. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- NetSuite vendor custom fields `custentity_acme_payment_hold` (checkbox) and `custentity_acme_hold_reason`.
+- Department budgets come from your planning system through the input.
+
+**Human decisions (signals).** These steps wait for a named person. Read the waiting action id from `status` (status `awaiting_signal`) and send:
+
+```json
+{ "action": "signal", "runId": "<run>", "actionId": "<waiting action id>", "value": "approve", "userId": "<approver id>", "note": "optional" }
+```
+
+Senders outside the allowed list, or excluded by segregation-of-duties rules, get HTTP 403.
+
+- `approve.manager`: requester's manager
+- `approve.finance`: finance (over 5,000 or over budget)
+- `approve.vp`: VP (over 50,000)
+- `approve.cfo`: CFO (over 250,000)
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

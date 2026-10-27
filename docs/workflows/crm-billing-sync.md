@@ -63,6 +63,25 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `hubspot.sync` | hubspot | **auto** | Write billing-owned fields (link, plan, MRR, status); approval past the limit or on a mass change |
 | `slack.post_sync` | slack | **auto** | Sync summary with conflicts |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| hubspot | `HUBSPOT_API_KEY` (private-app token) | Custom contact properties must exist before the workflow writes them. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- HubSpot contact properties (single-line text): `acme_stripe_customer_id`, `acme_plan`, `acme_mrr`, `acme_billing_status`.
+- Stripe customers in scope carry `metadata.acme_segment` equal to the input `segment`.
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

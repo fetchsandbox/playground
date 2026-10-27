@@ -66,6 +66,21 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `shopify.fulfill` | shopify | **auto** | Add the fulfillment with tracking to the Shopify order (notifies the customer) |
 | `slack.post_order` | slack | **auto** | Order outcome in the operations channel |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| shopify | `SHOPIFY_BASE_URL` (`https://<shop>.myshopify.com`) + `SHOPIFY_API_KEY` (Admin API access token) | Admin API version `2026-01`; override with `SHOPIFY_API_VERSION`. |
+| netsuite | `NETSUITE_BASE_URL` (`https://<account>.suitetalk.api.netsuite.com`) + `NETSUITE_API_KEY` (OAuth 2.0 access token) | Tokens expire after 60 minutes; refresh them outside the runtime. |
+| easypost | `EASYPOST_API_KEY` | HTTP Basic auth. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- A NetSuite customer whose email matches the Shopify order, and NetSuite items whose external ids are the Shopify SKUs.
+
 ## Setup and run
 
 From the repository root:

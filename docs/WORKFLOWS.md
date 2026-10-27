@@ -1,6 +1,6 @@
 # Workflow catalog
 
-Start with a business need, then read the workflow guide before running it.
+Start with a business need, then read the workflow guide before running it. [ADOPTING.md](ADOPTING.md) walks through connecting your providers, running, adapting, deploying and verifying any workflow below.
 This catalog describes repository availability, not the number of runtimes in a private AWS account.
 The repository is public and MIT-licensed; your own provider accounts, credentials and deployment are required.
 

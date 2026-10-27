@@ -55,6 +55,82 @@ WHY={
 'vulnerability-remediation':'Application Security needs every known vulnerability tracked to its severity deadline, escalated when late, and accepted as risk only by someone outside the owning team, for a limited time.',
 'support-escalation':'Support needs to combine incident severity, account context and billing health so urgent cases reach the right team with a reviewed customer reply.',
 }
+
+# Provider -> (environment variables, notes). Names match acme-ops/src/providers/index.ts.
+PROVIDER_ENV={
+'stripe':('`STRIPE_API_KEY` (restricted key)','Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes.'),
+'hubspot':('`HUBSPOT_API_KEY` (private-app token)','Custom contact properties must exist before the workflow writes them.'),
+'gmail':('`GMAIL_API_KEY` (OAuth access token)','Customer mail is created as drafts.'),
+'calendar':('`GOOGLE_CALENDAR_API_KEY` (OAuth access token)',''),
+'slack':('`SLACK_API_KEY` (bot token, `chat:write`)','Invite the bot to every channel the input names.'),
+'zendesk':('`ZENDESK_SUBDOMAIN` + `ZENDESK_API_KEY` (OAuth token, or API token with `ZENDESK_EMAIL`)',''),
+'asana':('`ASANA_API_KEY` (personal access token)',''),
+'workos':('`WORKOS_API_KEY`',''),
+'github':('`GITHUB_API_KEY` (fine-grained token)','Sends `X-GitHub-Api-Version: 2022-11-28`.'),
+'twilio':('`TWILIO_API_KEY` (auth token) + `TWILIO_ACCOUNT_SID`','HTTP Basic auth.'),
+'twilio_verify':('`TWILIO_VERIFY_API_KEY` + `TWILIO_ACCOUNT_SID` + `TWILIO_VERIFY_SERVICE_SID`','HTTP Basic auth.'),
+'pagerduty':('`PAGERDUTY_API_KEY` + `PAGERDUTY_FROM_EMAIL`','`Token token=` auth; `From` is required for writes.'),
+'notion':('`NOTION_API_KEY` (integration token)','Share the database with the integration. Sends `Notion-Version: 2022-06-28`.'),
+'box':('`BOX_API_KEY` (access token)','Uploads go to `upload.box.com`; override with `BOX_UPLOAD_URL` only for a test double.'),
+'screening':('`TRADE_GOV_API_KEY` (developer.trade.gov subscription key)','Sent as the `subscription-key` header.'),
+'square':('`SQUARE_API_KEY`',''),
+'openai':('`OPENAI_API_KEY` (+ optional `OPENAI_MODEL`)','Model output is validated in code and never trusted for money or access decisions.'),
+'shopify':('`SHOPIFY_BASE_URL` (`https://<shop>.myshopify.com`) + `SHOPIFY_API_KEY` (Admin API access token)','Admin API version `2026-01`; override with `SHOPIFY_API_VERSION`.'),
+'netsuite':('`NETSUITE_BASE_URL` (`https://<account>.suitetalk.api.netsuite.com`) + `NETSUITE_API_KEY` (OAuth 2.0 access token)','Tokens expire after 60 minutes; refresh them outside the runtime.'),
+'easypost':('`EASYPOST_API_KEY`','HTTP Basic auth.'),
+'plaid':('`PLAID_CLIENT_ID` + `PLAID_SECRET` (+ `PLAID_BASE_URL` for sandbox)','Credentials travel in the request body.'),
+'gusto':('`GUSTO_API_KEY` + `GUSTO_COMPANY_ID`','Pinned to `X-Gusto-API-Version: 2026-06-15`; override with `GUSTO_API_VERSION`.'),
+'datadog':('`DATADOG_API_KEY` + `DATADOG_APP_KEY`',''),
+'docusign':('`DOCUSIGN_BASE_URL` (your account\'s base URI) + `DOCUSIGN_API_KEY` (access token) + `DOCUSIGN_ACCOUNT_ID`',''),
+'moderntreasury':('`MODERN_TREASURY_API_KEY` + `MODERN_TREASURY_ORGANIZATION_ID`','HTTP Basic auth.'),
+}
+# What must already exist in the provider accounts. Workflows not listed need only the identifiers in their input.
+PREREQS={
+'consent-propagation':['HubSpot contact properties (single-line text): `acme_consent_marketing_email`, `acme_consent_sale_or_share`, `acme_consent_profiling`, `acme_consent_last_event`.','A HubSpot email subscription type for marketing; its id is the input `marketingSubscriptionId`.'],
+'crm-billing-sync':['HubSpot contact properties (single-line text): `acme_stripe_customer_id`, `acme_plan`, `acme_mrr`, `acme_billing_status`.','Stripe customers in scope carry `metadata.acme_segment` equal to the input `segment`.'],
+'customer-data-sweep':['Stripe customers in scope carry `metadata.acme_segment` equal to the input `segment`.'],
+'customer-kyc-rescreen':['Stripe Connect accounts in scope carry `metadata.acme_program`. The platform must be allowed to set their payout schedule (platform controls or loss liability).'],
+'usage-true-up':['A Stripe billing meter (its id is the input `meterId`) receiving usage events.','Each committed-use subscription carries `metadata.acme_committed_units`, `metadata.acme_overage_price` (a price id) and optionally `metadata.acme_billing_email`.'],
+'visa-and-leave-expiry':['A Notion database with columns `Employee` (title), `Email` (email), `Manager email` (email), `Type` (select: `work_authorization`, `leave`), `Document` (select), `Date` (date) and `Status` (select: `active`, `renewed`, `returned`, `closed`, `reverification_overdue`), shared with the integration.','A Notion webhook or automation that calls `start` with the page id when a row changes.'],
+'support-sla-breach':['Zendesk tickets in scope carry the input `scopeTag`; enterprise customers carry `enterpriseTag` (default `tier_enterprise`).','A PagerDuty service for support on-call.'],
+'supplier-bank-change':['NetSuite vendor custom fields: `custentity_acme_payment_hold` (checkbox), `custentity_acme_hold_reason`, `custentity_acme_bank_last4`, `custentity_acme_bank_token`, `custentity_acme_bank_changed_at`.','A Twilio Verify service, a Plaid link to the new account, and a developer.trade.gov subscription key.'],
+'purchase-request-to-po':['NetSuite vendor custom fields `custentity_acme_payment_hold` (checkbox) and `custentity_acme_hold_reason`.','Department budgets come from your planning system through the input.'],
+'order-to-cash':['A NetSuite customer whose email matches the Shopify order, and NetSuite items whose external ids are the Shopify SKUs.'],
+'inventory-replenishment':['For each planned SKU: its Shopify variant id, NetSuite item id and supplier (vendor) id, passed in the input.'],
+'invoice-three-way-match':['NetSuite vendor bills pending approval, linked to their purchase orders and item receipts.'],
+'month-end-close':['A Plaid link to the operating bank account that receives Stripe payouts, and NetSuite accounting periods named as in the input `periodName`.'],
+'lead-routing-sla':['HubSpot owners listed as reps in the input pods. Leads use the standard properties `country`, `numberofemployees` and `hs_email_domain`.'],
+'change-management-gate':['A GitHub repository using deployments, a PagerDuty service and the Datadog monitors named in the input.'],
+'vulnerability-remediation':['Dependabot alerts enabled on the repositories in the input.'],
+'contract-intake':['A Box file for the contract, an OpenAI key, and a DocuSign account.'],
+'dsar-export':['A restricted Box folder for exports (input `exportFolderId`).'],
+'delivery-exception':['An EasyPost tracker webhook that calls `start` with the tracker id and its Shopify order id.'],
+'treasury-payment-approval':['Modern Treasury internal (originating) and verified external (receiving) accounts.'],
+'payroll-anomaly-review':['A Gusto company with regular payrolls; reviewers named in the input.'],
+'employee-offboarding':['The employee\'s Gusto, WorkOS and GitHub identities, passed in the input.'],
+'user-access-review':['The WorkOS organizations and GitHub organization in the input, and an Asana workspace for evidence.'],
+'failed-payment-dunning':['A Stripe `invoice.payment_failed` webhook (or the daily sweep) that calls `start`.'],
+}
+def operations(w):
+ provs=[]
+ for a in w['agents']:
+  for p in a['providers']:
+   if p not in provs:provs.append(p)
+ for a in w['actions']:
+  if a['provider'] not in provs:provs.append(a['provider'])
+ lines=['','## Providers, credentials and operations','','Put these in the runtime\'s private `.env` locally, or in the stack\'s Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.','','| Provider | Environment | Notes |','|---|---|---|']
+ for p in provs:
+  env,note=PROVIDER_ENV.get(p,(f'`{p.upper()}_API_KEY`',''))
+  lines.append(f'| {p} | {env} | {cell(note)} |')
+ pre=PREREQS.get(w['id'])
+ if pre:lines+=['','**Set up in the provider accounts first:**','']+[f'- {x}' for x in pre]
+ signals=[a for a in w['actions'] if a['description'].startswith('Signal:')]
+ if signals:
+  lines+=['','**Human decisions (signals).** These steps wait for a named person. Read the waiting action id from `status` (status `awaiting_signal`) and send:','','```json','{ "action": "signal", "runId": "<run>", "actionId": "<waiting action id>", "value": "approve", "userId": "<approver id>", "note": "optional" }','```','','Senders outside the allowed list, or excluded by segregation-of-duties rules, get HTTP 403.','']
+  lines+=[f'- `{a["kind"]}`: {a["description"][len("Signal:"):].strip()}' for a in signals]
+ if w.get('tickEvery'):lines+=['',f'**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{{"action":"tick"}}` on the schedule `{w["tickEvery"]}` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.']
+ if w.get('audit'):lines+=['','**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.']
+ return lines
 def cell(v):return str(v).replace('|','\\|').replace('\n',' ')
 def render(w):
  id=w['id'];receipt=w['receipt'];counts=collections.Counter(c['status'] for c in receipt.get('checks',[]));base='../../acme-ops/'
@@ -73,6 +149,7 @@ def render(w):
  for a in roles:lines.append(f"| `{a['name']}` | {', '.join(a['providers']) or 'No direct provider requirement; uses input or prior agent results'} |")
  lines += ['',f"**{len(roles)} declared roles**, including the compose stage where present. These are logical responsibilities, not a count of independent models or servers.",'','## Policies, writes and approval boundaries','','Every possible action kind is declared below. `auto` means the workflow may perform it without a human gate after its business conditions pass; it does not mean it always runs. `approval` means the configured approver must decide. Read the linked workflow source for eligibility, thresholds and input-dependent branches. Never copy one workflow’s discount/refund rules into another.','','| Action | Provider | Gate | Business effect |','|---|---|---|---|']
  for a in w['actions']:lines.append(f"| `{a['kind']}` | {a['provider']} | **{a['gate']}** | {cell(a['description'])} |")
+ lines+=operations(w)
  lines+=['','## Setup and run','','From the repository root:','','```bash','cd acme-ops','npm ci','npm run check','npm test','npm run bundle',f'WORKFLOW={id} STATE_FILE=.state/{id}.json node --env-file=.env dist/main.mjs','```','','Create a private `.env` using the package setup guide. Set only credentials and provider URLs for your own sandbox/test accounts. Optional LLM drafting needs your model-service key; a template run is not an LLM evaluation. Missing provider credentials must stay visible as skipped/not configured. See the [shared setup and deployment guide](../../acme-ops/README.md#run-locally).','','The sample requires the isolated twin fixtures created by its contract. Do not send the sample identifiers to production. For live-vendor testing, prepare your own customer, product, ticket and approver identities and obtain any required access.','','## FetchSandbox verification','','Coding agents must follow the [repository verification instructions](../../AGENTS.md) and [verification guide](../VERIFICATION.md), including contract scope, independent observations and explicit blockers.','','```bash','cd acme-ops','npm run bundle',f'node verify/relay-proof.mjs {id}','```','','This makes network calls, creates isolated twin resources and consumes FetchSandbox usage. It needs FetchSandbox authentication and managed-relay access. It does not deploy to AWS or authorize live customer communication.','','### Declared scenarios','','| Check | Business behavior | Contract blocker |','|---|---|---|']
  for c in w['checks']:lines.append(f"| `{c['id']}` | {cell(c.get('label',''))} | {cell(c['blocked']['reason']) if c['blocked'] else 'Executable declaration; result comes from a receipt'} |")
  lines+=['','### Saved evidence — historical, not a fresh run','',f"The checked-in receipt records app version `{receipt.get('app_version','unrecorded')}`, verdict **{receipt.get('verdict','unknown')}**, and statuses: "+', '.join(f'**{v} {k}**' for k,v in sorted(counts.items()))+'.', '',f"[Recorded receipt]({receipt['receipt_url']}) · [Saved result]({base}verify/receipts/{id}.json)",'','Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.','','## Source and contract','',f'- [Workflow and business rules]({base}src/workflows/{id}.ts)',f'- [Executable verification contract]({base}verify/contracts/{id}.mjs)',f'- [Shared state, approval and recovery engine]({base}src/kit/engine.ts)','', '<!-- Generated by scripts/workflow_docs.py from workflow definitions, contracts and saved receipts. Edit source or the business-need mapping, then regenerate. -->','']

@@ -68,6 +68,25 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `pagerduty.page` | pagerduty | **auto** | Enterprise breach pages support on-call (de-duplicated) |
 | `slack.post_sweep` | slack | **auto** | Sweep summary |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| zendesk | `ZENDESK_SUBDOMAIN` + `ZENDESK_API_KEY` (OAuth token, or API token with `ZENDESK_EMAIL`) |  |
+| pagerduty | `PAGERDUTY_API_KEY` + `PAGERDUTY_FROM_EMAIL` | `Token token=` auth; `From` is required for writes. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- Zendesk tickets in scope carry the input `scopeTag`; enterprise customers carry `enterpriseTag` (default `tier_enterprise`).
+- A PagerDuty service for support on-call.
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(5 minutes)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

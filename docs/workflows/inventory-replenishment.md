@@ -92,6 +92,25 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `receiving.late_check` | netsuite | **auto** | Escalate lines not received two days after the due date |
 | `slack.post_replenishment` | slack | **auto** | Summary, stockout risks and SKUs that couldn't be planned |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| shopify | `SHOPIFY_BASE_URL` (`https://<shop>.myshopify.com`) + `SHOPIFY_API_KEY` (Admin API access token) | Admin API version `2026-01`; override with `SHOPIFY_API_VERSION`. |
+| netsuite | `NETSUITE_BASE_URL` (`https://<account>.suitetalk.api.netsuite.com`) + `NETSUITE_API_KEY` (OAuth 2.0 access token) | Tokens expire after 60 minutes; refresh them outside the runtime. |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- For each planned SKU: its Shopify variant id, NetSuite item id and supplier (vendor) id, passed in the input.
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

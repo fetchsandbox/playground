@@ -73,6 +73,35 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `compliance.remind` | slack | **auto** | Reminder every 3 days while undecided |
 | `slack.post_rescreen` | slack | **auto** | Sweep summary |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| screening | `TRADE_GOV_API_KEY` (developer.trade.gov subscription key) | Sent as the `subscription-key` header. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
+**Set up in the provider accounts first:**
+
+- Stripe Connect accounts in scope carry `metadata.acme_program`. The platform must be allowed to set their payout schedule (platform controls or loss liability).
+
+**Human decisions (signals).** These steps wait for a named person. Read the waiting action id from `status` (status `awaiting_signal`) and send:
+
+```json
+{ "action": "signal", "runId": "<run>", "actionId": "<waiting action id>", "value": "approve", "userId": "<approver id>", "note": "optional" }
+```
+
+Senders outside the allowed list, or excluded by segregation-of-duties rules, get HTTP 403.
+
+- `compliance.review`: analyst decides true match (hold) or false positive
+- `mlro.sar_decision`: MLRO (not the analyst) decides on a SAR within 30 days of detection
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(1 hour)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:

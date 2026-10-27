@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/fetchsandbox/playground/security/advisories/new
+    about: Report security problems privately, never in a public issue.
+  - name: Adopting a workflow
+    url: https://github.com/fetchsandbox/playground/blob/main/docs/ADOPTING.md
+    about: Step-by-step guide to running, adapting, deploying and verifying a workflow.

@@ -108,6 +108,38 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `slack.post_offboarding` | slack | **auto** | HR channel summary with the final-pay deadline |
 | `asana.offboarding_record` | asana | **auto** | Record once pay and access removal are settled |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| gusto | `GUSTO_API_KEY` + `GUSTO_COMPANY_ID` | Pinned to `X-Gusto-API-Version: 2026-06-15`; override with `GUSTO_API_VERSION`. |
+| workos | `WORKOS_API_KEY` |  |
+| github | `GITHUB_API_KEY` (fine-grained token) | Sends `X-GitHub-Api-Version: 2022-11-28`. |
+| easypost | `EASYPOST_API_KEY` | HTTP Basic auth. |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+
+**Set up in the provider accounts first:**
+
+- The employee's Gusto, WorkOS and GitHub identities, passed in the input.
+
+**Human decisions (signals).** These steps wait for a named person. Read the waiting action id from `status` (status `awaiting_signal`) and send:
+
+```json
+{ "action": "signal", "runId": "<run>", "actionId": "<waiting action id>", "value": "approve", "userId": "<approver id>", "note": "optional" }
+```
+
+Senders outside the allowed list, or excluded by segregation-of-duties rules, get HTTP 403.
+
+- `hr.rescind`: HR rescinds before the end of the last day
+
+**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{"action":"tick"}` on the schedule `rate(15 minutes)` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.
+
+**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.
+
 ## Setup and run
 
 From the repository root:
