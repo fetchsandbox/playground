@@ -1,0 +1,84 @@
+{
+  "workflow": "supplier-bank-change",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-supplier-bank-change-1.0.0-93f319c",
+  "session_id": "vs_154c65e363fc",
+  "run_id": "vr_1d352154f9af49b5b8738b1d015ff7e8",
+  "receipt_url": "https://fetchsandbox.com/runs/855eccad90?flow=vr_1d352154f9af49b5b8738b1d015ff7e8",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "payments_held_while_verifying",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "callback_to_number_on_file",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "submitter_cannot_confirm",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 403, received 404"
+    },
+    {
+      "id": "verifier_cannot_also_approve",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "two_person_rule_applies_change",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "treasury_rejection_keeps_old_account",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "callback_deadline_rejects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "ownership_checked_with_plaid",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "sanctions_screened",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "unreadable_vendor_blocks",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:13:36.667Z"
+}

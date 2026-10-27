@@ -81,6 +81,19 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `gmail.draft_customer_notice` | gmail | **approval** | Create (not send) the customer notice drafts |
 | `github.mark_customers_notified` | github | **approval** | Label the change record customers-notified |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| github | `GITHUB_API_KEY` (fine-grained token) | Sends `X-GitHub-Api-Version: 2022-11-28`. |
+| stripe | `STRIPE_API_KEY` (restricted key) | Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes. |
+| hubspot | `HUBSPOT_API_KEY` (private-app token) | Custom contact properties must exist before the workflow writes them. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+
 ## Setup and run
 
 From the repository root:

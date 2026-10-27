@@ -1,3 +1,4 @@
+import { SpecDeviation } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 export interface ZendeskTicket {
@@ -8,6 +9,7 @@ export interface ZendeskTicket {
   priority?: string | null;
   tags?: string[];
   requester_id?: number;
+  assignee_id?: number | null;
   organization_id?: number | null;
   created_at?: string;
   updated_at?: string;
@@ -27,6 +29,7 @@ export interface ZendeskUser {
   email?: string;
   name?: string;
   organization_id?: number | null;
+  locale?: string | null;
 }
 
 /**
@@ -43,7 +46,9 @@ export class ZendeskClient {
   }
 
   async getUser(id: number): Promise<ZendeskUser> {
-    const { body } = await this.http.request<{ user: ZendeskUser }>("GET", `/api/v2/users/${id}.json`);
+    const { body } = await this.http.request<{ user?: ZendeskUser }>("GET", `/api/v2/users/${id}.json`);
+    // Zendesk documents the user wrapped in `user` (Show User).
+    if (!body?.user) throw new SpecDeviation("zendesk", `GET /api/v2/users/${id}.json returned no \`user\` object`);
     return body.user;
   }
 
@@ -91,6 +96,27 @@ export class ZendeskClient {
    * agent added in between is never overwritten (a stale stamp is a 409 and
    * is retried against the fresh ticket).
    */
+  /**
+   * Compare-and-swap claim on a ticket: adds `tag` plus an owner marker with
+   * safe_update. Returns true for the owner (also on its retries), false when
+   * someone else holds the tag.
+   */
+  async claimTag(id: number | string, tag: string, owner: string): Promise<boolean> {
+    const mine = `${tag}_${owner}`;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const cur = await this.getTicket(id);
+      const tags = cur.tags ?? [];
+      if (tags.includes(mine)) return true;
+      if (tags.includes(tag)) return false;
+      const res = await this.http.request<{ ticket?: ZendeskTicket }>("PUT", `/api/v2/tickets/${encodeURIComponent(String(id))}.json`, {
+        json: { ticket: { tags: [...tags, tag, mine], safe_update: true, updated_stamp: cur.updated_at } },
+        allow: [409],
+      });
+      if (res.status !== 409) return true;
+    }
+    throw new Error(`ticket ${id}: could not claim ${tag} (kept conflicting)`);
+  }
+
   async addTags(id: number | string, tags: string[]): Promise<ZendeskTicket> {
     for (let attempt = 0; ; attempt++) {
       const cur = await this.getTicket(id);
@@ -102,6 +128,19 @@ export class ZendeskClient {
       });
       if (res.status !== 409) return res.body?.ticket ?? cur;
     }
+  }
+
+  /** Every ticket via cursor pagination (`page[size]`, `meta.after_cursor`), first `max`. */
+  async listTickets(max = 2000): Promise<ZendeskTicket[]> {
+    const out: ZendeskTicket[] = [];
+    let after: string | undefined;
+    while (out.length < max) {
+      const { body } = await this.http.request<{ tickets: ZendeskTicket[]; meta?: { has_more?: boolean; after_cursor?: string | null } }>("GET", "/api/v2/tickets.json", { query: { "page[size]": 100, "page[after]": after } });
+      out.push(...(body?.tickets ?? []));
+      after = body?.meta?.after_cursor ?? undefined;
+      if (!body?.meta?.has_more || !after || !body.tickets?.length) break;
+    }
+    return out.slice(0, max);
   }
 
   /** Search API (`type:ticket ...`), first `max` results. */

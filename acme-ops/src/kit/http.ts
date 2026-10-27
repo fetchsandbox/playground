@@ -12,10 +12,15 @@ export interface ProviderEndpoint {
 }
 
 export interface RequestOptions {
-  query?: Record<string, string | number | boolean | undefined>;
+  /** Array values repeat the key (e.g. PagerDuty's `statuses[]=a&statuses[]=b`). */
+  query?: Record<string, string | number | boolean | undefined | (string | number)[]>;
+  /** Read the body as text or base64 bytes instead of JSON (file downloads, text representations). */
+  responseType?: "json" | "text" | "base64";
   json?: unknown;
   /** Stripe-style application/x-www-form-urlencoded body (already flattened). */
   form?: Record<string, string | number | boolean | undefined>;
+  /** A body sent as is (e.g. multipart uploads). */
+  raw?: { body: string; contentType: string };
   /** Treat these statuses as data rather than errors (e.g. HubSpot 409). */
   allow?: number[];
   headers?: Record<string, string>;
@@ -24,6 +29,8 @@ export interface RequestOptions {
 export interface HttpResult<T> {
   status: number;
   body: T;
+  /** Response headers, lowercased (e.g. `location` for APIs that answer 204 + Location). */
+  headers?: Record<string, string>;
 }
 
 function retryAfterMs(res: Response): number | undefined {
@@ -70,8 +77,12 @@ export class ProviderHttp {
   }
 
   url(path: string, query?: RequestOptions["query"]): string {
-    const u = new URL(this.endpoint.baseUrl.replace(/\/+$/, "") + path);
-    for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined) u.searchParams.set(k, String(v));
+    // An absolute URL is a vendor's second host (e.g. Box uploads); credentials still come from this endpoint.
+    const u = new URL(/^https?:\/\//.test(path) ? path : this.endpoint.baseUrl.replace(/\/+$/, "") + path);
+    for (const [k, v] of Object.entries(query ?? {})) {
+      if (Array.isArray(v)) for (const x of v) u.searchParams.append(k, String(x));
+      else if (v !== undefined) u.searchParams.set(k, String(v));
+    }
     return u.toString();
   }
 
@@ -88,8 +99,10 @@ export class ProviderHttp {
   }
 
   private async once<T>(method: string, path: string, opts: RequestOptions): Promise<HttpResult<T>> {
+    const authorization = this.endpoint.getAuthorization ? await this.endpoint.getAuthorization() : this.endpoint.authorization ?? `Bearer ${this.endpoint.token}`;
     const headers: Record<string, string> = {
-      authorization: this.endpoint.getAuthorization ? await this.endpoint.getAuthorization() : this.endpoint.authorization ?? `Bearer ${this.endpoint.token}`,
+      // An empty authorization means the vendor authenticates in the body (Plaid).
+      ...(authorization ? { authorization } : {}),
       accept: "application/json",
       ...this.headers,
       ...opts.headers,
@@ -98,6 +111,9 @@ export class ProviderHttp {
     if (opts.json !== undefined) {
       headers["content-type"] = "application/json; charset=utf-8";
       body = JSON.stringify(opts.json);
+    } else if (opts.raw) {
+      headers["content-type"] = opts.raw.contentType;
+      body = opts.raw.body;
     } else if (opts.form) {
       headers["content-type"] = "application/x-www-form-urlencoded";
       const p = new URLSearchParams();
@@ -111,6 +127,10 @@ export class ProviderHttp {
     } catch (err) {
       throw new ProviderError(this.provider, 0, "network", true, `${method} ${path}: ${(err as Error).message}`);
     }
+    if (res.ok && opts.responseType && opts.responseType !== "json") {
+      const body = opts.responseType === "base64" ? Buffer.from(await res.arrayBuffer()).toString("base64") : await res.text();
+      return { status: res.status, body: body as T, headers: Object.fromEntries(res.headers) };
+    }
     const text = await res.text();
     let parsed: any;
     try {
@@ -118,7 +138,7 @@ export class ProviderHttp {
     } catch {
       parsed = { raw: text.slice(0, 500) };
     }
-    if (res.ok || opts.allow?.includes(res.status)) return { status: res.status, body: parsed as T };
+    if (res.ok || opts.allow?.includes(res.status)) return { status: res.status, body: parsed as T, headers: Object.fromEntries(res.headers) };
     const code = providerCode(parsed, res.status);
     const retryable = res.status === 429 || res.status >= 500;
     throw new ProviderError(this.provider, res.status, code, retryable, `${method} ${path} → ${res.status} ${code}`, retryable ? retryAfterMs(res) : undefined);

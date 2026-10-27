@@ -1,0 +1,69 @@
+{
+  "workflow": "employee-offboarding",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-employee-offboarding-1.0.0-4ac41d8",
+  "session_id": "vs_91c65159d1b7",
+  "run_id": "vr_e0eba42018b34a0abbcc31f78a52085b",
+  "receipt_url": "https://fetchsandbox.com/runs/6721b4e193?flow=vr_e0eba42018b34a0abbcc31f78a52085b",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "termination_filed",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "payroll_approval_pays",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "deadline_pays_without_approval",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "rescission_undoes_termination",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "access_removed_after_last_day",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 0, found 1"
+    },
+    {
+      "id": "late_entry_escalated",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "workos_unreadable_reported",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T18:01:27.062Z"
+}

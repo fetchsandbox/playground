@@ -1,0 +1,64 @@
+{
+  "workflow": "delivery-exception",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-delivery-exception-1.0.0-06c2f09",
+  "session_id": "vs_6868339bab40",
+  "run_id": "vr_59e842134e84480d8beaa68bd37fe374",
+  "receipt_url": "https://fetchsandbox.com/runs/2750a6afec?flow=vr_59e842134e84480d8beaa68bd37fe374",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stuck_parcel_customer_told",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "lost_parcel_replaced",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "returned_parcel_replaced",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "delivered_after_notice_solves_ticket",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "redelivered_webhook_one_ticket",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2"
+    },
+    {
+      "id": "tracker_unreadable_reported",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T20:16:37.368Z"
+}

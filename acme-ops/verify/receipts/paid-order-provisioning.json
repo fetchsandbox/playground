@@ -1,0 +1,124 @@
+{
+  "workflow": "paid-order-provisioning",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-paid-order-provisioning-1.0.0-ba92fe0",
+  "session_id": "vs_d7ae49672a65",
+  "run_id": "vr_91d0dcb6472e4337981361327717d67e",
+  "receipt_url": "https://fetchsandbox.com/runs/7191c10d9e?flow=vr_91d0dcb6472e4337981361327717d67e",
+  "status": null,
+  "verdict": "verified",
+  "app_verified": true,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "payment_event_provisions",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "provisioning_reconciled",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "exact_replay_once",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "concurrent_deliveries_once",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "unknown_payment_ignored",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stale_event_after_refund",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "withheld_event_swept",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "late_event_after_sweep",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 3, found 3; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "checkout_retry_charges_once",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "large_charge_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_charge_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_charge_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_order_access_reviewed",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "duplicate_checkout",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "unknown_customer_not_charged",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "workos_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    }
+  ],
+  "recorded_at": "2026-10-21T16:41:59.133Z"
+}

@@ -1,0 +1,59 @@
+{
+  "workflow": "customer-kyc-rescreen",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-customer-kyc-rescreen-1.0.0-befeb35",
+  "session_id": "vs_f48c4c7a5298",
+  "run_id": "vr_d94bf68353e54d558e1c472599f41006",
+  "receipt_url": "https://fetchsandbox.com/runs/6c0ea91459?flow=vr_d94bf68353e54d558e1c472599f41006",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "accounts_in_program_screened",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.accounts' is missing"
+    },
+    {
+      "id": "strong_match_held",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.held' is missing"
+    },
+    {
+      "id": "analyst_clears_false_positive",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "mlro_distinct_from_analyst",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "screening_unavailable_blocks",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:31:04.525Z"
+}

@@ -1,0 +1,69 @@
+{
+  "workflow": "month-end-close",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-month-end-close-1.0.0-4ac41d8",
+  "session_id": "vs_1735f8b532d0",
+  "run_id": "vr_f88da1c718664c50bd389823c70535ac",
+  "receipt_url": "https://fetchsandbox.com/runs/bf7aec0d1d?flow=vr_f88da1c718664c50bd389823c70535ac",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "payouts_read",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "bank_feed_read",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "payouts_reconciled",
+      "status": "unmeasured",
+      "explanation": "Application request timed out before recovery could be observed; no recovery verdict was established"
+    },
+    {
+      "id": "fee_journal_on_approval",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "accrual_reverses_next_period",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "signoff_locks_period",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "reminder_while_open",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_unreadable_blocks",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T17:19:28.719Z"
+}

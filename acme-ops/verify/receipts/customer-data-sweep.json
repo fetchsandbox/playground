@@ -1,0 +1,59 @@
+{
+  "workflow": "customer-data-sweep",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-customer-data-sweep-1.0.0-befeb35",
+  "session_id": "vs_303f2c2a425e",
+  "run_id": "vr_ea8d1d081bf341a7b716cd7513c668a2",
+  "receipt_url": "https://fetchsandbox.com/runs/5e8db1a7ef?flow=vr_ea8d1d081bf341a7b716cd7513c668a2",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "full_scan_250",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "flag_limit_needs_approval",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "rerun_flags_nothing",
+      "status": "violated",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 0; runs[*]: expected exactly 1, found 0"
+    },
+    {
+      "id": "incomplete_scan_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stripe_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T19:51:40.041Z"
+}

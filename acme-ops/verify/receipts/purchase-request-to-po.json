@@ -1,0 +1,69 @@
+{
+  "workflow": "purchase-request-to-po",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-purchase-request-to-po-1.0.0-06c2f09",
+  "session_id": "vs_666c94e4baa9",
+  "run_id": "vr_a1f6960b9f7947978738aa94c733d7ba",
+  "receipt_url": "https://fetchsandbox.com/runs/f872e53438?flow=vr_a1f6960b9f7947978738aa94c733d7ba",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "vendor_and_budget_read",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "chain_by_amount",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.approvalPath' is missing"
+    },
+    {
+      "id": "requester_cannot_approve",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 403, received 404"
+    },
+    {
+      "id": "no_repeat_approver",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "approved_po_raised_once",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "slow_approval_lapses",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "erp_unavailable_stops",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T20:28:16.858Z"
+}

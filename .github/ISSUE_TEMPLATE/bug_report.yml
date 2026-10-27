@@ -1,0 +1,50 @@
+name: Bug report
+description: A workflow, the kit or a provider client behaves wrongly.
+labels: [bug]
+body:
+  - type: input
+    id: workflow
+    attributes:
+      label: Workflow or module
+      description: For example `dsar-export`, `src/kit/engine.ts` or `src/providers/stripe.ts`.
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or version
+      description: "`git rev-parse --short HEAD`, or the app version in the receipt."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: Include the run view (`status`) with personal data and tokens removed.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The `start` input (synthetic data only), and the commands or a failing test.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where it happened
+      options:
+        - Local tests
+        - Local runtime against a provider sandbox
+        - FetchSandbox twin proof
+        - Deployed AgentCore runtime
+    validations:
+      required: true
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before you submit
+      options:
+        - label: I removed credentials, tokens and real customer data.
+          required: true

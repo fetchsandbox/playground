@@ -1,0 +1,51 @@
+name: Workflow proposal
+description: Propose a new business operations workflow.
+labels: [workflow-proposal]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Workflow
+      description: A short name, for example `vendor-onboarding`.
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Department and team
+      description: For example Finance · accounts-payable.
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: Business need
+      description: What goes wrong today without it, and who is accountable for the outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: Trigger and result
+      description: What starts it (webhook, schedule, person), and what must be true when it's done.
+    validations:
+      required: true
+  - type: textarea
+    id: providers
+    attributes:
+      label: Providers and their operations
+      description: Which systems it reads and writes, with links to the vendor's API reference for each operation.
+    validations:
+      required: true
+  - type: textarea
+    id: controls
+    attributes:
+      label: Policy, approvals and failure handling
+      description: Limits, who must approve what (and who must not), deadlines, and what happens when a provider is unavailable.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Checks that would prove it works
+      description: The happy path, plus duplicates, races, refusals, faults and timers that matter.

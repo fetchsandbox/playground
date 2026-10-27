@@ -1,0 +1,69 @@
+{
+  "workflow": "support-sla-breach",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-support-sla-breach-1.0.0-06c2f09",
+  "session_id": "vs_783a68dd8c8f",
+  "run_id": "vr_c92fbe845ccd407b86ac81b3bd23c5da",
+  "receipt_url": "https://fetchsandbox.com/runs/1b1c2cef6e?flow=vr_c92fbe845ccd407b86ac81b3bd23c5da",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "unanswered_ticket_timed",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.awaitingReply' is missing"
+    },
+    {
+      "id": "enterprise_tier_detected",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.enterprise' is missing"
+    },
+    {
+      "id": "answered_ticket_not_timed",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.awaitingReply' is missing"
+    },
+    {
+      "id": "pending_ticket_paused",
+      "status": "unmeasured",
+      "explanation": "required observation 'output.awaitingReply' is missing"
+    },
+    {
+      "id": "breach_fires_at_target",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "enterprise_breach_pages",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "zendesk_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T20:19:34.617Z"
+}

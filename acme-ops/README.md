@@ -2,9 +2,16 @@
 
 [Business guides for every workflow](../docs/WORKFLOWS.md) · [Coding-agent verification loop](../AGENTS.md) · [Proof scope and limits](../docs/VERIFICATION.md)
 
-Twenty-two ACME operations workflows across eleven departments, each a **standalone Amazon Bedrock AgentCore
-runtime**. Each runtime runs several agents in parallel across Zendesk,
-HubSpot, Gmail, Stripe, Google Calendar and Slack. Each one speaks the
+Fifty-one ACME operations workflows, each a **standalone Amazon Bedrock AgentCore
+runtime**. Each runtime runs several agents in parallel across the systems
+it needs: Stripe, HubSpot, Zendesk, Slack, Gmail, Google Calendar, Asana,
+WorkOS, GitHub, PagerDuty, Datadog, Notion, Box, NetSuite, Gusto, Shopify,
+EasyPost, Plaid, Modern Treasury, DocuSign, Twilio, OpenAI and the Trade.gov
+screening list.
+
+**New here?** Start with the [workflow catalog](../docs/WORKFLOWS.md) and the
+[adoption guide](../docs/ADOPTING.md). Each workflow's guide lists its
+credentials, provider setup, approvals, signals and timers. Each one speaks the
 AgentCore HTTP contract (`POST /invocations`, `GET /ping` on `:8080`), so a
 control plane such as LoopLabs can import it, start runs, approve gated
 actions, read every agent's output and action, and reconcile what was written.
@@ -13,6 +20,15 @@ This package is the shared kit (engine, AgentCore server, provider clients, depl
 Each workflow is one file in `src/workflows/` plus its contract, receipt and tests, and ships in its own
 PR; there is no central registry, so `WORKFLOW=<file name>` selects it at runtime and `cdk` adds one stack
 per file.
+
+The table below lists the first 22 workflows. The 2026-10 enterprise program
+added 29 more: [supplier bank change, access reviews, offboarding, three-way
+match, month-end close, change gate, lead routing, vulnerability SLA,
+contract intake, DSAR export, consent propagation, CRM ↔ billing sync,
+purchase request → PO, support SLA, treasury dual control, usage true-up,
+sanctions re-screen, replenishment, delivery exceptions, payroll anomalies,
+visa and leave dates, and others](../docs/WORKFLOWS.md). See the
+[program](../docs/ENTERPRISE_WORKFLOW_PROGRAM.md).
 
 | Workflow | Org · team | What it automates | Needs approval |
 |---|---|---|---|
@@ -66,6 +82,9 @@ Design rules shared by the Acme workflows:
 | `cancel` | `runId`, `userId` | `cancelled` (while awaiting approval), `cancelling` (mid-flight), `not_cancellable` |
 | `resume` | `runId` | Continues a stalled run from its last checkpoint, or retries failed effects of a parked or finished run |
 | `reconcile` | `runId` | Re-reads every applied effect from its provider and records `match`, `drift`, `missing` or `unverifiable` per action |
+| `signal` | `runId`, `actionId`, `value: approve\|reject`, `userId`, `note?` | Answers one step waiting for a person (a per-item decision, a callback, a review). The workflow decides who may answer: `from`, `notFrom`, `distinctFrom` give segregation of duties; others get HTTP 403 |
+| `tick` | — | Fires due timers across all runs (reminders, deadlines, watch windows). Deployed stacks schedule it; locally set `TICK_INTERVAL_MS` |
+| `evidence` | `runId` | Returns the run's hash-chained audit trail and whether it verifies (workflows with `audit: true`) |
 
 The **run view** is the control plane's single source of truth:
 
@@ -144,13 +163,15 @@ declared as a **blocked** check with evidence, never dropped.
 
 ### Results
 
-All 19 runtimes are relay-proven: **251 executable checks held, 0 violated**, every check driven twice
+For the first 19 workflows (October 2026, before the enterprise program), all runtimes are relay-proven: **251 executable checks held, 0 violated**, every check driven twice
 with identical saved state, each contract including a real process restart. 25 checks are declared
 blocked because the system they need has no faithful FetchSandbox twin (Zendesk, ERP, Salesforce,
 carriers, restricted-party screening, Okta/Google Admin, or twins that return sample data). Workflows
 without such gaps are *verified*; the others read *inconclusive* until those twins exist. The proofs
 caught real bugs (a duplicate subscription on a re-fired trigger, mixed-interval quotes, a reclaim
 safety check that blocked every reclaim, unbounded directory paging), all fixed and regression-tested.
+
+The 24 enterprise-program workflows were proven after an audit of every provider call against the vendors' API references: 232 checks, 91 held, 96 violated, 45 unmeasured, each gap classified in [FETCHSANDBOX_GAPS.md](../docs/FETCHSANDBOX_GAPS.md).
 
 Per-check results, receipt links and the twin findings: run `node verify/results.mjs`, which renders
 `verify/RESULTS.md` from the receipts in `verify/receipts/` (one per workflow, committed with it).
@@ -271,9 +292,14 @@ provider keys from [`.env.example`](.env.example) into each stack's `SecretArn`.
 
 ## Known gaps
 
-- **Zendesk twin**: FetchSandbox doesn't have one yet. The Zendesk client
-  ([`src/providers/zendesk.ts`](src/providers/zendesk.ts)) uses Zendesk's own
-  REST v2 paths, so it will run against the twin once it exists (set
-  `ZENDESK_BASE_URL`). Until then the Zendesk checks are declared blocked.
+- **What twins can't prove yet.** [FETCHSANDBOX_GAPS.md](../docs/FETCHSANDBOX_GAPS.md)
+  classifies every unproven check per workflow: twin missing (NetSuite, Gusto,
+  EasyPost, Modern Treasury, DocuSign, screening), a twin diverging from the
+  vendor's API, an operation not simulated, or the verifier's clock. Prove
+  those paths in your providers' sandboxes before production.
+- **Some older contracts are stale.** churn-risk-sweep, onboarding-kickoff,
+  returns-warranty, revenue-reconciliation and support-escalation still
+  declare Zendesk checks as blocked, though FetchSandbox now has a Zendesk
+  twin; they haven't been re-proven.
 - **Not yet deployed to a live AWS account.** Verified with tests, `cdk synth`
   and the twin proofs. The Docker image wasn't built here.

@@ -1,0 +1,69 @@
+{
+  "workflow": "usage-true-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-usage-true-up-1.0.0-06c2f09",
+  "session_id": "vs_d0218aa29dd1",
+  "run_id": "vr_dcbd9eb9423c41f18d954ee4153c447a",
+  "receipt_url": "https://fetchsandbox.com/runs/aa5bb1a765?flow=vr_dcbd9eb9423c41f18d954ee4153c447a",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "baseline_effects",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "usage_read_from_meter",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "overage_drafted_once",
+      "status": "violated",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 2, found 0"
+    },
+    {
+      "id": "under_commitment_not_billed",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "missing_contract_reported",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "owner_holds_invoice",
+      "status": "unmeasured",
+      "explanation": "app action expected HTTP 200, received 404"
+    },
+    {
+      "id": "issued_after_notice",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "large_overage_needs_approval",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    }
+  ],
+  "recorded_at": "2026-10-22T20:25:28.143Z"
+}

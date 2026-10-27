@@ -83,6 +83,16 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `asana.it_ticket` | asana | **auto** | Open the IT checklist ticket (laptop, manual app seats) |
 | `slack.notify_manager` | slack | **auto** | Tell the manager what changed and what awaits approval |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| workos | `WORKOS_API_KEY` |  |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

@@ -87,6 +87,18 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 | `gmail.draft_supplier_hold` | gmail | **approval** | Draft the formal supplier hold notice |
 | `slack.announce_hold` | slack | **approval** | Tell Purchasing to stop releasing POs |
 
+## Providers, credentials and operations
+
+Put these in the runtime's private `.env` locally, or in the stack's Secrets Manager secret when deployed (see [`acme-ops/.env.example`](../../acme-ops/.env.example)). A provider without credentials is reported as *not configured*; its agents and actions are skipped, never faked.
+
+| Provider | Environment | Notes |
+|---|---|---|
+| hubspot | `HUBSPOT_API_KEY` (private-app token) | Custom contact properties must exist before the workflow writes them. |
+| asana | `ASANA_API_KEY` (personal access token) |  |
+| calendar | `GOOGLE_CALENDAR_API_KEY` (OAuth access token) |  |
+| gmail | `GMAIL_API_KEY` (OAuth access token) | Customer mail is created as drafts. |
+| slack | `SLACK_API_KEY` (bot token, `chat:write`) | Invite the bot to every channel the input names. |
+
 ## Setup and run
 
 From the repository root:

@@ -1,9 +1,21 @@
+import { specWarning } from "../kit/errors";
 import type { ProviderHttp } from "../kit/http";
 
 export interface StripeCustomer {
   id: string;
   email: string | null;
   name?: string | null;
+  metadata?: Record<string, string>;
+  address?: Record<string, string | null> | null;
+  created?: number;
+}
+export interface StripeConnectedAccount {
+  id: string;
+  country?: string | null;
+  business_profile?: { name?: string | null } | null;
+  company?: { name?: string | null } | null;
+  individual?: { first_name?: string | null; last_name?: string | null } | null;
+  settings?: { payouts?: { schedule?: { interval?: string } } } | null;
   metadata?: Record<string, string>;
 }
 export interface StripePrice {
@@ -33,7 +45,7 @@ export interface StripeInvoice {
   amount_due: number;
   amount_remaining: number;
   currency: string;
-  /** Epoch seconds on real Stripe; some backends send ISO strings. */
+  /** Epoch seconds (Stripe API reference). */
   due_date?: number | string | null;
   created?: number | string;
   charge?: string | null;
@@ -42,6 +54,10 @@ export interface StripeInvoice {
   number?: string | null;
   lines?: { data: { price?: { id: string; product?: string } | null; quantity?: number; description?: string | null }[] };
   metadata?: Record<string, string>;
+  subscription?: string | null;
+  attempt_count?: number;
+  next_payment_attempt?: number | null;
+  default_payment_method?: string | null;
 }
 export interface StripeProduct {
   id: string;
@@ -81,6 +97,17 @@ export interface StripePaymentIntent {
   metadata?: Record<string, string>;
 }
 
+export interface StripeTransfer {
+  id: string;
+  amount: number;
+  currency: string;
+  destination: string | null;
+  transfer_group?: string | null;
+  reversed?: boolean;
+  amount_reversed?: number;
+  metadata?: Record<string, string>;
+}
+
 interface List<T> {
   data: T[];
   has_more: boolean;
@@ -111,6 +138,12 @@ export class StripeClient {
   async findCustomersByEmail(email: string): Promise<StripeCustomer[]> {
     const matches = await this.listAll<StripeCustomer>("/v1/customers", { email }, 100);
     return matches.filter((c) => c.email?.toLowerCase() === email.toLowerCase());
+  }
+
+  /** One page of customers, for callers that need to see the cursor's behaviour themselves. */
+  async customerPage(limit: number, startingAfter?: string): Promise<{ data: StripeCustomer[]; has_more: boolean }> {
+    const { body } = await this.http.request<{ data: StripeCustomer[]; has_more: boolean }>("GET", "/v1/customers", { query: { limit, starting_after: startingAfter } });
+    return { data: body?.data ?? [], has_more: !!body?.has_more };
   }
 
   listCustomers(max?: number) {
@@ -226,14 +259,68 @@ export class StripeClient {
     return this.listAll<StripePaymentIntent>("/v1/payment_intents", { customer }, 300);
   }
 
+  async getAccount(id: string): Promise<{ id: string; capabilities?: Record<string, string> | null; requirements?: { disabled_reason?: string | null } | null; payouts_enabled?: boolean | null }> {
+    return (await this.http.request<any>("GET", `/v1/accounts/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Connected accounts (Connect), for sweeps across a platform's partners. */
+  listAccounts(max = 2000) {
+    return this.listAll<StripeConnectedAccount>("/v1/accounts", {}, max);
+  }
+
+  async getConnectedAccount(id: string): Promise<StripeConnectedAccount> {
+    return (await this.http.request<StripeConnectedAccount>("GET", `/v1/accounts/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Sets a connected account's payout schedule (manual holds funds on the balance). */
+  async setPayoutSchedule(id: string, interval: string): Promise<StripeConnectedAccount> {
+    return (await this.http.request<StripeConnectedAccount>("POST", `/v1/accounts/${encodeURIComponent(id)}`, { form: { "settings[payouts][schedule][interval]": interval } })).body;
+  }
+
+  async updateAccountMetadata(id: string, metadata: Record<string, string>): Promise<StripeConnectedAccount> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeConnectedAccount>("POST", `/v1/accounts/${encodeURIComponent(id)}`, { form })).body;
+  }
+
+  listTransfers(transferGroup: string) {
+    return this.listAll<StripeTransfer>("/v1/transfers", { transfer_group: transferGroup }, 1000);
+  }
+
+  async getTransfer(id: string): Promise<StripeTransfer> {
+    return (await this.http.request<StripeTransfer>("GET", `/v1/transfers/${encodeURIComponent(id)}`)).body;
+  }
+
+  /** Money to a connected account. The key makes a retried request (e.g. after a lost response) return the same transfer. */
+  async createTransfer(t: { amount: number; currency: string; destination: string; transferGroup: string; description: string; metadata: Record<string, string> }, idempotencyKey: string): Promise<StripeTransfer> {
+    const form: Record<string, string | number> = { amount: t.amount, currency: t.currency, destination: t.destination, transfer_group: t.transferGroup, description: t.description };
+    for (const [k, v] of Object.entries(t.metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeTransfer>("POST", "/v1/transfers", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  /** Charges a saved payment method now (off session), e.g. an in-app seat purchase. */
+  async chargeSavedMethod(p: { customer: string; amount: number; currency: string; paymentMethod: string; description: string; metadata: Record<string, string> }, idempotencyKey: string): Promise<StripePaymentIntent> {
+    const form: Record<string, string | number> = { customer: p.customer, amount: p.amount, currency: p.currency, payment_method: p.paymentMethod, confirm: "true", off_session: "true", description: p.description };
+    for (const [k, v] of Object.entries(p.metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripePaymentIntent>("POST", "/v1/payment_intents", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async updatePaymentIntentMetadata(id: string, metadata: Record<string, string>): Promise<StripePaymentIntent> {
+    const form: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripePaymentIntent>("POST", `/v1/payment_intents/${encodeURIComponent(id)}`, { form })).body;
+  }
+
   async getPaymentIntent(id: string): Promise<StripePaymentIntent> {
     return (await this.http.request<StripePaymentIntent>("GET", `/v1/payment_intents/${encodeURIComponent(id)}`)).body;
   }
 
   async listRefundsForPaymentIntent(paymentIntent: string): Promise<StripeRefund[]> {
     const refunds = await this.listAll<StripeRefund>("/v1/refunds", { payment_intent: paymentIntent });
-    // Some backends ignore the filter; never count another payment's refunds.
-    return refunds.filter((r) => r.payment_intent === paymentIntent);
+    // Never count another payment's refunds, even if the documented filter wasn't applied.
+    const mine = refunds.filter((r) => r.payment_intent === paymentIntent);
+    if (mine.length !== refunds.length) specWarning("stripe", `GET /v1/refunds?payment_intent=${paymentIntent} returned ${refunds.length - mine.length} refund(s) of other payments`);
+    return mine;
   }
 
   async refundPaymentIntent(paymentIntent: string, amount: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeRefund> {
@@ -272,6 +359,57 @@ export class StripeClient {
         headers: { "Idempotency-Key": idempotencyKey },
       })
     ).body;
+  }
+
+  /** Total usage a billing meter recorded for one customer in [startSec, endSec) (meter event summaries). */
+  async meterUsage(meterId: string, customer: string, startSec: number, endSec: number): Promise<number> {
+    let total = 0;
+    let after: string | undefined;
+    for (;;) {
+      const { body } = await this.http.request<{ data: { id: string; aggregated_value: number }[]; has_more: boolean }>("GET", `/v1/billing/meters/${encodeURIComponent(meterId)}/event_summaries`, { query: { customer, start_time: startSec, end_time: endSec, limit: 100, starting_after: after } });
+      const page = body?.data ?? [];
+      total += page.reduce((t, s) => t + Number(s.aggregated_value ?? 0), 0);
+      if (!body?.has_more || !page.length) return total;
+      after = page[page.length - 1]!.id;
+    }
+  }
+
+  /** Draft invoice sent by email (not charged automatically), left in draft until finalized. */
+  async createDraftInvoice(customer: string, description: string, daysUntilDue: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeInvoice> {
+    const form: Record<string, string> = { customer, description, collection_method: "send_invoice", days_until_due: String(daysUntilDue), auto_advance: "false", pending_invoice_items_behavior: "exclude" };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeInvoice>("POST", "/v1/invoices", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async addInvoiceLine(invoice: string, customer: string, price: string, quantity: number, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {
+    return (await this.http.request<any>("POST", "/v1/invoiceitems", { form: { customer, invoice, price, quantity: String(quantity), description }, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async finalizeInvoice(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/finalize`, { form: { auto_advance: "false" } })).body;
+  }
+
+  async sendInvoice(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/send`, { form: {} })).body;
+  }
+
+  /** Retries an open invoice now, optionally with another saved payment method. Declines come back as 402 card errors. */
+  async payInvoice(id: string, paymentMethod: string | undefined, idempotencyKey: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/pay`, { form: { payment_method: paymentMethod, off_session: "true" }, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  async listCardPaymentMethods(customer: string): Promise<{ id: string; card?: { exp_month?: number; exp_year?: number; last4?: string } | null }[]> {
+    return (await this.http.request<any>("GET", "/v1/payment_methods", { query: { customer, type: "card", limit: 20 } })).body?.data ?? [];
+  }
+
+  /** Payouts that arrived in [from, to) (epoch seconds). */
+  listPayouts(fromSec: number, toSec: number) {
+    return this.listAll<{ id: string; amount: number; currency: string; arrival_date: number; status: string }>("/v1/payouts", { "arrival_date[gte]": fromSec, "arrival_date[lt]": toSec }, 1_000);
+  }
+
+  /** Balance transactions settled in a payout (charges, refunds, fees). */
+  payoutTransactions(payout: string) {
+    return this.listAll<{ id: string; amount: number; fee: number; type: string; currency: string }>("/v1/balance_transactions", { payout }, 10_000);
   }
 
   async listBalanceTransactions(customer: string) {
