@@ -10,6 +10,7 @@ const APPROVER = "U_REVOPS_LEAD";
 /** Per check: segment size and how many of them miss a country. */
 const FIXTURES = {
   baseline: { size: 3, missing: 1 },
+  baseline_effects: { size: 3, missing: 1 },
   full_scan_250: { size: 250, missing: 25 },
   flag_limit_needs_approval: { size: 12, missing: 12 },
   rerun_flags_nothing: { size: 3, missing: 1 },
@@ -23,7 +24,7 @@ const flags = (status, count) => actionKind("stripe.flag_customer", status, coun
 export const checks = [
   check("baseline", "A request starts one recorded run (provider-independent, so every later check is measured)", [sweep("baseline")], runs([], 1)),
   // Until 2026-10-22 this was the baseline; moved so a missing or divergent twin fails only this check.
-  check("baseline_effects", "A small segment is scanned and its customer without a country is flagged; the sweep is recorded and posted", [asCase("baseline_effects", sweep("baseline"))], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 3), flags("applied", 1), action("asana.sweep_record", "applied"), action("slack.post_sweep", "applied")])),
+  check("baseline_effects", "A small segment is scanned and its customer without a country is flagged; the sweep is recorded and posted", [asCase("baseline_effects", sweep("baseline_effects"))], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 3), flags("applied", 1), action("asana.sweep_record", "applied"), action("slack.post_sweep", "applied")])),
   check("full_scan_250", "A 250-customer segment is read completely across three pages and all 25 customers without a country are flagged", [sweep("full_scan_250")], runs([eq("phase", "DONE"), eq("output.mode", "flag"), eq("output.segmentCount", 250), eq("output.flags", 25), flags("applied", 25)])),
   check("flag_limit_needs_approval", "Past the run's automatic limit (5), flags wait for approval", [sweep("flag_limit_needs_approval", { autoFlagMax: 5 })], runs([eq("phase", "AWAITING_APPROVAL"), flags("applied", 5), flags("pending_approval", 7)])),
   check("rerun_flags_nothing", "A second sweep of the same segment finds everything flagged already and writes nothing", [sweep("rerun_flags_nothing"), start("rerun_flags_nothing", { segment: segment("rerun_flags_nothing"), expectedMin: 3, revopsChannel: CHANNEL, approvers: [APPROVER] }, { runId: "rerun-b-{{run_id}}" })], all(runs([], 2), runs([flags("applied", 1)]), runs([eq("output.mode", "nothing"), flags(null, 0)]))),
