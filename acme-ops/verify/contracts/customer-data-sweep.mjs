@@ -44,6 +44,15 @@ async function seed(legs, log) {
       let body = null;
       try { body = JSON.parse(text); } catch {}
       if (res.ok && body?.id) { made++; return body; }
+      if (res.status === 429 && attempt < 4) {
+        // Fixture preparation must respect the gateway's finite traffic cap.
+        // Retry only the rejected request; never restart an already seeded segment.
+        const seconds = Number(res.headers.get("retry-after") ?? body?.retry_after_seconds ?? 20);
+        if (!Number.isFinite(seconds) || seconds < 0 || seconds > 60) throw new Error("Unbounded fixture Retry-After");
+        transient.push(`429 fixture preparation; retry after ${seconds}s`);
+        await new Promise((r) => setTimeout(r, Math.max(1000, seconds * 1000)));
+        continue;
+      }
       if ((res.status >= 500 || !body) && attempt < 4) { transient.push(`${res.status} ${text.slice(0, 60)}`); await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt)); continue; }
       throw new Error(`seed customer → ${res.status} ${text.slice(0, 200)}`);
     }
