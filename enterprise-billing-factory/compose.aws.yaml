@@ -1,0 +1,58 @@
+# Private AWS verification environment. This does not authorize a customer release.
+# Credentials must be generated privately on the host. No public ports or real payments.
+x-app: &app
+  image: ${BILLING_REFERENCE_IMAGE:?pin the built reference image}
+  environment: &environment
+    DEMO_SCHEMA: vf_0123456789ab
+    DEMO_DATABASE_URL: ${DEMO_DATABASE_URL:?required}
+    DEMO_TENANT_TOKENS: ${DEMO_TENANT_TOKENS:?required}
+    DEMO_WORKER_TOKEN: ${DEMO_WORKER_TOKEN:?required}
+    DEMO_PAYMENT_URL: http://payments:8000
+  mem_limit: 128m
+  cpus: 0.25
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: {max-size: 5m, max-file: '2'}
+  depends_on:
+    init:
+      condition: service_completed_successfully
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      POSTGRES_DB: demo
+    command: [postgres, -c, shared_buffers=32MB, -c, max_connections=30]
+    mem_limit: 192m
+    cpus: 0.25
+    restart: unless-stopped
+    volumes: [billing-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U demo -d demo']
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  init:
+    <<: *app
+    command: [python, runtime.py, init]
+    restart: 'no'
+    depends_on:
+      database:
+        condition: service_healthy
+  billing:
+    <<: *app
+    command: [uvicorn, 'runtime:billing', --host, 0.0.0.0, --port, '8000']
+    ports: ['127.0.0.1:8098:8000']
+  payments:
+    <<: *app
+    command: [uvicorn, 'runtime:payments', --host, 0.0.0.0, --port, '8000']
+  worker:
+    <<: *app
+    command: [python, runtime.py, serve-worker]
+volumes:
+  billing-data:
