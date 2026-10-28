@@ -79,7 +79,7 @@ PostgreSQL container and loopback service processes):
 RUN_LOCAL_BILLING=1 python -m unittest discover -s tests -v
 ```
 
-Measured locally: 13 maintainer checks passed, including seven fixture-preparation
+Measured locally: 14 maintainer checks passed, including seven fixture-preparation
 checks. The delivery-key variant reproduces two payment effects after a real
 worker exit (business rule fails). The invoice-key variant preserves one effect
 under the same restart scenario (business rule passes). Concurrency, duplicate

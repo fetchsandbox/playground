@@ -148,6 +148,20 @@ class LocalBillingRuntime(unittest.TestCase):
             list(pool.map(lambda _: self.worker(["work"]), range(2)))
         self.assertEqual(self.payment_count(), (1, 12500))
 
+    def test_continuous_worker_finishes_a_queued_collection(self):
+        log = tempfile.TemporaryFile(); self.logs.append(log)
+        proc = subprocess.Popen([sys.executable, "runtime.py", "serve-worker"], cwd=ROOT,
+            env=self.env, stdout=log, stderr=log)
+        self.processes.append(proc)
+        self.enqueue()
+        for _ in range(50):
+            result = httpx.get(self.base + "/invoices/INV-1042", headers=self.headers).json()
+            if result["status"] == "paid": break
+            if proc.poll() is not None: self.fail("continuous worker exited before completion")
+            time.sleep(.1)
+        else: self.fail("queued collection was not completed")
+        self.assertEqual(self.payment_count(), (1, 12500))
+
     def test_tenant_and_anonymous_access(self):
         path = self.base + "/invoices/INV-1042"
         self.assertEqual(httpx.get(path).status_code, 401)
