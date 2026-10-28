@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "organization": "Northstar Instruments (fictional)",
+  "implemented": [
+    "linked_synthetic_signals",
+    "deterministic_duplicate_effect_detector",
+    "versioned_rule_proposal",
+    "sandbox_plan_preparation",
+    "python_billing_api",
+    "separate_synthetic_payment_service",
+    "postgresql_queue_worker"
+  ],
+  "not_yet_measured": [
+    "rule_owner_approval",
+    "live_jira_or_asana_intake",
+    "coding_agent_pr",
+    "coderabbit_review",
+    "fetchsandbox_application_receipt",
+    "aws_deployment",
+    "post_deploy_verification",
+    "database_restart",
+    "accepted_payment_response_lost",
+    "distinct_installments_runtime",
+    "product_usage_ledger_delivery"
+  ],
+  "status": "local_preparation_and_runtime_checks_only",
+  "locally_measured": [
+    "baseline_collection",
+    "duplicate_queue_delivery",
+    "concurrent_workers",
+    "process_exit_after_payment_before_ack_delivery_key_fails",
+    "process_exit_after_payment_before_ack_invoice_key_passes",
+    "tenant_and_anonymous_isolation",
+    "conflicting_payment_identity_rejected"
+  ]
+}

@@ -1,0 +1,43 @@
+# Synthetic local demo only. Only the billing API is published, on loopback.
+x-app: &app
+  build: .
+  environment: &environment
+    DEMO_SCHEMA: vf_0123456789ab
+    DEMO_DATABASE_URL: postgresql://demo:local-demo-only@database:5432/demo
+    DEMO_TENANT_TOKENS: '{"local-alder":"tenant_alder","local-birch":"tenant_birch"}'
+    DEMO_WORKER_TOKEN: local-worker-only
+    DEMO_PAYMENT_URL: http://payments:8000
+  depends_on:
+    init:
+      condition: service_completed_successfully
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: local-demo-only
+      POSTGRES_DB: demo
+    volumes: [billing-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U demo -d demo']
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  init:
+    <<: *app
+    command: [python, runtime.py, init]
+    depends_on:
+      database:
+        condition: service_healthy
+  billing:
+    <<: *app
+    command: [uvicorn, 'runtime:billing', --host, 0.0.0.0, --port, '8000']
+    ports: ['127.0.0.1:8098:8000']
+  payments:
+    <<: *app
+    command: [uvicorn, 'runtime:payments', --host, 0.0.0.0, --port, '8000']
+  worker:
+    <<: *app
+    command: [python, runtime.py, serve-worker]
+volumes:
+  billing-data:

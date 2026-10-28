@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "fixture_time": "2026-10-27T12:00:00Z",
+  "organization": {"id": "org_northstar_demo", "name": "Northstar Instruments (fictional)"},
+  "services": [
+    {"id": "billing-api", "language": "python", "team": "Revenue Engineering", "owner": "Maya Chen (synthetic)", "department": "Engineering"},
+    {"id": "payment-service", "language": "python", "team": "Revenue Engineering", "owner": "Owen Patel (synthetic)", "department": "Engineering"},
+    {"id": "billing-worker", "language": "python", "team": "Platform Engineering", "owner": "Alex Rivera (synthetic)", "department": "Engineering"}
+  ],
+  "policies": [
+    {"id": "POL-PAY-001", "version": 1, "owner": "Finance Operations", "text": "A tenant's invoice installment may have at most one successful collection. Retries must reuse the collection identity. Separate installments are separate obligations."},
+    {"id": "POL-REL-001", "version": 1, "owner": "Engineering", "text": "Changes to collection identity or recovery require a named release approver. Approval binds the exact verified artifact. Failed or unmeasured required checks block release."}
+  ],
+  "issues": [
+    {"id": "JIRA-BILL-142", "source_type": "jira_fixture", "title": "Customer charged again after worker recovery", "severity": "high", "invoice_id": "INV-1042", "tenant_id": "tenant_alder", "trace_id": "trace_bill_142", "policy_ids": ["POL-PAY-001"], "status": "open", "description": "Two payment records appeared for installment 1. Worker stopped after payment, before queue acknowledgment. Revenue Engineering must investigate."},
+    {"id": "JIRA-PLAT-87", "source_type": "jira_fixture", "title": "Billing message redelivered after lease expiry", "severity": "medium", "trace_id": "trace_bill_142", "related_issue_ids": ["JIRA-BILL-142"], "status": "open"},
+    {"id": "JIRA-BILL-143", "source_type": "jira_fixture", "title": "Repeated audit delivery should not count as another charge", "severity": "low", "invoice_id": "INV-1043", "tenant_id": "tenant_birch", "trace_id": "trace_bill_143", "status": "open"}
+  ],
+  "tasks": [
+    {"id": "ASANA-FEAT-31", "source_type": "asana_fixture", "title": "Resume interrupted invoice collections safely", "owner": "Maya Chen (synthetic)", "related_issue_ids": ["JIRA-BILL-142", "JIRA-PLAT-87"], "prd_id": "PRD-RECOVERY-1", "status": "proposed", "acceptance": ["Completed payment survives worker restart", "Redelivery does not create another payment", "Another tenant cannot read the invoice", "Release approval is invalid after artifact changes"]}
+  ],
+  "invoices": [
+    {"id": "INV-1042", "tenant_id": "tenant_alder", "currency": "USD", "installment": 1, "amount_minor": 12500, "customer_email": "accounts@alder.example.invalid"},
+    {"id": "INV-1043", "tenant_id": "tenant_birch", "currency": "USD", "installment": 1, "amount_minor": 9900, "customer_email": "accounts@birch.example.invalid"},
+    {"id": "INV-1044", "tenant_id": "tenant_cedar", "currency": "EUR", "installment": 1, "amount_minor": 5000, "customer_email": "accounts@cedar.example.invalid"},
+    {"id": "INV-1044", "tenant_id": "tenant_cedar", "currency": "EUR", "installment": 2, "amount_minor": 5000, "customer_email": "accounts@cedar.example.invalid"}
+  ],
+  "payment_audit": [
+    {"id": "AUD-001", "payment_id": "PAY-001", "tenant_id": "tenant_alder", "invoice_id": "INV-1042", "installment": 1, "currency": "USD", "amount_minor": 12500, "status": "succeeded", "trace_id": "trace_bill_142"},
+    {"id": "AUD-002", "payment_id": "PAY-002", "tenant_id": "tenant_alder", "invoice_id": "INV-1042", "installment": 1, "currency": "USD", "amount_minor": 12500, "status": "succeeded", "trace_id": "trace_bill_142"},
+    {"id": "AUD-003", "payment_id": "PAY-003", "tenant_id": "tenant_birch", "invoice_id": "INV-1043", "installment": 1, "currency": "USD", "amount_minor": 9900, "status": "succeeded", "trace_id": "trace_bill_143"},
+    {"id": "AUD-004", "payment_id": "PAY-003", "tenant_id": "tenant_birch", "invoice_id": "INV-1043", "installment": 1, "currency": "USD", "amount_minor": 9900, "status": "succeeded", "trace_id": "trace_bill_143"},
+    {"id": "AUD-005", "payment_id": "PAY-004", "tenant_id": "tenant_cedar", "invoice_id": "INV-1044", "installment": 1, "currency": "EUR", "amount_minor": 5000, "status": "succeeded", "trace_id": "trace_bill_144"},
+    {"id": "AUD-006", "payment_id": "PAY-005", "tenant_id": "tenant_cedar", "invoice_id": "INV-1044", "installment": 2, "currency": "EUR", "amount_minor": 5000, "status": "succeeded", "trace_id": "trace_bill_144"}
+  ],
+  "worker_events": [
+    {"id": "EVT-001", "trace_id": "trace_bill_142", "job_id": "JOB-142", "delivery_id": "DEL-142-A", "kind": "payment_committed", "payment_id": "PAY-001", "at": "2026-10-27T10:00:00Z"},
+    {"id": "EVT-002", "trace_id": "trace_bill_142", "job_id": "JOB-142", "delivery_id": "DEL-142-A", "kind": "worker_exit_before_ack", "at": "2026-10-27T10:00:01Z"},
+    {"id": "EVT-003", "trace_id": "trace_bill_142", "job_id": "JOB-142", "delivery_id": "DEL-142-B", "kind": "message_redelivered", "at": "2026-10-27T10:00:30Z"},
+    {"id": "EVT-004", "trace_id": "trace_bill_142", "job_id": "JOB-142", "delivery_id": "DEL-142-B", "kind": "payment_committed", "payment_id": "PAY-002", "at": "2026-10-27T10:00:31Z"}
+  ]
+}

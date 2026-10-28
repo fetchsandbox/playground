@@ -1,0 +1,35 @@
+name: Billing factory local integration checks
+on:
+  pull_request:
+    paths: ['enterprise-billing-factory/**', '.github/workflows/enterprise-billing-factory.yml']
+  push:
+    branches: [main]
+    paths: ['enterprise-billing-factory/**', '.github/workflows/enterprise-billing-factory.yml']
+permissions:
+  contents: read
+jobs:
+  local-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+        working-directory: enterprise-billing-factory
+      - run: python prepare.py --out /tmp/billing-factory-plan.json
+        working-directory: enterprise-billing-factory
+      - run: python -m unittest discover -s tests -v
+        working-directory: enterprise-billing-factory
+        env:
+          RUN_LOCAL_BILLING: '1'
+          BILLING_OBSERVATIONS: /tmp/billing-local-observations.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: billing-local-evidence
+          path: |
+            /tmp/billing-factory-plan.json
+            /tmp/billing-local-observations.json
+          if-no-files-found: warn
