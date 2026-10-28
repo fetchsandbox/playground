@@ -10,6 +10,7 @@ import hmac
 import json
 import os
 import re
+import time
 import uuid
 from contextlib import contextmanager
 
@@ -151,9 +152,16 @@ def work(strategy="invoice", crash_after_payment=False):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["init", "work"])
+    p.add_argument("action", choices=["init", "work", "serve-worker"])
     p.add_argument("--strategy", choices=["invoice", "delivery"], default="invoice")
     p.add_argument("--crash-after-payment", action="store_true")
     a = p.parse_args()
     if a.action == "init": initialize()
-    else: print(json.dumps({"processed": work(a.strategy, a.crash_after_payment)}))
+    elif a.action == "work": print(json.dumps({"processed": work(a.strategy, a.crash_after_payment)}))
+    else:
+        while True:
+            try:
+                if not work(a.strategy): time.sleep(.5)
+            except (httpx.HTTPError, psycopg.Error):
+                # Failed jobs retain their lease and are reclaimable. No business success is emitted.
+                time.sleep(1)

@@ -93,3 +93,18 @@ services publicly: tenant tokens are local synthetic credentials, the queue leas
 is deliberately short, and production authentication, quotas, migrations,
 retention and monitoring are outside this first slice. New sources must propose
 rules; a proposal is never release approval.
+
+## Interactive local stack
+
+```sh
+docker compose up --build -d
+curl -X POST http://127.0.0.1:8098/invoices -H 'Authorization: Bearer local-alder' -H 'Content-Type: application/json' -d '{"id":"INV-1042","amount":12500,"currency":"USD"}'
+curl -X POST http://127.0.0.1:8098/invoices/INV-1042/collect -H 'Authorization: Bearer local-alder'
+curl http://127.0.0.1:8098/invoices/INV-1042 -H 'Authorization: Bearer local-alder'
+docker compose down
+```
+
+Collection returns202 when queued; poll the read until `status` is `paid`. The
+worker runs asynchronously. `down` preserves the local volume. These published
+tokens are intentionally synthetic local-demo values and are not usable in
+FetchSandbox, AWS, or any vendor account. Only loopback8098 is published.
