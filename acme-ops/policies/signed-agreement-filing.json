@@ -1,0 +1,27 @@
+{
+  "store": { "provider": "box", "root": "0" },
+  "internalDomains": ["acme.example"],
+  "legalChannel": "C0LEGAL0001",
+  "classification": {
+    "customField": "agreement_type",
+    "formField": "agreement_type",
+    "subjectRules": [
+      { "pattern": "\\b(NDA|non-disclosure|confidentiality agreement)\\b", "type": "NDA" },
+      { "pattern": "\\b(DPA|data processing (agreement|addendum))\\b", "type": "DPA" },
+      { "pattern": "\\b(SOW|statement of work)\\b", "type": "SOW" },
+      { "pattern": "\\border form\\b", "type": "ORDER_FORM" },
+      { "pattern": "\\b(MSA|master (services|subscription) agreement)\\b", "type": "MSA" }
+    ]
+  },
+  "counterparty": { "customField": "counterparty", "formField": "counterparty" },
+  "types": {
+    "NDA": { "folder": "Legal/NDAs/{year}", "notify": null, "requireInternalSigner": false },
+    "MSA": { "folder": "Legal/Agreements/{counterparty}", "notify": "C0LEGAL0001", "requireInternalSigner": true },
+    "DPA": { "folder": "Legal/Agreements/{counterparty}/DPAs", "notify": "C0PRIVACY01", "requireInternalSigner": true },
+    "SOW": { "folder": "Legal/Agreements/{counterparty}/SOWs", "notify": null, "requireInternalSigner": true },
+    "ORDER_FORM": { "folder": "Sales/Order Forms/{year}/{counterparty}", "notify": "C0REVOPS001", "requireInternalSigner": false }
+  },
+  "review": { "folder": "Legal/Needs filing review/{year}", "notify": "C0LEGAL0001" },
+  "fileName": "{date} {type} - {counterparty} ({envelopeId}).pdf",
+  "includeCertificate": true
+}
