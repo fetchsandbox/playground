@@ -432,6 +432,13 @@ export class BoxClient {
     return { id: String(body.id), name: body.name };
   }
 
+  /** A file's or folder's current shared link (null when it has none). */
+  async getSharedLink(type: "file" | "folder", id: string): Promise<BoxSharedLink | null> {
+    const { body } = await this.http.request<any>("GET", `/${type}s/${encodeURIComponent(id)}`, { query: { fields: "shared_link" } });
+    if (!body || !("shared_link" in body)) throw new SpecDeviation("box", `GET /${type}s/{id}?fields=shared_link returned no shared_link field`);
+    return body.shared_link ?? null;
+  }
+
   /** Changes or removes (`null`) a file's or folder's shared link. */
   async setSharedLink(type: "file" | "folder", id: string, link: { access?: "open" | "company" | "collaborators"; unshared_at?: string | null } | null): Promise<BoxSharedLink | null> {
     const { body } = await this.http.request<any>("PUT", `/${type}s/${encodeURIComponent(id)}`, { query: { fields: "shared_link" }, json: { shared_link: link } });
