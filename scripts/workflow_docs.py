@@ -55,6 +55,7 @@ WHY={
 'supplier-ncr':'Supplier Quality needs an accountable corrective-action process after a failed inspection, including supplier follow-up and review scheduling.',
 'supplier-bank-change':'Accounts Payable needs to stop payment fraud through supplier bank-detail changes: nothing is paid to new details until a callback to the number on file and two different people have verified them.',
 'vulnerability-remediation':'Application Security needs every known vulnerability tracked to its severity deadline, escalated when late, and accepted as risk only by someone outside the owning team, for a limited time.',
+'signed-agreement-filing':'Legal needs every signed agreement in the company\'s document store, in the right folder, the day it is signed, without anyone downloading PDFs from DocuSign, and needs unrecognized or uncountersigned documents caught for review instead of misfiled.',
 'support-escalation':'Support needs to combine incident severity, account context and billing health so urgent cases reach the right team with a reviewed customer reply.',
 }
 
@@ -112,6 +113,7 @@ PREREQS={
 'payroll-anomaly-review':['A Gusto company with regular payrolls; reviewers named in the input.'],
 'employee-offboarding':['The employee\'s Gusto, WorkOS and GitHub identities, passed in the input.'],
 'user-access-review':['The WorkOS organizations and GitHub organization in the input, and an Asana workspace for evidence.'],
+'signed-agreement-filing':['A DocuSign Connect configuration (or a daily sweep of completed envelopes) that calls `start` with the envelope id; use `ds-<envelopeId>` as the run id.','Envelope custom fields `agreement_type` and `counterparty` set by your templates or senders (or form fields with those labels); otherwise the subject rules in the policy classify the envelope.','A Box folder id or Dropbox path as the policy\'s store root; the integration needs write access below it. Slack channels named in the policy, with the bot invited.'],
 'failed-payment-dunning':['A Stripe `invoice.payment_failed` webhook (or the daily sweep) that calls `start`.'],
 }
 def operations(w):

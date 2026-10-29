@@ -137,6 +137,7 @@ because an earlier step had no data.
 | delivery-exception | 06c2f09 | 4 / 5 / 0 | **TD** Shopify 2026-01 → "No route" (orders can't be created or read); **TM** EasyPost trackers | R5, R6 |
 | payroll-anomaly-review | befeb35 | 3 / 4 / 1 | **TM** Gusto | R16 |
 | visa-and-leave-expiry | befeb35 | 2 / 6 / 1 | **ON** Notion `POST /v1/pages` succeeds, but `GET /v1/pages/{id}` → 404 (no read-after-write) | R26 |
+| signed-agreement-filing | 599e7fc | 7 / 0 / 9 | **TM** DocuSign (envelope, form data, combined PDF: 7 checks), **TM** Dropbox (1), **TD** Box folders, uploads and file reads (1, see the document-workflows table) | R27, R28, R29 |
 
 Earlier receipts, measured before the audit and not re-run, because they
 belong to workflows already in review: ai-support-triage (3abd028: 18 / 3 / 0;

@@ -4,7 +4,7 @@
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
   "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
   "counts": {
-    "inconclusive": 20,
+    "inconclusive": 21,
     "failing": 23,
     "verified": 8
   },
@@ -1721,6 +1721,42 @@
         "overdue_escalated",
         "github_unreadable_blocks",
         "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "signed-agreement-filing": {
+      "workflow": "signed-agreement-filing",
+      "receipt_url": "https://fetchsandbox.com/runs/ce83edb34f?flow=vr_d4bd89d89ce84a58b8cc41798ede1685",
+      "source": "acme-ops/verify/receipts/signed-agreement-filing.json",
+      "checked_at": "2026-10-29T01:24:19.873145+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-29T01:22:52.385+00:00",
+      "app_version": {
+        "value": "acme-ops-signed-agreement-filing-1.0.0-599e7fc",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 7,
+        "unmeasured": 9
+      },
+      "check_ids": [
+        "baseline",
+        "docusign_unavailable_files_nothing",
+        "duplicate_delivery",
+        "concurrent_delivery",
+        "invalid_input_rejected",
+        "slack_rate_limited",
+        "restart_then_redelivery",
+        "filed_in_type_folder",
+        "refiling_is_idempotent",
+        "type_from_subject",
+        "unknown_type_to_review",
+        "missing_countersignature_to_review",
+        "not_completed_ignored",
+        "dropbox_store",
+        "box_store_follows_box_api",
+        "store_refusal_reported"
       ],
       "scope": "application_workflow_v1"
     }
