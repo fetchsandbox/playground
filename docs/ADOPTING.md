@@ -13,7 +13,7 @@ its trigger, deploy it to AWS, and verify it. Every workflow in
 
 ## 1. Choose a workflow
 
-Browse the [workflow catalog](WORKFLOWS.md). It lists 51 workflows by
+Browse the [workflow catalog](WORKFLOWS.md). It lists 52 workflows by
 department, including Finance, People, IT and Security, Legal and Privacy,
 RevOps, Supply Chain, Support and Customer Experience.
 

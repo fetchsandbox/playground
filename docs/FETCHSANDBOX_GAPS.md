@@ -137,6 +137,7 @@ because an earlier step had no data.
 | delivery-exception | 06c2f09 | 4 / 5 / 0 | **TD** Shopify 2026-01 → "No route" (orders can't be created or read); **TM** EasyPost trackers | R5, R6 |
 | payroll-anomaly-review | befeb35 | 3 / 4 / 1 | **TM** Gusto | R16 |
 | visa-and-leave-expiry | befeb35 | 2 / 6 / 1 | **ON** Notion `POST /v1/pages` succeeds, but `GET /v1/pages/{id}` → 404 (no read-after-write) | R26 |
+| vendor-compliance-docs | 47e9bd7 | 8 / 2 / 7 | **TD** Box `GET /folders/{id}/items` has no top-level `entries[]` (the runtime fails closed: `SpecDeviation … returned no entries[]`), so the Insurance folder can't be read (2 violated); **TM** DocuSign (4), Dropbox (1); certificates can't be seeded because Box uploads drop name and parent (2, also clock) | R27, R28, R29, clock |
 
 Earlier receipts, measured before the audit and not re-run, because they
 belong to workflows already in review: ai-support-triage (3abd028: 18 / 3 / 0;

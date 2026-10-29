@@ -1,0 +1,26 @@
+{
+  "store": { "provider": "box", "root": "0" },
+  "vendorFolder": "Vendors/{vendor} ({vendorId})",
+  "packets": [
+    { "name": "High-risk vendor", "match": { "riskTier": ["high"] }, "templates": ["w9-template-id", "vendor-msa-template-id", "security-addendum-template-id"] },
+    { "name": "Standard vendor", "match": { "riskTier": ["medium", "low"] }, "templates": ["w9-template-id", "vendor-terms-template-id"] }
+  ],
+  "dpaTemplate": "dpa-template-id",
+  "signerRole": "Vendor",
+  "countersigner": { "roleName": "Procurement", "name": "Acme Procurement", "email": "procurement@acme.example" },
+  "subject": "{vendor}: Acme supplier onboarding documents",
+  "docusign": { "reminderDelayDays": 3, "reminderEveryDays": 3, "expireDays": 30 },
+  "connectSender": "docusign-connect",
+  "unsignedEscalateDays": [7, 14],
+  "onboardingFolder": "Onboarding",
+  "fileName": "{date} Onboarding documents - {vendor}.pdf",
+  "insurance": {
+    "requiredTiers": ["medium", "high"],
+    "folder": "Insurance",
+    "certificatePattern": "^COI (\\d{4}-\\d{2}-\\d{2})\\b",
+    "noticeDays": [60, 30, 7],
+    "renewalSubject": "Updated certificate of insurance for Acme",
+    "requestRenewalAtDays": 30
+  },
+  "procurementChannel": "C0PROCURE01"
+}
