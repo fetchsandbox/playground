@@ -137,6 +137,7 @@ because an earlier step had no data.
 | delivery-exception | 06c2f09 | 4 / 5 / 0 | **TD** Shopify 2026-01 → "No route" (orders can't be created or read); **TM** EasyPost trackers | R5, R6 |
 | payroll-anomaly-review | befeb35 | 3 / 4 / 1 | **TM** Gusto | R16 |
 | visa-and-leave-expiry | befeb35 | 2 / 6 / 1 | **ON** Notion `POST /v1/pages` succeeds, but `GET /v1/pages/{id}` → 404 (no read-after-write) | R26 |
+| external-sharing-audit | 53a03cd | 8 / 1 / 6 | **TD** Box `GET /folders/{id}/items?fields=shared_link` has no top-level `entries[]` (runtime: `SpecDeviation … returned no entries[]`), so the Box tree can't be inventoried (1 violated) and public links can't be staged (`PUT /files/{id}` → 404 on session files) (5); **TM** Dropbox (1) | R28, R29 |
 
 Earlier receipts, measured before the audit and not re-run, because they
 belong to workflows already in review: ai-support-triage (3abd028: 18 / 3 / 0;
