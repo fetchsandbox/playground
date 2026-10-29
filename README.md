@@ -7,7 +7,7 @@ use to test agent-built applications with [FetchSandbox](https://fetchsandbox.co
 
 ## What's here
 
-[`acme-ops`](acme-ops/README.md) holds **51 operations workflows** across
+[`acme-ops`](acme-ops/README.md) holds **52 operations workflows** across
 Finance, People, IT and Security, Legal and Privacy, RevOps, Supply Chain,
 Support, Customer Experience, Sales and Quality.
 
