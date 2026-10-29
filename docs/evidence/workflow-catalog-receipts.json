@@ -5,7 +5,7 @@
   "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
   "counts": {
     "inconclusive": 20,
-    "failing": 23,
+    "failing": 24,
     "verified": 8
   },
   "workflows": {
@@ -1721,6 +1721,44 @@
         "overdue_escalated",
         "github_unreadable_blocks",
         "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "vendor-compliance-docs": {
+      "workflow": "vendor-compliance-docs",
+      "receipt_url": "https://fetchsandbox.com/runs/300dcbf02e?flow=vr_d0c78fb1728b453eadb202ee705eae11",
+      "source": "acme-ops/verify/receipts/vendor-compliance-docs.json",
+      "checked_at": "2026-10-29T01:35:29.459601+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-29T01:34:45.512+00:00",
+      "app_version": {
+        "value": "acme-ops-vendor-compliance-docs-1.0.0-47e9bd7",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 8,
+        "violated": 2,
+        "unmeasured": 7
+      },
+      "check_ids": [
+        "baseline",
+        "docusign_unavailable_sends_nothing",
+        "insurance_folder_read_from_box",
+        "missing_certificate_raised",
+        "unreadable_folder_is_not_missing",
+        "duplicate_request",
+        "concurrent_requests",
+        "invalid_input_rejected",
+        "slack_rate_limited",
+        "restart_then_redelivery",
+        "packet_by_tier_with_dpa",
+        "onboarding_filed_on_completion",
+        "envelope_reused",
+        "unsigned_and_declined_escalated",
+        "certificate_notices_and_renewal_draft",
+        "renewed_certificate_stands_down",
+        "dropbox_store"
       ],
       "scope": "application_workflow_v1"
     }

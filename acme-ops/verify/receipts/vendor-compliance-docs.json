@@ -1,0 +1,104 @@
+{
+  "workflow": "vendor-compliance-docs",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-vendor-compliance-docs-1.0.0-47e9bd7",
+  "session_id": "vs_7f77bc2bd90c",
+  "run_id": "vr_d0c78fb1728b453eadb202ee705eae11",
+  "receipt_url": "https://fetchsandbox.com/runs/300dcbf02e?flow=vr_d0c78fb1728b453eadb202ee705eae11",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "docusign_unavailable_sends_nothing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "insurance_folder_read_from_box",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "missing_certificate_raised",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "unreadable_folder_is_not_missing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_request",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_requests",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_then_redelivery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "packet_by_tier_with_dpa",
+      "status": "unmeasured",
+      "explanation": "No DocuSign twin."
+    },
+    {
+      "id": "onboarding_filed_on_completion",
+      "status": "unmeasured",
+      "explanation": "No DocuSign twin; Box twin uploads lose name and parent."
+    },
+    {
+      "id": "envelope_reused",
+      "status": "unmeasured",
+      "explanation": "Needs DocuSign envelope listing by custom_field."
+    },
+    {
+      "id": "unsigned_and_declined_escalated",
+      "status": "unmeasured",
+      "explanation": "Needs the DocuSign twin and the runtime clock to advance during an attempt."
+    },
+    {
+      "id": "certificate_notices_and_renewal_draft",
+      "status": "unmeasured",
+      "explanation": "A dated certificate can't be seeded into a Box folder (name and parent dropped), and the timers need the runtime clock during an attempt."
+    },
+    {
+      "id": "renewed_certificate_stands_down",
+      "status": "unmeasured",
+      "explanation": "Needs a stateful Box folder (R29) and the clock."
+    },
+    {
+      "id": "dropbox_store",
+      "status": "unmeasured",
+      "explanation": "No Dropbox twin."
+    }
+  ],
+  "recorded_at": "2026-10-29T01:34:45.512Z"
+}
