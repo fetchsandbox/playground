@@ -336,6 +336,22 @@ export class NotionClient {
 }
 
 /** Box: ACME's controlled-document library (compliance declarations, certificates). */
+export interface BoxSharedLink {
+  url: string;
+  access: "open" | "company" | "collaborators";
+  effective_access?: string;
+  unshared_at: string | null;
+  is_password_enabled?: boolean;
+  download_count?: number;
+}
+export interface BoxItem {
+  type: "file" | "folder" | "web_link";
+  id: string;
+  name: string;
+  modified_at?: string;
+  shared_link?: BoxSharedLink | null;
+}
+
 export interface BoxFile {
   id: string;
   name: string;
@@ -380,6 +396,46 @@ export class BoxClient {
   async downloadBase64(fileId: string): Promise<string> {
     // Box redirects to dl.boxcloud.com with the raw bytes.
     return (await this.http.request<string>("GET", `/files/${encodeURIComponent(fileId)}/content`, { responseType: "base64" })).body;
+  }
+
+  /**
+   * Uploads bytes (a signed PDF, a scan). Box: multipart to upload.box.com, `attributes` part before
+   * the `file` part; a name already in the folder answers 409 item_name_in_use.
+   */
+  async uploadBytes(folderId: string, name: string, bytes: Uint8Array, contentType = "application/pdf"): Promise<{ id: string; name: string }> {
+    const boundary = `acme${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const head = [`--${boundary}`, 'Content-Disposition: form-data; name="attributes"', "", JSON.stringify({ name, parent: { id: folderId } }), `--${boundary}`, `Content-Disposition: form-data; name="file"; filename="${name.replace(/"/g, "")}"`, `Content-Type: ${contentType}`, "", ""].join("\r\n");
+    const body = Buffer.concat([Buffer.from(head, "utf8"), Buffer.from(bytes), Buffer.from(`\r\n--${boundary}--\r\n`, "utf8")]);
+    const { body: res } = await this.http.request<any>("POST", `${this.uploadUrl}/files/content`, { raw: { body, contentType: `multipart/form-data; boundary=${boundary}` } });
+    const f = res?.entries?.[0];
+    if (!f?.id) throw new SpecDeviation("box", "POST /files/content returned no entries[0].id");
+    return { id: String(f.id), name: f.name };
+  }
+
+  /** Every item in a folder (marker paging), with the fields asked for. */
+  async folderItems(folderId: string, fields = "name,type"): Promise<BoxItem[]> {
+    const items: BoxItem[] = [];
+    let marker: string | undefined;
+    do {
+      const { body } = await this.http.request<any>("GET", `/folders/${encodeURIComponent(folderId)}/items`, { query: { fields, limit: 1000, usemarker: "true", marker } });
+      if (!Array.isArray(body?.entries)) throw new SpecDeviation("box", "GET /folders/{id}/items returned no entries[]");
+      items.push(...body.entries.map((e: any) => ({ ...e, id: String(e.id) })));
+      marker = body.next_marker || undefined;
+    } while (marker);
+    return items;
+  }
+
+  /** Creates a sub-folder; Box answers 409 item_name_in_use when it already exists (the caller re-reads). */
+  async createFolder(parentId: string, name: string): Promise<{ id: string; name: string } | { conflict: true }> {
+    const { status, body } = await this.http.request<any>("POST", "/folders", { json: { name, parent: { id: parentId } }, allow: [409] });
+    if (status === 409) return { conflict: true };
+    return { id: String(body.id), name: body.name };
+  }
+
+  /** Changes or removes (`null`) a file's or folder's shared link. */
+  async setSharedLink(type: "file" | "folder", id: string, link: { access?: "open" | "company" | "collaborators"; unshared_at?: string | null } | null): Promise<BoxSharedLink | null> {
+    const { body } = await this.http.request<any>("PUT", `/${type}s/${encodeURIComponent(id)}`, { query: { fields: "shared_link" }, json: { shared_link: link } });
+    return body?.shared_link ?? null;
   }
 
   async createSharedLink(fileId: string, expiresAt: string): Promise<{ url: string }> {
@@ -428,6 +484,16 @@ export class DatadogClient {
 }
 
 /** DocuSign eSignature REST v2.1 (https://developers.docusign.com/docs/esign-rest-api/reference/). Base URL ends in /restapi. */
+export interface DocuSignEnvelope {
+  envelopeId: string;
+  status: string;
+  emailSubject?: string;
+  sentDateTime?: string;
+  completedDateTime?: string | null;
+  recipients?: { signers?: { email: string; name: string; roleName?: string; status: string; signedDateTime?: string }[] };
+  customFields?: { textCustomFields?: { name: string; value: string }[]; listCustomFields?: { name: string; value: string }[] };
+}
+
 export class DocuSignClient {
   constructor(readonly http: ProviderHttp, readonly accountId: string) {}
 
@@ -452,6 +518,77 @@ export class DocuSignClient {
   async findByExternalId(externalId: string, fromDate: string): Promise<{ envelopeId: string; status: string }[]> {
     const { body } = await this.http.request<any>("GET", `/v2.1/accounts/${encodeURIComponent(this.accountId)}/envelopes`, { query: { from_date: fromDate, custom_field: `acme_external_id=${externalId}` } });
     return body?.envelopes ?? [];
+  }
+
+  private get base() {
+    return `/v2.1/accounts/${encodeURIComponent(this.accountId)}`;
+  }
+
+  /**
+   * Sends an envelope built from server templates (composite templates: one per document, in order),
+   * each role filled by a recipient. DocuSign's own reminders and expiry come from `notification`.
+   */
+  async createFromTemplates(e: { subject: string; blurb?: string; templateIds: string[]; roles: { roleName: string; email: string; name: string }[]; externalId: string; reminders?: { delayDays: number; everyDays: number }; expireDays?: number }): Promise<{ envelopeId: string; status: string }> {
+    const recipients = { signers: e.roles.map((r, i) => ({ email: r.email, name: r.name, roleName: r.roleName, recipientId: String(i + 1), routingOrder: String(i + 1) })) };
+    const { body } = await this.http.request<any>("POST", `${this.base}/envelopes`, {
+      json: {
+        emailSubject: e.subject,
+        ...(e.blurb ? { emailBlurb: e.blurb } : {}),
+        compositeTemplates: e.templateIds.map((templateId, i) => ({
+          compositeTemplateId: String(i + 1),
+          serverTemplates: [{ sequence: "1", templateId }],
+          inlineTemplates: [{ sequence: "2", recipients }],
+        })),
+        customFields: { textCustomFields: [{ name: "acme_external_id", value: e.externalId, show: "false" }] },
+        ...(e.reminders || e.expireDays
+          ? {
+              notification: {
+                useAccountDefaults: "false",
+                ...(e.reminders ? { reminders: { reminderEnabled: "true", reminderDelay: String(e.reminders.delayDays), reminderFrequency: String(e.reminders.everyDays) } } : {}),
+                ...(e.expireDays ? { expirations: { expireEnabled: "true", expireAfter: String(e.expireDays), expireWarn: String(Math.max(1, Math.min(3, e.expireDays - 1))) } } : {}),
+              },
+            }
+          : {}),
+        status: "sent",
+      },
+    });
+    if (!body?.envelopeId) throw new SpecDeviation("docusign", "POST /envelopes returned no envelopeId");
+    return { envelopeId: body.envelopeId, status: body.status };
+  }
+
+  /** An envelope with its recipients and custom fields (`include=recipients,custom_fields`). */
+  async getEnvelopeDetail(id: string): Promise<DocuSignEnvelope> {
+    const { body } = await this.http.request<any>("GET", `${this.base}/envelopes/${encodeURIComponent(id)}`, { query: { include: "recipients,custom_fields" } });
+    if (!body?.envelopeId || typeof body.status !== "string") throw new SpecDeviation("docusign", "GET /envelopes/{id} returned no envelopeId/status");
+    return body;
+  }
+
+  /** The values signers entered (`GET .../form_data`), flattened to name → value. */
+  async formData(id: string): Promise<Record<string, string>> {
+    const { body } = await this.http.request<any>("GET", `${this.base}/envelopes/${encodeURIComponent(id)}/form_data`);
+    return Object.fromEntries(((body?.formData ?? []) as { name: string; value: string }[]).map((f) => [f.name, f.value]));
+  }
+
+  /**
+   * The signed documents as one PDF (`documents/combined`), base64. With `certificate`, DocuSign
+   * appends the certificate of completion.
+   */
+  async combinedPdfBase64(id: string, certificate = true): Promise<string> {
+    return (await this.http.request<string>("GET", `${this.base}/envelopes/${encodeURIComponent(id)}/documents/combined`, { query: { certificate: String(certificate) }, responseType: "base64", headers: { accept: "application/pdf" } })).body;
+  }
+
+  /** Envelopes whose status changed since `fromDate` (ISO), optionally filtered by status. */
+  async listChanged(fromDate: string, status?: string): Promise<{ envelopeId: string; status: string; emailSubject?: string; completedDateTime?: string | null }[]> {
+    const out: any[] = [];
+    let start = 0;
+    for (;;) {
+      const { body } = await this.http.request<any>("GET", `${this.base}/envelopes`, { query: { from_date: fromDate, status, start_position: start, count: 100 } });
+      const page = body?.envelopes ?? [];
+      out.push(...page);
+      const total = Number(body?.totalSetSize ?? out.length);
+      if (!page.length || out.length >= total) return out;
+      start = out.length;
+    }
   }
 
   async remind(id: string): Promise<void> {

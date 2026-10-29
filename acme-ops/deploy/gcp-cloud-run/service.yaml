@@ -1,0 +1,55 @@
+# Google Cloud Run: one service per workflow. Replace every <...> value, then:
+#   gcloud run services replace service.yaml --region <region>
+#
+# Single instance by design: the run store here is FileStore on a Cloud Storage
+# volume, which is only safe with one writer. For more than one instance, use a
+# store with compare-and-swap (Firestore, Cloud SQL) that passes
+# test/conformance/kv-store.ts, and drop maxScale.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: acme-<workflow>
+  labels:
+    acme-workflow: <workflow>
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "1"
+        # Timers fire from the in-process tick loop, so CPU stays allocated between requests.
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      serviceAccountName: acme-<workflow>@<project>.iam.gserviceaccount.com
+      containers:
+        - image: <region>-docker.pkg.dev/<project>/acme-ops/<workflow>:<tag>
+          ports:
+            - containerPort: 8080
+          env:
+            - { name: WORKFLOW, value: <workflow> }
+            - { name: STATE_FILE, value: /state/<workflow>.json }
+            - { name: POLICY_FILE, value: /policy/policy.json }
+            - { name: TICK_INTERVAL_MS, value: "60000" }
+            - { name: APPROVER_USER_IDS, value: "<U_APPROVER>" }
+            # One entry per provider credential the workflow's guide lists (Secret Manager).
+            - name: DOCUSIGN_API_KEY
+              valueFrom: { secretKeyRef: { name: acme-docusign-token, key: latest } }
+            - name: DOCUSIGN_ACCOUNT_ID
+              valueFrom: { secretKeyRef: { name: acme-docusign-account, key: latest } }
+          startupProbe:
+            httpGet: { path: /ping, port: 8080 }
+          volumeMounts:
+            - { name: state, mountPath: /state }
+            - { name: policy, mountPath: /policy }
+      volumes:
+        - name: state
+          csi:
+            driver: gcsfuse.run.googleapis.com
+            volumeAttributes: { bucketName: <state-bucket> }
+        # The deployment's policy override, versioned in Secret Manager (merged over the bundled defaults).
+        - name: policy
+          secret:
+            secretName: acme-<workflow>-policy
+            items:
+              - { key: latest, path: policy.json }

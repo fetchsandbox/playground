@@ -52,6 +52,9 @@ const STRIPE_WEBHOOK_PATH = "/webhooks/stripe";
  * AgentCore keeps the session through its 15-minute idle timeout, and
  * "Healthy" otherwise. `time_of_last_update` only moves when the status changes.
  */
+/** Route a Snowflake service function calls (see deploy/snowflake-spcs). */
+export const SNOWFLAKE_FUNCTION_PATH = "/snowflake/invocations";
+
 export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: ServerOptions = {}): Server {
   let lastStatus = "Healthy";
   let lastChange = Math.floor(Date.now() / 1000);
@@ -123,6 +126,36 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         log.info("invocation", { action: parsed.data.action, runId: "runId" in parsed.data ? parsed.data.runId : undefined, session });
         const reply = await engine.handle(parsed.data, correlation);
         return send(reply.status, reply.body);
+      }
+
+      // Snowflake service functions (SPCS) post rows as {"data": [[row, arg], ...]} and expect the
+      // same shape back. Each row's argument is one command; each reply carries its own status.
+      if (req.method === "POST" && path === SNOWFLAKE_FUNCTION_PATH) {
+        let rows: unknown;
+        try {
+          rows = (JSON.parse(await readBody(req)) as { data?: unknown }).data;
+        } catch {
+          return send(400, { error: "body must be a Snowflake service-function batch" });
+        }
+        if (!Array.isArray(rows)) return send(400, { error: "body must be a Snowflake service-function batch" });
+        const out: [unknown, unknown][] = [];
+        for (const row of rows) {
+          const [index, arg] = Array.isArray(row) ? row : [null, undefined];
+          let cmd: unknown = arg;
+          try {
+            if (typeof arg === "string") cmd = JSON.parse(arg);
+          } catch {
+            cmd = undefined;
+          }
+          const parsed = CommandSchema.safeParse(cmd);
+          if (!parsed.success) {
+            out.push([index, { status: 400, body: { error: "invalid command", issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) } }]);
+            continue;
+          }
+          const reply = await engine.handle(parsed.data, correlationOf(req.headers));
+          out.push([index, { status: reply.status, body: reply.body }]);
+        }
+        return send(200, { data: out });
       }
 
       // Verifier-only, read-only views of saved run state, scoped by the

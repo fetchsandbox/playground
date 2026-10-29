@@ -5,6 +5,7 @@ import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
 import { errorCode, errorMessage, SkipAction } from "./errors";
 import type { Logger } from "./log";
+import { policyJsonSchema, resolvePolicy, type EffectivePolicy } from "./policy";
 import type { Item, KvStore } from "./store";
 import {
   type ActionContext,
@@ -90,6 +91,8 @@ export interface EngineDeps {
   /** A RUNNING/APPROVED run untouched this long may be resumed by anyone. */
   staleMs?: number;
   now?: () => number;
+  /** Kit v3: the resolved policy (main.ts resolves it from defaults, POLICY_FILE and POLICY_JSON). */
+  policy?: EffectivePolicy;
 }
 
 const MAX_EVENTS = 100;
@@ -122,12 +125,15 @@ export class Engine<I> {
   private readonly driving = new Set<string>();
   private readonly emittedControl=new Set<string>();
   private readonly now: () => number;
+  /** Kit v3: the resolved policy new runs start under (deps.policy, else the workflow's validated defaults). */
+  readonly policy?: EffectivePolicy;
 
   constructor(
     readonly workflow: WorkflowDef<I>,
     private readonly deps: EngineDeps,
   ) {
     this.now = deps.now ?? Date.now;
+    this.policy = deps.policy ?? (workflow.policy ? resolvePolicy(workflow.policy) : undefined);
   }
 
   /** True while a run is executing in the background (AgentCore /ping → HealthyBusy). */
@@ -184,6 +190,7 @@ export class Engine<I> {
       actions: wf.catalog,
       input: z.toJSONSchema(wf.input as z.ZodType, { unrepresentable: "any" }),
       commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence"],
+      ...(wf.policy && this.policy ? { policy: { version: this.policy.version, sources: this.policy.sources, values: this.policy.values, schema: policyJsonSchema(wf.policy) } } : {}),
     };
   }
 
@@ -212,7 +219,8 @@ export class Engine<I> {
       agents: [],
       actions: [],
       duplicateStarts: 0,
-      events: [{ at, msg: `started by ${cmd.requestedBy.userId}` }],
+      events: [{ at, msg: `started by ${cmd.requestedBy.userId}${this.policy ? ` under policy ${this.policy.version}` : ""}` }],
+      ...(this.policy ? { policy: { version: this.policy.version, values: this.policy.values } } : {}),
       ...(this.deps.control ? {control:{scope:this.deps.control.scope,events:[]}} : {}),
       createdAt: at,
       updatedAt: at,
@@ -655,6 +663,7 @@ export class Engine<I> {
       log: this.deps.log.child({ runId: run.runId, workflow: run.workflow }),
       startedAt: new Date(run.createdAt),
       checkpoint: this.checkpoints(run.runId),
+      policy: run.policy?.values ?? this.policy?.values,
     };
   }
 
@@ -848,6 +857,7 @@ export class Engine<I> {
       },
       wakeAt: r.wakeAt ?? null,
       audit: r.audit ?? null,
+      policyVersion: r.policy?.version ?? null,
       approval: r.approval,
       output: r.output ?? {},
       lastError: r.lastError,

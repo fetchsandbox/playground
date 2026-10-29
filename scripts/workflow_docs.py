@@ -84,6 +84,7 @@ PROVIDER_ENV={
 'gusto':('`GUSTO_API_KEY` + `GUSTO_COMPANY_ID`','Pinned to `X-Gusto-API-Version: 2026-06-15`; override with `GUSTO_API_VERSION`.'),
 'datadog':('`DATADOG_API_KEY` + `DATADOG_APP_KEY`',''),
 'docusign':('`DOCUSIGN_BASE_URL` (your account\'s base URI) + `DOCUSIGN_API_KEY` (access token) + `DOCUSIGN_ACCOUNT_ID`',''),
+'dropbox':('`DROPBOX_API_KEY` (OAuth access token; + `DROPBOX_PATH_ROOT` for a team space)','RPC calls go to `api.dropboxapi.com`, uploads and downloads to `content.dropboxapi.com`.'),
 'moderntreasury':('`MODERN_TREASURY_API_KEY` + `MODERN_TREASURY_ORGANIZATION_ID`','HTTP Basic auth.'),
 }
 # What must already exist in the provider accounts. Workflows not listed need only the identifiers in their input.
@@ -132,6 +133,20 @@ def operations(w):
   lines+=[f'- `{a["kind"]}`: {a["description"][len("Signal:"):].strip()}' for a in signals]
  if w.get('tickEvery'):lines+=['',f'**Timers.** Reminders, deadlines and follow-ups are durable timers. A deployed stack sends `{{"action":"tick"}}` on the schedule `{w["tickEvery"]}` (EventBridge Scheduler); locally, set `TICK_INTERVAL_MS` or send `tick` yourself.']
  if w.get('audit'):lines+=['','**Audit trail.** Every decision, signal and effect is hash-chained. `{"action":"evidence","runId":"<run>"}` returns the trail and whether the chain verifies.']
+ if w.get('policy'):lines+=policy_section(w['policy'])
+ return lines
+def policy_rows(schema,values,prefix=''):
+ rows=[]
+ for k,prop in (schema.get('properties') or {}).items():
+  path=f'{prefix}{k}';v=(values or {}).get(k)
+  if prop.get('type')=='object' and prop.get('properties') and isinstance(v,dict):
+   if prop.get('description'):rows.append((path,'',prop['description']))
+   rows+=policy_rows(prop,v,path+'.')
+  else:rows.append((path,json.dumps(v,ensure_ascii=False),prop.get('description','')))
+ return rows
+def policy_section(p):
+ lines=['','## Configurable policy','',f"Every limit, deadline, routing rule and folder layout lives in [`{p['file']}`](../../{p['file']}), not in the code. The workflow validates it at startup against its schema and refuses to start on an invalid value. Each run records the policy version it started under and keeps it until it finishes.",'','Override per deployment without a code change: `POLICY_FILE=/path/override.json` (a mounted file) and/or `POLICY_JSON=\'{...}\'` (an environment value or secret). Objects merge key by key; lists and values replace. On AWS: `cdk deploy -c policyFile:<workflow>=override.json`. `{"action":"describe"}` returns the effective values, their version and the JSON Schema.','','| Setting | Default | Meaning |','|---|---|---|']
+ lines+=[f'| `{k}` | {cell(f"`{v}`" if v else "")} | {cell(d)} |' for k,v,d in policy_rows(p['schema'],p['values'])]
  return lines
 def cell(v):return str(v).replace('|','\\|').replace('\n',' ')
 def render(w):

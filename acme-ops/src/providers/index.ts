@@ -5,6 +5,7 @@ import { CalendarClient, GmailClient } from "./google";
 import { HubSpotClient } from "./hubspot";
 import { SlackClient } from "./slack";
 import { SquareClient } from "./square";
+import { DropboxClient } from "./storage";
 import { StripeClient } from "./stripe";
 import { ModernTreasuryClient } from "./treasury";
 import { AsanaClient, BoxClient, DatadogClient, DocuSignClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
@@ -35,8 +36,9 @@ export type ProviderName =
   | "gusto"
   | "datadog"
   | "docusign"
+  | "dropbox"
   | "moderntreasury";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign", "moderntreasury"];
+export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign", "dropbox", "moderntreasury"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
@@ -75,6 +77,8 @@ export interface Providers {
   datadog?: DatadogClient;
   /** E-signature (DocuSign eSignature). */
   docusign?: DocuSignClient;
+  /** File storage and shared links (Dropbox API v2). */
+  dropbox?: DropboxClient;
   moderntreasury?: ModernTreasuryClient;
 }
 
@@ -103,6 +107,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
   gusto: "https://api.gusto.com",
   datadog: "https://api.datadoghq.com",
   docusign: "https://na1.docusign.net/restapi",
+  dropbox: "https://api.dropboxapi.com",
   moderntreasury: "https://app.moderntreasury.com",
 };
 
@@ -132,6 +137,7 @@ const PREFIX: Record<ProviderName, string[]> = {
   gusto: ["GUSTO"],
   datadog: ["DATADOG", "DD"],
   docusign: ["DOCUSIGN"],
+  dropbox: ["DROPBOX"],
   moderntreasury: ["MODERN_TREASURY", "MODERNTREASURY"],
 };
 
@@ -237,6 +243,8 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
       twilio_verify: h.twilio_verify && new TwilioVerifyClient(h.twilio_verify, env.TWILIO_VERIFY_SERVICE_SID ?? "VA_ACME_DEMO"),
       gusto: h.gusto && new GustoClient(h.gusto, env.GUSTO_COMPANY_ID ?? "acme-company"),
       docusign: h.docusign && new DocuSignClient(h.docusign, env.DOCUSIGN_ACCOUNT_ID ?? "acme-account"),
+      // Content calls (upload, download) go to content.dropboxapi.com; a non-default base (a twin) serves both.
+      dropbox: h.dropbox && new DropboxClient(h.dropbox, env.DROPBOX_CONTENT_URL ?? (endpoints.dropbox?.baseUrl === DEFAULT_BASE.dropbox ? "https://content.dropboxapi.com/2" : `${endpoints.dropbox?.baseUrl}/2`), env.DROPBOX_PATH_ROOT || undefined),
       moderntreasury: h.moderntreasury && new ModernTreasuryClient(h.moderntreasury),
       datadog: h.datadog && new DatadogClient(h.datadog, env.DATADOG_APP_KEY ?? env.DD_APPLICATION_KEY ?? ""),
     };
