@@ -1,0 +1,94 @@
+{
+  "workflow": "new-hire-paperwork",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-new-hire-paperwork-1.0.0-00c653b",
+  "session_id": "vs_5a14499bb704",
+  "run_id": "vr_847c23904d864f0a9e42180279a52b52",
+  "receipt_url": "https://fetchsandbox.com/runs/93652c96db?flow=vr_847c23904d864f0a9e42180279a52b52",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "docusign_unavailable_sends_nothing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "no_packet_sends_nothing",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_hire_event",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_hire_events",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_then_redelivery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "packet_sent_from_templates",
+      "status": "unmeasured",
+      "explanation": "No DocuSign twin: composite-template envelopes can't be created or read back."
+    },
+    {
+      "id": "existing_envelope_reused",
+      "status": "unmeasured",
+      "explanation": "Needs DocuSign envelope listing by custom_field."
+    },
+    {
+      "id": "completion_rechecked_and_filed",
+      "status": "unmeasured",
+      "explanation": "Needs a DocuSign envelope that a contract can move to completed, documents/combined bytes, and a store twin that keeps uploads (Box: R29, Dropbox: missing)."
+    },
+    {
+      "id": "forged_completion_refused",
+      "status": "unmeasured",
+      "explanation": "Needs the DocuSign twin to report a sent envelope."
+    },
+    {
+      "id": "unsigned_reminders_before_start",
+      "status": "unmeasured",
+      "explanation": "Needs the DocuSign twin, and the runtime clock to reach the reminder dates during an attempt (fixture time steps are unavailable during an active attempt)."
+    },
+    {
+      "id": "declined_or_unsigned_escalated",
+      "status": "unmeasured",
+      "explanation": "Needs the DocuSign twin (declined status) and the start-date deadline inside an attempt."
+    },
+    {
+      "id": "too_close_start_sends_nothing",
+      "status": "unmeasured",
+      "explanation": "Decided after the existing-envelope check, which needs DocuSign."
+    }
+  ],
+  "recorded_at": "2026-10-29T01:28:55.476Z"
+}
