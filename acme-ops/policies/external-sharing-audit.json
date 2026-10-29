@@ -1,0 +1,19 @@
+{
+  "sources": {
+    "box": { "enabled": true, "rootFolders": ["0"], "maxItems": 5000 },
+    "dropbox": { "enabled": true }
+  },
+  "exemptPaths": ["Marketing/Public", "Press Kit"],
+  "publicMaxDays": 30,
+  "passwordCountsAsRestricted": true,
+  "sensitivePatterns": ["payroll", "salar(y|ies)", "\\bssn\\b", "passport", "\\bw-?2\\b", "customer[ _-]?(export|list)", "bank[ _-]?details", "\\.(csv|xlsx)$"],
+  "remediation": {
+    "sensitivePublic": "restrict",
+    "publicNoExpiry": "set_expiry",
+    "publicExpiryTooLong": "set_expiry",
+    "approvalFor": ["revoke"],
+    "autoLimit": 25
+  },
+  "securityChannel": "C0SECURITY1",
+  "reportTop": 10
+}
