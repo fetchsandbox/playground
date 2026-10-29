@@ -165,6 +165,8 @@ export interface DocumentStore {
    * of that name is returned with `existed: true` (so a retried filing is a no-op).
    */
   put(folder: string, name: string, bytes: Uint8Array): Promise<StoredDocument & { existed: boolean }>;
+  /** Files directly in `folder` (not sub-folders); empty when the folder doesn't exist. */
+  list(folder: string): Promise<StoredDocument[]>;
 }
 
 const segments = (folder: string) => folder.split("/").map((s) => s.trim()).filter(Boolean);
@@ -198,6 +200,13 @@ export class BoxDocumentStore implements DocumentStore {
     return f ? { provider: "box", id: f.id, name: f.name, path: segments(folder).join("/") } : null;
   }
 
+  async list(folder: string): Promise<StoredDocument[]> {
+    const id = await this.folderId(folder, false);
+    if (!id) return [];
+    const path = segments(folder).join("/");
+    return (await this.box.folderItems(id)).filter((i) => i.type === "file").map((i) => ({ provider: "box" as const, id: i.id, name: i.name, path }));
+  }
+
   async put(folder: string, name: string, bytes: Uint8Array): Promise<StoredDocument & { existed: boolean }> {
     const id = (await this.folderId(folder, true))!;
     const existing = (await this.box.folderItems(id)).find((i) => i.type === "file" && i.name === name);
@@ -220,6 +229,13 @@ export class DropboxDocumentStore implements DocumentStore {
   async find(folder: string, name: string): Promise<StoredDocument | null> {
     const e = await this.dropbox.getMetadata(this.full(folder, name));
     return e && e[".tag"] === "file" ? { provider: "dropbox", id: e.id, name: e.name, path: segments(folder).join("/") } : null;
+  }
+
+  async list(folder: string): Promise<StoredDocument[]> {
+    const dir = await this.dropbox.getMetadata(this.full(folder));
+    if (!dir || dir[".tag"] !== "folder") return [];
+    const path = segments(folder).join("/");
+    return (await this.dropbox.listFolder(this.full(folder))).filter((e) => e[".tag"] === "file").map((e) => ({ provider: "dropbox" as const, id: e.id, name: e.name, path }));
   }
 
   async put(folder: string, name: string, bytes: Uint8Array): Promise<StoredDocument & { existed: boolean }> {

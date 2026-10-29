@@ -26,6 +26,9 @@ describe("document stores (Box and Dropbox)", () => {
     expect(w.state.box.folders).toHaveLength(3);
     expect(await store.find("Legal/Agreements/2026", "MSA - Globex.pdf")).toMatchObject({ id: a.id });
     expect(await store.find("Legal/Nope", "x.pdf")).toBeNull();
+    expect((await store.list("Legal/Agreements/2026")).map((d) => d.name).sort()).toEqual(["MSA - Globex.pdf", "a.pdf", "b.pdf", "c.pdf"]);
+    expect(await store.list("Legal")).toEqual([]);
+    expect(await store.list("Nope/Nothing")).toEqual([]);
   });
 
   it("Dropbox: uploads with the arguments in Dropbox-API-Arg, header-safe, and treats a conflict as already filed", async () => {
@@ -42,6 +45,9 @@ describe("document stores (Box and Dropbox)", () => {
     const dl = await providers().dropbox!.downloadBase64(a.id);
     expect(Buffer.from(dl.base64, "base64").toString()).toBe("%PDF-1.4 one");
     expect(dl.metadata?.name).toBe("Contrato – Müller.pdf");
+    await store.put("Legal/Agreements/2026/Old", "x.pdf", pdf("x"));
+    expect((await store.list("Legal/Agreements/2026")).map((d) => d.name)).toEqual(["Contrato – Müller.pdf"]);
+    expect(await store.list("Nope")).toEqual([]);
   });
 
   it("Dropbox: list_folder and list_shared_links follow their cursors; links can be narrowed and revoked", async () => {
