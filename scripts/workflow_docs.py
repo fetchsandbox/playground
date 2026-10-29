@@ -55,6 +55,7 @@ WHY={
 'supplier-ncr':'Supplier Quality needs an accountable corrective-action process after a failed inspection, including supplier follow-up and review scheduling.',
 'supplier-bank-change':'Accounts Payable needs to stop payment fraud through supplier bank-detail changes: nothing is paid to new details until a callback to the number on file and two different people have verified them.',
 'vulnerability-remediation':'Application Security needs every known vulnerability tracked to its severity deadline, escalated when late, and accepted as risk only by someone outside the owning team, for a limited time.',
+'external-sharing-audit':'Security needs to know that no payroll file, customer export or passport scan sits behind a public link with no expiry, in either document store, and needs it fixed without breaking links people rely on or overriding a fix someone already made.',
 'support-escalation':'Support needs to combine incident severity, account context and billing health so urgent cases reach the right team with a reviewed customer reply.',
 }
 
@@ -112,6 +113,7 @@ PREREQS={
 'payroll-anomaly-review':['A Gusto company with regular payrolls; reviewers named in the input.'],
 'employee-offboarding':['The employee\'s Gusto, WorkOS and GitHub identities, passed in the input.'],
 'user-access-review':['The WorkOS organizations and GitHub organization in the input, and an Asana workspace for evidence.'],
+'external-sharing-audit':['A Box token that can see the policy\'s root folders, and a Dropbox token for the account to audit (team-wide Dropbox audits need a team admin token per member, not included).','A weekly schedule (or an on-demand trigger) that calls `start` with an audit id such as `SHARE-2026-W44`; security approvers in the input or `APPROVER_USER_IDS`.','Your sensitive-name patterns, exempt folders and maximum public-link age in the policy.'],
 'failed-payment-dunning':['A Stripe `invoice.payment_failed` webhook (or the daily sweep) that calls `start`.'],
 }
 def operations(w):

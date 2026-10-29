@@ -5,7 +5,7 @@
   "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
   "counts": {
     "inconclusive": 20,
-    "failing": 23,
+    "failing": 24,
     "verified": 8
   },
   "workflows": {
@@ -1721,6 +1721,42 @@
         "overdue_escalated",
         "github_unreadable_blocks",
         "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "external-sharing-audit": {
+      "workflow": "external-sharing-audit",
+      "receipt_url": "https://fetchsandbox.com/runs/2911898104?flow=vr_a5c6c476217148e89c3501f4618a5e2f",
+      "source": "acme-ops/verify/receipts/external-sharing-audit.json",
+      "checked_at": "2026-10-29T01:40:07.664293+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-29T01:39:41.839+00:00",
+      "app_version": {
+        "value": "acme-ops-external-sharing-audit-1.0.0-53a03cd",
+        "source": "declared"
+      },
+      "verdict": "failing",
+      "counts": {
+        "held": 8,
+        "violated": 1,
+        "unmeasured": 6
+      },
+      "check_ids": [
+        "baseline",
+        "box_links_inventoried",
+        "unreadable_store_not_clean",
+        "box_auth_failure_not_clean",
+        "duplicate_audit",
+        "concurrent_audits",
+        "invalid_input_rejected",
+        "slack_rate_limited",
+        "restart_then_redelivery",
+        "sensitive_public_restricted",
+        "expiry_capped",
+        "exempt_and_restricted_left_alone",
+        "change_since_sweep_respected",
+        "revoke_needs_approval",
+        "dropbox_links_enforced"
       ],
       "scope": "application_workflow_v1"
     }
