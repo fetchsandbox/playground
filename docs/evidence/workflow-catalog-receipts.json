@@ -4,7 +4,7 @@
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
   "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
   "counts": {
-    "inconclusive": 20,
+    "inconclusive": 21,
     "failing": 23,
     "verified": 8
   },
@@ -1721,6 +1721,41 @@
         "overdue_escalated",
         "github_unreadable_blocks",
         "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "new-hire-paperwork": {
+      "workflow": "new-hire-paperwork",
+      "receipt_url": "https://fetchsandbox.com/runs/93652c96db?flow=vr_847c23904d864f0a9e42180279a52b52",
+      "source": "acme-ops/verify/receipts/new-hire-paperwork.json",
+      "checked_at": "2026-10-29T01:29:32.984711+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-29T01:28:55.476+00:00",
+      "app_version": {
+        "value": "acme-ops-new-hire-paperwork-1.0.0-00c653b",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 8,
+        "unmeasured": 7
+      },
+      "check_ids": [
+        "baseline",
+        "docusign_unavailable_sends_nothing",
+        "no_packet_sends_nothing",
+        "duplicate_hire_event",
+        "concurrent_hire_events",
+        "invalid_input_rejected",
+        "slack_rate_limited",
+        "restart_then_redelivery",
+        "packet_sent_from_templates",
+        "existing_envelope_reused",
+        "completion_rechecked_and_filed",
+        "forged_completion_refused",
+        "unsigned_reminders_before_start",
+        "declined_or_unsigned_escalated",
+        "too_close_start_sends_nothing"
       ],
       "scope": "application_workflow_v1"
     }

@@ -55,6 +55,7 @@ WHY={
 'supplier-ncr':'Supplier Quality needs an accountable corrective-action process after a failed inspection, including supplier follow-up and review scheduling.',
 'supplier-bank-change':'Accounts Payable needs to stop payment fraud through supplier bank-detail changes: nothing is paid to new details until a callback to the number on file and two different people have verified them.',
 'vulnerability-remediation':'Application Security needs every known vulnerability tracked to its severity deadline, escalated when late, and accepted as risk only by someone outside the owning team, for a limited time.',
+'new-hire-paperwork':'People Operations needs every new hire to receive the right paperwork for their country and contract, signed and filed before day one, and needs to hear in time, not on the start date, when it is not.',
 'support-escalation':'Support needs to combine incident severity, account context and billing health so urgent cases reach the right team with a reviewed customer reply.',
 }
 
@@ -112,6 +113,7 @@ PREREQS={
 'payroll-anomaly-review':['A Gusto company with regular payrolls; reviewers named in the input.'],
 'employee-offboarding':['The employee\'s Gusto, WorkOS and GitHub identities, passed in the input.'],
 'user-access-review':['The WorkOS organizations and GitHub organization in the input, and an Asana workspace for evidence.'],
+'new-hire-paperwork':['DocuSign server templates for each packet in the policy, each with a signer role named as the policy\'s `signerRole` (and the countersigner\'s role); put their ids in the policy.','A DocuSign Connect adapter that sends `signal` for `docusign.packet_completed` as the policy\'s `connectSender`: `approve` on envelope-completed, `reject` on declined or voided.','An HRIS or ATS hook that calls `start` when a hire is finalized; use the hire id in the run id.','A Box folder id or Dropbox path as the store root, and the People Ops Slack channel with the bot invited.'],
 'failed-payment-dunning':['A Stripe `invoice.payment_failed` webhook (or the daily sweep) that calls `start`.'],
 }
 def operations(w):

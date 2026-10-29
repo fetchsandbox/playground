@@ -1,0 +1,18 @@
+{
+  "store": { "provider": "box", "root": "0" },
+  "packets": [
+    { "name": "US employee", "match": { "country": ["US"], "employmentType": ["full_time", "part_time", "intern"] }, "templates": ["us-offer-letter-template-id", "us-pii-agreement-template-id", "us-handbook-ack-template-id"] },
+    { "name": "UK employee", "match": { "country": ["GB"], "employmentType": ["full_time", "part_time"] }, "templates": ["uk-employment-contract-template-id", "uk-handbook-ack-template-id"] },
+    { "name": "Contractor", "match": { "employmentType": ["contractor"] }, "templates": ["contractor-agreement-template-id"] }
+  ],
+  "signerRole": "Employee",
+  "countersigner": { "roleName": "People Team", "name": "Acme People Team", "email": "people@acme.example" },
+  "subject": "Your Acme paperwork, {firstName}",
+  "minLeadDays": 3,
+  "docusign": { "reminderDelayDays": 2, "reminderEveryDays": 2, "expireDaysAfterStart": 7 },
+  "connectSender": "docusign-connect",
+  "escalateDaysBeforeStart": [7, 2],
+  "peopleChannel": "C0PEOPLEOPS",
+  "folder": "People/Onboarding/{country}/{year}/{employee} ({hireId})",
+  "fileName": "{date} Onboarding paperwork - {employee}.pdf"
+}
