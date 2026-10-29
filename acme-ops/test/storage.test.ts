@@ -71,7 +71,9 @@ describe("document stores (Box and Dropbox)", () => {
     const f = await box.uploadBytes("0", "deck.pdf", pdf("deck"));
     await box.createSharedLink(f.id, "2027-01-01T00:00:00Z");
     expect(await box.setSharedLink("file", f.id, { access: "company", unshared_at: "2026-11-01T00:00:00Z" })).toMatchObject({ access: "company", unshared_at: "2026-11-01T00:00:00Z" });
+    expect(await box.getSharedLink("file", f.id)).toMatchObject({ access: "company" });
     expect(await box.setSharedLink("file", f.id, null)).toBeNull();
+    expect(await box.getSharedLink("file", f.id)).toBeNull();
     const items = await box.folderItems("0", "name,type,shared_link");
     expect(items.find((i) => i.id === f.id)?.shared_link).toBeNull();
   });

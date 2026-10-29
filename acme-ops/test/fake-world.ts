@@ -689,6 +689,10 @@ export async function startWorld() {
       else f.sharedLink = { url: f.sharedLink?.url ?? `https://acme.app.box.com/s/${f.id}x`, access: body.shared_link.access ?? f.sharedLink?.access ?? "open", unshared_at: (body.shared_link.unshared_at !== undefined ? body.shared_link.unshared_at : (f.sharedLink?.unshared_at ?? null)) as string };
       return send(200, { id: f.id, shared_link: f.sharedLink ?? null });
     }
+    if (req.method === "GET" && (r = m(/^\/folders\/(\d+)$/)) && q.get("fields") === "shared_link") {
+      const f = state.box.folders.find((x) => x.id === r![1]);
+      return f ? send(200, { type: "folder", id: f.id, shared_link: f.sharedLink ?? null }) : send(404, { type: "error", code: "not_found" });
+    }
     if (req.method === "GET" && (r = m(/^\/folders\/(\d+)\/items$/))) {
       const withLink = (q.get("fields") ?? "").includes("shared_link");
       const all = [
@@ -708,6 +712,7 @@ export async function startWorld() {
     if (req.method === "GET" && (r = m(/^\/files\/(\d+)$/))) {
       const f = state.box.files.find((x) => x.id === r![1]);
       if (!f) return send(404, { type: "error", code: "not_found" });
+      if (q.get("fields") === "shared_link") return send(200, { type: "file", id: f.id, shared_link: f.sharedLink ?? null });
       if ((q.get("fields") ?? "").includes("representations")) {
         return send(200, { id: f.id, representations: { entries: f.text === null ? [] : [{ representation: "extracted_text", status: { state: "success" }, content: { url_template: `${base}/internal_files/${f.id}/versions/1/representations/extracted_text/content/{+asset_path}` } }] } });
       }
