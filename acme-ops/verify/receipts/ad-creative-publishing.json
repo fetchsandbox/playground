@@ -1,0 +1,70 @@
+{
+  "workflow": "ad-creative-publishing",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-ad-creative-publishing-1.0.0-4f90f60",
+  "bundle_sha256": "e973e50704a15f3527ba9776f583fc84de33ebfa01912b5b935d5a4e019c94cc",
+  "session_id": "vs_814e52110c14",
+  "run_id": "vr_b190f863ba1a4adcaf2108b356654ade",
+  "receipt_url": "https://fetchsandbox.com/runs/cbd22c286e?flow=vr_b190f863ba1a4adcaf2108b356654ade",
+  "status": null,
+  "verdict": "verified",
+  "app_verified": true,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_reviewer",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "accepted_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_business",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_adset",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "provider_auth",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    }
+  ],
+  "recorded_at": "2026-10-30T14:24:44.694Z"
+}

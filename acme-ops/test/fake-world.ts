@@ -31,6 +31,7 @@ const id = (p: string) => `${p}_${++seq}`;
 
 export function seedState() {
   return {
+    meta: {ads:[] as any[],creatives:[{id:"3001",account_id:"1001",name:"Pergola TEST",object_story_spec:{page_id:"4001",link_data:{message:"Plan your outdoor space",link:"https://example.test/pergolas"}}}] as any[],loseResponses:0,hideAds:false},
     stripe: {
       customers: [
         { id: "cus_alice", email: "alice@acmecorp.com", name: "Alice" },
@@ -1042,6 +1043,19 @@ export async function startWorld() {
       return g ? send(200, { gift_card: g }) : send(404, { errors: [{ code: "NOT_FOUND" }] });
     }
 
+    if(path==="/v26.0/act_1001/ads"){
+      if(req.method==="GET")return send(200,{data:state.meta.hideAds?[]:state.meta.ads});
+      if(req.method==="POST"){
+        const creative=typeof body.creative==="string"?JSON.parse(body.creative):body.creative;
+        const row={id:String(++seq),account_id:"1001",name:body.name,adset_id:body.adset_id,creative:{id:creative.creative_id},status:body.status};state.meta.ads.push(row);
+        if(state.meta.loseResponses-->0){res.destroy();return;}
+        return send(200,{id:row.id});
+      }
+    }
+    if(req.method==="GET"&&path.startsWith("/v26.0/")){
+      const node=state.meta.creatives.find(c=>c.id===path.slice(7))??state.meta.ads.find(a=>a.id===path.slice(7));
+      return node?send(200,node):send(404,{error:{code:100}});
+    }
     send(404, { error: "no_route", path });
   });
 
@@ -1057,7 +1071,7 @@ export async function startWorld() {
     },
     requests,
     base,
-    endpoints(only: ProviderName[] = all) {
+    endpoints(only: ProviderName[] = [...all,"meta"]) {
       return Object.fromEntries(only.map((p) => [p, { provider: p, baseUrl: base, token: `tok_${p}` }]));
     },
     engine<I>(wf: WorkflowDef<I>, opts: { only?: ProviderName[]; store?: KvStore } & Partial<EngineDeps> = {}) {

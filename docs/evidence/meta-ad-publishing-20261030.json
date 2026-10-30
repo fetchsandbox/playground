@@ -1,0 +1,289 @@
+{
+  "measured_on": "2026-10-30",
+  "scope": "Prepared creative, owner review and PAUSED ad creation against FetchSandbox only",
+  "backend_commit": "8f274004",
+  "mcp_version": "0.7.30",
+  "checks_sha256": "6799522eeffe77ff50d99db0fe7cc122359203109e892da875dc55c34d51f16f",
+  "same_checks": true,
+  "repaired": {
+    "workflow": "ad-creative-publishing",
+    "mcp_observed": {
+      "name": "fetchsandbox",
+      "version": "0.7.30"
+    },
+    "mcp_source": "npm_package",
+    "app_version": "acme-ops-ad-creative-publishing-1.0.0-4f90f60",
+    "bundle_sha256": "e973e50704a15f3527ba9776f583fc84de33ebfa01912b5b935d5a4e019c94cc",
+    "session_id": "vs_814e52110c14",
+    "run_id": "vr_b190f863ba1a4adcaf2108b356654ade",
+    "receipt_url": "https://fetchsandbox.com/runs/cbd22c286e?flow=vr_b190f863ba1a4adcaf2108b356654ade",
+    "status": null,
+    "verdict": "verified",
+    "app_verified": true,
+    "complete": true,
+    "checks": [
+      {
+        "id": "baseline",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "rejected",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_reviewer",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "duplicate",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "restart_held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "accepted_loss",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_business",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_adset",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "provider_auth",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      }
+    ],
+    "recorded_at": "2026-10-30T14:24:44.694Z"
+  },
+  "negative_control": {
+    "workflow": "ad-creative-publishing",
+    "mcp_observed": {
+      "name": "fetchsandbox",
+      "version": "0.7.30"
+    },
+    "mcp_source": "npm_package",
+    "app_version": "acme-ops-ad-creative-publishing-1.0.0-4f90f60-bundle-5154a0730cc2",
+    "bundle_sha256": "5154a0730cc252693211c940f6b155bd96ec2982c1b82bd108e6f1d12d1dbc0b",
+    "session_id": "vs_94500a7394b2",
+    "run_id": "vr_52dc52bc56a04903998b1db7a86eeedd",
+    "receipt_url": "https://fetchsandbox.com/runs/456e72100a?flow=vr_52dc52bc56a04903998b1db7a86eeedd",
+    "status": null,
+    "verdict": "failing",
+    "app_verified": false,
+    "complete": true,
+    "checks": [
+      {
+        "id": "baseline",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "rejected",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_reviewer",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "duplicate",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "restart_held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "accepted_loss",
+        "status": "violated",
+        "explanation": "Accepted response read-back repeated the provider write"
+      },
+      {
+        "id": "wrong_business",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_adset",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "provider_auth",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      }
+    ],
+    "recorded_at": "2026-10-30T14:31:13.249Z"
+  },
+  "negative_provider_readback": {
+    "http": "200",
+    "case": "accepted_loss",
+    "paused_ads": 2,
+    "distinct_ids": 2,
+    "ids": [
+      "28980055398631560",
+      "28648470402708051"
+    ]
+  },
+  "repaired_provider_readback": {
+    "paused_ads": 1,
+    "distinct_ids": 1,
+    "assertion_held": true
+  },
+  "mutation": {
+    "from": "if(prior){if(adHash(prior)!==adHash(i))throw new FatalError(\"Saved publication intent conflicts\");return recover(action,i);}",
+    "to": "if(prior){if(adHash(prior)!==adHash(i))throw new FatalError(\"Saved publication intent conflicts\");}",
+    "bundle_sha256": "5154a0730cc252693211c940f6b155bd96ec2982c1b82bd108e6f1d12d1dbc0b",
+    "purpose": "Deliberately resend after saved publication intent; production source remains unchanged"
+  },
+  "native": {
+    "runtime_id": "acme_ad_creative_publishing-5xhddY3mCW",
+    "version": "2",
+    "image": {
+      "containerConfiguration": {
+        "containerUri": "342206308838.dkr.ecr.us-west-2.amazonaws.com/cdk-hnb659fds-container-assets-342206308838-us-west-2:ad-creative-publishing-77aef2edf4cdc478bdebd9d4009d24709c8200ac"
+      }
+    },
+    "source_commit": "77aef2edf4cdc478bdebd9d4009d24709c8200ac",
+    "department": "Marketing",
+    "owner_team": "creative-operations",
+    "owner": "Raj",
+    "run_id": "ad-native-ee77931a-df28-4eca-9849-cd80f52aa242",
+    "held_and_durable_before_approval": true,
+    "wrong_reviewer_refused": true,
+    "approved_paused_ad_count": 1,
+    "decision_replay_ad_count": 1,
+    "dynamodb_readback": true,
+    "reconcile": {
+      "checkedAt": "2026-10-30T14:10:17.353Z",
+      "detail": "Compared account, exact tagged name, creative, ad set and PAUSED state",
+      "status": "match"
+    },
+    "approval_source": "scripted named test reviewer; not human UI",
+    "live_meta": false
+  },
+  "reviewed": {
+    "runtime_id": "acme_ad_creative_publishing-5xhddY3mCW",
+    "version": "3",
+    "source_commit": "77aef2edf4cdc478bdebd9d4009d24709c8200ac",
+    "checks": {
+      "bad_signature": 401,
+      "wrong_tenant": 409,
+      "native_bypass": 403,
+      "stale_revision": 409
+    },
+    "exact_review_frozen": true,
+    "provider_paused_ad_count": 1,
+    "replay_count": 1,
+    "dynamodb_control_and_result": true,
+    "run_id": "ad-reviewed-4830b104-8501-4b61-98f1-c020a05ee2a6",
+    "approval_source": "scripted signed adapter request, not LoopLabs UI or device-bound signature",
+    "live_meta": false
+  },
+  "restored_binding_after_backend_redeploy": {
+    "build": {
+      "commit": "8f274004",
+      "built_at": "2026-10-30T14:20:05.062839+00:00",
+      "env": "unknown"
+    },
+    "retained_binding": "0461912093",
+    "same_credentials_and_verified_owner": true,
+    "retained_paused_ad_count": 2,
+    "saved_ids_match_prior_aws_results": true
+  },
+  "aws_reconciliation_after_backend_redeploy": [
+    {
+      "mode": "native",
+      "qualifier": "meta_native_v2",
+      "run_id": "ad-native-ee77931a-df28-4eca-9849-cd80f52aa242",
+      "reconcile": "match"
+    },
+    {
+      "mode": "reviewed",
+      "qualifier": "DEFAULT",
+      "run_id": "ad-reviewed-4830b104-8501-4b61-98f1-c020a05ee2a6",
+      "reconcile": "match"
+    }
+  ],
+  "limits": [
+    "No positive live Meta parity or live ad spend",
+    "No LLM drafting or image generation",
+    "Scripted owner and HMAC adapter decisions, not a LoopLabs UI click or device-bound signature",
+    "Native Meta coding-agent acceptance not measured",
+    "Bounded configured sandbox recovery, not all historical resources",
+    "Three parent brain-integrity failures remain open"
+  ],
+  "ownership_observed": {
+    "runtime_id": "acme_ad_creative_publishing-5xhddY3mCW",
+    "version": "3",
+    "status": "READY",
+    "environment": {
+      "WORKFLOW_ORGANIZATION": "Acme",
+      "WORKFLOW_COMPANY_NAME": "Acme Corporation",
+      "WORKFLOW_DEPARTMENT": "Marketing",
+      "WORKFLOW_OWNER": "Raj",
+      "WORKFLOW_OWNER_TEAM": "creative-operations",
+      "WORKFLOW_SOURCE_COMMIT": "77aef2edf4cdc478bdebd9d4009d24709c8200ac",
+      "WORKFLOW_DEPLOYMENT_VERSION": "acme-ad-publishing-77aef2e"
+    },
+    "tags": {
+      "organization": "Acme",
+      "company": "Acme Corporation",
+      "owner": "Raj",
+      "department": "Marketing",
+      "owner_team": "creative-operations"
+    }
+  },
+  "usage_telemetry_observed": {
+    "tls": true,
+    "completed_requests_read_from_postgresql": 7,
+    "start_and_completion_rows": 14,
+    "deployed_version": "meta-ads-8f274004",
+    "verified_account_on_management_calls": true,
+    "twin_token_calls_remain_anonymous": true,
+    "meta_provider_association": true,
+    "invalid_token_401_recorded": true,
+    "observed_credentials_absent": true,
+    "no_body_or_query_fields": true
+  },
+  "comparison_key_cleanup": {
+    "negative": {
+      "helper_exit": 0,
+      "recovery_file_remaining": false
+    },
+    "repaired": {
+      "helper_exit": 0,
+      "recovery_file_remaining": false
+    }
+  }
+}

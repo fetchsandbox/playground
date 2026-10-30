@@ -86,7 +86,7 @@ def upload(data):
 config_digest, layer_digest = upload(new_config), upload(layer)
 manifest["config"].update(digest=config_digest, size=len(new_config))
 manifest["layers"].append({"mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip", "digest": layer_digest, "size": len(layer)})
-tag = "cancellation-" + revision
+tag = a.workflow + "-" + revision
 image = ecr.put_image(repositoryName=repository, imageTag=tag, imageManifest=json.dumps(manifest, separators=(",", ":")))["image"]
 result = {"source_commit": revision, "base_image": a.base_image, "architecture": "arm64", "repository": repository, "tag": tag, "image_digest": image["imageId"]["imageDigest"], "image_uri": f"{host}/{repository}:{tag}", "base_layers_preserved": len(manifest["layers"]) - 1, "overlay_file_hashes": hashes}
 (out / "image-provenance.json").write_text(json.dumps(result, indent=2))

@@ -1,0 +1,70 @@
+{
+  "workflow": "ad-creative-publishing",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-ad-creative-publishing-1.0.0-4f90f60-bundle-5154a0730cc2",
+  "bundle_sha256": "5154a0730cc252693211c940f6b155bd96ec2982c1b82bd108e6f1d12d1dbc0b",
+  "session_id": "vs_94500a7394b2",
+  "run_id": "vr_52dc52bc56a04903998b1db7a86eeedd",
+  "receipt_url": "https://fetchsandbox.com/runs/456e72100a?flow=vr_52dc52bc56a04903998b1db7a86eeedd",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_reviewer",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "accepted_loss",
+      "status": "violated",
+      "explanation": "Accepted response read-back repeated the provider write"
+    },
+    {
+      "id": "wrong_business",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_adset",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "provider_auth",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    }
+  ],
+  "recorded_at": "2026-10-30T14:31:13.249Z"
+}

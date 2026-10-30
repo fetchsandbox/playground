@@ -19,7 +19,7 @@ for (const wf of Object.values(WORKFLOWS)) {
   new WorkflowStack(app, `AcmeOps-${wf.id}`, {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
     workflow: wf.id,
-    looplabsControlConfig: wf.id === "product-cancellation" ? ctx("looplabsControlConfig") : undefined,
+    looplabsControlConfig: ["product-cancellation","ad-creative-publishing"].includes(wf.id) ? ctx("looplabsControlConfig") : undefined,
     containerRepository: ctx("containerWorkflow") === wf.id ? ctx("containerRepository") : undefined,
     containerTag: ctx("containerWorkflow") === wf.id ? ctx("containerTag") : undefined,
     sourceCommit: ctx("sourceCommit") ?? process.env.WORKFLOW_SOURCE_COMMIT ?? "unrecorded",

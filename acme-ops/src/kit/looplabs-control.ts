@@ -24,6 +24,12 @@ export function approvalRevision(a:Omit<Approval,"revision">){return hash([a.id,
 function freeze(r:RunRecord,c:ControlConfig):Approval|undefined {
  const requestedBy=customer(r);const allowedReviewers=Object.entries(c.reviewerMap).filter(([,id])=>r.approval?.approvers.includes(id)).map(([e])=>e).sort();
  if(!requestedBy||!allowedReviewers.length||!r.approval||!r.output)return undefined;
+ if(r.workflow==="ad-creative-publishing"){
+  const p=r.output.publication as Record<string,unknown>|null;
+  if(!p||p.status!=="PAUSED"||typeof r.output.creativeHash!=="string"||typeof r.output.policyVersion!=="string")return undefined;
+  const a={id:"APR-"+hash(r.runId).slice(0,16),runId:r.runId,policyVersion:"ads-"+hash([r.output.policyVersion,r.output.policyHash,c.scope.version,r.actions.map(a=>a.summary)]).slice(0,24),title:"Review pergola ad publication",reason:"The owner must review this exact creative and paused ad before creation.",action:"Create the reviewed paused ad",system:"Meta Marketing API sandbox",before:"No publication confirmed for this request",after:JSON.stringify({publication:p,creative:r.actions[0]?.summary.creativeSnapshot}),requestedBy,allowedReviewers,expiresAt:r.approval.expiresAt,channel:channel(r)};
+  return {...a,revision:approvalRevision(a)};
+ }
  const request=(r.input as {stage?:string}).stage==="request";const offer=r.output.refundOffer as {amountMinor?:number;currency?:string}|undefined;
  const refundMinor=request?offer?.amountMinor:r.output.refundMinor;const currency=request?offer?.currency:r.output.currency;const method=request?null:({original_payment:"the original payment method",store_credit:"store credit",gift_card:"a gift card"} as Record<string,string>)[String(r.output.refundMethod)];
  if(!request&&(!Number.isSafeInteger(refundMinor)||Number(refundMinor)<=0||typeof currency!=="string"||! /^[a-z]{3}$/.test(currency)||!method))return undefined;
@@ -37,12 +43,12 @@ export function checkpoint(previous:RunRecord|undefined,r:RunRecord,c:ControlCon
  const add=(name:string,key:string,extra:Record<string,unknown>={})=>r.control!.events.push({schema_version:"1.0",event_name:name,event_id:"evt_"+String(r.control!.events.length).padStart(4,"0")+"_"+hash([r.runId,key]).slice(0,32),run_id:r.runId,action_id:null,timestamp:at,attempt:1,trace_id:hash(r.runId).slice(0,32),span_id:hash([r.runId,key]).slice(0,16),trigger_channel:channel(r),agent_deployment_version:c.scope.version,...extra});
  if(!previous)add("workflow.started","start");
  for(const a of r.agents)if(!previous?.agents.some(p=>p.name===a.name&&p.status===a.status))add(a.status==="ok"?"action.completed":"action.failed",`role:${a.name}:${a.status}`,{action_id:"role_"+hash(a.name).slice(0,16),action_name:a.name,provider:"internal"});
- if(r.output&&!previous?.output)add("policy.evaluated","policy",{rule_id:"cancellation-policy",rule_version:String(r.output.policyVersion??"not_reported"),decision:r.actions.some(a=>a.gate==="approval")?"needs_approval":["cancel","refund"].includes(String(r.output.decision))?"allow":"review_required"});
+ if(r.output&&!previous?.output)add("policy.evaluated","policy",{rule_id:r.workflow==="ad-creative-publishing"?"ad-publishing-policy":"cancellation-policy",rule_version:String(r.output.policyVersion??"not_reported"),decision:r.actions.some(a=>a.gate==="approval")?"needs_approval":["cancel","refund"].includes(String(r.output.decision))?"allow":"review_required"});
  for(const a of r.actions){const prior=previous?.actions.find(p=>p.id===a.id);if(prior?.status===a.status)continue;const event=a.status==="applied"?"action.completed":a.status==="failed"?"action.failed":a.status==="pending_approval"?"action.withheld":"action.proposed";add(event,`action:${a.id}:${a.status}:${a.attempts}`,{action_id:"action_"+hash(a.id).slice(0,16),action_name:a.kind,provider:a.provider,attempt:Math.max(1,a.attempts),...(r.control.frozen?{approval_id:r.control.frozen.id}:{})});}
  if(r.phase==="AWAITING_APPROVAL"&&previous?.phase!==r.phase){r.control.frozen=freeze(r,c);r.control.stateHash=protectedState(r);add("approval.requested","approval-requested",r.control.frozen?{approval_id:r.control.frozen.id}:{});add("workflow.paused","paused",{outcome:"awaiting_approval"});}
  if(r.approval?.decision&&!previous?.approval?.decision){add(r.approval.decision==="approve"?"approval.approved":"approval.rejected","decision",r.control.frozen?{approval_id:r.control.frozen.id}:{});if(r.approval.decision==="approve")add("workflow.resumed","resumed");}
  if(r.phase==="EXPIRED"&&previous?.phase!==r.phase)add("approval.expired","expired");
- if(["DONE","REJECTED","EXPIRED","CANCELLED","FAILED"].includes(r.phase)&&previous?.phase!==r.phase)add("workflow.finished","finished:"+r.phase,{outcome:r.phase==="DONE"?(r.actions.some(a=>a.status==="failed")?"partial":"completed"):r.phase.toLowerCase()});
+ if(["DONE","REJECTED","EXPIRED","CANCELLED","FAILED"].includes(r.phase)&&previous?.phase!==r.phase)add("workflow.finished","finished:"+r.phase,{outcome:r.phase==="DONE"?(r.actions.some(a=>a.status==="failed")||r.agents.some(a=>a.status==="failed")?"partial":"completed"):r.phase.toLowerCase()});
  if(r.control.events.length>500)throw Error("Control event limit exceeded");
 }
 export function validateReviewed(r:RunRecord,c:ControlConfig,expected?:{revision:string;policyVersion:string}) {
