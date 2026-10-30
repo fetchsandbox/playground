@@ -1,7 +1,11 @@
 # Local Commerce SDK recovery proof — October 29, 2026
 
 Application source `fd25cb996bfd1c9607175bbb24966a60bc467ffb`. SDK `@agent-cards/commerce-sdk@0.18.5`.
-Engine `0aa39c90efcc92039e490854d8d352e69825301b`. **Not deployed, not pushed, no hosted MCP receipt.**
+Engine `0aa39c90efcc92039e490854d8d352e69825301b`. **Historical local execution; not deployed; no hosted MCP receipt.**
+
+The original measured application source is preserved at the public
+[`proof-opencommerce-recovery-20261029` tag](https://github.com/fetchsandbox/playground/tree/proof-opencommerce-recovery-20261029/opencommerce-recovery).
+The branch adds a public reproduction path; that does not retroactively change the recorded run.
 
 ## Observed application comparison
 

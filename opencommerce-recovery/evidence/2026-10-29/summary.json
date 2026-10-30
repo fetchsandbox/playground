@@ -41,12 +41,12 @@
   "controller_sha256": "fc5a677e4c6410e961bd155e508ac79de0145c07b71e5725d9f7a1299d31efb4",
   "prior_attempts": [
     {
-      "path": "/Users/raj/.codex/private-evidence/opencommerce-recovery-20261029-attempt1",
-      "result": "setup failures; no certified comparison"
+      "result": "setup failures; no certified comparison",
+      "retention": "private maintainer evidence; not included in this public snapshot"
     },
     {
-      "path": "/Users/raj/.codex/private-evidence/opencommerce-recovery-20261029-attempt2",
-      "result": "healthy/repaired each failed database recovery; contract unchanged; no certified comparison"
+      "result": "healthy/repaired each failed database recovery; contract unchanged; no certified comparison",
+      "retention": "private maintainer evidence; not included in this public snapshot"
     }
   ],
   "additional_checks": {
