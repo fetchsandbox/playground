@@ -38,7 +38,9 @@ const control=readControlConfig(process.env);
 if(control&&!["product-cancellation","ad-creative-publishing"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
 if(workflow.id==="ad-creative-publishing"){
  const base=endpoints.meta?.baseUrl??"";
- if(!/^https:\/\/fetchsandbox\.com\/sandbox\//.test(base)&&!/^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(base))throw Error("Ad demo requires an explicit FetchSandbox Meta binding; live Meta is not enabled");
+ // An unbound verifier bootstrap may expose status/describe only: the missing
+ // provider remains absent, so no action can run. Reject any actual live binding.
+ if(base&&!/^https:\/\/fetchsandbox\.com\/sandbox\//.test(base)&&!/^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(base))throw Error("Ad demo requires an explicit FetchSandbox Meta binding; live Meta is not enabled");
  if(!(process.env.APPROVER_USER_IDS??"").trim())throw Error("Ad demo requires configured named approvers");
 }
 const engine = new Engine(workflow, {
