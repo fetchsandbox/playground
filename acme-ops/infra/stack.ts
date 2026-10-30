@@ -37,6 +37,8 @@ export interface WorkflowStackProps extends StackProps {
   looplabsExternalId?: string;
   /** Kit v2 timers: wake waiting runs on this schedule (e.g. "rate(5 minutes)"). */
   tickEvery?: string;
+  /** Kit v3: validated policy overrides (JSON) for this deployment, passed as POLICY_JSON. */
+  policyJson?: string;
 }
 
 /** One workflow = one AgentCore runtime, one state table, one secret. Nothing is shared between workflows. */
@@ -91,6 +93,7 @@ export class WorkflowStack extends Stack {
         ANTHROPIC_MODEL: props.claudeModel ?? "claude-opus-5-5",
         APPROVER_USER_IDS: props.approverUserIds ?? "",
         APPROVAL_TTL_HOURS: String(props.approvalTtlHours ?? 24),
+        ...(props.policyJson ? { POLICY_JSON: props.policyJson } : {}),
       },
       tracingEnabled: true,
       // The deployment may reuse a verified regional policy to avoid consuming

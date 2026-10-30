@@ -9,6 +9,7 @@ import { silentLogger } from "../src/kit/log";
 import { MemoryStore, type KvStore } from "../src/kit/store";
 import type { WorkflowDef } from "../src/kit/types";
 import { type ProviderName, providerFactory } from "../src/providers";
+import { headerJson } from "../src/providers/storage";
 
 export interface Fault {
   method: string;
@@ -72,8 +73,13 @@ export function seedState() {
     asana: { tasks: [] as any[], stories: [] as { task: string; text: string }[] },
     shopify: { drafts: [] as any[], orders: [] as any[], fulfillments: [] as any[], variants: [] as any[], levels: [] as { inventory_item_id: number; location_id: number; available: number }[] },
     gusto: { terminations: [] as any[], payrolls: [] as any[], employees: [] as any[] },
-    box: { files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; sharedLink?: { url: string; unshared_at: string } }[] },
+    box: {
+      files: [] as { id: string; name: string; text: string | null; folder?: string; content?: string; modified_at?: string; sharedLink?: { url: string; unshared_at: string; access?: string } }[],
+      folders: [] as { id: string; name: string; parent: string; sharedLink?: { url: string; unshared_at: string; access?: string } }[],
+    },
     docusign: { envelopes: [] as any[] },
+    /** Dropbox: entries keyed by lower-cased path; shared links as Dropbox returns them. */
+    dropbox: { entries: [] as { tag: "file" | "folder"; id: string; path: string; content?: string }[], links: [] as any[] },
     dependabot: [] as { repo: string; number: number; state: string; created_at: string; security_advisory: { ghsa_id: string; severity: string; summary: string }; dependency: { package: { name: string; ecosystem: string } }; dismissed_reason?: string }[],
     issues: [] as { repo: string; number: number; title: string; body?: string; state: string; labels: string[]; comments: string[] }[],
     gh: { pulls: [] as any[], reviews: [] as any[], checkRuns: [] as any[], deployments: [] as any[], statuses: [] as any[] },
@@ -675,15 +681,38 @@ export async function startWorld() {
       const folder = q.get("ancestor_folder_ids");
       return send(200, { entries: state.box.files.filter((f) => f.name.includes(q.get("query") ?? "") && (!folder || f.folder === folder)).map((f) => ({ type: "file", id: f.id, name: f.name })) });
     }
-    if (req.method === "PUT" && (r = m(/^\/files\/(\d+)$/))) {
-      const f = state.box.files.find((x) => x.id === r![1]);
+    if (req.method === "PUT" && (r = m(/^\/(files|folders)\/(\d+)$/))) {
+      const f = r[1] === "files" ? state.box.files.find((x) => x.id === r![2]) : state.box.folders.find((x) => x.id === r![2]);
       if (!f) return send(404, { type: "error", code: "not_found" });
-      f.sharedLink = { url: `https://acme.app.box.com/s/${f.id}x`, unshared_at: body.shared_link.unshared_at };
-      return send(200, { id: f.id, shared_link: f.sharedLink });
+      // Box: shared_link null removes the link; an object creates or updates it.
+      if (body.shared_link === null) delete f.sharedLink;
+      else f.sharedLink = { url: f.sharedLink?.url ?? `https://acme.app.box.com/s/${f.id}x`, access: body.shared_link.access ?? f.sharedLink?.access ?? "open", unshared_at: (body.shared_link.unshared_at !== undefined ? body.shared_link.unshared_at : (f.sharedLink?.unshared_at ?? null)) as string };
+      return send(200, { id: f.id, shared_link: f.sharedLink ?? null });
+    }
+    if (req.method === "GET" && (r = m(/^\/folders\/(\d+)$/)) && q.get("fields") === "shared_link") {
+      const f = state.box.folders.find((x) => x.id === r![1]);
+      return f ? send(200, { type: "folder", id: f.id, shared_link: f.sharedLink ?? null }) : send(404, { type: "error", code: "not_found" });
+    }
+    if (req.method === "GET" && (r = m(/^\/folders\/(\d+)\/items$/))) {
+      const withLink = (q.get("fields") ?? "").includes("shared_link");
+      const all = [
+        ...state.box.folders.filter((x) => x.parent === r![1]).map((x) => ({ type: "folder", id: x.id, name: x.name, ...(withLink ? { shared_link: x.sharedLink ?? null } : {}) })),
+        ...state.box.files.filter((x) => (x.folder ?? "0") === r![1]).map((x) => ({ type: "file", id: x.id, name: x.name, ...(withLink ? { shared_link: x.sharedLink ?? null, modified_at: x.modified_at } : {}) })),
+      ];
+      // Marker paging, two per page, so clients must follow next_marker.
+      const at = Number(q.get("marker") ?? 0);
+      return send(200, { entries: all.slice(at, at + 2), limit: 2, ...(at + 2 < all.length ? { next_marker: String(at + 2) } : {}) });
+    }
+    if (req.method === "POST" && path === "/folders") {
+      if (state.box.folders.some((x) => x.parent === body.parent.id && x.name === body.name)) return send(409, { type: "error", code: "item_name_in_use" });
+      const f = { id: String(8_000_000 + ++seq), name: body.name, parent: body.parent.id };
+      state.box.folders.push(f);
+      return send(201, { type: "folder", id: f.id, name: f.name });
     }
     if (req.method === "GET" && (r = m(/^\/files\/(\d+)$/))) {
       const f = state.box.files.find((x) => x.id === r![1]);
       if (!f) return send(404, { type: "error", code: "not_found" });
+      if (q.get("fields") === "shared_link") return send(200, { type: "file", id: f.id, shared_link: f.sharedLink ?? null });
       if ((q.get("fields") ?? "").includes("representations")) {
         return send(200, { id: f.id, representations: { entries: f.text === null ? [] : [{ representation: "extracted_text", status: { state: "success" }, content: { url_template: `${base}/internal_files/${f.id}/versions/1/representations/extracted_text/content/{+asset_path}` } }] } });
       }
@@ -720,19 +749,115 @@ export async function startWorld() {
     if ((r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes$/))) {
       if (req.method === "POST") {
         const ext = body.customFields?.textCustomFields?.find((f: any) => f.name === "acme_external_id")?.value;
-        const env = { envelopeId: id("env"), status: "sent", externalId: ext, signers: body.recipients.signers, reminders: 0 };
+        // Composite templates: server templates in order, signers from the inline template.
+        const composite = body.compositeTemplates as any[] | undefined;
+        if (composite && composite.some((c) => !c.serverTemplates?.[0]?.templateId)) return send(400, { errorCode: "TEMPLATE_ID_INVALID" });
+        const signers = composite ? composite[0].inlineTemplates[0].recipients.signers : body.recipients.signers;
+        const env = { envelopeId: id("env"), status: "sent", externalId: ext, signers, reminders: 0, emailSubject: body.emailSubject, templateIds: composite?.map((c) => c.serverTemplates[0].templateId), notification: body.notification, sentDateTime: new Date().toISOString() };
         state.docusign.envelopes.push(env);
         return send(201, { envelopeId: env.envelopeId, status: "sent" });
       }
       const cf = (q.get("custom_field") ?? "").split("=")[1];
-      return send(200, { envelopes: state.docusign.envelopes.filter((e) => !cf || e.externalId === cf) });
+      const status = q.get("status");
+      const rows = state.docusign.envelopes.filter((e) => (!cf || e.externalId === cf) && (!status || status.split(",").includes(e.status)));
+      const start = Number(q.get("start_position") ?? 0);
+      const count = Number(q.get("count") ?? 100);
+      return send(200, { envelopes: rows.slice(start, start + count), resultSetSize: String(Math.min(count, rows.length - start)), totalSetSize: String(rows.length) });
+    }
+    if (req.method === "GET" && (r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes\/([^/]+)\/form_data$/))) {
+      const env = state.docusign.envelopes.find((e) => e.envelopeId === r![2]);
+      return env ? send(200, { envelopeId: env.envelopeId, formData: env.formData ?? [] }) : send(404, { errorCode: "ENVELOPE_DOES_NOT_EXIST" });
+    }
+    if (req.method === "GET" && (r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes\/([^/]+)\/documents\/combined$/))) {
+      const env = state.docusign.envelopes.find((e) => e.envelopeId === r![2]);
+      if (!env) return send(404, { errorCode: "ENVELOPE_DOES_NOT_EXIST" });
+      res.writeHead(200, { "content-type": "application/pdf" });
+      return res.end(`%PDF-1.4 ${env.envelopeId} certificate=${q.get("certificate")}`);
     }
     if ((r = m(/^\/v2\.1\/accounts\/([^/]+)\/envelopes\/([^/]+)(\/recipients)?$/))) {
       const env = state.docusign.envelopes.find((e) => e.envelopeId === r![2]);
       if (!env) return send(404, { errorCode: "ENVELOPE_DOES_NOT_EXIST" });
       if (req.method === "PUT" && r[3]) env.reminders++;
       else if (req.method === "PUT") Object.assign(env, { status: body.status, voidedReason: body.voidedReason });
-      return send(200, env);
+      // include=recipients,custom_fields: DocuSign nests them as `recipients` and `customFields`.
+      return send(200, { ...env, recipients: { signers: env.signers }, customFields: { textCustomFields: [...(env.externalId ? [{ name: "acme_external_id", value: env.externalId }] : []), ...(env.textCustomFields ?? [])] } });
+    }
+
+    // ---- Dropbox API v2 (RPC: JSON body; content: Dropbox-API-Arg header)
+    if (req.method === "POST" && path.startsWith("/2/")) {
+      const D = state.dropbox;
+      const arg = req.headers["dropbox-api-arg"] ? JSON.parse(String(req.headers["dropbox-api-arg"])) : body;
+      if (/[^\x00-\x7f]/.test(String(req.headers["dropbox-api-arg"] ?? ""))) return send(400, "Dropbox-API-Arg must be HTTP header safe");
+      const lower = (p: string) => p.toLowerCase();
+      const meta = (e: (typeof D.entries)[number]) => ({ ".tag": e.tag, id: e.id, name: e.path.split("/").pop(), path_lower: lower(e.path), path_display: e.path, ...(e.tag === "file" ? { size: e.content?.length ?? 0, server_modified: "2026-10-14T12:00:00Z" } : {}) });
+      const at = (p: string) => D.entries.find((e) => lower(e.path) === lower(p) || e.id === p);
+      const notFound = (route: string) => send(409, { error_summary: "path/not_found/..", error: { ".tag": "path", path: { ".tag": "not_found" } }, route });
+      const mkdirs = (p: string) => {
+        const parts = p.split("/").filter(Boolean);
+        for (let i = 1; i < parts.length; i++) {
+          const dir = `/${parts.slice(0, i).join("/")}`;
+          if (!at(dir)) D.entries.push({ tag: "folder", id: `id:dbx${++seq}`, path: dir });
+        }
+      };
+      switch (path) {
+        case "/2/files/get_metadata": {
+          const e = at(arg.path);
+          return e ? send(200, meta(e)) : notFound(path);
+        }
+        case "/2/files/create_folder_v2": {
+          if (at(arg.path)) return send(409, { error_summary: "path/conflict/folder/..", error: { ".tag": "path", path: { ".tag": "conflict", conflict: { ".tag": "folder" } } } });
+          mkdirs(arg.path);
+          const e = { tag: "folder" as const, id: `id:dbx${++seq}`, path: arg.path };
+          D.entries.push(e);
+          return send(200, { metadata: meta(e) });
+        }
+        case "/2/files/upload": {
+          if (String(req.headers["content-type"]) !== "application/octet-stream") return send(400, "Content-Type must be application/octet-stream");
+          if (arg.mode !== "add" || arg.autorename !== false) return send(400, "test double expects mode add without autorename");
+          if (at(arg.path)) return send(409, { error_summary: "path/conflict/file/..", error: { ".tag": "path", reason: { ".tag": "conflict", conflict: { ".tag": "file" } } } });
+          mkdirs(arg.path);
+          const e = { tag: "file" as const, id: `id:dbx${++seq}`, path: arg.path, content: raw };
+          D.entries.push(e);
+          return send(200, meta(e));
+        }
+        case "/2/files/download": {
+          const e = at(arg.path);
+          if (!e || e.tag !== "file") return notFound(path);
+          res.writeHead(200, { "content-type": "application/octet-stream", "dropbox-api-result": headerJson(meta(e)) });
+          return res.end(e.content ?? "");
+        }
+        case "/2/files/list_folder":
+        case "/2/files/list_folder/continue": {
+          const st = path.endsWith("continue") ? JSON.parse(Buffer.from(arg.cursor, "base64url").toString()) : { path: arg.path, recursive: arg.recursive, at: 0 };
+          const dir = lower(st.path).replace(/\/$/, "");
+          const rows = D.entries.filter((e) => { const p = lower(e.path); return p.startsWith(`${dir}/`) && (st.recursive || !p.slice(dir.length + 1).includes("/")); });
+          const page = rows.slice(st.at, st.at + 2);
+          const more = st.at + 2 < rows.length;
+          return send(200, { entries: page.map(meta), has_more: more, cursor: Buffer.from(JSON.stringify({ ...st, at: st.at + 2 })).toString("base64url") });
+        }
+        case "/2/sharing/list_shared_links": {
+          const rows = D.links.filter((l) => !arg.path || l.path_lower === lower(arg.path));
+          const from = arg.cursor ? Number(arg.cursor) : 0;
+          return send(200, { links: rows.slice(from, from + 2), has_more: from + 2 < rows.length, ...(from + 2 < rows.length ? { cursor: String(from + 2) } : {}) });
+        }
+        case "/2/sharing/modify_shared_link_settings": {
+          const l = D.links.find((x) => x.url === arg.url);
+          if (!l) return send(409, { error_summary: "shared_link_not_found/..", error: { ".tag": "shared_link_not_found" } });
+          if (arg.settings.expires) {
+            if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(arg.settings.expires)) return send(400, "expires must be %Y-%m-%dT%H:%M:%SZ");
+            l.expires = arg.settings.expires;
+          }
+          if (arg.settings.audience) l.link_permissions = { ...l.link_permissions, resolved_visibility: { ".tag": arg.settings.audience[".tag"] === "team" ? "team_only" : arg.settings.audience[".tag"] }, effective_audience: arg.settings.audience };
+          return send(200, l);
+        }
+        case "/2/sharing/revoke_shared_link": {
+          const i = D.links.findIndex((x) => x.url === arg.url);
+          if (i < 0) return send(409, { error_summary: "shared_link_not_found/..", error: { ".tag": "shared_link_not_found" } });
+          D.links.splice(i, 1);
+          res.writeHead(200, { "content-type": "application/json" });
+          return res.end("null");
+        }
+      }
     }
 
     // ---- GitHub Dependabot alerts and issues
@@ -1047,7 +1172,7 @@ export async function startWorld() {
 
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign", "moderntreasury", "notion"];
+  const all: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "square", "workos", "asana", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "screening", "github", "gusto", "pagerduty", "datadog", "box", "docusign", "dropbox", "moderntreasury", "notion"];
 
   return {
     state,

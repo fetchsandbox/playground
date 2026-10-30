@@ -2,6 +2,7 @@
 //
 //   WORKFLOW=support-escalation node dist/main.mjs
 //
+// Policy: POLICY_FILE / POLICY_JSON override policies/<workflow>.json (see kit/policy.ts).
 // Storage: DYNAMODB_TABLE (AgentCore) › STATE_FILE (local, survives restarts) › memory.
 // Secrets: SECRET_ARN (Secrets Manager JSON, merged into env at boot) or plain env.
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
@@ -9,6 +10,7 @@ import { ClaudeDrafter, templateDrafter } from "./kit/drafter";
 import { Engine } from "./kit/engine";
 import {readControlConfig} from "./kit/looplabs-control";
 import { createLogger } from "./kit/log";
+import { PolicyError, resolvePolicy } from "./kit/policy";
 import { createAgentServer } from "./kit/server";
 import { DynamoStore, FileStore, type KvStore, MemoryStore } from "./kit/store";
 import { loadWorkflow } from "./kit/load";
@@ -27,6 +29,17 @@ if (process.env.SECRET_ARN) {
 }
 
 const log = createLogger({ service: "acme-ops", workflow: workflow.id, org: workflow.org, team: workflow.team });
+
+// Kit v3 policy: policies/<workflow>.json ← POLICY_FILE ← POLICY_JSON, validated before serving.
+let policy;
+try {
+  policy = workflow.policy ? resolvePolicy(workflow.policy, process.env) : undefined;
+} catch (err) {
+  if (!(err instanceof PolicyError)) throw err;
+  log.error("policy rejected; not starting", { err: err.message });
+  process.exit(2);
+}
+if (policy) log.info("policy", { version: policy.version, sources: policy.sources });
 const store: KvStore = process.env.DYNAMODB_TABLE
   ? new DynamoStore(process.env.DYNAMODB_TABLE)
   : process.env.STATE_FILE
@@ -44,6 +57,7 @@ const engine = new Engine(workflow, {
   log,
   approvers: (process.env.APPROVER_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
   approvalTtlMs: Number(process.env.APPROVAL_TTL_HOURS ?? 24) * 3_600_000,
+  policy,
 });
 
 const server = createAgentServer(engine as Engine<unknown>, log, {

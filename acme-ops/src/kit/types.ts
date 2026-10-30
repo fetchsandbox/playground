@@ -17,6 +17,11 @@ export interface RunContext<I> {
   startedAt: Date;
   /** Durable progress for long agents (Kit v2): a restart continues from the last saved value. */
   checkpoint: Checkpoints;
+  /**
+   * Kit v3: the run's policy values (validated against the workflow's policy schema), as they
+   * were when the run started. Read them through the workflow's own typed accessor.
+   */
+  policy: unknown;
 }
 
 export interface Checkpoints {
@@ -119,6 +124,8 @@ export interface ReconcileResult {
 }
 
 export interface WorkflowDef<I> {
+  /** Kit v3: configurable policy — schema in code, values in policies/<id>.json, overridable per deployment. */
+  policy?: import("./policy").PolicySpec<unknown>;
   id: string;
   title: string;
   /** Owning organisation and team, surfaced to the control plane. */
@@ -225,6 +232,8 @@ export interface RunRecord {
   wakeAt?: string;
   /** Kit v2: hash-chained audit trail head (entries are stored as audit#<run>#<seq>). */
   audit?: { seq: number; head: string };
+  /** Kit v3: the policy this run started under (it keeps it for its whole life). */
+  policy?: { version: string; values: unknown };
   cancelRequested?: boolean;
   duplicateStarts: number;
   lastError?: string;
