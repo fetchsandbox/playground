@@ -6,8 +6,8 @@ const approve=(step=1)=>command("decide",step,{userId:OWNER,decision:"approve"})
 const effect=(id,count)=>({provider:"meta-marketing",collection:"ads",assertion:{select:"records[*]",count,required:true,where:[eq("name",`Pergola consultation ${id} {{run_id}}`),eq("account_id","1001"),eq("status","PAUSED")]}});
 const rule=(id,name,actions,assertions,count,extra={})=>check(id,name,actions,runs(assertions),{...extra,provider_assertions:[effect(id,count)]});
 export const checks=[
- rule("held","Owner review holds the exact creative before any ad exists",[begin("held")],[eq("phase","AWAITING_APPROVAL"),action("meta.create_paused_ad","pending_approval")],0),
  rule("baseline","Owner approval creates one paused ad and independently reads it back",[begin("baseline"),approve(),command("reconcile",1)],[eq("outcome","ok"),action("meta.create_paused_ad","applied",1,[eq("reconcile.status","match")])],1),
+ rule("held","Owner review holds the exact creative before any ad exists",[begin("held")],[eq("phase","AWAITING_APPROVAL"),action("meta.create_paused_ad","pending_approval")],0),
  rule("rejected","A rejected review creates no ad",[begin("rejected"),command("decide",1,{userId:OWNER,decision:"reject"})],[eq("phase","REJECTED")],0),
  rule("wrong_reviewer","An unconfigured reviewer cannot publish",[begin("wrong_reviewer"),command("decide",1,{userId:"U_STRANGER",decision:"approve"},403)],[eq("phase","AWAITING_APPROVAL")],0),
  rule("duplicate","Replaying the approved decision does not create another ad",[begin("duplicate"),approve(),approve()],[eq("outcome","ok"),action("meta.create_paused_ad","applied",1,[eq("attempts",1)])],1),
