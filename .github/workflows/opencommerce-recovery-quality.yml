@@ -1,0 +1,51 @@
+name: Commerce SDK recovery reference
+on:
+  pull_request:
+    paths: ['opencommerce-recovery/**', '.github/workflows/opencommerce-recovery-quality.yml']
+  push:
+    branches: [main]
+    paths: ['opencommerce-recovery/**', '.github/workflows/opencommerce-recovery-quality.yml']
+jobs:
+  local-application-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: opencommerce-recovery
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: opencommerce-recovery/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run check && npm test
+      - run: docker build -t fs-opencommerce:fixed --build-arg DELIVERY=delivery.mjs .
+      - run: docker build -t fs-opencommerce:broken --build-arg DELIVERY=delivery-naive.mjs .
+      - name: Execute application scenarios without private engine access
+        run: >-
+          python3 verify/run.py --out /tmp/opencommerce-public-ci
+          --fixed-image fs-opencommerce:fixed --broken-image fs-opencommerce:broken
+          --allow-local-demo-host
+      - name: Summarize observed outcomes
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('## Local application scenarios only\n\nNo provider API, real inbox, live payment or hosted FetchSandbox comparison.\n\n')
+              for leg in ['healthy','broken','repaired']:
+                  p=Path('/tmp/opencommerce-public-ci')/leg/'receipt.json'
+                  if not p.exists():
+                      out.write(f'- {leg}: no receipt; setup/execution not measured.\n')
+                      continue
+                  r=json.loads(p.read_text())
+                  passed=sum(c['held'] for c in r['cases'])
+                  out.write(f'- {leg}: {passed} passed, {len(r["cases"])-passed} failed; exit {r["exit_code"]}; cleanup {r.get("cleanup")}.\n')
+          PY

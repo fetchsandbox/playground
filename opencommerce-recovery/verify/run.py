@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = json.loads((ROOT/'verify/contract.json').read_text())
 DOCKER_HOST = 'unix:///Users/raj/.colima/xenon-verification/docker.sock'
-PG = 'postgres@sha256:41ce2fd2ff79290295de5b936ea12edc8c38078f2f68b8a572bf16c7bbc1edbe'
+PG = 'postgres:16.15-bookworm@sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938'
 
 def digest(b): return hashlib.sha256(b).hexdigest()
 def canonical(v): return json.dumps(v,sort_keys=True,separators=(',',':')).encode()
@@ -109,6 +109,8 @@ class Run:
               'cap_drop':h['CapDrop'],'security_opt':h['SecurityOpt'],'readonly_root':h['ReadonlyRootfs'],
               'memory':h['Memory'],'pids_limit':h['PidsLimit'],'nanocpus':h['NanoCpus'],
               'no_provider_credentials':True,'mode':'sandbox-fixture-only'}
+            self.receipt['runtime']['postgres_image_id']=json.loads(docker('inspect',self.pg).stdout)[0]['Image']
+            self.receipt['runtime']['postgres_version']=docker('exec',self.pg,'postgres','--version').stdout.strip()
             # Assert transport isolation; these are controls, not business outcomes.
             if self.receipt['runtime']['host_mounts'] or self.receipt['runtime']['published_ports']:raise RuntimeError('isolation_contract_failed')
     def reset(self):
@@ -211,19 +213,33 @@ class Run:
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--out',required=True);p.add_argument('--fixed-image',required=True);p.add_argument('--broken-image',required=True)
-    p.add_argument('--engine-root',required=True);a=p.parse_args()
-    if os.environ.get('DOCKER_HOST')!=DOCKER_HOST:raise SystemExit('dedicated pilot Docker host required')
+    p.add_argument('--engine-root',help='Optional maintained private FetchSandbox engine checkout; no replacement gate is included')
+    p.add_argument('--allow-local-demo-host',action='store_true',help='Explicitly use your own disposable local Docker daemon; never a production daemon')
+    a=p.parse_args()
+    selected_host=os.environ.get('DOCKER_HOST','')
+    if selected_host!=DOCKER_HOST and not (a.allow_local_demo_host and selected_host.startswith('unix://')):
+        raise SystemExit('dedicated pilot Docker host required; for your own local disposable daemon set DOCKER_HOST and explicitly pass --allow-local-demo-host')
     out=Path(a.out).resolve();out.mkdir(parents=True,exist_ok=False)
     receipts={}
     for label,image in [('healthy',a.fixed_image),('broken',a.broken_image),('repaired',a.fixed_image)]:
         receipts[label]=Run(label,image,out/label).execute()
-    sys.path[:0]=[a.engine_root,str(Path(a.engine_root)/'backend')]
-    from verification_factory.comparison import compare_control_receipts
-    comparison=compare_control_receipts(receipts['healthy'],receipts['broken'],receipts['repaired'],
-      expected_cases=frozenset(c['id'] for c in CONTRACT['cases']),scope=CONTRACT['scope']+'; controlled integration defect, not an Agentcard defect')
+    if a.engine_root:
+        sys.path[:0]=[a.engine_root,str(Path(a.engine_root)/'backend')]
+        from verification_factory.comparison import compare_control_receipts
+        comparison=compare_control_receipts(receipts['healthy'],receipts['broken'],receipts['repaired'],
+          expected_cases=frozenset(c['id'] for c in CONTRACT['cases']),scope=CONTRACT['scope']+'; controlled integration defect, not an Agentcard defect')
+    else:
+        comparison={'scope':CONTRACT['scope'],'state':'not_executed',
+          'reason':'Public scenario execution only. The maintained FetchSandbox comparison engine is not distributed in this example.',
+          'gate':None,'owner_release_approval':False}
     save(out/'comparison.json',comparison);save(out/'contract.json',CONTRACT)
     # Reopen every persisted receipt; command success is not a readback substitute.
     readback={k:json.loads((out/k/'receipt.json').read_text())==v for k,v in receipts.items()}
     save(out/'readback.json',readback)
     print(json.dumps(comparison),flush=True)
-    sys.exit(0 if comparison['gate']['green_allowed'] and all(readback.values()) else 2)
+    if not all(readback.values()) or any(len(r['cases'])!=len(CONTRACT['cases']) or r['exit_code']==2 for r in receipts.values()):
+        sys.exit(2)
+    if a.engine_root:
+        sys.exit(0 if comparison['gate']['green_allowed'] else 2)
+    # Ordinary application test exit status, not a substitute proof verdict.
+    sys.exit(0 if receipts['healthy']['exit_code']==receipts['repaired']['exit_code']==0 and receipts['broken']['exit_code']==1 else 1)

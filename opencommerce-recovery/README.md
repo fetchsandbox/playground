@@ -40,8 +40,9 @@ from the pinned public contract, not captured live-provider payloads.
 
 ## Setup and execution
 
-Requires Python 3, Node 22, npm, Docker and the existing FetchSandbox
-`verification_factory` maintainer checkout. Install only locked dependencies:
+Requires Python 3, Node 22, npm and a disposable local Docker daemon. The public
+scenario runner does not require a FetchSandbox account or private repository.
+Install only locked dependencies:
 
 ```sh
 npm ci --ignore-scripts
@@ -49,20 +50,22 @@ npm run check
 npm test
 ```
 
-Execution is restricted by `verify/run.py` to the dedicated pilot Docker daemon
-`unix:///Users/raj/.colima/xenon-verification/docker.sock`. It does not use the
-production API engine's daemon, database or provider credentials. Change that
-guard only after reviewing equivalent isolation on another workstation.
+The maintainer proof used a separate pilot Docker daemon. On your workstation,
+select your own disposable local daemon with `DOCKER_HOST` and explicitly pass
+`--allow-local-demo-host`. Never select a production host or the daemon running
+your production application. No provider credentials are needed.
 
 Build the two application artifacts on that daemon:
 
 ```sh
-export DOCKER_HOST=unix:///Users/raj/.colima/xenon-verification/docker.sock
+# Linux example. For Docker Desktop/Colima, use your local context's socket:
+# docker context inspect --format '{{.Endpoints.docker.Host}}'
+export DOCKER_HOST=unix:///var/run/docker.sock
 docker build -t fs-opencommerce:fixed --build-arg DELIVERY=delivery.mjs .
 docker build -t fs-opencommerce:broken --build-arg DELIVERY=delivery-naive.mjs .
 python3 verify/run.py --out /tmp/opencommerce-proof-unique \
   --fixed-image fs-opencommerce:fixed --broken-image fs-opencommerce:broken \
-  --engine-root /path/to/verification-factory/sandbox
+  --allow-local-demo-host
 ```
 
 Use a new evidence directory each time. The controller creates a private internal
@@ -78,19 +81,23 @@ reproduction and can be removed separately by their recorded IDs.
 
 [The frozen contract](verify/contract.json) names every scenario and limitation.
 The same controller, contract and SDK run against healthy, deliberately defective
-and repaired artifacts. The comparison imports the existing FetchSandbox
-`verification_factory.comparison` and `app.flows.proof_gate`; it does not add a
-second verdict engine. Receipts record actual image IDs, source revision,
+and repaired artifacts. The optional maintainer comparison imports the existing
+FetchSandbox `verification_factory.comparison` and `app.flows.proof_gate`; the
+private product engine is not copied into this public example. Receipts record actual image IDs, source revision,
 assertion/contract hashes, observed database effects, crash status and cleanup.
 
-Exit 0 from the controller means the scoped healthy/defect/repair comparison
+Without `--engine-root`, exit 0 means the ordinary application matrix completed
+with healthy/repaired checks passing and a failing negative control. The emitted
+`comparison.json` explicitly says the FetchSandbox comparison was not executed.
+With an authorized maintainer engine checkout, add `--engine-root /path/to/sandbox`
+to execute that existing gate. That mode's exit 0 means the scoped comparison
 passed. Exit 2 means setup, incomplete evidence or failed comparison. Individual
 leg receipts distinguish observed behavior failure (1) from setup failure (2).
 Never count missing cases or interrupted execution as passing.
 
 Read the [saved results](evidence/RESULTS.md) before interpreting a receipt.
-After a run, check the receipts in a fresh process and exercise malformed-evidence
-rejection through the same existing gate:
+Maintainers with the private engine checkout can check receipts in a fresh process
+and exercise malformed-evidence rejection through the same existing gate:
 
 ```sh
 python3 verify/check-evidence.py --evidence /tmp/opencommerce-proof-unique \
