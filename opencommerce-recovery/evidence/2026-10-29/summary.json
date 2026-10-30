@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "scope": "local actual SDK application failure/repair demonstration only",
+  "deployment": "not deployed",
+  "source_revision": "fd25cb996bfd1c9607175bbb24966a60bc467ffb",
+  "engine_revision": "0aa39c90efcc92039e490854d8d352e69825301b",
+  "sdk": "@agent-cards/commerce-sdk@0.18.5",
+  "legs": {
+    "healthy": {
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "image": "sha256:f8c7619c464093485bc04752b638d297b32784f5f8a92515a0a8573b0048183b",
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      }
+    },
+    "broken": {
+      "passed": 7,
+      "failed": 6,
+      "exit_code": 1,
+      "image": "sha256:0fbee0ae90bbd66ff35fc6e9a6b0c24fa9cc5124a7ef71f582740ad7f0272869",
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      }
+    },
+    "repaired": {
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "image": "sha256:f8c7619c464093485bc04752b638d297b32784f5f8a92515a0a8573b0048183b",
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      }
+    }
+  },
+  "contract_sha256": "134477396fc6d65a9ce1ac952d77628c1830b3117a65ae711318de3b3a820650",
+  "controller_sha256": "fc5a677e4c6410e961bd155e508ac79de0145c07b71e5725d9f7a1299d31efb4",
+  "prior_attempts": [
+    {
+      "result": "setup failures; no certified comparison",
+      "retention": "private maintainer evidence; not included in this public snapshot"
+    },
+    {
+      "result": "healthy/repaired each failed database recovery; contract unchanged; no certified comparison",
+      "retention": "private maintainer evidence; not included in this public snapshot"
+    }
+  ],
+  "additional_checks": {
+    "sdk_contract_tests": {
+      "passed": 3,
+      "scope": "local host Node SDK preflight"
+    },
+    "existing_proof_gate_tests": {
+      "passed": 37,
+      "warnings": [
+        "python_multipart pending deprecation"
+      ]
+    },
+    "fresh_process_admission_controls": 11
+  },
+  "unmeasured": [
+    "Agentcard sandbox API integration",
+    "real merchant orders or charges",
+    "real inbox delivery",
+    "LLM/native-agent acceptance",
+    "hosted MCP receipt",
+    "automatic PR intake/checks",
+    "production deployment",
+    "purchase approval or price-change policies"
+  ],
+  "sdk_fixture_origin": "pinned public SDK event schema; synthetic events, not captured provider fixtures",
+  "receipt_kind": "local observer records using existing FetchSandbox comparison/proof_gate, not a hosted receipt",
+  "message_semantics": "one captured sink message conditional on downstream idempotency support",
+  "recorded_at": "2026-10-30T04:22:47.189953+00:00"
+}

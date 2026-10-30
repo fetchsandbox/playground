@@ -119,6 +119,12 @@ These guides describe code outside `main`; follow the source branch/PR and its s
 
 These are separate from the enterprise workflow catalog. Read their own setup and findings; do not infer a blanket verification result.
 
+- [Commerce SDK shopper-message recovery](../opencommerce-recovery/README.md): local
+  deliberate-failure reference using the published Agentcard SDK, PostgreSQL and
+  a captured-message sink. No live purchases or provider API calls. See its
+  [measured evidence](../opencommerce-recovery/evidence/RESULTS.md) for the exact
+  contract, source version and remaining acceptance limits.
+
 - [agentmail](../apps/agentmail/README.md)
 - [clerk](../apps/clerk/README.md)
 - [descope](../apps/descope/README.md)

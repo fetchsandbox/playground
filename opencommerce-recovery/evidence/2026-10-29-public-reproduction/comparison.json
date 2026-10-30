@@ -1,0 +1,7 @@
+{
+  "scope": "Local application integration with unmodified Commerce SDK and synthetic signed events; no Agentcard API, merchant order, charge or real inbox",
+  "state": "not_executed",
+  "reason": "Public scenario execution only. The maintained FetchSandbox comparison engine is not distributed in this example.",
+  "gate": null,
+  "owner_release_approval": false
+}

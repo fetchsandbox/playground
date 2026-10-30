@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "workflow": "opencommerce-shopper-message-recovery",
+  "leg": "repaired",
+  "contract_sha256": "134477396fc6d65a9ce1ac952d77628c1830b3117a65ae711318de3b3a820650",
+  "assertion_implementation_sha256": "fc5a677e4c6410e961bd155e508ac79de0145c07b71e5725d9f7a1299d31efb4",
+  "available": true,
+  "exit_code": 0,
+  "cases": [
+    {
+      "name": "same_worker_replay",
+      "held": true,
+      "expected": "Two deliveries to one worker yield one captured message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_same_worker_replay",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "concurrent_workers",
+      "held": true,
+      "expected": "Concurrent first deliveries to two workers yield one captured message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_concurrent_workers",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "restart_replay",
+      "held": true,
+      "expected": "An acknowledged completed event replayed after application restart yields one message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_restart_replay",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "crash_after_inbox",
+      "held": true,
+      "expected": {
+        "ack": 200,
+        "crash_exit": 137,
+        "messages_before": 0,
+        "messages_after": 1
+      },
+      "observed": {
+        "ack": 200,
+        "crash_exit": 137,
+        "messages_before": 0,
+        "messages_after": 1,
+        "inbox_before": 1,
+        "after": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_crash_after_inbox",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        },
+        "redeliveries_after_restart": 0
+      }
+    },
+    {
+      "name": "crash_after_sink",
+      "held": true,
+      "expected": {
+        "ack": 200,
+        "crash_exit": 137,
+        "messages_before": 1,
+        "messages_after": 1
+      },
+      "observed": {
+        "ack": 200,
+        "crash_exit": 137,
+        "messages_before": 1,
+        "messages_after": 1,
+        "inbox_before": 1,
+        "after": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 2,
+          "routes": [
+            {
+              "event_id": "evt_crash_after_sink",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        },
+        "redeliveries_after_restart": 0
+      }
+    },
+    {
+      "name": "sink_failure",
+      "held": true,
+      "expected": "Sink returns 503 once; the durably accepted event is retried to one message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 2,
+          "routes": [
+            {
+              "event_id": "evt_sink_failure",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        },
+        "http_status": 200
+      }
+    },
+    {
+      "name": "lost_sink_response",
+      "held": true,
+      "expected": "Sink commits then drops the HTTP response; retry retains one captured message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 2,
+          "routes": [
+            {
+              "event_id": "evt_lost_sink_response",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        },
+        "http_status": 200
+      }
+    },
+    {
+      "name": "invalid_signature",
+      "held": true,
+      "expected": "SDK returns 400; no inbox or message effect",
+      "observed": {
+        "state": {
+          "inbox": 0,
+          "outbox_pending": 0,
+          "messages": 0,
+          "attempts": 0,
+          "routes": []
+        },
+        "http_status": 400
+      }
+    },
+    {
+      "name": "stale_signature",
+      "held": true,
+      "expected": "SDK returns 400 for signature timestamp 10 minutes old; no effect",
+      "observed": {
+        "state": {
+          "inbox": 0,
+          "outbox_pending": 0,
+          "messages": 0,
+          "attempts": 0,
+          "routes": []
+        },
+        "http_status": 400
+      }
+    },
+    {
+      "name": "expired_message",
+      "held": true,
+      "expected": "SDK returns 200 but expired purchase message produces no inbox or message effect",
+      "observed": {
+        "state": {
+          "inbox": 0,
+          "outbox_pending": 0,
+          "messages": 0,
+          "attempts": 0,
+          "routes": []
+        },
+        "http_status": 200
+      }
+    },
+    {
+      "name": "shopper_thread_isolation",
+      "held": true,
+      "expected": "Valid shopper/thread events go to their bound chats; mismatched binding produces no message",
+      "observed": {
+        "state": {
+          "inbox": 3,
+          "outbox_pending": 0,
+          "messages": 3,
+          "attempts": 3,
+          "routes": [
+            {
+              "event_id": "evt_shopper_thread_isolation",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            },
+            {
+              "event_id": "evt_shopper_thread_isolation_a2",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a2",
+              "text": "Your test order was confirmed."
+            },
+            {
+              "event_id": "evt_shopper_thread_isolation_b",
+              "shopper_id": "shopper-b",
+              "thread_id": "thread-b",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "conflicting_event",
+      "held": true,
+      "expected": "Same event ID with changed payload delivered to another worker does not alter or repeat first message",
+      "observed": {
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_conflicting_event",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        },
+        "http_status": 500
+      }
+    },
+    {
+      "name": "database_failure_retry",
+      "held": true,
+      "expected": "Unavailable application database yields SDK 500; restored database plus redelivery captures one message",
+      "observed": {
+        "unavailable_status": 500,
+        "recovered_status": 200,
+        "state": {
+          "inbox": 1,
+          "outbox_pending": 0,
+          "messages": 1,
+          "attempts": 1,
+          "routes": [
+            {
+              "event_id": "evt_database_failure_retry",
+              "shopper_id": "shopper-a",
+              "thread_id": "thread-a",
+              "text": "Your test order was confirmed."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "scope": "Local application integration with unmodified Commerce SDK and synthetic signed events; no Agentcard API, merchant order, charge or real inbox",
+  "sdk": "@agent-cards/commerce-sdk@0.18.5",
+  "started_at": "2026-10-30T04:20:42.849540+00:00",
+  "owner_release_approval": false,
+  "source_revision": "fd25cb996bfd1c9607175bbb24966a60bc467ffb",
+  "setup_stage": "sink_and_observer",
+  "runtime": {
+    "internal_network": true,
+    "host_mounts": [],
+    "published_ports": {},
+    "app_image_id": "sha256:f8c7619c464093485bc04752b638d297b32784f5f8a92515a0a8573b0048183b",
+    "cap_drop": [
+      "ALL"
+    ],
+    "security_opt": [
+      "no-new-privileges"
+    ],
+    "readonly_root": true,
+    "memory": 268435456,
+    "pids_limit": 80,
+    "nanocpus": 1000000000,
+    "no_provider_credentials": true,
+    "mode": "sandbox-fixture-only"
+  },
+  "cleanup": {
+    "containers_remaining": false,
+    "networks_remaining": false
+  },
+  "finished_at": "2026-10-30T04:21:15.953228+00:00"
+}

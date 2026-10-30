@@ -1,0 +1,49 @@
+{
+  "scope": "public application scenario runner without private engine checkout; separate from historical engine comparison",
+  "source_revision": "1b76e39a719bdc50d871669629ab88194a8dceef",
+  "deployed": false,
+  "hosted_receipt": false,
+  "comparison_engine_executed": false,
+  "contract_sha256": "134477396fc6d65a9ce1ac952d77628c1830b3117a65ae711318de3b3a820650",
+  "controller_sha256": "22bf4c6a3e3e02752f81e520f7425fc2dd30005eb260ae2f363f46c43cceaa45",
+  "legs": {
+    "healthy": {
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      },
+      "postgres_version": "postgres (PostgreSQL) 16.15 (Debian 16.15-1.pgdg12+2)",
+      "postgres_image_id": "sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938"
+    },
+    "broken": {
+      "passed": 7,
+      "failed": 6,
+      "exit_code": 1,
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      },
+      "postgres_version": "postgres (PostgreSQL) 16.15 (Debian 16.15-1.pgdg12+2)",
+      "postgres_image_id": "sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938"
+    },
+    "repaired": {
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "cleanup": {
+        "containers_remaining": false,
+        "networks_remaining": false
+      },
+      "postgres_version": "postgres (PostgreSQL) 16.15 (Debian 16.15-1.pgdg12+2)",
+      "postgres_image_id": "sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938"
+    }
+  },
+  "readback": {
+    "healthy": true,
+    "broken": true,
+    "repaired": true
+  }
+}
