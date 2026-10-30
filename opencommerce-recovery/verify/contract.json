@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "workflow": "opencommerce-shopper-message-recovery",
+  "scope": "Local application integration with unmodified Commerce SDK and synthetic signed events; no Agentcard API, merchant order, charge or real inbox",
+  "sdk": "@agent-cards/commerce-sdk@0.18.5",
+  "cases": [
+    {"id":"same_worker_replay","expected":"Two deliveries to one worker yield one captured message"},
+    {"id":"concurrent_workers","expected":"Concurrent first deliveries to two workers yield one captured message"},
+    {"id":"restart_replay","expected":"An acknowledged completed event replayed after application restart yields one message"},
+    {"id":"crash_after_inbox","expected":"After HTTP acknowledgment and SIGKILL before sending, restart delivers the durable pending event without webhook redelivery"},
+    {"id":"crash_after_sink","expected":"SIGKILL after independent sink commit but before application acknowledgment recovers with one message"},
+    {"id":"sink_failure","expected":"Sink returns 503 once; the durably accepted event is retried to one message"},
+    {"id":"lost_sink_response","expected":"Sink commits then drops the HTTP response; retry retains one captured message"},
+    {"id":"invalid_signature","expected":"SDK returns 400; no inbox or message effect"},
+    {"id":"stale_signature","expected":"SDK returns 400 for signature timestamp 10 minutes old; no effect"},
+    {"id":"expired_message","expected":"SDK returns 200 but expired purchase message produces no inbox or message effect"},
+    {"id":"shopper_thread_isolation","expected":"Valid shopper/thread events go to their bound chats; mismatched binding produces no message"},
+    {"id":"conflicting_event","expected":"Same event ID with changed payload delivered to another worker does not alter or repeat first message"},
+    {"id":"database_failure_retry","expected":"Unavailable application database yields SDK 500; restored database plus redelivery captures one message"}
+  ],
+  "limits": [
+    "Notification uniqueness requires an idempotent downstream sink; no exactly-once promise for arbitrary email or chat APIs",
+    "No agent conversation, purchase authorization, price-change, merchant order or payment settlement verified",
+    "Synthetic event payloads follow pinned public SDK contract; not captured live provider fixtures",
+    "Local controlled mutation and repair; not an Agentcard defect report or native-agent acceptance",
+    "Configured bindings are test fixtures; not real OAuth or identity-provider acceptance"
+  ]
+}

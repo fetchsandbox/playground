@@ -1,0 +1,20 @@
+{
+  "name": "opencommerce-recovery",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "check": "node --check src/server.mjs && node --check src/delivery.mjs && node --check src/delivery-naive.mjs && node --check src/sink.mjs",
+    "test": "node --test verify/*.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "Local Commerce SDK shopper-message recovery reference; no purchases",
+  "dependencies": {
+    "@agent-cards/commerce-sdk": "0.18.5",
+    "pg": "8.16.3"
+  },
+  "type": "module",
+  "private": true
+}
