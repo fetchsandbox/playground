@@ -62,3 +62,23 @@ OpenCommerce entry. No production MCP persona was launched, and no hosted receip
 is claimed. The next integration slice requires authorized Agentcard sandbox
 credentials and actual provider events; live order/payment reconciliation needs
 separate authoritative observations. No PR/approval/AWS release path is measured.
+
+## Public reproduction path checked separately
+
+The public runner was executed at source
+[`1b76e39`](https://github.com/fetchsandbox/playground/commit/1b76e39)
+without `--engine-root`. Healthy: 13 passed; defective reference: 7 passed and
+6 failed; repaired: 13 passed. This run used pinned PostgreSQL 16.15 with a
+multi-architecture image reference, separate from the earlier PostgreSQL 16.2
+maintainer run. The business contract stayed unchanged, but controller and
+environment identities are different and are retained separately.
+
+[Public-run summary](2026-10-29-public-reproduction/summary.json) ·
+[defective receipt](2026-10-29-public-reproduction/broken/receipt.json) ·
+[repaired receipt](2026-10-29-public-reproduction/repaired/receipt.json) ·
+[comparison status](2026-10-29-public-reproduction/comparison.json).
+
+The public run explicitly records the private comparison engine as
+`not_executed`. Ordinary scenario test results are not a newly minted hosted
+FetchSandbox receipt. No provider credentials were used. All run containers and
+networks were removed.
