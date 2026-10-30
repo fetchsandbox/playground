@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from urllib.parse import urlsplit,parse_qs
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 WHY={
+ 'ad-creative-publishing':'Marketing needs the owner to review one exact pergola creative and paused ad before Meta creation, and must verify an uncertain outcome before retrying so a lost response does not create duplicate ads.',
 'account-takeover-containment':'IT Security needs to contain a suspected account takeover within minutes, holding money movement and removing admin access, without locking a customer organization out of its last admin or acting on an unreadable directory.',
 'user-access-review':'IT Security needs quarterly access certifications that auditors accept: every entitlement decided by its owner, nobody certifying themselves, unreviewed admin access removed, and evidence that cannot be edited after the fact.',
 'access-jml':'IT needs to grant the correct employee access and remove it when employment changes, while keeping privileged changes under human control.',
@@ -60,6 +61,7 @@ WHY={
 
 # Provider -> (environment variables, notes). Names match acme-ops/src/providers/index.ts.
 PROVIDER_ENV={
+ 'meta':('`META_BASE_URL` (FetchSandbox Meta sandbox) + `META_API_KEY` (sandbox credential)','Bounded Graph26.0 PAUSED-ad demo only. No live Meta endpoint, delivery, review or billing is enabled.'),
 'stripe':('`STRIPE_API_KEY` (restricted key)','Pinned to Stripe API version `2024-12-18.acacia`; override with `STRIPE_API_VERSION` only after checking the field changes.'),
 'hubspot':('`HUBSPOT_API_KEY` (private-app token)','Custom contact properties must exist before the workflow writes them.'),
 'gmail':('`GMAIL_API_KEY` (OAuth access token)','Customer mail is created as drafts.'),

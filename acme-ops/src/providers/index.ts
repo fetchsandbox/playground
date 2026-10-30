@@ -9,8 +9,10 @@ import { StripeClient } from "./stripe";
 import { ModernTreasuryClient } from "./treasury";
 import { AsanaClient, BoxClient, DatadogClient, DocuSignClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
+import { MetaClient } from "./meta";
 
 export type ProviderName =
+  | "meta"
   | "stripe"
   | "hubspot"
   | "gmail"
@@ -36,10 +38,11 @@ export type ProviderName =
   | "datadog"
   | "docusign"
   | "moderntreasury";
-export const PROVIDERS: ProviderName[] = ["stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign", "moderntreasury"];
+export const PROVIDERS: ProviderName[] = ["meta", "stripe", "hubspot", "gmail", "calendar", "slack", "zendesk", "asana", "workos", "github", "twilio", "pagerduty", "notion", "box", "screening", "square", "openai", "shopify", "netsuite", "easypost", "plaid", "twilio_verify", "gusto", "datadog", "docusign", "moderntreasury"];
 
 /** Clients for one run. A provider that isn't configured is absent, never faked. */
 export interface Providers {
+  meta?: MetaClient;
   stripe?: StripeClient;
   hubspot?: HubSpotClient;
   gmail?: GmailClient;
@@ -79,6 +82,7 @@ export interface Providers {
 }
 
 const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
+  meta: undefined, // Explicit sandbox binding only for this demonstration.
   stripe: "https://api.stripe.com",
   hubspot: "https://api.hubapi.com",
   gmail: "https://gmail.googleapis.com",
@@ -108,6 +112,7 @@ const DEFAULT_BASE: Record<ProviderName, string | undefined> = {
 
 // Env var prefix per provider. Calendar also answers to GOOGLE_CALENDAR_*.
 const PREFIX: Record<ProviderName, string[]> = {
+  meta: ["META"],
   stripe: ["STRIPE"],
   hubspot: ["HUBSPOT"],
   gmail: ["GMAIL"],
@@ -214,6 +219,7 @@ export function providerFactory(endpoints: Partial<Record<ProviderName, Provider
     const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, { ...VENDOR_HEADERS[p], ...headers }) : undefined);
     const h = Object.fromEntries(PROVIDERS.map((p) => [p, http(p)])) as Record<ProviderName, ProviderHttp | undefined>;
     return {
+      meta: h.meta && new MetaClient(h.meta),
       stripe: h.stripe && new StripeClient(h.stripe),
       hubspot: h.hubspot && new HubSpotClient(h.hubspot),
       gmail: h.gmail && new GmailClient(h.gmail),

@@ -1,0 +1,26 @@
+import {check,start,command,restart,runs,eq,action,agent} from "./lib.mjs";
+const OWNER="U_AD_OWNER";
+const input=(id,over={})=>({organization:"Acme",customer:{email:"builder@example.test"},creativeId:"3001",adsetId:"2001",title:`Pergola consultation ${id} {{run_id}}`,...over});
+const begin=(id,over)=>start(id,input(id,over));
+const approve=(step=1)=>command("decide",step,{userId:OWNER,decision:"approve"});
+const effect=(id,count)=>({provider:"meta-marketing",collection:"ads",assertion:{select:"records[*]",count,required:true,where:[eq("name",`Pergola consultation ${id} {{run_id}}`),eq("account_id","1001"),eq("status","PAUSED")]}});
+const rule=(id,name,actions,assertions,count,extra={})=>check(id,name,actions,runs(assertions),{...extra,provider_assertions:[effect(id,count)]});
+export const checks=[
+ rule("held","Owner review holds the exact creative before any ad exists",[begin("held")],[eq("phase","AWAITING_APPROVAL"),action("meta.create_paused_ad","pending_approval")],0),
+ rule("baseline","Owner approval creates one paused ad and independently reads it back",[begin("baseline"),approve(),command("reconcile",1)],[eq("outcome","ok"),action("meta.create_paused_ad","applied",1,[eq("reconcile.status","match")])],1),
+ rule("rejected","A rejected review creates no ad",[begin("rejected"),command("decide",1,{userId:OWNER,decision:"reject"})],[eq("phase","REJECTED")],0),
+ rule("wrong_reviewer","An unconfigured reviewer cannot publish",[begin("wrong_reviewer"),command("decide",1,{userId:"U_STRANGER",decision:"approve"},403)],[eq("phase","AWAITING_APPROVAL")],0),
+ rule("duplicate","Replaying the approved decision does not create another ad",[begin("duplicate"),approve(),approve()],[eq("outcome","ok"),action("meta.create_paused_ad","applied",1,[eq("attempts",1)])],1),
+ rule("restart_held","A real worker restart preserves the held request and review boundary",[begin("restart_held"),restart,approve()],[eq("outcome","ok"),action("meta.create_paused_ad","applied")],1),
+ rule("accepted_loss","After acceptance and client timeout, resume reads the existing ad instead of resending",[begin("accepted_loss"),approve(),command("resume",1),command("reconcile",1)],[eq("outcome","ok"),action("meta.create_paused_ad","applied",1,[eq("reconcile.status","match"),eq("detail.recovered",true)])],1,{fault:{provider:"meta-marketing",scenario:"accepted_response_loss",evidence:"accepted_response_retry"}}),
+ rule("wrong_business","An input naming a different business cannot publish",[begin("wrong_business",{organization:"Different business"})],[agent("creative-research","failed")],0),
+ rule("wrong_adset","An ad set outside the configured policy cannot publish",[begin("wrong_adset",{adsetId:"2002"})],[agent("creative-research","failed")],0),
+ rule("provider_auth","A Meta authentication failure cannot produce an ad",[begin("provider_auth")],[agent("creative-research","failed")],0,{fault:{provider:"meta-marketing",scenario:"auth_failure",evidence:"refusal"}}),
+];
+export default {
+ workflow:"ad-creative-publishing",providers:["meta-marketing"],checks,
+ appEnv:{APPROVER_USER_IDS:OWNER,META_WRITE_TIMEOUT_MS:"200",LOOPLABS_CONTROL_CONFIG:"",LOOPLABS_APPROVAL_SIGNING_SECRET:"",AD_PUBLISHING_POLICY_JSON:JSON.stringify({version:"acme-ads-2026-10-30",organization:"Acme",account:"act_1001",adsets:["2001"],status:"PAUSED"})},
+ context:{goal:"Verify owner-reviewed creation of a paused pergola ad against FetchSandbox's bounded Meta twin, including accepted response loss and observation-before-retry. No real Meta delivery, billing or LLM drafting is claimed.",workflow:"POST /invocations starts research and parks an exact publication for review; configured owner decision releases it. Durable intent precedes the only create request. Resume after an uncertain result reads provider state and never blindly resends.",entry_points:["POST /invocations"],state_store:"Protected read-only verification routes expose saved application runs; independent provider assertions read actual twin ad records."},
+ coverage:{baseline:["held","baseline"],identity_and_access:["wrong_reviewer","wrong_business","wrong_adset"],schema_and_value_boundaries:["wrong_business","wrong_adset"],amount_currency_quantity:"No money moves; PAUSED state only, Meta review/delivery/billing outside scope.",duplicate_replay:["duplicate"],concurrency:"Same-run engine claims are unit-tested; multi-worker publisher contention not measured by this contract.",ordering_and_stale_events:"No webhooks; policy/creative changes at review are separate local regression cases.",delayed_or_missing_events:"No inbound events.",provider_auth_and_scopes:["provider_auth"],rate_limit_server_error_timeout:["accepted_loss"],accepted_effect_response_loss:["accepted_loss"],partial_effects_and_recovery:["accepted_loss"],restart_and_durability:["restart_held"],reconciliation:["baseline","accepted_loss"],cancellation_refund_entitlements:"No subscriptions, refunds or entitlement writes.",data_and_privacy_boundaries:["wrong_business","wrong_adset"],cleanup_and_isolation:"Disposable verification session; exact owned resources are cleaned by the shared evaluation lifecycle."},
+ evidence:["acme-ops/src/workflows/ad-creative-publishing.ts","acme-ops/src/providers/meta.ts","acme-ops/src/kit/engine.ts","acme-ops/src/kit/http.ts"]
+};

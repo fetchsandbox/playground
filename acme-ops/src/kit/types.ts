@@ -58,6 +58,8 @@ export interface PlannedAction<I> {
   execute(ctx: ActionContext<I>): Promise<ActionReceipt>;
   /** Re-read the provider and say whether the effect is still what we wrote. */
   reconcile?(ctx: ActionContext<I>, receipt: ActionReceipt): Promise<ReconcileResult>;
+  /** Optional read-only recovery of a stale in-flight claim. Must never execute the effect. */
+  recover?(ctx: ActionContext<I>): Promise<ActionReceipt>;
 
   // ---- Kit v2 (all optional; an action without them behaves as before) ----
   /** Durable timer: not executed before this ISO time. The run waits (phase WAITING) and a tick wakes it. */

@@ -77,6 +77,7 @@ export interface Reply {
 }
 
 export interface EngineDeps {
+  requireReviewedDecisions?: boolean;
   control?: ControlConfig;
   controlSink?: (event:Record<string,unknown>)=>void;
   store: KvStore;
@@ -155,6 +156,7 @@ export class Engine<I> {
         return run ? { status: 200, body: this.view(await this.expireIfDue(run)) } : notFound(cmd.runId);
       }
       case "decide":
+        if(this.deps.requireReviewedDecisions)return {status:403,body:{error:"Use the authenticated exact-review approval bridge"}};
         return this.decide(cmd);
       case "cancel":
         return this.cancel(cmd);
@@ -396,6 +398,15 @@ export class Engine<I> {
         const claim = await this.deps.store.get(claimKey);
         if (claim?.state === "applied") {
           await this.updateAction(runId, p.id, { status: "applied", ref: claim.ref as string, detail: claim.detail as Record<string, unknown> });
+        }
+        else if(claim?.state==="running"&&p.recover&&this.now()-Date.parse(String(claim.at))>(this.deps.staleMs??60_000)){
+          // Opt-in and read-only: an old worker's write may already exist.
+          // Never release the stale claim and blindly rerun an uncertain effect.
+          try{
+            const receipt=await p.recover({...ctx,applied:{},statuses:{}} as ActionContext<I>);
+            if(await this.deps.store.replace({...claim,state:"applied",ref:receipt.ref,detail:receipt.detail??{}}))
+              await this.updateAction(runId,p.id,{status:"applied",ref:receipt.ref,detail:receipt.detail,appliedAt:new Date(this.now()).toISOString()});
+          }catch(err){ctx.log.warn("uncertain effect remains held",{action:p.id,errorCode:errorCode(err)});}
         }
         continue;
       }

@@ -131,6 +131,7 @@ const stateFile = join(OUT_DIR, "state.json");
 function twinEnv(legs) {
   const env = {};
   const map = {
+    "meta-marketing": "META",
     stripe: "STRIPE",
     hubspot: "HUBSPOT",
     gmail: "GMAIL",
@@ -169,7 +170,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|OPENAI|SHOPIFY|NETSUITE|EASYPOST|PLAID|TWILIO_VERIFY|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => !/^(META|STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|OPENAI|SHOPIFY|NETSUITE|EASYPOST|PLAID|TWILIO_VERIFY|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
   );
   const env = {
     ...inherited,

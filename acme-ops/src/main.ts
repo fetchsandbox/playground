@@ -35,8 +35,14 @@ const store: KvStore = process.env.DYNAMODB_TABLE
 const endpoints = endpointsFromEnv();
 
 const control=readControlConfig(process.env);
-if(control&&workflow.id!=="product-cancellation")throw Error("LoopLabs adapter is scoped to product cancellation");
+if(control&&!["product-cancellation","ad-creative-publishing"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
+if(workflow.id==="ad-creative-publishing"){
+ const base=endpoints.meta?.baseUrl??"";
+ if(!/^https:\/\/fetchsandbox\.com\/sandbox\//.test(base)&&!/^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(base))throw Error("Ad demo requires an explicit FetchSandbox Meta binding; live Meta is not enabled");
+ if(!(process.env.APPROVER_USER_IDS??"").trim())throw Error("Ad demo requires configured named approvers");
+}
 const engine = new Engine(workflow, {
+  requireReviewedDecisions:!!control&&workflow.id==="ad-creative-publishing",
   control,controlSink:(event)=>console.log(JSON.stringify(event)),
   store,
   providers: providerFactory(endpoints),

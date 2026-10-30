@@ -12,6 +12,9 @@ export interface ProviderEndpoint {
 }
 
 export interface RequestOptions {
+  /** Opt out for ambiguous writes whose provider has no established replay key. */
+  retry?: boolean;
+  timeoutMs?: number;
   /** Array values repeat the key (e.g. PagerDuty's `statuses[]=a&statuses[]=b`). */
   query?: Record<string, string | number | boolean | undefined | (string | number)[]>;
   /** Read the body as text or base64 bytes instead of JSON (file downloads, text representations). */
@@ -91,7 +94,7 @@ export class ProviderHttp {
       try {
         return await this.once<T>(method, path, opts);
       } catch (err) {
-        if (!(err instanceof ProviderError) || !err.retryable || attempt >= this.retries) throw err;
+        if (!(err instanceof ProviderError) || !err.retryable || opts.retry === false || attempt >= this.retries) throw err;
         const backoff = Math.random() * Math.min(4_000, 250 * 2 ** attempt);
         await sleep(Math.min(4_000, err.retryAfterMs ?? backoff));
       }
@@ -123,7 +126,7 @@ export class ProviderHttp {
     const url = this.url(path, opts.query);
     let res: Response;
     try {
-      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(this.timeoutMs) });
+      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(opts.timeoutMs ?? this.timeoutMs) });
     } catch (err) {
       throw new ProviderError(this.provider, 0, "network", true, `${method} ${path}: ${(err as Error).message}`);
     }
