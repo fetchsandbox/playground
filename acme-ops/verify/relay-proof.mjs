@@ -211,6 +211,11 @@ const mcpInfo = await mcp.init();
 log("MCP observed", mcpInfo?.version ?? "unknown");
 const tools=await mcp.listTools();save("mcp-tools",tools);for(const name of ["manage_tunnel","validate_integration","get_job"])if(!tools.tools?.some(t=>t.name===name))throw Error("Required MCP tool not discovered: "+name);
 log("MCP tool discovery",tools.tools.map(t=>t.name).join(","));
+for (const provider of contract.providers ?? []) {
+  const discovered=await mcp.call("list_specs",{filter:provider});save(`discovery-${provider}`,discovered);
+  if (!discovered.specs?.some(s=>s.slug===provider)) throw Error(`Provider not discovered through published MCP: ${provider}`);
+}
+
 let credentialFile;
 const finish = async (code) => {
   try {
