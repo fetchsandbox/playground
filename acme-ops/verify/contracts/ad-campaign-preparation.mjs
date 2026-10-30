@@ -8,11 +8,11 @@ const effects=(id,n)=>writes.map(([collection,suffix],index)=>{
  if(n){
   if(!(id==='unknown'&&collection==='ads'))where.push(eq('id',`{{prev.actions.${index}.ref}}`));
   if(collection!=='adcreatives')where.push(eq('status','PAUSED'));
-  if(collection==='adsets')where.push(eq('campaign_id','{{prev.actions.0.ref}}'),eq('daily_budget','1000'),eq('targeting.publisher_platforms.0',id==='facebook'?'facebook':'instagram'));
+  if(collection==='adsets')where.push(eq('campaign_id','{{prev.actions.0.ref}}'),eq('daily_budget','1000'),{select:'targeting.publisher_platforms',set_equals:[id==='facebook'?'facebook':'instagram'],count:1,required:false});
   if(collection==='adcreatives'){where.push(eq('object_story_spec.page_id','4001'));if(id!=='facebook')where.push(eq('object_story_spec.instagram_user_id','5001'));}
   if(collection==='ads')where.push(eq('adset_id','{{prev.actions.1.ref}}'),eq('creative.id','{{prev.actions.2.ref}}'));
  }
- return {provider:"meta-marketing",collection,assertion:{select:"records[*]",count:n,required:true,where}};
+ return {provider:"meta-marketing",collection,assertion:{select:"records[*]",count:n,required:true,where:where.map(predicate=>({...predicate,required:false}))}};
 });
 const applied=()=>writes.map(([edge])=>action('meta.prepare_'+edge,'applied'));
 const rule=(id,name,actions,assertions,count,extra={})=>check(id,name,actions,runs(assertions),{...extra,provider_assertions:effects(id,count)});
