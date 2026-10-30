@@ -20,4 +20,16 @@ describe('Zendesk scoped client credentials', () => {
   const twin=endpointsFromEnv({...c,ZENDESK_BASE_URL:'https://twin.example',ZENDESK_API_KEY:'twin'}).zendesk!;expect(twin.token).toBe('twin');expect(twin.getAuthorization).toBeUndefined();
   expect(endpointsFromEnv({...c,ZENDESK_SCOPES:''}).zendesk).toBeUndefined();
  });
+ it('identifies an expired trial redirect without following it or exposing provider content', async () => {
+  const fetcher=vi.fn().mockResolvedValue(new Response('',{status:302,headers:{location:'/agent/expired-trial'}}));vi.stubGlobal('fetch',fetcher);
+  const auth=zendeskAuthorization('https://demo.zendesk.com','private-client','private-secret','tickets:read');
+  await expect(auth()).rejects.toMatchObject({name:'ProviderError',provider:'zendesk',code:'account_trial_expired',retryable:false});
+  expect(fetcher.mock.calls[0]![1]!.redirect).toBe('manual');
+ });
+ it('turns an HTML token response into a redacted setup failure and can recover later', async () => {
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(new Response('<html>private-token private-secret</html>')).mockResolvedValueOnce(new Response(JSON.stringify({access_token:'recovered'}))));
+  const auth=zendeskAuthorization('https://demo.zendesk.com','id','secret','tickets:read');
+  await expect(auth()).rejects.toMatchObject({name:'ProviderError',code:'oauth_invalid_response',retryable:false,message:'Zendesk token response was not JSON'});
+  expect(await auth()).toBe('Bearer recovered');
+ });
 });
