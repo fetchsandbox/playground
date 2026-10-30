@@ -36,7 +36,7 @@ const endpoints = endpointsFromEnv();
 
 const control=readControlConfig(process.env);
 if(control&&!["product-cancellation","ad-creative-publishing"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
-if(workflow.id==="ad-creative-publishing"){
+if(["ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id)){
  const base=endpoints.meta?.baseUrl??"";
  // An unbound verifier bootstrap may expose status/describe only: the missing
  // provider remains absent, so no action can run. Reject any actual live binding.

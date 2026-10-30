@@ -1,0 +1,11 @@
+import {afterEach,beforeEach,describe,expect,it} from "vitest";
+import {adCampaignPreparation,preparationPolicy} from "../src/workflows/ad-campaign-preparation";
+import {startWorld,type World,NOW} from "./fake-world";
+const input={organization:"Acme",customer:{email:"builder@example.test"},platform:"instagram" as const,title:"Pergola campaign",message:"Plan a pergola",link:"https://example.test/pergolas",dailyBudgetMinor:1000};
+describe("campaign preparation review boundary",()=>{
+ let w:World;beforeEach(async()=>{w=await startWorld();});afterEach(async()=>{delete process.env.AD_PREPARATION_POLICY_JSON;await w.close();});
+ function setup(){return w.engine(adCampaignPreparation,{now:()=>NOW,approvers:["U_OWNER"]});}
+ it("freezes four ordered pending effects, platform and budget before any write",async()=>{const e=setup();const r=await e.handle({action:"start",runId:"prepare",requestedBy:{userId:"U_BUILDER"},input});expect(r.body.phase).toBe("AWAITING_APPROVAL");expect(r.body.actions).toHaveLength(4);expect(r.body.output.reviewedInput.platform).toBe("instagram");expect(r.body.output.reviewedInput.dailyBudgetMinor).toBe(1000);expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);});
+ it.each([{dailyBudgetMinor:1001},{organization:"Other business"},{link:"https://unapproved.test/"},{link:"https://user:password@example.test/"}])("refuses an out-of-policy request without writes: %j",async over=>{const e=setup();const r=await e.handle({action:"start",runId:"prepare",requestedBy:{userId:"U_BUILDER"},input:{...input,...over}});expect(r.body.outcome).not.toBe("ok");expect(r.body.actions).toHaveLength(0);expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);});
+ it("refuses the wrong reviewer and a policy change at execution",async()=>{const e=setup();await e.handle({action:"start",runId:"prepare",requestedBy:{userId:"U_BUILDER"},input});expect((await e.handle({action:"decide",runId:"prepare",userId:"U_STRANGER",decision:"approve"})).status).toBe(403);process.env.AD_PREPARATION_POLICY_JSON=JSON.stringify({...preparationPolicy(),version:"changed"});await e.handle({action:"decide",runId:"prepare",userId:"U_OWNER",decision:"approve"});expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);});
+});
