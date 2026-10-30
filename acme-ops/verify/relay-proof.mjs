@@ -16,6 +16,7 @@
  * Writes verify/receipts/<workflow>.json and prints the receipt URL.
  */
 import { execFileSync, spawn } from "node:child_process";
+import {createHash} from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -44,7 +45,8 @@ const gitSha = (() => {
     return "local";
   }
 })();
-const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}`;
+const BUNDLE_SHA256 = createHash("sha256").update(readFileSync(BUNDLE)).digest("hex");
+const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
 const OUT_DIR = process.env.PROOF_OUT_DIR ?? join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});
@@ -352,6 +354,7 @@ const receipt = {
   mcp_observed: mcpInfo,
   mcp_source: process.env.FETCHSANDBOX_MCP_BIN ? "local_build" : "npm_package",
   app_version: APP_VERSION,
+  bundle_sha256: BUNDLE_SHA256,
   session_id: sid,
   run_id: runId,
   receipt_url: share || null,
