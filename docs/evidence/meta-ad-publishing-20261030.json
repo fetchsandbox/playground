@@ -242,5 +242,48 @@
     "Native Meta coding-agent acceptance not measured",
     "Bounded configured sandbox recovery, not all historical resources",
     "Three parent brain-integrity failures remain open"
-  ]
+  ],
+  "ownership_observed": {
+    "runtime_id": "acme_ad_creative_publishing-5xhddY3mCW",
+    "version": "3",
+    "status": "READY",
+    "environment": {
+      "WORKFLOW_ORGANIZATION": "Acme",
+      "WORKFLOW_COMPANY_NAME": "Acme Corporation",
+      "WORKFLOW_DEPARTMENT": "Marketing",
+      "WORKFLOW_OWNER": "Raj",
+      "WORKFLOW_OWNER_TEAM": "creative-operations",
+      "WORKFLOW_SOURCE_COMMIT": "77aef2edf4cdc478bdebd9d4009d24709c8200ac",
+      "WORKFLOW_DEPLOYMENT_VERSION": "acme-ad-publishing-77aef2e"
+    },
+    "tags": {
+      "organization": "Acme",
+      "company": "Acme Corporation",
+      "owner": "Raj",
+      "department": "Marketing",
+      "owner_team": "creative-operations"
+    }
+  },
+  "usage_telemetry_observed": {
+    "tls": true,
+    "completed_requests_read_from_postgresql": 7,
+    "start_and_completion_rows": 14,
+    "deployed_version": "meta-ads-8f274004",
+    "verified_account_on_management_calls": true,
+    "twin_token_calls_remain_anonymous": true,
+    "meta_provider_association": true,
+    "invalid_token_401_recorded": true,
+    "observed_credentials_absent": true,
+    "no_body_or_query_fields": true
+  },
+  "comparison_key_cleanup": {
+    "negative": {
+      "helper_exit": 0,
+      "recovery_file_remaining": false
+    },
+    "repaired": {
+      "helper_exit": 0,
+      "recovery_file_remaining": false
+    }
+  }
 }
