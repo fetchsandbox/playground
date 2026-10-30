@@ -22,7 +22,11 @@ def digest(b): return hashlib.sha256(b).hexdigest()
 def canonical(v): return json.dumps(v,sort_keys=True,separators=(',',':')).encode()
 def cmd(args, *, data=None, check=True, timeout=60):
     r=subprocess.run(args,input=data,text=True,capture_output=True,timeout=timeout)
-    if check and r.returncode: raise RuntimeError(f'operation failed: {args[:3]} ({r.returncode})')
+    if check and r.returncode:
+        # Retain failure category, not SQL, credentials or arbitrary stderr.
+        category=next((s for s in ['Connection refused','server closed the connection','database system is starting up',
+          'database system is shutting down','password authentication failed','permission denied'] if s in r.stderr),'unclassified')
+        raise RuntimeError(f'operation failed: {args[:3]} ({r.returncode}, {category})')
     return r
 def docker(*args, **kw): return cmd(['docker',*args],**kw)
 def save(path,value):
@@ -73,12 +77,16 @@ class Run:
         self.names.append(self.pg)
         docker('run','-d','--name',self.pg,'--network',self.net,'--memory','384m','--cpus','1','--pids-limit','120',
           '--tmpfs','/var/lib/postgresql/data:rw,size=192m','-e','POSTGRES_HOST_AUTH_METHOD=trust',PG)
-        if not until(lambda:docker('exec',self.pg,'pg_isready','-U','postgres',check=False).returncode==0):raise RuntimeError('postgres_not_ready')
+        # The image's temporary initialization server accepts Unix sockets before
+        # shutting down. Only the final server listens on TCP. Do not race it.
+        if not until(lambda:docker('exec',self.pg,'pg_isready','-h','127.0.0.1','-U','postgres',check=False).returncode==0):raise RuntimeError('postgres_not_ready')
+        self.receipt['setup_stage']='schema_initialization'
         schema=(ROOT/'verify/schema.sql').read_text().replace(":'app_password'",f"'{self.app_pw}'").replace(":'sink_password'",f"'{self.sink_pw}'")
         self.sql('postgres',schema)
         # Enforce password auth after first setup; only disposable private database.
         docker('exec',self.pg,'sh','-c',"printf 'local all all trust\nhost all all all scram-sha-256\n' > /var/lib/postgresql/data/pg_hba.conf")
         self.sql('postgres','SELECT pg_reload_conf();')
+        self.receipt['setup_stage']='sink_and_observer'
         self.container(self.observer,{},['sleep','infinity'])
         self.container(self.sink,{'DATABASE_URL':f'postgres://sink:{self.sink_pw}@{self.pg}:5432/sink','SINK_TOKEN':self.sink_token},['node','src/sink.mjs'])
         if not until(lambda:self.request(self.sink)['status']==200):raise RuntimeError('sink_not_ready')
