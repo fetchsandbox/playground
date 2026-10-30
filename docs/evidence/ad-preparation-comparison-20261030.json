@@ -1,0 +1,262 @@
+{
+  "measured_on": "2026-10-30",
+  "scope": "Owner-reviewed paused Facebook/Instagram hierarchy in FetchSandbox; not live Meta qualification",
+  "backend_commit": "d3cf81f4",
+  "mcp_version": "0.7.30",
+  "checks_sha256": "3249af4f7b832c1d8cca4109eac2b479c910a51508482b96ea8ef56985870e62",
+  "same_checks": true,
+  "repaired": {
+    "workflow": "ad-campaign-preparation",
+    "mcp_observed": {
+      "name": "fetchsandbox",
+      "version": "0.7.30"
+    },
+    "mcp_source": "npm_package",
+    "app_version": "acme-ops-ad-campaign-preparation-1.0.0-02fca24",
+    "bundle_sha256": "04cf0554edbb45740b89219663b491b3352b5b364f8476fbfecb68f13a2cd4fa",
+    "session_id": "vs_21c9373a02f1",
+    "run_id": "vr_64fb6753c0fe4d6293782ed88eb3d83c",
+    "receipt_url": "https://fetchsandbox.com/runs/28e3ab6313?flow=vr_64fb6753c0fe4d6293782ed88eb3d83c",
+    "status": null,
+    "verdict": "verified",
+    "app_verified": true,
+    "complete": true,
+    "checks": [
+      {
+        "id": "baseline",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "facebook",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "rejected",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_reviewer",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "replay",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "budget",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "business",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "destination",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "provider_auth",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "unknown",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "restart",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "campaign_loss",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "adset_loss",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "creative_loss",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "ad_loss",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      }
+    ],
+    "recorded_at": "2026-10-30T20:52:30.084Z"
+  },
+  "negative_control": {
+    "workflow": "ad-campaign-preparation",
+    "mcp_observed": {
+      "name": "fetchsandbox",
+      "version": "0.7.30"
+    },
+    "mcp_source": "npm_package",
+    "app_version": "acme-ops-ad-campaign-preparation-1.0.0-02fca24-bundle-f36ee954850c",
+    "bundle_sha256": "f36ee954850c196078bd2ea16df8a0d74f521894a58475c8a4396b97edd16f35",
+    "session_id": "vs_23747559c166",
+    "run_id": "vr_12b0543851a344fd976d5eb272ea25e0",
+    "receipt_url": "https://fetchsandbox.com/runs/51b9c01a84?flow=vr_12b0543851a344fd976d5eb272ea25e0",
+    "status": null,
+    "verdict": "failing",
+    "app_verified": false,
+    "complete": false,
+    "checks": [
+      {
+        "id": "baseline",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "held",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "facebook",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "rejected",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "wrong_reviewer",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "replay",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "budget",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "business",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "destination",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "provider_auth",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "unknown",
+        "status": "unmeasured",
+        "explanation": "Declared provider fault was not independently observed; state alone cannot prove fault recovery"
+      },
+      {
+        "id": "restart",
+        "status": "held",
+        "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      },
+      {
+        "id": "campaign_loss",
+        "status": "violated",
+        "explanation": "Accepted response read-back repeated the provider write"
+      },
+      {
+        "id": "adset_loss",
+        "status": "violated",
+        "explanation": "Accepted response read-back repeated the provider write"
+      },
+      {
+        "id": "creative_loss",
+        "status": "violated",
+        "explanation": "Accepted response read-back repeated the provider write"
+      },
+      {
+        "id": "ad_loss",
+        "status": "violated",
+        "explanation": "Accepted response read-back repeated the provider write"
+      }
+    ],
+    "recorded_at": "2026-10-30T20:56:21.516Z"
+  },
+  "mutation": {
+    "from": "if(saved){if(adHash(saved)!==adHash(intended))throw new FatalError(\"Saved preparation intent conflicts\");return recover(c);}",
+    "to": "if(saved){if(adHash(saved)!==adHash(intended))throw new FatalError(\"Saved preparation intent conflicts\");}",
+    "bundle_sha256": "f36ee954850c196078bd2ea16df8a0d74f521894a58475c8a4396b97edd16f35",
+    "purpose": "Deliberately resend after saved publication intent; production source remains unchanged"
+  },
+  "independent_provider_counts": {
+    "preparation": {
+      "campaign_loss": {
+        "collection": "campaigns",
+        "count": 1,
+        "distinct_ids": 1
+      },
+      "adset_loss": {
+        "collection": "adsets",
+        "count": 1,
+        "distinct_ids": 1
+      },
+      "creative_loss": {
+        "collection": "adcreatives",
+        "count": 1,
+        "distinct_ids": 1
+      },
+      "ad_loss": {
+        "collection": "ads",
+        "count": 1,
+        "distinct_ids": 1
+      }
+    },
+    "preparation-defect": {
+      "campaign_loss": {
+        "collection": "campaigns",
+        "count": 2,
+        "distinct_ids": 2
+      },
+      "adset_loss": {
+        "collection": "adsets",
+        "count": 2,
+        "distinct_ids": 2
+      },
+      "creative_loss": {
+        "collection": "adcreatives",
+        "count": 2,
+        "distinct_ids": 2
+      },
+      "ad_loss": {
+        "collection": "ads",
+        "count": 2,
+        "distinct_ids": 2
+      }
+    }
+  },
+  "negative_limit": "unknown read-back refusal case remained unmeasured; not counted as a pass",
+  "live_meta": false
+}

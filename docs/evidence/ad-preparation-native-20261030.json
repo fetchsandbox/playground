@@ -1,0 +1,54 @@
+{
+  "runtime": "acme_ad_campaign_preparation-d4VxBH8KHG",
+  "version": "1",
+  "source": "c9fdee7d51947164df852f6bd7889d8a69d9a012",
+  "backend": "d3cf81f4",
+  "approval": "scripted named reviewer, not human UI",
+  "provider": "FetchSandbox only; live Meta untested",
+  "results": [
+    {
+      "platform": "facebook",
+      "runId": "prep-facebook-c34b14e7-bdd3-4278-b08c-32e033142b4b",
+      "held_without_effects": true,
+      "wrong_reviewer_refused": true,
+      "four_linked_paused_objects": true,
+      "reconcile_matches": 4,
+      "replay_object_counts": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dynamo_readback": true
+    },
+    {
+      "platform": "instagram",
+      "runId": "prep-instagram-66655910-4a64-47bd-b28d-7ec7fcdc4ee6",
+      "held_without_effects": true,
+      "wrong_reviewer_refused": true,
+      "four_linked_paused_objects": true,
+      "reconcile_matches": 4,
+      "replay_object_counts": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dynamo_readback": true
+    }
+  ],
+  "scope": "Bounded native AgentCore workflow checks against a FetchSandbox provider fixture; not live Meta or human UI acceptance",
+  "organization": "Acme Corporation",
+  "department": "Marketing",
+  "team": "creative-operations",
+  "owner": "Raj",
+  "bundle_sha256": "04cf0554edbb45740b89219663b491b3352b5b364f8476fbfecb68f13a2cd4fa",
+  "measured_on": "2026-10-30",
+  "unmeasured": [
+    "live Meta positive parity and token permissions",
+    "image upload",
+    "activation, delivery and spend",
+    "native Meta review",
+    "device-bound human approval"
+  ]
+}

@@ -2,11 +2,11 @@
   "schema_version": 1,
   "audited_at": "2026-10-27T18:06:07.393162+00:00",
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
-  "scope": "Existing rows retain their historical audit; Meta paused-ad row independently read October30,2026. Deliberately mutated negative-control receipts are documented separately, not substituted for the source workflow.",
+  "scope": "Historical rows retain their recorded audit. Meta paused-ad and preparation receipts independently read October 30, 2026; deliberately mutated variants are separate evidence.",
   "counts": {
     "inconclusive": 20,
     "failing": 23,
-    "verified": 9
+    "verified": 10
   },
   "workflows": {
     "access-jml": {
@@ -1726,13 +1726,13 @@
     },
     "ad-creative-publishing": {
       "workflow": "ad-creative-publishing",
-      "receipt_url": "https://fetchsandbox.com/runs/cbd22c286e?flow=vr_b190f863ba1a4adcaf2108b356654ade",
+      "receipt_url": "https://fetchsandbox.com/runs/f60b391b5f?flow=vr_921e8044b8904d68bdfb99f56a56b4ff",
       "source": "acme-ops/verify/receipts/ad-creative-publishing.json",
-      "checked_at": "2026-10-30T14:30:18.329915+00:00",
+      "checked_at": "2026-10-30T21:02:02.628965+00:00",
       "http": 200,
-      "snapshot_at": "2026-10-30T14:24:39.662473+00:00",
+      "snapshot_at": "2026-10-30T21:01:36.445144+00:00",
       "app_version": {
-        "value": "acme-ops-ad-creative-publishing-1.0.0-4f90f60",
+        "value": "acme-ops-ad-creative-publishing-1.0.0-9fcaf8e",
         "source": "declared"
       },
       "verdict": "verified",
@@ -1750,6 +1750,41 @@
         "wrong_business",
         "wrong_adset",
         "provider_auth"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "ad-campaign-preparation": {
+      "workflow": "ad-campaign-preparation",
+      "receipt_url": "https://fetchsandbox.com/runs/28e3ab6313?flow=vr_64fb6753c0fe4d6293782ed88eb3d83c",
+      "source": "acme-ops/verify/receipts/ad-campaign-preparation.json",
+      "checked_at": "2026-10-30T20:53:14.263253+00:00",
+      "http": 200,
+      "snapshot_at": "2026-10-30T20:52:24.941432+00:00",
+      "app_version": {
+        "value": "acme-ops-ad-campaign-preparation-1.0.0-02fca24",
+        "source": "declared"
+      },
+      "verdict": "verified",
+      "counts": {
+        "held": 16
+      },
+      "check_ids": [
+        "baseline",
+        "held",
+        "facebook",
+        "rejected",
+        "wrong_reviewer",
+        "replay",
+        "budget",
+        "business",
+        "destination",
+        "provider_auth",
+        "unknown",
+        "restart",
+        "campaign_loss",
+        "adset_loss",
+        "creative_loss",
+        "ad_loss"
       ],
       "scope": "application_workflow_v1"
     }

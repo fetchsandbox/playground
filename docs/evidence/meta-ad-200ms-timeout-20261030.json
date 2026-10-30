@@ -1,0 +1,70 @@
+{
+  "workflow": "ad-creative-publishing",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-ad-creative-publishing-1.0.0-02fca24",
+  "bundle_sha256": "04cf0554edbb45740b89219663b491b3352b5b364f8476fbfecb68f13a2cd4fa",
+  "session_id": "vs_400a7c2ee36e",
+  "run_id": "vr_2fbf5ac9b3af4e438e7a0e74ab1ef6a2",
+  "receipt_url": "https://fetchsandbox.com/runs/288b76bdd2?flow=vr_2fbf5ac9b3af4e438e7a0e74ab1ef6a2",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_reviewer",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    },
+    {
+      "id": "restart_held",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "accepted_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_business",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "wrong_adset",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "provider_auth",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    }
+  ],
+  "recorded_at": "2026-10-30T20:58:30.735Z"
+}
