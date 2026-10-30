@@ -104,3 +104,50 @@ The authored FetchSandbox projection covers three Graph operations only. Real
 Meta app permissions, OAuth consent, positive creation parity, review/delivery,
 billing, revocation races, device signatures, an actual LangGraph adapter and the
 prospect's Vault code remain outside this proof.
+
+## October 30 measured deployment
+
+- FetchSandbox backend `8f274004`: bounded `meta-marketing` contract plus a
+  separate `accepted_response_readback` evidence gate. The old retry gates were
+  preserved. The new gate requires provider acceptance, a real client disconnect,
+  a later direct read of the same ad ID, and no second create request.
+- Executable bundle SHA256:
+  `e973e50704a15f3527ba9776f583fc84de33ebfa01912b5b935d5a4e019c94cc`.
+  Hosted application revision `4f90f60`; AWS image revision `77aef2e` has the same
+  bundle hash. Subsequent changes concerned contract/infra metadata.
+- [Repaired application receipt](https://fetchsandbox.com/runs/cbd22c286e?flow=vr_b190f863ba1a4adcaf2108b356654ade):
+  ten declared rules passed. This is scripted application execution over published
+  MCP0.7.30, not a cold coding-agent pass or live Meta acceptance.
+- AgentCore `acme_ad_creative_publishing-5xhddY3mCW`: native approval version2
+  pinned at endpoint `meta_native_v2`; signed review adapter version3 at `DEFAULT`.
+  Acme Corporation / Marketing / creative-operations / owner Raj. Two declared
+  deterministic roles. The named approvals were automated test decisions.
+- Both AWS runs saved their hold/results in DynamoDB, created one paused ad each
+  and retained one after approval replay. The signed path refused bad signature,
+  wrong tenant, stale review and native approval bypass. Both reconciled against
+  the original ad IDs after the FetchSandbox backend was redeployed.
+
+The retained demo binding is selected through `SANDBOX_WARM_SANDBOX_IDS` in
+FetchSandbox's existing persistent manager. Its two ads, owner and credentials
+were read back after restart. This bounded operational selection (maximum8) is
+not automatic restoration of every historical sandbox. Missing configured state
+refuses startup; it never manufactures an empty successful replacement.
+
+In ordinary language: the owner reviews the exact ad. We deliberately cut the
+connection after the platform saved it. A careless worker presses publish again;
+the protected worker first checks what already exists and recovers that result.
+If it cannot establish one exact result, it asks for investigation instead of
+risking another ad. Everything here stays paused in FetchSandbox.
+
+The prospect's Vault implementation, live Meta publishing, app permissions,
+production traffic, image generation, device-bound signatures and the actual
+LoopLabs approval-screen click remain outside the measured scope. Keep the
+negative-control receipt separate from the repaired source workflow's receipt.
+
+[Deliberately broken negative-control receipt](https://fetchsandbox.com/runs/456e72100a?flow=vr_52dc52bc56a04903998b1db7a86eeedd):
+the unchanged ten-rule contract rejected the blind-resend variant. An independent
+provider-state GET before cleanup found two distinct paused ads for the lost-response
+case. The repaired run's independent provider-state assertion found exactly one.
+The mutation exists only in a separate ignored test bundle; there is no production
+input that turns off recovery. Its bundle hash and exact mutation are retained in
+[the comparison evidence](../docs/evidence/meta-ad-publishing-20261030.json).
