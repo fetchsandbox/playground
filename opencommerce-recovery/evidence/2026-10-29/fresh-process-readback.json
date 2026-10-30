@@ -1,0 +1,56 @@
+{
+  "scope": "fresh-process readback plus scoped rejection controls; not cryptographic attestation",
+  "controls": [
+    {
+      "name": "fresh_process_original_evidence_admitted",
+      "passed": true
+    },
+    {
+      "name": "missing_case_refused",
+      "passed": true
+    },
+    {
+      "name": "contract_change_refused",
+      "passed": true
+    },
+    {
+      "name": "observer_change_refused",
+      "passed": true
+    },
+    {
+      "name": "setup_exit_not_pass",
+      "passed": true
+    },
+    {
+      "name": "cleanup_not_confirmed",
+      "passed": true
+    },
+    {
+      "name": "external_network_refused",
+      "passed": true
+    },
+    {
+      "name": "host_mount_refused",
+      "passed": true
+    },
+    {
+      "name": "published_port_refused",
+      "passed": true
+    },
+    {
+      "name": "non_boolean_case_refused",
+      "passed": true
+    },
+    {
+      "name": "inconsistent_exit_refused",
+      "passed": true
+    }
+  ],
+  "receipt_sha256": {
+    "healthy": "376acb836228a61f00d88e26ce5da248f53649fc11d7503014f925e5ff47a206",
+    "broken": "92d33feec0c03a2445c8381276e150d4f7bea25a5119d7649a709412a12c0196",
+    "repaired": "0659100538b8a6dcfe68a498b75b273314a6ddae649f0e8094d6a6e8fa266da5"
+  },
+  "proof_gate_sha256": "b725a74836cdfb785dd16200a5e763526a704fbe3eb06c61b5051d64cf0b11e7",
+  "comparison_implementation_sha256": "3337a4f7b748641f3725ffac64ea3c43cccc26d95fdc0b653b1f7a45d921ee66"
+}

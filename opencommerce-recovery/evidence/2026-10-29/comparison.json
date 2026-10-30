@@ -1,0 +1,19 @@
+{
+  "scope": "Local application integration with unmodified Commerce SDK and synthetic signed events; no Agentcard API, merchant order, charge or real inbox; controlled integration defect, not an Agentcard defect",
+  "matching_assertion_contract": true,
+  "healthy_control": {
+    "available": true,
+    "exit_code": 0
+  },
+  "gate": {
+    "state": "proven",
+    "green_allowed": true,
+    "ran_real_code": true,
+    "reproduced": true,
+    "verified": true,
+    "label": "ran your code",
+    "reason": "Reproduced on your code, then verified fixed on your code.",
+    "reference_advisory": false
+  },
+  "owner_release_approval": false
+}

@@ -46,6 +46,7 @@ Requires Python 3, Node 22, npm, Docker and the existing FetchSandbox
 ```sh
 npm ci --ignore-scripts
 npm run check
+npm test
 ```
 
 Execution is restricted by `verify/run.py` to the dedicated pilot Docker daemon
@@ -86,6 +87,19 @@ Exit 0 from the controller means the scoped healthy/defect/repair comparison
 passed. Exit 2 means setup, incomplete evidence or failed comparison. Individual
 leg receipts distinguish observed behavior failure (1) from setup failure (2).
 Never count missing cases or interrupted execution as passing.
+
+Read the [saved results](evidence/RESULTS.md) before interpreting a receipt.
+After a run, check the receipts in a fresh process and exercise malformed-evidence
+rejection through the same existing gate:
+
+```sh
+python3 verify/check-evidence.py --evidence /tmp/opencommerce-proof-unique \
+  --engine-root /path/to/verification-factory/sandbox
+```
+
+These local JSON records are editable operator evidence, not cryptographically
+authenticated attestations. Receipt-shape rejection does not establish resistance
+to an operator who rewrites the observations and hashes together.
 
 ## Telemetry and access boundary
 
