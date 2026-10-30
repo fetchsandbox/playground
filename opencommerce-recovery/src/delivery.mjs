@@ -27,8 +27,9 @@ let draining = false;
 export async function drain() {
   if (draining) return;
   draining = true;
-  const client = await db.connect();
+  let client;
   try {
+    client = await db.connect();
     await client.query('BEGIN');
     const r = await client.query(`SELECT * FROM outbox WHERE delivered_at IS NULL
       ORDER BY event_id FOR UPDATE SKIP LOCKED LIMIT 1`);
@@ -39,8 +40,8 @@ export async function drain() {
       await client.query(`UPDATE outbox SET delivered_at=clock_timestamp() WHERE scope=$1 AND event_id=$2`,[row.scope,row.event_id]);
     }
     await client.query('COMMIT');
-  } catch { await client.query('ROLLBACK'); }
-  finally { client.release(); draining = false; }
+  } catch { if(client) await client.query('ROLLBACK').catch(() => {}); }
+  finally { client?.release(); draining = false; }
 }
 
 export function start() { const timer=setInterval(() => drain().catch(() => {}), 60); return () => clearInterval(timer); }
