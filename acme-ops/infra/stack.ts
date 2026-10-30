@@ -74,7 +74,7 @@ export class WorkflowStack extends Stack {
         : agentcore.RuntimeAuthorizerConfiguration.usingIAM(),
       environmentVariables: {
         WORKFLOW: props.workflow,
-        ...(props.looplabsControlConfig ? {LOOPLABS_CONTROL_CONFIG:props.looplabsControlConfig} : {}),
+        ...(props.looplabsControlConfig ? {LOOPLABS_CONTROL_CONFIG:props.looplabsControlConfig} : {LOOPLABS_CONTROL_CONFIG:"",LOOPLABS_APPROVAL_SIGNING_SECRET:""}),
         WORKFLOW_ORGANIZATION: "Acme",
         WORKFLOW_COMPANY_NAME: "Acme Corporation",
         WORKFLOW_ENVIRONMENT: "production",
