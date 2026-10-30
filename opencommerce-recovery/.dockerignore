@@ -1,0 +1,5 @@
+node_modules
+evidence
+verify
+!verify/request.mjs
+.env*

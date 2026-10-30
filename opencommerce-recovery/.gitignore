@@ -1,0 +1,4 @@
+node_modules/
+.env*
+evidence/private/
+__pycache__/
