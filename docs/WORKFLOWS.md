@@ -52,8 +52,8 @@ adding a result; a local build or a different workflow's receipt is not a substi
 
 | S.no | Workflow | Department / team | Roles | Business guide | Latest known FetchSandbox run |
 |---:|---|---|---:|---|---|
-| 1 | `ad-campaign-preparation` | Marketing / creative-operations | 2 | [Facebook and Instagram paused preparation](workflows/ad-campaign-preparation.md) | [2026-10-30 · 16 passed](https://fetchsandbox.com/runs/28e3ab6313?flow=vr_64fb6753c0fe4d6293782ed88eb3d83c) |
-| 2 | `ad-creative-publishing` | Marketing / creative-operations | 2 | [Owner-reviewed Meta paused ad](workflows/ad-creative-publishing.md) | [2026-10-30 · 10 passed](https://fetchsandbox.com/runs/f60b391b5f?flow=vr_921e8044b8904d68bdfb99f56a56b4ff) |
+| 1 | `ad-campaign-preparation` | Marketing / creative-operations | 2 | [Facebook and Instagram paused preparation](workflows/ad-campaign-preparation.md) | [2026-11-01 · 16 passed](https://fetchsandbox.com/runs/7ca9dcf552?flow=vr_8225e8f6438c4c12b97cfa651fac9c9a) |
+| 2 | `ad-creative-publishing` | Marketing / creative-operations | 2 | [Owner-reviewed Meta paused ad](workflows/ad-creative-publishing.md) | [2026-11-01 · 10 passed](https://fetchsandbox.com/runs/297dc0dae1?flow=vr_9a6a4d9b3a43431b889e63686d113e52) |
 | 3 | Account takeover containment | IT / `it-security` | 3 | [account-takeover-containment](workflows/account-takeover-containment.md) | [2026-10-21 · 20 passed, 2 not checked](https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0) |
 | 4 | AI support triage (LLM, guarded) | Support / `support-ops` | 3 | [ai-support-triage](workflows/ai-support-triage.md) | [2026-10-22 · 18 passed, 3 failed](https://fetchsandbox.com/runs/8b707a425c?flow=vr_7609225e94cb4126a1649d0772bd8bb1) |
 | 5 | User access review (SOC 2) | IT Security / `grc` | 3 | [user-access-review](workflows/user-access-review.md) | [2026-10-22 · 8 passed, 4 failed](https://fetchsandbox.com/runs/192682caf9?flow=vr_c14cb6f1efe04a0fbf095e93e9089086) |

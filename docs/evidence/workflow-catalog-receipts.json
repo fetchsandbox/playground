@@ -2,7 +2,7 @@
   "schema_version": 1,
   "audited_at": "2026-10-27T18:06:07.393162+00:00",
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
-  "scope": "Historical rows retain their recorded audit. Meta paused-ad and preparation receipts independently read October 30, 2026; deliberately mutated variants are separate evidence.",
+  "scope": "Historical rows retain their recorded audit. Meta paused-ad and preparation receipts independently read October 30, 2026; deliberately mutated variants are separate evidence. November1 Meta preparation and legacy rows remeasured; other historical rows were not re-audited.",
   "counts": {
     "inconclusive": 20,
     "failing": 23,
@@ -1726,13 +1726,13 @@
     },
     "ad-creative-publishing": {
       "workflow": "ad-creative-publishing",
-      "receipt_url": "https://fetchsandbox.com/runs/f60b391b5f?flow=vr_921e8044b8904d68bdfb99f56a56b4ff",
+      "receipt_url": "https://fetchsandbox.com/runs/297dc0dae1?flow=vr_9a6a4d9b3a43431b889e63686d113e52",
       "source": "acme-ops/verify/receipts/ad-creative-publishing.json",
-      "checked_at": "2026-10-30T21:02:02.628965+00:00",
+      "checked_at": "2026-11-01T16:14:05.775515+00:00",
       "http": 200,
-      "snapshot_at": "2026-10-30T21:01:36.445144+00:00",
+      "snapshot_at": "2026-11-01T16:06:02.353038+00:00",
       "app_version": {
-        "value": "acme-ops-ad-creative-publishing-1.0.0-9fcaf8e",
+        "value": "acme-ops-ad-creative-publishing-1.0.0-ab5ea6d",
         "source": "declared"
       },
       "verdict": "verified",
@@ -1755,13 +1755,13 @@
     },
     "ad-campaign-preparation": {
       "workflow": "ad-campaign-preparation",
-      "receipt_url": "https://fetchsandbox.com/runs/28e3ab6313?flow=vr_64fb6753c0fe4d6293782ed88eb3d83c",
+      "receipt_url": "https://fetchsandbox.com/runs/7ca9dcf552?flow=vr_8225e8f6438c4c12b97cfa651fac9c9a",
       "source": "acme-ops/verify/receipts/ad-campaign-preparation.json",
-      "checked_at": "2026-10-30T20:53:14.263253+00:00",
+      "checked_at": "2026-11-01T16:14:05.775515+00:00",
       "http": 200,
-      "snapshot_at": "2026-10-30T20:52:24.941432+00:00",
+      "snapshot_at": "2026-11-01T16:09:56.753165+00:00",
       "app_version": {
-        "value": "acme-ops-ad-campaign-preparation-1.0.0-02fca24",
+        "value": "acme-ops-ad-campaign-preparation-1.0.0-ab08b3f",
         "source": "declared"
       },
       "verdict": "verified",
