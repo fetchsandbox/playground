@@ -4,14 +4,14 @@ const input=(id,over={})=>({organization:"Acme",customer:{email:"builder@example
 const begin=(id,over)=>start(id,input(id,over));const approve=()=>command("decide",1,{userId:OWNER,decision:"approve"});
 const writes=[['campaigns',' campaign'],['adsets',' ad set'],['adcreatives',' creative'],['ads',' ad']];
 const effects=(id,n)=>writes.map(([collection,suffix],index)=>{
- const where=[eq("name",`Pergola ${id} {{run_id}}${suffix}`),eq("account_id","1001")];
+ const where=[eq(collection==="adcreatives"?"object_story_spec.link_data.name":"name",`Pergola ${id} {{run_id}}${collection==="adcreatives"?"":suffix}`),eq("account_id","1001")];
  if(n){
   if(!(id==='unknown'&&collection==='ads'))where.push(eq('id',`{{prev.actions.${index}.ref}}`));
   if(collection!=='adcreatives')where.push(eq('status','PAUSED'));
   if(collection==='campaigns')where.push(eq('is_adset_budget_sharing_enabled',false));
   if(collection==='adsets')where.push(eq('bid_strategy','LOWEST_COST_WITHOUT_CAP'),eq('targeting.age_min',18),eq('targeting.age_max',65),eq('targeting.targeting_automation.advantage_audience',0),{select:'targeting.geo_locations.location_types',set_equals:['frequently_in','home','recent'],count:3,required:false});
   if(collection==='adsets')where.push(eq('campaign_id','{{prev.actions.0.ref}}'),eq('daily_budget','1000'),{select:'targeting.publisher_platforms',set_equals:[id==='facebook'?'facebook':'instagram'],count:1,required:false});
-  if(collection==='adcreatives'){where.push(eq('object_story_spec.page_id','4001'));if(id!=='facebook')where.push(eq('object_story_spec.instagram_user_id','5001'));}
+  if(collection==='adcreatives'){where.push(eq('name','{{prev.actions.2.detail.observedName}}'),{select:'name',contains:'{{prev.actions.2.detail.requestedName}}',count:1,required:false},eq('object_story_spec.link_data.message','Plan your pergola consultation'),eq('object_story_spec.link_data.link','https://example.test/pergolas'),eq('object_story_spec.link_data.image_hash','demo-image-1001'),eq('object_story_spec.page_id','4001'));if(id!=='facebook')where.push(eq('object_story_spec.instagram_user_id','5001'));}
   if(collection==='ads')where.push(eq('adset_id','{{prev.actions.1.ref}}'),eq('creative.id','{{prev.actions.2.ref}}'));
  }
  return {provider:"meta-marketing",collection,assertion:{select:"records[*]",count:n,required:true,where:where.map(predicate=>({...predicate,required:false}))}};
