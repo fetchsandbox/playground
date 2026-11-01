@@ -58,3 +58,30 @@ requires an explicit FetchSandbox provider binding. The local six-case process
 proof used a scripted signed client, provider read-back and file persistence;
 it does not establish a real LoopLabs browser or device signature. Deployment
 and native acceptance evidence must identify their own versions separately.
+
+When enabling this adapter on an existing runtime, remove a previously explicit
+empty `LOOPLABS_APPROVAL_SIGNING_SECRET` environment value. The boot loader
+intentionally preserves explicit environment values, including an empty value
+used to disable old bindings; it cannot load the secret over that override.
+Validate the exact merged environment with `readControlConfig` before rollout.
+Use a separate scoped secret when preserving an earlier version without control
+configuration; adding only a signing key to that version's old secret would
+create a partial configuration and prevent startup.
+
+November 1 preparation acceptance: source `2d62db5` is deployed as AgentCore
+version 4, with version 2 pinned separately. Version 3 failed startup because
+an inherited empty signing-key override blocked the separate secret; version 4
+removed that override and passed the exact startup validator. The adapter's
+AWS proof uses a scripted signed client, not a real LoopLabs user decision.
+
+The same maintained `infra/cancellation_delivery/telemetry_forwarder.py` now
+projects only preparation version-4 typed events into its `-business-v4` group.
+A fresh held-then-rejected request delivered all 16 expected distinct events
+through the actual CloudWatch subscription with zero provider effects. The
+previous successful execution's 17 events were separately replayed unchanged
+for historical continuity; that replay is not fresh transport acceptance.
+LoopLabs history enrollment is saved under the existing workspace and invited
+owner, and its measured read contains 33 events across two executions. Original
+diagnostic logs remain at their original source. Shared approval authority must
+still be bound to the actual saved tenant/connection/enrollment epoch and invited
+reviewer; the scripted native scope is not an installed LoopLabs user binding.

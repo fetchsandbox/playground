@@ -1,0 +1,288 @@
+{
+  "recorded_at": "2026-11-01T17:34:00.310063+00:00",
+  "workflow": "ad-campaign-preparation",
+  "source_commit": "2d62db58c2146eda3507404b06e978313865103e",
+  "bundle_sha256": "bf73dd99f2f1057eeaf2b5af14bd013d2b97a4e490bf5680ce60c1f14fc6aadb",
+  "backend_version": "8ba275bf",
+  "deployment": {
+    "agentcore_version": "4",
+    "status": "READY",
+    "image_digest": "sha256:0bbae54dcdbb3f3b3f57fa2ef3542ba1a6f1e52e028ff5b1784096b192d87522",
+    "previous_version_pinned": "2",
+    "previous_secret_unchanged": true,
+    "new_secret_access": "GetSecretValue for one exact secret ARN; no new principal or network access",
+    "organization": "Acme Corporation",
+    "department": "Marketing",
+    "team": "creative-operations",
+    "owner": "Raj",
+    "failed_version_3": {
+      "startup": "refused partial control configuration",
+      "cause": "An inherited explicit empty signing-key environment value shadowed the separate Secrets Manager value",
+      "correction": "Removed the empty override; validated the exact merged configuration using the maintained readControlConfig; v4 uses same source/image",
+      "failed_run_absent_and_effect_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "hosted_regression": {
+    "receipt_url": "https://fetchsandbox.com/runs/49b110197f?flow=vr_d6a7eddea9e0469caec55caac9234797",
+    "passed": 16,
+    "failed": 0,
+    "unmeasured": 0,
+    "control_mode": "Adapter disabled; unchanged 16-case contract",
+    "independent_writing_cases": 9,
+    "effect_counts_per_writing_case": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "nonwriting_cases": 7
+  },
+  "local_control_process": {
+    "scope": "Actual local app process and signed bridge against deployed FetchSandbox; not real LoopLabs browser, AWS deployment or native Instagram",
+    "bundle_sha256": "bf73dd99f2f1057eeaf2b5af14bd013d2b97a4e490bf5680ce60c1f14fc6aadb",
+    "results": [
+      {
+        "case": "approve",
+        "decision_http": 200,
+        "phase": "DONE",
+        "provider_counts": {
+          "campaigns": 1,
+          "adsets": 1,
+          "adcreatives": 1,
+          "ads": 1
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true,
+        "business_outcome": "ok"
+      },
+      {
+        "case": "reject",
+        "decision_http": 200,
+        "phase": "REJECTED",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false,
+        "business_outcome": "ok"
+      },
+      {
+        "case": "stale",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false,
+        "business_outcome": "ok"
+      },
+      {
+        "case": "wrong_reviewer",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false,
+        "business_outcome": "ok"
+      },
+      {
+        "case": "changed_input",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true,
+        "business_outcome": "ok"
+      },
+      {
+        "case": "changed_policy",
+        "decision_http": 200,
+        "phase": "DONE",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true,
+        "business_outcome": "partial"
+      }
+    ]
+  },
+  "local_tests": {
+    "full_suite_passed": 397,
+    "focused_control_and_regression_passed": 65,
+    "final_preparation_selection_passed": 22,
+    "counts_overlap": true,
+    "typecheck": "passed"
+  },
+  "retained_failed_attempt": {
+    "receipt_url": "https://fetchsandbox.com/runs/eb90b9687e?flow=vr_1c455f730f59488095c8361eb726286c",
+    "passed": 10,
+    "unmeasured": 6,
+    "cause_observed": "Managed relay returned Local tunnel disconnected during an observation GET; underlying network cause not established",
+    "same_build_and_contract_on_retry": true
+  },
+  "native_discovery": {
+    "scope": "Read-only Meta Graph v26.0 with existing approved demo credentials",
+    "http_successful_reads": 4,
+    "demo_page_instagram_link": "absent in UI and API",
+    "available_instagram_identities": 0,
+    "page_credential_parent_read": {
+      "http": 400,
+      "code": 100,
+      "subcode": 33
+    },
+    "note": "Page credential can read the previously qualified creative/ad but not campaign; no runtime live-Meta binding was enabled"
+  },
+  "limitations": [
+    "No LoopLabs browser/device-bound approval proof yet; scripted signed requests are separate.",
+    "No native Instagram qualification; demo Facebook Page is not an Instagram profile.",
+    "No full native Meta workflow acceptance or continuous native drift monitor.",
+    "Historical runs are not converted into the new signed-review scope."
+  ],
+  "setup_failures": [
+    "First local provider observer used default urllib user agent and received a non-JSON response; its attempt is archived, then rerun with the existing evaluation user agent.",
+    "Initial local test fixture lacked campaign/adset routes; one happy-path test failed before the existing fixture was extended.",
+    "Initial deployment check expected an incorrect endpoint response field; read-back confirmed liveVersion=2 before continuing.",
+    "Wrong-directory local commands and a documentation check while the fresh receipt was absent did not execute their intended checks.",
+    "AWS helper completed effect/replay assertions then failed serializing DynamoDB Decimal data; a separate continuation read back the same runs without new provider writes."
+  ],
+  "aws_control_comparison": {
+    "scope": "Actual AWS v2/v4 comparison against FetchSandbox only; scripted signed client, not LoopLabs UI/device signature",
+    "source": "2d62db58c2146eda3507404b06e978313865103e",
+    "controlled_version": "4",
+    "native_version": "2",
+    "results": [
+      {
+        "mode": "native",
+        "version": "2",
+        "four_linked_paused_objects": true,
+        "reconciliation_matches": 4,
+        "consistent_dynamodb_readback": true,
+        "replay_counts": [
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "mode": "controlled",
+        "version": "4",
+        "four_linked_paused_objects": true,
+        "reconciliation_matches": 4,
+        "consistent_dynamodb_readback": true,
+        "checks": {
+          "bad_signature": 401,
+          "wrong_scope": 409,
+          "direct_bypass": 403,
+          "stale_revision": 409
+        },
+        "events_redacted": true,
+        "frozen_review_saved": true,
+        "replay_counts": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    ],
+    "earlier_attempt": "Controlled effects and replay assertions passed; helper then failed serializing DynamoDB Decimal values. This continuation independently reads back those same runs."
+  },
+  "looplabs_ui": {
+    "observed_runtime_version": "4",
+    "aws_access_check": "confirmed through existing read-only connection",
+    "declared_owner": "Raj",
+    "department": "Marketing",
+    "team": "creative-operations",
+    "history_enrollment": "saved for version 4 and invited Raj owner; same workflow source narrowed to business-v4",
+    "browser_approval_decision": "not measured",
+    "previous_raw_source": {
+      "distinct_v4_events": 17,
+      "unsupported_diagnostic_records": 608,
+      "deduplicated_deliveries": 61,
+      "coverage": "partial"
+    },
+    "current_read": {
+      "coverage_label": "History fetched for this time range",
+      "reported_versions": [
+        "4"
+      ],
+      "distinct_events": 33,
+      "executions": 2,
+      "completed_reported": 1,
+      "rejected_reported": 1,
+      "deduplicated_deliveries": 71,
+      "unsupported_format_warning": false,
+      "scope": "Source-reported history; not independent provider proof or device-bound approval"
+    }
+  },
+  "history_forwarder": {
+    "implementation": "acme-ops/infra/cancellation_delivery/telemetry_forwarder.py (unchanged)",
+    "local_tests_passed": 7,
+    "version": "4",
+    "permissions": "Write only to exact business destination and own function logs; cannot invoke runtime or read secrets",
+    "subscription_filter": "schema_version=1.0 AND agent_deployment_version=4",
+    "fresh_subscription_proof": {
+      "scope": "Fresh actual AgentCore -> CloudWatch subscription -> existing Lambda projector -> destination log read-back, no synthetic transport injection for this run",
+      "version": "4",
+      "runId": "history-delivery-ef7d455f-8422-4e98-941a-fdc2f0afe6b9",
+      "expected_distinct_events": 16,
+      "observed_distinct_events": 16,
+      "delivery_count": 26,
+      "phase": "REJECTED",
+      "provider_effect_counts": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source": "/aws/bedrock-agentcore/runtimes/acme_ad_campaign_preparation-d4VxBH8KHG-DEFAULT",
+      "destination": "/aws/bedrock-agentcore/runtimes/acme_ad_campaign_preparation-d4VxBH8KHG-business-v4"
+    },
+    "historical_backfill": {
+      "scope": "Unchanged replay of recorded native typed events through maintained forwarder; not fresh subscription delivery",
+      "source_deliveries": 78,
+      "distinct_event_ids": 17,
+      "result": {
+        "forwarded": 78,
+        "coverageGaps": 0
+      }
+    }
+  },
+  "coordination": {
+    "company_mapping": "Separate agent owns display/business metadata only; existing tenant, AWS connection, ARN and execution owner remain unchanged",
+    "shared_approval": "Native scope remains scripted-only; actual invited reviewer, server enrollment epoch and binding must be reviewed together before changes"
+  }
+}

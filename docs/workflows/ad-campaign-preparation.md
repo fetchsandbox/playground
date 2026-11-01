@@ -140,9 +140,9 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-ad-campaign-preparation-1.0.0-ab08b3f`, verdict **verified**, and statuses: **16 held**.
+The checked-in receipt records app version `acme-ops-ad-campaign-preparation-1.0.0-2d62db5`, verdict **verified**, and statuses: **16 held**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/7ca9dcf552?flow=vr_8225e8f6438c4c12b97cfa651fac9c9a) · [Saved result](../../acme-ops/verify/receipts/ad-campaign-preparation.json)
+[Recorded receipt](https://fetchsandbox.com/runs/49b110197f?flow=vr_d6a7eddea9e0469caec55caac9234797) · [Saved result](../../acme-ops/verify/receipts/ad-campaign-preparation.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 
@@ -155,7 +155,7 @@ Blocked reasons above describe this contract revision. They can become stale whe
 
 ## Bounded deployment and deliberate failure proof
 
-November 1 deployment: FetchSandbox backend `8ba275bf`; AgentCore version 2, runtime source `ab5ea6d23b3b433c91d8f242f7e1b989fb30e8a6`. The latest hosted contract is `ab08b3f`; its runtime bundle is byte-identical to the AWS image (SHA256 `3ec8c3c1437adeaaa808994b02364f5ce0dbd615b72d8875fe18ef2b892afa56`). Ownership is Acme Corporation / Marketing / creative-operations / Raj. Roles use deterministic checks, and the measured approver is scripted under AWS IAM, not a device-bound human UI.
+Initial November 1 deployment: FetchSandbox backend `8ba275bf`; AgentCore version 2, runtime source `ab5ea6d23b3b433c91d8f242f7e1b989fb30e8a6`. That deployment used hosted contract `ab08b3f`; its runtime bundle is byte-identical to the AWS image (SHA256 `3ec8c3c1437adeaaa808994b02364f5ce0dbd615b72d8875fe18ef2b892afa56`). Ownership is Acme Corporation / Marketing / creative-operations / Raj. Roles use deterministic checks, and the measured approver is scripted under AWS IAM, not a device-bound human UI.
 
 The fresh hosted preparation run passed all 16 declared checks, including actual app-process restart and four accepted-response-loss cases. Independent provider reads confirmed exactly one campaign, ad set, creative and ad for each writing case, with linked IDs, paused statuses and disabled audience expansion. Restoring only the old strict-name defect under the same final check contract violated baseline; the other 15 checks were unmeasured because baseline failed. Independent negative-state counts were 1 campaign, 1 ad set, 1 creative and 0 ads. [Current deployment, separate receipts and measured limits](../evidence/ad-preparation-release-20261101.json).
 
@@ -165,6 +165,20 @@ Native-observed budget-sharing, bid-strategy, audience and creative-name behavio
 
 The [October 30 AWS observations](../evidence/ad-preparation-native-20261030.json) and [historical deliberate duplicate-effect comparison](../evidence/ad-preparation-comparison-20261030.json) describe older versions. Their creative duplicate result does not establish current or native behavior. Earlier setup and contract-assertion failures are retained in the current release evidence, not counted as passes.
 
-Native Instagram qualification, application media upload, activation/review/delivery/spend, device-bound approval and a LoopLabs controls comparison remain unmeasured. No live Meta fallback or continuous native drift monitor is introduced. Historical saved runs are not migrated or requalified by these fresh checks.
+Native Instagram qualification, application media upload, activation/review/delivery/spend, device-bound approval and a LoopLabs browser controls comparison remain unmeasured. No live Meta fallback or continuous native drift monitor is introduced. Historical saved runs are not migrated or requalified by these fresh checks.
+
+
+### Signed preparation review adapter
+
+The follow-up source `2d62db5` extends the existing signed LoopLabs bridge to this four-action preparation workflow. The review binds business input, policy version/hash, budget, audience, destination, creative reference and all four paused action summaries. When this adapter is configured, direct native approval is refused. Typed policy events identify `ad-preparation-policy` and omit email, destination and creative message. [Follow-up deployment and separate proof scopes](../evidence/ad-preparation-control-20261101.json).
+
+The actual local HTTP app process passed six control cases against FetchSandbox, with independent provider and file-state read-back. Approved work created one linked paused hierarchy; rejection, stale revision, wrong reviewer, changed input and changed policy produced no objects. A changed policy can accept the approval request but still records a partial execution outcome; HTTP 200 is not workflow success. Replay made no duplicate objects, and approval survived process restart. These are scripted bridge checks, not a human browser or device-bound approval.
+
+The follow-up hosted run uses the unchanged 16-case contract with control disabled to check native approval and recovery compatibility. Its earlier attempt passed 10 cases before the relay disconnected and left six unmeasured; the same-build retry passed all 16. Both receipts are retained separately. Native Instagram still requires its own professional identity; the dedicated Facebook Page currently has no linked Instagram profile. No live Meta fallback or ad activation is enabled.
+
+
+AgentCore version 4 deploys this signed-review capability; pinned version 2 retains its separate native approval path and original secret. The AWS comparison observed four linked paused objects, four reconciliation matches, consistent DynamoDB state and replay counts 1/1/1/1 in both paths. Version 4 also refused invalid signatures, wrong scope, direct approval bypass and stale review. Version 3 startup failure and the exact environment-only correction are preserved in the evidence.
+
+History enrollment is saved in LoopLabs under the existing invited owner. The unchanged version-filtered forwarder measured 16/16 events for a fresh held-then-rejected zero-effect run; the prior 17 successful-run events were separately backfilled. The measured UI read has 33 version-4 events across two executions with no unsupported-format warning for that range. This is source-reported observation, not provider certification. Actual LoopLabs shared approval still requires the existing tenant, connection, saved enrollment epoch and real invited reviewer binding. Company relabeling does not establish that authority.
 
 <!-- Generated by scripts/workflow_docs.py from workflow definitions, contracts and saved receipts. Edit source or the business-need mapping, then regenerate. -->
