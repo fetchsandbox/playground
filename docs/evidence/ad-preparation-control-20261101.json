@@ -168,7 +168,8 @@
     "No LoopLabs browser/device-bound approval proof yet; scripted signed requests are separate.",
     "No native Instagram qualification; demo Facebook Page is not an Instagram profile.",
     "No full native Meta workflow acceptance or continuous native drift monitor.",
-    "Historical runs are not converted into the new signed-review scope."
+    "Historical runs are not converted into the new signed-review scope.",
+    "Authenticated initiating-user/reviewer separation has not been established; declared customer email and native requester metadata are not proof of an authenticated human."
   ],
   "setup_failures": [
     "First local provider observer used default urllib user agent and received a non-JSON response; its attempt is archived, then rerun with the existing evaluation user agent.",
@@ -283,6 +284,7 @@
   },
   "coordination": {
     "company_mapping": "Separate agent owns display/business metadata only; existing tenant, AWS connection, ARN and execution owner remain unchanged",
-    "shared_approval": "Native scope remains scripted-only; actual invited reviewer, server enrollment epoch and binding must be reviewed together before changes"
+    "shared_approval": "Native scope remains scripted-only; actual invited reviewer, server enrollment epoch and binding must be reviewed together before changes",
+    "binding_review": "Actual saved enrollment scope was read by the company task and reviewed locally. Updating AgentCore environment creates a new version: never reuse version4 epoch for a newer version. No bridge-scope adjustment was applied."
   }
 }

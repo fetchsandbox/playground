@@ -85,3 +85,11 @@ owner, and its measured read contains 33 events across two executions. Original
 diagnostic logs remain at their original source. Shared approval authority must
 still be bound to the actual saved tenant/connection/enrollment epoch and invited
 reviewer; the scripted native scope is not an installed LoopLabs user binding.
+
+The observed v4 enrollment is version-specific. An AgentCore environment update
+publishes a new runtime version; never reuse the v4 enrollment epoch or report a
+newer runtime as v4. Review the actual new server binding before activation.
+Declared customer email/native requester metadata does not independently prove
+an authenticated initiating human. Separation between that person and the
+invited approver remains unqualified until identity-bound integration and its
+negative checks are measured.
