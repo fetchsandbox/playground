@@ -3,6 +3,8 @@ const OWNER="U_AD_OWNER";
 const input=(id,over={})=>({organization:"Acme",customer:{email:"builder@example.test"},platform:"instagram",title:`Pergola ${id} {{run_id}}`,message:"Plan your pergola consultation",link:"https://example.test/pergolas",dailyBudgetMinor:1000,...over});
 const begin=(id,over)=>start(id,input(id,over));const approve=()=>command("decide",1,{userId:OWNER,decision:"approve"});
 const writes=[['campaigns',' campaign'],['adsets',' ad set'],['adcreatives',' creative'],['ads',' ad']];
+// Record predicates intentionally use the verifier default required:false.
+// Omitting that repeated default preserves semantics and stays below64KiB.
 const effects=(id,n)=>writes.map(([collection,suffix],index)=>{
  const where=[eq(collection==="adcreatives"?"object_story_spec.link_data.name":"name",`Pergola ${id} {{run_id}}${collection==="adcreatives"?"":suffix}`),eq("account_id","1001")];
  if(n){
@@ -14,7 +16,7 @@ const effects=(id,n)=>writes.map(([collection,suffix],index)=>{
   if(collection==='adcreatives'){where.push(eq('name','{{prev.actions.2.detail.observedName}}'),{select:'name',contains:'{{prev.actions.2.detail.requestedName}}',count:1,required:false},eq('object_story_spec.link_data.message','Plan your pergola consultation'),eq('object_story_spec.link_data.link','https://example.test/pergolas'),eq('object_story_spec.link_data.image_hash','demo-image-1001'),eq('object_story_spec.page_id','4001'));if(id!=='facebook')where.push(eq('object_story_spec.instagram_user_id','5001'));}
   if(collection==='ads')where.push(eq('adset_id','{{prev.actions.1.ref}}'),eq('creative.id','{{prev.actions.2.ref}}'));
  }
- return {provider:"meta-marketing",collection,assertion:{select:"records[*]",count:n,required:true,where:where.map(predicate=>({...predicate,required:false}))}};
+ return {provider:"meta-marketing",collection,assertion:{select:"records[*]",count:n,required:true,where:where.map(({required,...predicate})=>predicate)}};
 });
 const applied=()=>writes.map(([edge])=>action('meta.prepare_'+edge,'applied'));
 const rule=(id,name,actions,assertions,count,extra={})=>check(id,name,actions,runs(assertions),{...extra,provider_assertions:effects(id,count)});
