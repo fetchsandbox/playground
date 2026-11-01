@@ -8,6 +8,8 @@ const effects=(id,n)=>writes.map(([collection,suffix],index)=>{
  if(n){
   if(!(id==='unknown'&&collection==='ads'))where.push(eq('id',`{{prev.actions.${index}.ref}}`));
   if(collection!=='adcreatives')where.push(eq('status','PAUSED'));
+  if(collection==='campaigns')where.push(eq('is_adset_budget_sharing_enabled',false));
+  if(collection==='adsets')where.push(eq('bid_strategy','LOWEST_COST_WITHOUT_CAP'));
   if(collection==='adsets')where.push(eq('campaign_id','{{prev.actions.0.ref}}'),eq('daily_budget','1000'),{select:'targeting.publisher_platforms',set_equals:[id==='facebook'?'facebook':'instagram'],count:1,required:false});
   if(collection==='adcreatives'){where.push(eq('object_story_spec.page_id','4001'));if(id!=='facebook')where.push(eq('object_story_spec.instagram_user_id','5001'));}
   if(collection==='ads')where.push(eq('adset_id','{{prev.actions.1.ref}}'),eq('creative.id','{{prev.actions.2.ref}}'));
