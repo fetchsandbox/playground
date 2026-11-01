@@ -35,7 +35,7 @@ const store: KvStore = process.env.DYNAMODB_TABLE
 const endpoints = endpointsFromEnv();
 
 const control=readControlConfig(process.env);
-if(control&&!["product-cancellation","ad-creative-publishing"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
+if(control&&!["product-cancellation","ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
 if(["ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id)){
  const base=endpoints.meta?.baseUrl??"";
  // An unbound verifier bootstrap may expose status/describe only: the missing
@@ -44,7 +44,7 @@ if(["ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id)){
  if(!(process.env.APPROVER_USER_IDS??"").trim())throw Error("Ad demo requires configured named approvers");
 }
 const engine = new Engine(workflow, {
-  requireReviewedDecisions:!!control&&workflow.id==="ad-creative-publishing",
+  requireReviewedDecisions:!!control&&["ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id),
   control,controlSink:(event)=>console.log(JSON.stringify(event)),
   store,
   providers: providerFactory(endpoints),

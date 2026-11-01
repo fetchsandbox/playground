@@ -1,4 +1,8 @@
 import {afterEach,beforeEach,describe,expect,it} from "vitest";
+import {createHmac,randomUUID} from "node:crypto";
+import {approvalView,controlEnvelope,type ControlConfig} from "../src/kit/looplabs-control";
+import type {Engine} from "../src/kit/engine";
+import {adHash} from "../src/workflows/ad-creative-publishing";
 import {MemoryStore} from "../src/kit/store";
 import {providerFactory} from "../src/providers";
 import {adCampaignPreparation,preparationPolicy} from "../src/workflows/ad-campaign-preparation";
@@ -38,4 +42,22 @@ describe("campaign preparation review boundary",()=>{
   const e=w.engine(adCampaignPreparation,{now:()=>NOW,approvers:["U_OWNER"],providers:()=>clients});for(const runId of ["first-identical","second-identical"]){await e.handle({action:"start",runId,requestedBy:{userId:"U_BUILDER"},input});expect((await e.handle({action:"decide",runId,userId:"U_OWNER",decision:"approve"})).body.outcome).toBe("ok");}
   expect(requested).toHaveLength(2);expect(requested[0]).not.toBe(requested[1]);expect(requested.every(n=>/ \[FS:[a-f0-9]{24}\]$/.test(n))).toBe(true);
  });
+
+ it.each(["approve","reject","stale","wrong_reviewer","changed_input","changed_policy"])("binds LoopLabs preparation review and refuses changed authority: %s",async mode=>{
+  const control:ControlConfig={scope:{tenantId:"acme",connectionId:"preparation-test",resourceArn:"arn:aws:bedrock-agentcore:us-west-2:342206308838:runtime/acme_ad_campaign_preparation-demo",version:"3",epoch:"test"},secret:"a".repeat(64),reviewerMap:{"owner@example.test":"U_OWNER"},allowSelfReview:false};
+  const store=new MemoryStore(),events:Record<string,unknown>[]=[];const e=w.engine(adCampaignPreparation,{store,now:()=>NOW,approvers:["U_OWNER"],control,controlSink:event=>events.push(event),requireReviewedDecisions:true});
+  await e.handle({action:"start",runId:"controlled",requestedBy:{userId:"U_BUILDER"},input});
+  const run=(await e.load("controlled"))!,a=approvalView(run,control);
+  expect(a).not.toBeNull();expect(a!.title).toBe("Review Instagram campaign preparation");
+  expect(JSON.parse(a!.after)).toMatchObject({deliveryEnabled:false,reviewedInput:input});expect(JSON.parse(a!.after).actions).toHaveLength(4);
+  expect(events.find(x=>x.event_name==="policy.evaluated")?.rule_id).toBe("ad-preparation-policy");for(const privateValue of [input.customer.email,input.link,input.message])expect(JSON.stringify(events)).not.toContain(privateValue);expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);
+  expect((await e.handle({action:"decide",runId:run.runId,userId:"U_OWNER",decision:"approve"})).status).toBe(403);
+  if(mode==="changed_input"){const saved=(await store.get("run#"+run.runId))!;(saved.input as any).dailyBudgetMinor=999;await store.replace(saved);}
+  if(mode==="changed_policy")process.env.AD_PREPARATION_POLICY_JSON=JSON.stringify({...preparationPolicy(),version:"changed-after-review"});
+  const decision=mode==="reject"?"rejected":"approved",reviewer=mode==="wrong_reviewer"?"stranger@example.test":"owner@example.test",revision=mode==="stale"?"f".repeat(64):a!.revision;
+  async function send(){const raw=JSON.stringify({contract:"looplabs-shared-approval-1",scope:control.scope,nonce:randomUUID(),timestamp:String(NOW/1000),operation:"decide",id:a!.id,revision,policyVersion:a!.policyVersion,decision,reviewer,decisionId:adHash([control.scope.tenantId,control.scope.resourceArn,a!.id,revision,reviewer,decision])});return controlEnvelope(e as Engine<unknown>,store,control,{method:"POST",path:"/looplabs/approval-bridge",raw_body:raw,headers:{"x-looplabs-signature":createHmac("sha256",control.secret).update("request\n"+raw).digest("hex")}},()=>NOW);}
+  const reply=await send();expect(reply.status).toBe(["stale","wrong_reviewer","changed_input"].includes(mode)?409:200);await e.idle();
+  if(mode==="approve"){expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(4);await send();await e.idle();expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(4);expect((await e.handle({action:"reconcile",runId:run.runId})).body.actions.every((x:any)=>x.reconcile.status==="match")).toBe(true);}else {expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);if(mode==="changed_policy")expect((await e.handle({action:"status",runId:run.runId})).body.outcome).toBe("partial");}
+ });
+
 });

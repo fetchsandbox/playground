@@ -43,3 +43,18 @@ uses one write attempt, and has no runtime invoke or provider permissions. Its
 subscription matches the reported deployment version; it does not convert
 ordinary diagnostic text into workflow evidence. Native delivery, reader access
 and the selected source must be verified separately.
+
+## Campaign preparation adapter
+
+`ad-campaign-preparation` uses the same signed bridge when explicitly configured.
+Its review freezes the complete input, policy version/hash, and four ordered
+paused action summaries. A direct native `decide` is refused while the bridge is
+required. Tenant/runtime/version/revision/reviewer and expiry checks remain in
+the shared implementation. Typed events identify `ad-preparation-policy` and do
+not copy the input, destination, email or creative message into event payloads.
+
+This adds adapter capability, not a native Meta connection: the runtime still
+requires an explicit FetchSandbox provider binding. The local six-case process
+proof used a scripted signed client, provider read-back and file persistence;
+it does not establish a real LoopLabs browser or device signature. Deployment
+and native acceptance evidence must identify their own versions separately.
