@@ -13,6 +13,7 @@ import { createAgentServer } from "./kit/server";
 import { DynamoStore, FileStore, type KvStore, MemoryStore } from "./kit/store";
 import { loadWorkflow } from "./kit/load";
 import { endpointsFromEnv, providerFactory } from "./providers";
+import {nativeMetaSandbox} from "./providers/meta-native-sandbox";
 
 const workflowId = process.env.WORKFLOW ?? "";
 const workflow = await loadWorkflow(workflowId);
@@ -35,12 +36,14 @@ const store: KvStore = process.env.DYNAMODB_TABLE
 const endpoints = endpointsFromEnv();
 
 const control=readControlConfig(process.env);
+const nativeMeta=nativeMetaSandbox(process.env);
+if(nativeMeta&&(!control||control.allowSelfReview))throw Error("Native Meta sandbox requires signed review with requester self-review disabled");
 if(control&&!["product-cancellation","ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id))throw Error("LoopLabs adapter is scoped to reviewed supported workflows");
 if(["ad-creative-publishing","ad-campaign-preparation"].includes(workflow.id)){
  const base=endpoints.meta?.baseUrl??"";
  // An unbound verifier bootstrap may expose status/describe only: the missing
  // provider remains absent, so no action can run. Reject any actual live binding.
- if(base&&!/^https:\/\/fetchsandbox\.com\/sandbox\//.test(base)&&!/^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(base))throw Error("Ad demo requires an explicit FetchSandbox Meta binding; live Meta is not enabled");
+ if(!nativeMeta&&base&&!/^https:\/\/fetchsandbox\.com\/sandbox\//.test(base)&&!/^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(base))throw Error("Ad demo requires an explicit FetchSandbox Meta binding; live Meta is not enabled");
  if(!(process.env.APPROVER_USER_IDS??"").trim())throw Error("Ad demo requires configured named approvers");
 }
 const engine = new Engine(workflow, {
