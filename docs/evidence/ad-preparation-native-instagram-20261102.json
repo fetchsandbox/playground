@@ -1,0 +1,187 @@
+{
+  "observed_date": "2026-11-02",
+  "source_commit": "ff604a7b2649aa90c04903765dce98f1e871ed51",
+  "bundle_sha256": "b88278ee555605d3a359eeb4a0fd4131e5e235754bece72422615baf77f528b8",
+  "deployment": {
+    "runtime_id": "fetchsandbox_ad_campaign_native-FMD48eDPFA",
+    "version": "1",
+    "image_digest": "sha256:60dc1d6731cfc2c880ed18894f9c7490e141773d9d3a4edebd73c287e4b2cb8e",
+    "scope": "Separate cost-free native Meta qualification runtime; existing v5 unchanged",
+    "company": "FetchSandbox",
+    "department": "Marketing",
+    "owner_team": "creative-operations",
+    "owner": "Raj",
+    "state": "Separate encrypted DynamoDB table with point-in-time recovery",
+    "authorization": "AWS IAM invocation plus existing signed review bridge; requester ID supplied by invoking integration"
+  },
+  "separate_proofs": {
+    "unit_regression": {
+      "tests_passed": 405,
+      "files_passed": 60,
+      "typecheck": "passed",
+      "bundle": "passed"
+    },
+    "fetchsandbox_twin_regression": {
+      "receipt_url": "https://fetchsandbox.com/runs/21c6fc6085?flow=vr_60e11403c426463cb9847c7bfaf1103f",
+      "app_verified": true,
+      "checks_met": 16,
+      "unchanged_contract": true,
+      "disposable_key_revoked": true,
+      "relay_cleanup_confirmed": true,
+      "scope": "Hosted app against FetchSandbox provider twins; not native Meta"
+    },
+    "local_native_http": {
+      "cases": [
+        {
+          "case": "self_review",
+          "phase": "AWAITING_APPROVAL",
+          "outcome": "ok",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "approval_http": 409
+        },
+        {
+          "case": "reject",
+          "phase": "REJECTED",
+          "outcome": "ok",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "approval_http": 200
+        },
+        {
+          "case": "stale",
+          "phase": "AWAITING_APPROVAL",
+          "outcome": "ok",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "approval_http": 409
+        },
+        {
+          "case": "wrong_reviewer",
+          "phase": "AWAITING_APPROVAL",
+          "outcome": "ok",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "approval_http": 409
+        },
+        {
+          "case": "approve",
+          "phase": "DONE",
+          "outcome": "ok",
+          "provider_counts": {
+            "campaigns": 1,
+            "adsets": 1,
+            "adcreatives": 1,
+            "ads": 1
+          },
+          "approval_http": 200
+        }
+      ],
+      "reconciliation_matches": 4,
+      "actual_process_restart": true,
+      "approval_replay_no_duplicate": true,
+      "scope": "Actual local HTTP app with native Meta v26.0; scripted signed reviewer, not browser approval or authenticated requester"
+    },
+    "agentcore_native": {
+      "at": "2026-11-02T17:37:01.542838+00:00",
+      "runtime_id": "fetchsandbox_ad_campaign_native-FMD48eDPFA",
+      "version": "1",
+      "source_commit": "ff604a7b2649aa90c04903765dce98f1e871ed51",
+      "image": "342206308838.dkr.ecr.us-west-2.amazonaws.com/cdk-hnb659fds-container-assets-342206308838-us-west-2@sha256:60dc1d6731cfc2c880ed18894f9c7490e141773d9d3a4edebd73c287e4b2cb8e",
+      "scope": "Actual AgentCore and native cost-free Meta sandbox; IAM invoker and scripted signed reviewer, not browser or authenticated initiating-human acceptance",
+      "cases": [
+        {
+          "case": "self_review",
+          "runId": "aws-native-self_review-8818bfd8-fd58-4979-9cdb-e18096a7c4b2",
+          "phase": "AWAITING_APPROVAL",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "consistent_dynamodb_readback": true
+        },
+        {
+          "case": "reject",
+          "runId": "aws-native-reject-dc6302dd-ac1a-40e7-abc0-a84e2f4f852b",
+          "phase": "REJECTED",
+          "provider_counts": {
+            "campaigns": 0,
+            "adsets": 0,
+            "adcreatives": 0,
+            "ads": 0
+          },
+          "consistent_dynamodb_readback": true
+        },
+        {
+          "case": "approve",
+          "runId": "aws-native-approve-8506fc24-6ce9-4d4b-98a5-b702d9c9d122",
+          "phase": "DONE",
+          "provider_counts": {
+            "campaigns": 1,
+            "adsets": 1,
+            "adcreatives": 1,
+            "ads": 1
+          },
+          "consistent_dynamodb_readback": true
+        }
+      ],
+      "delivery_activated": false,
+      "reconciliation_matches": 4,
+      "cross_session_durable_read": true,
+      "replay_and_resume_no_duplicate": true,
+      "deliberate_name_drift_detected": true,
+      "restoration_matches": 4,
+      "redacted_durable_control_events": 17,
+      "existing_v5_preserved": true
+    },
+    "agentcore_source_telemetry": {
+      "runId": "aws-native-approve-8506fc24-6ce9-4d4b-98a5-b702d9c9d122",
+      "scope": "CloudWatch source emission compared with strongly consistent DynamoDB control events; not a LoopLabs history-enrollment test",
+      "expected_unique": 17,
+      "observed_unique": 17,
+      "deliveries": 34,
+      "duplicates": 17,
+      "missing": []
+    }
+  },
+  "retained_setup_failures": [
+    {
+      "attempt": 1,
+      "result": "Execution role could not be assumed before business run; exact runtime-ID trust",
+      "provider_effects": 0
+    },
+    {
+      "attempt": 2,
+      "result": "Same startup refusal with runtime-ID-plus-suffix trust",
+      "provider_effects": 0
+    }
+  ],
+  "setup_resolution": "Runtime-name-prefix trust, restricted to this account, region and AgentCore service, succeeded on attempt 3. Timing/propagation contribution was not independently isolated. Existing runtime role untouched.",
+  "credential_contract": "Account credential creates campaigns/ad sets and reads account objects; Page credential creates creatives/ads and reads creatives. No credential fallback. Other accounts/hosts, activation and over-budget requests rejected.",
+  "telemetry_scope": "Existing durable action/provider and redacted signed-control records. Direct native calls bypass FetchSandbox HTTP usage ledger.",
+  "limits": [
+    "Native AWS approvals were scripted signed decisions, not the actual browser approval UI. Earlier v5 browser proof uses twins and is separate.",
+    "Authenticated initiating-human attestation remains unmeasured; IAM caller is authenticated, but requestedBy remains integration supplied.",
+    "Cost-free sandbox fixture only; no live-account deployment, ad delivery, review outcome or spend measured. Provider effective processing state is not configured PAUSED state.",
+    "No continuous drift monitor or LoopLabs history enrollment for this new native resource is claimed.",
+    "No new persona/client acceptance run; 405 app tests, hosted executable contract and explicit native application observations are separate scopes."
+  ]
+}
