@@ -114,6 +114,12 @@ preserved. A separate authenticated named-account API approval produced one
 linked campaign/ad set/creative/ad in FetchSandbox, with delivery paused,
 consistent database read-back and four reconciliation matches. Self-review and
 non-reviewer decisions returned 403; stale and repeated decisions returned 409.
-The actual browser remains signed out, so browser approval is untested. This
-does not establish authenticated initiating-human identity or native Meta /
-Instagram workflow acceptance. See the [separate evidence record](../docs/evidence/ad-preparation-identity-20261101.json).
+The separate November 2 actual Chrome test saved one approval and independently
+confirmed the paused hierarchy and four reconciliation matches. This was an
+agent-operated signed-in account, not a manual human decision. A first attempt
+left the run held with zero effects; its exact response was not captured. The
+UI also encountered a shared connection rate limit before and after success;
+that usability issue is unresolved. This does not establish authenticated
+initiating-human identity or native Meta / Instagram workflow acceptance. See the [separate evidence record](../docs/evidence/ad-preparation-identity-20261101.json).
+
+[Separate browser acceptance evidence and limits](../docs/evidence/ad-preparation-browser-20261102.json).
