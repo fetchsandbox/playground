@@ -43,6 +43,8 @@ const FIXTURES = {
   exception_approved: "contract",
   exception_rejected: "contract",
   approve_by_stranger_refused: "contract",
+  requester_self_review_refused: "contract",
+  slack_requester_self_review_refused: "contract",
   restart_while_parked: "contract",
   no_refund_due: "non_refundable",
   large_refund_needs_approval: "annual",
@@ -102,6 +104,7 @@ export const checks = [
   check("exception_approved", "The CX lead's approval cancels the contract subscription and sends the offer", [req("exception_approved"), command("decide", 1, { decision: "approve", userId: APPROVER })], runs([eq("phase", "DONE"), action("stripe.cancel_subscription", "applied", 1, [eq("attempts", 1)]), action("zendesk.refund_offer", "applied")])),
   check("exception_rejected", "A rejected exception cancels nothing and tells the customer nothing automatically", [req("exception_rejected"), command("decide", 1, { decision: "reject", userId: APPROVER })], runs([eq("phase", "REJECTED"), action("stripe.cancel_subscription", "rejected"), action("zendesk.refund_offer", "rejected")])),
   check("approve_by_stranger_refused", "Someone who is not an approver cannot approve an exception", [req("approve_by_stranger_refused"), command("decide", 1, { decision: "approve", userId: "U_AGENT" }, 403)], runs([eq("phase", "AWAITING_APPROVAL"), action("stripe.cancel_subscription", "pending_approval")])),
+  ...[["requester_self_review_refused",APPROVER],["slack_requester_self_review_refused",`slack:${APPROVER}`]].map(([id,requester])=>{const request=req(id);request.body.requestedBy={userId:requester};return check(id,"The initiating employee cannot approve their own cancellation exception",[request,command("decide",1,{decision:"approve",userId:APPROVER},403)],runs([eq("phase","AWAITING_APPROVAL"),action("stripe.cancel_subscription","pending_approval"),action("zendesk.refund_offer","pending_approval")]));}),
   check("no_refund_due", "A non-refundable product is cancelled and confirmed with no refund offer; the ticket is solved", [req("no_refund_due")], runs([eq("phase", "DONE"), action("stripe.cancel_subscription", "applied"), action("zendesk.cancellation_confirmed", "applied"), noAction("zendesk.refund_offer")])),
   check(
     "large_refund_needs_approval",
@@ -183,6 +186,7 @@ async function seed(legs, log, context) {
     if(["gift_card_end_to_end","gift_card_balance_readback"].includes(check.id)) {
       check.provider_assertions=[providerCheck("square","gift_cards",[eq("id","{{step2.actions.1.ref}}"),eq("state","ACTIVE"),eq("balance_money.amount",4900),eq("balance_money.currency","USD")]),providerCheck("zendesk","simulated_email_deliveries",[eq("recipient_fingerprint",fingerprint(email(check.id))),eq("delivery_mode","simulated_mailbox"),{select:"body",required:true,contains:"Your gift card number is "},{select:"body",required:true,contains:"{{step2.actions.1.detail.ganLast4}}"}])];
     }
+    if(["requester_self_review_refused","slack_requester_self_review_refused"].includes(check.id))check.provider_assertions=[providerCheck("stripe","subscriptions",[eq("id",out[check.id].subscription),eq("status","active")]),providerCheck("stripe","refunds",[eq("payment_intent",out[check.id].paymentIntent)],0)];
     if(check.id==="phone_request_opens_ticket") check.provider_assertions=[providerCheck("zendesk","tickets",[eq("id","{{step1.actions.0.ref}}"),eq("requester_id","{{step1.actions.0.detail.requesterId}}")])];
     if(check.id==="customer_email_delivery") check.provider_assertions=[providerCheck("zendesk","simulated_email_deliveries",[eq("recipient_fingerprint",fingerprint(email(check.id))),eq("delivery_mode","simulated_mailbox"),eq("status","delivered"),{select:"body",required:true,contains:"We've refunded $49.00"},{select:"body",required:true,contains:"That completes your cancellation."}])];
 
@@ -200,6 +204,8 @@ export default {
   workflow: "product-cancellation",
   providers: ["stripe", "zendesk", "square", "slack"],
   seed,
+  // Disposable local verification policy only; no production identity or signing authority.
+  appEnv: {LOOPLABS_CONTROL_CONFIG:JSON.stringify({scope:{tenantId:"verification",connectionId:"verification",resourceArn:"arn:aws:bedrock-agentcore:us-west-2:000000000000:runtime/cancellation_verification",version:"1",epoch:"verification-only"},reviewerMap:{"lead@fetchsandbox.example":APPROVER},allowSelfReview:false}),LOOPLABS_APPROVAL_SIGNING_SECRET:"0".repeat(64)},
   context: {
     goal: "Prove the product-cancellation AgentCore runtime: cancellation request (Zendesk ticket) → parallel ticket context, Stripe policy research, Square gift-card availability → acknowledgement, policy note, cancellation (exceptions gated), refund offer; the customer's choice → Stripe refund, Stripe store credit or Square gift card (large refunds gated) → confirmation on the ticket.",
     workflow: "POST /invocations {action:start, input.stage:request} researches and cancels or parks an exception; {action:start, input.stage:refund_choice} issues the chosen refund; {action:decide} approves or rejects gated actions. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",
@@ -210,7 +216,7 @@ export default {
   scope_review: checks.map(c => ({check_id:c.id,classification:"in_scope",reason:"Cancellation runtime behavior.",evidence:["acme-ops/src/workflows/product-cancellation.ts"]})),
   coverage: {
     baseline: ["baseline"],
-    identity_and_access: ["approve_by_stranger_refused", "unknown_customer_not_cancelled"],
+    identity_and_access: ["approve_by_stranger_refused", "unknown_customer_not_cancelled", "requester_self_review_refused", "slack_requester_self_review_refused"],
     schema_and_value_boundaries: ["invalid_input_rejected", "method_not_offered_clarified"],
     amount_currency_quantity: ["large_refund_needs_approval", "prorated_credit_tier"],
     duplicate_replay: ["duplicate_start", "second_refund_refused"],
