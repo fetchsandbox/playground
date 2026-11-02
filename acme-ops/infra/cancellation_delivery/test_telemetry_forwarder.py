@@ -37,3 +37,10 @@ class Tests(unittest.TestCase):
    c=Logs()
    with self.assertRaises(AssertionError):forward(event(logGroup=source),c,source=source,destination=DEST,owner='342206308838',version='4')
    self.assertEqual(c.rows,[])
+ def test_preparation_approval_endpoint_joins_only_its_exact_version_source(self):
+  source='/aws/bedrock-agentcore/runtimes/acme_ad_campaign_preparation-d4VxBH8KHG-looplabs_prepare_v5';destination=source.removesuffix('-looplabs_prepare_v5')+'-business-v5';c=Logs()
+  self.assertEqual(forward(event({'event_name':'approval.approved','agent_deployment_version':'5'},logGroup=source),c,source=source,destination=destination,owner='342206308838',version='5'),{'forwarded':1,'coverageGaps':0})
+  for wrong in [source.replace('_v5','_v4'),source.replace('d4VxBH8KHG','foreign')]:
+   c=Logs()
+   with self.assertRaises(AssertionError):forward(event({'agent_deployment_version':'5'},logGroup=wrong),c,source=wrong,destination=destination,owner='342206308838',version='5')
+   self.assertEqual(c.rows,[])

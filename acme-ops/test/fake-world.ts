@@ -31,7 +31,7 @@ const id = (p: string) => `${p}_${++seq}`;
 
 export function seedState() {
   return {
-    meta: {ads:[] as any[],creatives:[{id:"3001",account_id:"1001",name:"Pergola TEST",object_story_spec:{page_id:"4001",link_data:{message:"Plan your outdoor space",link:"https://example.test/pergolas"}}}] as any[],loseResponses:0,hideAds:false},
+    meta: {campaigns:[] as any[],adsets:[] as any[],ads:[] as any[],creatives:[{id:"3001",account_id:"1001",name:"Pergola TEST",object_story_spec:{page_id:"4001",link_data:{message:"Plan your outdoor space",link:"https://example.test/pergolas"}}}] as any[],loseResponses:0,hideAds:false},
     stripe: {
       customers: [
         { id: "cus_alice", email: "alice@acmecorp.com", name: "Alice" },
@@ -1043,6 +1043,16 @@ export async function startWorld() {
       return g ? send(200, { gift_card: g }) : send(404, { errors: [{ code: "NOT_FOUND" }] });
     }
 
+    if((r=m(/^\/v26.0\/act_1001\/(campaigns|adsets|adcreatives)$/))){
+      const rows=r[1]==="campaigns"?state.meta.campaigns:r[1]==="adsets"?state.meta.adsets:state.meta.creatives;
+      if(req.method==="GET")return send(200,{data:rows});
+      if(req.method==="POST"){
+        const row:any={...body,id:String(++seq),account_id:"1001"};
+        for(const k of ["special_ad_categories","targeting","object_story_spec"])if(typeof row[k]==="string")row[k]=JSON.parse(row[k]);
+        if("is_adset_budget_sharing_enabled" in row)row.is_adset_budget_sharing_enabled=String(row.is_adset_budget_sharing_enabled)==="true";
+        rows.push(row);return send(200,{id:row.id});
+      }
+    }
     if(path==="/v26.0/act_1001/ads"){
       if(req.method==="GET")return send(200,{data:state.meta.hideAds?[]:state.meta.ads});
       if(req.method==="POST"){
@@ -1053,7 +1063,7 @@ export async function startWorld() {
       }
     }
     if(req.method==="GET"&&path.startsWith("/v26.0/")){
-      const node=state.meta.creatives.find(c=>c.id===path.slice(7))??state.meta.ads.find(a=>a.id===path.slice(7));
+      const node=[...state.meta.campaigns,...state.meta.adsets,...state.meta.creatives,...state.meta.ads].find(a=>a.id===path.slice(7));
       return node?send(200,node):send(404,{error:{code:100}});
     }
     send(404, { error: "no_route", path });

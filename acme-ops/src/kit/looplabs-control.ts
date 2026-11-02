@@ -18,12 +18,26 @@ export function readControlConfig(env:NodeJS.ProcessEnv):ControlConfig|undefined
 }
 export const sameScope=(a:ControlScope,b:ControlScope)=>Object.entries(a).every(([k,v])=>b[k as keyof ControlScope]===v)&&Object.keys(a).length===5&&Object.keys(b).length===5;
 function customer(r:RunRecord){const i=r.input as {customer?:{email?:unknown}};return email(i.customer?.email)?i.customer!.email as string:null;}
+/** Native requester IDs come from the invoking integration, not the customer field.
+ * This comparison does not attest a human identity; the invoker must bind it.
+ */
+export function isSelfReview(r:RunRecord,c:ControlConfig,userId:string){
+ const reviewer=Object.entries(c.reviewerMap).find(([,id])=>id===userId)?.[0];
+ return r.requestedBy.userId===userId||!!(reviewer&&customer(r)?.toLowerCase()===reviewer.toLowerCase());
+}
 function channel(r:RunRecord):"slack"|"email"|"internal"{const c=(r.input as {channel?:string}).channel??r.labels.trigger;return c==="slack"?"slack":c?.includes("email")?"email":"internal";}
 function protectedState(r:RunRecord){return hash([r.workflow,r.input,r.requestedBy,r.agents,r.output,r.actions.map(a=>[a.id,a.kind,a.provider,a.agent,a.gate,a.summary]),r.approval?.approvers,r.approval?.expiresAt]);}
 export function approvalRevision(a:Omit<Approval,"revision">){return hash([a.id,a.runId,a.policyVersion,a.title,a.reason,a.action,a.system,a.before,a.after,a.requestedBy,a.allowedReviewers,a.expiresAt,a.channel]);}
 function freeze(r:RunRecord,c:ControlConfig):Approval|undefined {
- const requestedBy=customer(r);const allowedReviewers=Object.entries(c.reviewerMap).filter(([,id])=>r.approval?.approvers.includes(id)).map(([e])=>e).sort();
+ const requestedBy=Object.entries(c.reviewerMap).find(([,id])=>id===r.requestedBy.userId)?.[0]??customer(r);const allowedReviewers=Object.entries(c.reviewerMap).filter(([,id])=>r.approval?.approvers.includes(id)).map(([e])=>e).sort();
  if(!requestedBy||!allowedReviewers.length||!r.approval||!r.output)return undefined;
+ if(r.workflow==="ad-campaign-preparation"){
+  const input=r.output.reviewedInput as Record<string,unknown>|undefined;
+  const stages=["campaigns","adsets","adcreatives","ads"];
+  if(r.output.decision!=="prepare"||r.output.deliveryEnabled!==false||!object(input)||!["facebook","instagram"].includes(String(input.platform))||typeof r.output.policyVersion!=="string"||typeof r.output.policyHash!=="string"||r.actions.length!==4||!r.actions.every((a,i)=>a.id==="meta.prepare_"+stages[i]&&a.provider==="meta"&&a.gate==="approval"&&a.summary.status==="PAUSED"))return undefined;
+  const a={id:"APR-"+hash(r.runId).slice(0,16),runId:r.runId,policyVersion:"ads-preparation-"+hash([r.output.policyVersion,r.output.policyHash,c.scope.version,r.actions.map(a=>a.summary)]).slice(0,24),title:`Review ${input.platform==="instagram"?"Instagram":"Facebook"} campaign preparation`,reason:"Review the exact business, budget, audience, destination and creative before any provider write.",action:"Prepare four linked paused campaign objects",system:"Meta Marketing API sandbox",before:"No campaign objects confirmed for this request",after:JSON.stringify({deliveryEnabled:false,reviewedInput:input,policyVersion:r.output.policyVersion,policyHash:r.output.policyHash,actions:r.actions.map(a=>({id:a.id,summary:a.summary}))}),requestedBy,allowedReviewers,expiresAt:r.approval.expiresAt,channel:channel(r)};
+  return {...a,revision:approvalRevision(a)};
+ }
  if(r.workflow==="ad-creative-publishing"){
   const p=r.output.publication as Record<string,unknown>|null;
   if(!p||p.status!=="PAUSED"||typeof r.output.creativeHash!=="string"||typeof r.output.policyVersion!=="string")return undefined;
@@ -43,7 +57,7 @@ export function checkpoint(previous:RunRecord|undefined,r:RunRecord,c:ControlCon
  const add=(name:string,key:string,extra:Record<string,unknown>={})=>r.control!.events.push({schema_version:"1.0",event_name:name,event_id:"evt_"+String(r.control!.events.length).padStart(4,"0")+"_"+hash([r.runId,key]).slice(0,32),run_id:r.runId,action_id:null,timestamp:at,attempt:1,trace_id:hash(r.runId).slice(0,32),span_id:hash([r.runId,key]).slice(0,16),trigger_channel:channel(r),agent_deployment_version:c.scope.version,...extra});
  if(!previous)add("workflow.started","start");
  for(const a of r.agents)if(!previous?.agents.some(p=>p.name===a.name&&p.status===a.status))add(a.status==="ok"?"action.completed":"action.failed",`role:${a.name}:${a.status}`,{action_id:"role_"+hash(a.name).slice(0,16),action_name:a.name,provider:"internal"});
- if(r.output&&!previous?.output)add("policy.evaluated","policy",{rule_id:r.workflow==="ad-creative-publishing"?"ad-publishing-policy":"cancellation-policy",rule_version:String(r.output.policyVersion??"not_reported"),decision:r.actions.some(a=>a.gate==="approval")?"needs_approval":["cancel","refund"].includes(String(r.output.decision))?"allow":"review_required"});
+ if(r.output&&!previous?.output)add("policy.evaluated","policy",{rule_id:r.workflow==="ad-campaign-preparation"?"ad-preparation-policy":r.workflow==="ad-creative-publishing"?"ad-publishing-policy":"cancellation-policy",rule_version:String(r.output.policyVersion??"not_reported"),decision:r.actions.some(a=>a.gate==="approval")?"needs_approval":["cancel","refund"].includes(String(r.output.decision))?"allow":"review_required"});
  for(const a of r.actions){const prior=previous?.actions.find(p=>p.id===a.id);if(prior?.status===a.status)continue;const event=a.status==="applied"?"action.completed":a.status==="failed"?"action.failed":a.status==="pending_approval"?"action.withheld":"action.proposed";add(event,`action:${a.id}:${a.status}:${a.attempts}`,{action_id:"action_"+hash(a.id).slice(0,16),action_name:a.kind,provider:a.provider,attempt:Math.max(1,a.attempts),...(r.control.frozen?{approval_id:r.control.frozen.id}:{})});}
  if(r.phase==="AWAITING_APPROVAL"&&previous?.phase!==r.phase){r.control.frozen=freeze(r,c);r.control.stateHash=protectedState(r);add("approval.requested","approval-requested",r.control.frozen?{approval_id:r.control.frozen.id}:{});add("workflow.paused","paused",{outcome:"awaiting_approval"});}
  if(r.approval?.decision&&!previous?.approval?.decision){add(r.approval.decision==="approve"?"approval.approved":"approval.rejected","decision",r.control.frozen?{approval_id:r.control.frozen.id}:{});if(r.approval.decision==="approve")add("workflow.resumed","resumed");}
@@ -75,7 +89,7 @@ export async function controlEnvelope(engine:Engine<unknown>,store:KvStore,c:Con
   if(v.operation==="decide"){
    if(!email(v.reviewer)||!c.reviewerMap[v.reviewer]||! /^[a-f0-9]{64}$/.test(String(v.revision))||! /^[a-f0-9]{64}$/.test(String(v.decisionId))||!["approved","rejected"].includes(String(v.decision)))return fail(409);
    const rows=await engine.controlRuns();const run=rows.find(r=>r.control?.frozen?.id===v.id);const a=run&&approvalView(run,c);
-   if(!run||!a||!a.allowedReviewers.includes(v.reviewer)||(a.requestedBy===v.reviewer&&!c.allowSelfReview)||v.decisionId!==hash([c.scope.tenantId,c.scope.resourceArn,a.id,v.revision,v.reviewer,v.decision]))return fail(409);
+   if(!run||!a||!a.allowedReviewers.includes(v.reviewer)||(!c.allowSelfReview&&isSelfReview(run,c,c.reviewerMap[v.reviewer]!))||v.decisionId!==hash([c.scope.tenantId,c.scope.resourceArn,a.id,v.revision,v.reviewer,v.decision]))return fail(409);
    const reply=await engine.decideReviewed(run.runId,v.reviewer,c.reviewerMap[v.reviewer]!,String(v.decision),String(v.revision),String(v.policyVersion));if(reply.status!==200)return fail(reply.status);
   }
   const requests=(await engine.controlRuns()).map(r=>approvalView(r,c)).filter(x=>x!==null);if(requests.length>100)return fail(503);

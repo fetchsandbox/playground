@@ -1,0 +1,56 @@
+{
+  "checkedUtc": "2026-11-02T13:04:59.942334+00:00",
+  "scope": "Actual Chrome UI approval followed by independent native DynamoDB and FetchSandbox provider state; agent-operated signed-in account, not manual human click or authenticated initiating-human proof",
+  "runtime_version": "5",
+  "runtime_source": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
+  "looplabs_web_commit": "f6e77f97b1140d291cffdf815296c879ce6b1640",
+  "runId": "prep-v5-pending-review-9455a7b3-001b-481d-a6a6-4f0257eb0017",
+  "approvalId": "APR-af2316fb75fa808e",
+  "revision": "47daa8d6e529e3cc58b8cc54dfbe435275db1ec803d09165d70fa3d8a3ff1886",
+  "phase": "DONE",
+  "outcome": "ok",
+  "native_decided_by": "U_AD_OWNER",
+  "provider_counts": {
+    "campaigns": 1,
+    "adsets": 1,
+    "adcreatives": 1,
+    "ads": 1
+  },
+  "linked_hierarchy": true,
+  "delivery_objects_paused": true,
+  "daily_budget_minor": 1000,
+  "facebook_feed_only": true,
+  "audience_expansion_disabled": true,
+  "exact_creative_and_destination": true,
+  "saved_action_refs_match_provider": true,
+  "frozen_review_preserved": true,
+  "consistent_dynamodb_readback": true,
+  "reconciliation_matches": 4,
+  "native_meta_egress": false,
+  "browser": {
+    "operator": "Coding agent using Raj existing signed-in Chrome account",
+    "manual_human_click": false,
+    "decision_recorded_utc": "2026-11-02T13:04:43Z",
+    "saved_reviewer_shown": true,
+    "self_review_request_has_no_decision_button": true,
+    "successful_decisions": 1,
+    "confirmation_clicks": 2,
+    "first_attempt": "Independent recheck at13:04:33Z confirmed still awaiting approval, no saved decision and zero effects; exact response/cause was not captured",
+    "second_attempt": "Browser reported approval saved and execution completed; separate independent readback confirms business effects"
+  },
+  "open_issues": [
+    "Shared connection-level 12/minute observation throttle is also consumed by approval reads. Actual UI showed429 before and after successful decision; broad inventory/enrollment/history reads and dialog polling share the budget. No fix deployed; exact first decision response unmeasured.",
+    "Requester is declared by a setup service; authenticated initiating-human identity not established",
+    "Native Meta/Instagram full workflow acceptance unmeasured"
+  ],
+  "instagram": {
+    "chosen_account": "trymathquest",
+    "signed_in_profile_observed": true,
+    "professional_controls_observed": true,
+    "facebook_label_in_settings": "MathQuest",
+    "active_page_link_verified": false,
+    "existing_app_only_demo_page_visible": true,
+    "new_access_granted": false,
+    "current_step": "Awaiting action-time confirmation before Continue as Rajender grants Instagram Facebook-account access"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-01",
+  "workflow": "ad-campaign-preparation",
+  "scope": "Native read-only application creative-action replay plus separate local regression checks; not full workflow acceptance",
+  "candidate_deployed": false,
+  "source_sha256": {
+    "application": "490f0b00df6becbf18349d2918381144db41498d474a53704e0a9ecb8c267cc3",
+    "backend": "a03e63e29d61ad29ae394713f357dfa8791187f3421849ec6fa947107ef9cd8d"
+  },
+  "native_action_replay": {
+    "same_fixture": true,
+    "writes": 0,
+    "before": [
+      {
+        "known_id": false,
+        "recovered": false
+      },
+      {
+        "known_id": true,
+        "recovered": false
+      }
+    ],
+    "after": [
+      {
+        "known_id": false,
+        "recovered": true,
+        "reconcile": "match"
+      },
+      {
+        "known_id": true,
+        "recovered": true,
+        "reconcile": "match"
+      }
+    ]
+  },
+  "separate_native_repeat": {
+    "identical_posts": 2,
+    "distinct_creative_ids": 1,
+    "same_returned_name": true,
+    "limits": "One cost-free Meta sandbox; not concurrency or a universal Meta guarantee"
+  },
+  "local": {
+    "app_tests_passed": 391,
+    "preparation_subset": 16,
+    "backend_selected_passed": 129,
+    "typecheck": "passed",
+    "bundle": "passed",
+    "local_doc_targets": 643,
+    "process_restart": "not measured; reconstructed-engine persistence only"
+  },
+  "contract_change": "Names are checked against the run-bound intent and recorded provider suffix rule, then frozen exactly; account/story/image/link/identity stay exact. Identical supported creative requests reuse their ID in the candidate. Historical 16-check receipt is not reused.",
+  "pending": [
+    "paired hosted positive/negative proof",
+    "AgentCore revision and process restart proof",
+    "native full workflow and Instagram",
+    "candidate production telemetry",
+    "continuous native drift monitoring"
+  ]
+}

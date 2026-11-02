@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-01T16:14:05.775515+00:00",
+  "workflow": "ad-campaign-preparation",
+  "deployment": {
+    "backend_commit": "8ba275bf",
+    "agentcore_version": "2",
+    "runtime_source_commit": "ab5ea6d23b3b433c91d8f242f7e1b989fb30e8a6",
+    "hosted_contract_version": "acme-ops-ad-campaign-preparation-1.0.0-ab08b3f",
+    "bundle_sha256": "3ec8c3c1437adeaaa808994b02364f5ce0dbd615b72d8875fe18ef2b892afa56",
+    "image_digest": "sha256:a7b2d1e1effddfc4d8db32287f49a75a876b596991bae08ed8f1c4111caa3c31",
+    "company": "Acme Corporation",
+    "department": "Marketing",
+    "team": "creative-operations",
+    "owner": "Raj",
+    "iam_and_network_unchanged": true
+  },
+  "hosted": {
+    "receipt_url": "https://fetchsandbox.com/runs/7ca9dcf552?flow=vr_8225e8f6438c4c12b97cfa651fac9c9a",
+    "passed": 16,
+    "failed": 0,
+    "unmeasured": 0,
+    "scope": "Real app over managed relay against FetchSandbox; not native Meta/Instagram acceptance"
+  },
+  "deliberate_name_defect": {
+    "same_check_sha256": "60bf66627a60d001bce4a443c64eb20f81b89ef36b1ff943173351abf2fdbd7d",
+    "positive": "https://fetchsandbox.com/runs/7ca9dcf552?flow=vr_8225e8f6438c4c12b97cfa651fac9c9a",
+    "negative": "https://fetchsandbox.com/runs/f8d44ac580?flow=vr_d91cbcadaab74d60b25cd046cb758a77",
+    "negative_baseline": "violated",
+    "negative_other_checks": "15 unmeasured because baseline failed",
+    "independent_negative_effect_counts": {
+      "campaigns": 1,
+      "adsets": 1,
+      "adcreatives": 1,
+      "ads": 0
+    }
+  },
+  "legacy_regression": {
+    "workflow": "ad-creative-publishing",
+    "receipt_url": "https://fetchsandbox.com/runs/297dc0dae1?flow=vr_9a6a4d9b3a43431b889e63686d113e52",
+    "passed": 10,
+    "unmeasured": 0
+  },
+  "agentcore": {
+    "provider": "FetchSandbox only",
+    "approval": "scripted named reviewer under IAM; not device-bound human approval",
+    "paths": [
+      {
+        "platform": "facebook",
+        "waiting_before_approval": true,
+        "wrong_reviewer_refused": true,
+        "linked_paused_objects": 4,
+        "reconcile_matches": 4,
+        "replay_counts": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "consistent_dynamodb_readback": true
+      },
+      {
+        "platform": "instagram",
+        "waiting_before_approval": true,
+        "wrong_reviewer_refused": true,
+        "linked_paused_objects": 4,
+        "reconcile_matches": 4,
+        "replay_counts": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "consistent_dynamodb_readback": true
+      }
+    ]
+  },
+  "production_telemetry": {
+    "postgresql_over_tls": true,
+    "completed_requests": 4,
+    "verified_jwt_and_key_attribution": true,
+    "invalid_token_http": 401,
+    "simulated_provider_is_anonymous": true,
+    "route_templates_and_deployment_version_verified": true,
+    "scope": "Synthetic probe traffic, not customer usage"
+  },
+  "preserved": {
+    "catalog_entries": 87,
+    "persistent_mount_sources": true,
+    "historical_receipt_sha256": "c4178dcc8263be8f1aee5fa94af827bf96ab1dc21c4d5744ff7858b3a6e10eed"
+  },
+  "earlier_attempts": [
+    {
+      "scope": "staged HTTP",
+      "result": "failed because release omitted unchanged handler config; corrected with full Meta assets"
+    },
+    {
+      "scope": "hosted setup",
+      "result": "two attempts rejected for contract size; no workflow checks executed"
+    },
+    {
+      "receipt_url": "https://fetchsandbox.com/runs/1555b1de2e?flow=vr_a4dd3971efc944bc8372da43756aa4d9",
+      "result": "baseline provider assertion failed because one set-valued field was incorrectly counted as three arrays; 15 checks unmeasured"
+    },
+    {
+      "receipt_url": "https://fetchsandbox.com/runs/8a2d8eab56?flow=vr_31f7448b67da4fc4af722b80d3bc9b42",
+      "result": "negative baseline unmeasured due conditional reconciliation-field declaration; not counted as defect-detection pass"
+    }
+  ],
+  "limitations": [
+    "Native Meta action-level qualification remains separate from this hosted/AWS proof.",
+    "Native Instagram qualification, device-bound approval/LoopLabs comparison and continuous native drift monitoring remain open.",
+    "Existing historical runs are not migrated or requalified by these fresh-run checks.",
+    "Concurrency beyond the declared checks and a cold-agent persona evaluation were not measured."
+  ]
+}

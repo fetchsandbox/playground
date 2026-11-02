@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-ad-creative-publishing-1.0.0-9fcaf8e",
-  "bundle_sha256": "04cf0554edbb45740b89219663b491b3352b5b364f8476fbfecb68f13a2cd4fa",
-  "session_id": "vs_d0aa1fc7a02f",
-  "run_id": "vr_921e8044b8904d68bdfb99f56a56b4ff",
-  "receipt_url": "https://fetchsandbox.com/runs/f60b391b5f?flow=vr_921e8044b8904d68bdfb99f56a56b4ff",
+  "app_version": "acme-ops-ad-creative-publishing-1.0.0-ab5ea6d",
+  "bundle_sha256": "3ec8c3c1437adeaaa808994b02364f5ce0dbd615b72d8875fe18ef2b892afa56",
+  "session_id": "vs_f547e628b689",
+  "run_id": "vr_9a6a4d9b3a43431b889e63686d113e52",
+  "receipt_url": "https://fetchsandbox.com/runs/297dc0dae1?flow=vr_9a6a4d9b3a43431b889e63686d113e52",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -66,5 +66,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-10-30T21:01:38.176Z"
+  "recorded_at": "2026-11-01T16:06:02.987Z"
 }

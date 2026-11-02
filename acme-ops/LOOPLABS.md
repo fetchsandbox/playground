@@ -43,3 +43,83 @@ uses one write attempt, and has no runtime invoke or provider permissions. Its
 subscription matches the reported deployment version; it does not convert
 ordinary diagnostic text into workflow evidence. Native delivery, reader access
 and the selected source must be verified separately.
+
+## Campaign preparation adapter
+
+`ad-campaign-preparation` uses the same signed bridge when explicitly configured.
+Its review freezes the complete input, policy version/hash, and four ordered
+paused action summaries. A direct native `decide` is refused while the bridge is
+required. Tenant/runtime/version/revision/reviewer and expiry checks remain in
+the shared implementation. Typed events identify `ad-preparation-policy` and do
+not copy the input, destination, email or creative message into event payloads.
+
+This adds adapter capability, not a native Meta connection: the runtime still
+requires an explicit FetchSandbox provider binding. The local six-case process
+proof used a scripted signed client, provider read-back and file persistence;
+it does not establish a real LoopLabs browser or device signature. Deployment
+and native acceptance evidence must identify their own versions separately.
+
+When enabling this adapter on an existing runtime, remove a previously explicit
+empty `LOOPLABS_APPROVAL_SIGNING_SECRET` environment value. The boot loader
+intentionally preserves explicit environment values, including an empty value
+used to disable old bindings; it cannot load the secret over that override.
+Validate the exact merged environment with `readControlConfig` before rollout.
+Use a separate scoped secret when preserving an earlier version without control
+configuration; adding only a signing key to that version's old secret would
+create a partial configuration and prevent startup.
+
+November 1 preparation acceptance: source `2d62db5` is deployed as AgentCore
+version 4, with version 2 pinned separately. Version 3 failed startup because
+an inherited empty signing-key override blocked the separate secret; version 4
+removed that override and passed the exact startup validator. The adapter's
+AWS proof uses a scripted signed client, not a real LoopLabs user decision.
+
+The same maintained `infra/cancellation_delivery/telemetry_forwarder.py` now
+projects only preparation version-4 typed events into its `-business-v4` group.
+A fresh held-then-rejected request delivered all 16 expected distinct events
+through the actual CloudWatch subscription with zero provider effects. The
+previous successful execution's 17 events were separately replayed unchanged
+for historical continuity; that replay is not fresh transport acceptance.
+LoopLabs history enrollment is saved under the existing workspace and invited
+owner, and its measured read contains 33 events across two executions. Original
+diagnostic logs remain at their original source. Shared approval authority must
+still be bound to the actual saved tenant/connection/enrollment epoch and invited
+reviewer; the scripted native scope is not an installed LoopLabs user binding.
+
+The observed v4 enrollment is version-specific. An AgentCore environment update
+publishes a new runtime version; never reuse the v4 enrollment epoch or report a
+newer runtime as v4. Review the actual new server binding before activation.
+Declared customer email/native requester metadata does not independently prove
+an authenticated initiating human. Separation between that person and the
+invited approver remains unqualified until identity-bound integration and its
+negative checks are measured.
+
+The follow-up self-review guard compares the saved native requester ID with the
+configured reviewer's native ID inside the decision compare-and-swap, as well as
+retaining the conservative customer-email check. A different customer email
+cannot bypass this guard. If the requester ID has an administrator-configured
+reviewer mapping, the displayed requester uses that mapping. This is protection
+against inconsistent request metadata, not human authentication: `requestedBy`
+still comes from the trusted invoking integration. Binding that integration's
+authenticated principal and accepting a real LoopLabs user decision are
+separate acceptance checks; the later named-account API measurement below
+covers the latter, while actual browser acceptance remains untested. Existing explicit demo self-review configuration is
+preserved; it must never be presented as independent review.
+
+## November 1 v5 release and named-account API acceptance
+
+AgentCore preparation v5 (`3d96f14`) and LoopLabs `f6e77f9` are deployed. The
+exact pinned v5 binding is installed with self-review disabled; v4 remains
+preserved. A separate authenticated named-account API approval produced one
+linked campaign/ad set/creative/ad in FetchSandbox, with delivery paused,
+consistent database read-back and four reconciliation matches. Self-review and
+non-reviewer decisions returned 403; stale and repeated decisions returned 409.
+The separate November 2 actual Chrome test saved one approval and independently
+confirmed the paused hierarchy and four reconciliation matches. This was an
+agent-operated signed-in account, not a manual human decision. A first attempt
+left the run held with zero effects; its exact response was not captured. The
+UI also encountered a shared connection rate limit before and after success;
+that usability issue is unresolved. This does not establish authenticated
+initiating-human identity or native Meta / Instagram workflow acceptance. See the [separate evidence record](../docs/evidence/ad-preparation-identity-20261101.json).
+
+[Separate browser acceptance evidence and limits](../docs/evidence/ad-preparation-browser-20261102.json).

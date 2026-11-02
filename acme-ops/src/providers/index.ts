@@ -10,6 +10,7 @@ import { ModernTreasuryClient } from "./treasury";
 import { AsanaClient, BoxClient, DatadogClient, DocuSignClient, GitHubClient, NotionClient, PagerDutyClient, ScreeningClient, TwilioClient, WorkOSClient } from "./work";
 import { ZendeskClient } from "./zendesk";
 import { MetaClient } from "./meta";
+import {nativeMetaSandbox} from "./meta-native-sandbox";
 
 export type ProviderName =
   | "meta"
@@ -215,11 +216,13 @@ const VENDOR_HEADERS: Partial<Record<ProviderName, Record<string, string>>> = {
 
 /** Builds per-run clients that stamp `headers` (e.g. X-Flow-Run-Id) on every provider request. */
 export function providerFactory(endpoints: Partial<Record<ProviderName, ProviderEndpoint>>, env: NodeJS.ProcessEnv = process.env): ProviderFactory {
+  const native=nativeMetaSandbox(env);
+  if(native&&(!endpoints.meta||endpoints.meta.baseUrl!=="https://graph.facebook.com"||endpoints.meta.token!==env.META_API_KEY))throw new Error("Native Meta endpoint does not match the scoped configuration");
   return (headers) => {
     const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, { ...VENDOR_HEADERS[p], ...headers }) : undefined);
     const h = Object.fromEntries(PROVIDERS.map((p) => [p, http(p)])) as Record<ProviderName, ProviderHttp | undefined>;
     return {
-      meta: h.meta && new MetaClient(h.meta),
+      meta: h.meta && new MetaClient(h.meta,native?new ProviderHttp({...endpoints.meta!,token:env.META_PAGE_API_KEY!,authorization:undefined,getAuthorization:undefined},headers):undefined),
       stripe: h.stripe && new StripeClient(h.stripe),
       hubspot: h.hubspot && new HubSpotClient(h.hubspot),
       gmail: h.gmail && new GmailClient(h.gmail),
