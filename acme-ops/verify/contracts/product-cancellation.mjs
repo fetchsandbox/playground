@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { action, agent, all, blocked, check, command, eq, noAction, restart, runs, start } from "./lib.mjs";
+import { coverage, action, agent, all, blocked, check, command, eq, noAction, restart, runs, start } from "./lib.mjs";
 
 // Each case uses its own customer and requester-owned Zendesk ticket. Stripe customers, subscriptions and payments are seeded per
 // check by seed() below (customer cxl-<check>@cancel.test), so no two checks
@@ -200,7 +200,7 @@ async function seed(legs, log, context) {
   return out;
 }
 
-export default {
+const contract = {
   workflow: "product-cancellation",
   providers: ["stripe", "zendesk", "square", "slack"],
   seed,
@@ -235,3 +235,13 @@ export default {
   },
   evidence: ["acme-ops/src/workflows/product-cancellation.ts", "acme-ops/src/kit/engine.ts", "acme-ops/src/kit/server.ts", "acme-ops/src/providers/{stripe,zendesk,square,slack}.ts"],
 };
+
+// Keep all check IDs, inputs, assertions and classifications. Only redundant
+// display labels/review annotations are compacted for the 64KiB API envelope;
+// the complete descriptions and exact source references remain above/in Git.
+contract.applicationConfig={
+ get checks(){return checks.map((c,i)=>({...c,name:`C${i+1}`}));},
+ get scope_review(){return contract.scope_review.map(r=>({...r,reason:"App",evidence:["acme-ops"]}));},
+ get coverage_review(){return coverage(contract.coverage,checks).map(r=>r.rule_ids.length?{...r,reason:"See rule IDs."}:r);},
+};
+export default contract;
