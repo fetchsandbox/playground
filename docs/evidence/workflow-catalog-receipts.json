@@ -2,7 +2,7 @@
   "schema_version": 1,
   "audited_at": "2026-10-27T18:06:07.393162+00:00",
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
-  "scope": "Historical rows retain their recorded audit. Meta paused-ad and preparation receipts independently read October 30, 2026; deliberately mutated variants are separate evidence. November1 Meta preparation and legacy rows remeasured; other historical rows were not re-audited.",
+  "scope": "Historical rows retain their recorded audit. Meta paused-ad and preparation receipts independently read October 30, 2026; deliberately mutated variants are separate evidence. November1 Meta preparation and legacy rows remeasured; other historical rows were not re-audited. November 2: only ad-campaign-preparation was freshly remeasured on ff604a7; public summary read after cleanup. Other entries retain their audit.",
   "counts": {
     "inconclusive": 20,
     "failing": 23,
@@ -1755,13 +1755,13 @@
     },
     "ad-campaign-preparation": {
       "workflow": "ad-campaign-preparation",
-      "receipt_url": "https://fetchsandbox.com/runs/baa581e5b0?flow=vr_40cddd2b2da44a96b27b4a878acedb38",
+      "receipt_url": "https://fetchsandbox.com/runs/21c6fc6085?flow=vr_60e11403c426463cb9847c7bfaf1103f",
       "source": "acme-ops/verify/receipts/ad-campaign-preparation.json",
-      "checked_at": "2026-11-02T02:19:14.830076+00:00",
+      "checked_at": "2026-11-02T17:42:44.552074+00:00",
       "http": 200,
-      "snapshot_at": "2026-11-02T02:05:33.787369+00:00",
+      "snapshot_at": "2026-11-02T17:32:26.703911+00:00",
       "app_version": {
-        "value": "acme-ops-ad-campaign-preparation-1.0.0-3d96f14",
+        "value": "acme-ops-ad-campaign-preparation-1.0.0-ff604a7",
         "source": "declared"
       },
       "verdict": "verified",
