@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-02T02:17:16.503766+00:00",
+  "recorded_at": "2026-11-02T05:31:09.470493+00:00",
   "workflow": "ad-campaign-preparation",
   "runtime_source_commit": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
   "agentcore_version": "5",
@@ -235,11 +235,19 @@
   },
   "looplabs_changes": {
     "pr": "https://github.com/rnagulapalle/agentgovern/pull/159",
-    "source_commit": "7c8579b",
+    "source_commit": "f6e77f97b1140d291cffdf815296c879ce6b1640",
     "focused_tests_passed": 56,
-    "deployment": "Not deployed; CI pending at recording time",
+    "deployment": "Deployed and running image/commit verified",
     "parser_after": "Same saved 4,001-character record accepted with exact snapshot/revision",
-    "scope": "after-only 32,768-character bound; total signed response cap remains 131,072 bytes; separately keyed exact preparation ARN, self-review disabled"
+    "scope": "after-only 32,768-character bound; total signed response cap remains 131,072 bytes; separately keyed exact preparation ARN, self-review disabled",
+    "image": "sha256:a7b8b91f4ae4429a592d331e75e92069364e3ece0425623ad5cc788e5830643b",
+    "ci_candidate": "ac9f6efc91e147a575f927f5ca85bb2823a76dd1",
+    "identical_ci_and_release_tree": "0bb4e7f6c594786272d64753d561a3ab0e412394",
+    "ci_url": "https://github.com/rnagulapalle/agentgovern/actions/runs/41389422506",
+    "ci_jobs_passed": 3,
+    "quality_tests_passed": 3555,
+    "quality_test_files_passed": 384,
+    "exact_preparation_binding_verified": true
   },
   "preserved": {
     "v4_pinned_endpoint": "preparation_reviewed_v4",
@@ -248,16 +256,18 @@
     "native_meta_egress_disabled": true
   },
   "remaining": [
-    "Authenticated initiating-human attestation not implemented",
-    "Real hosted LoopLabs user decision not measured",
-    "Native Meta/Instagram full workflow acceptance not measured",
-    "LoopLabs web deployment and exact approval attachment pending"
+    "Authenticated initiating-human attestation not implemented; setup service metadata is not an authenticated human",
+    "Actual browser review and decision untested: Chrome is signed out; authenticated named-account API path is separately measured",
+    "Native Meta/Instagram full workflow acceptance not measured"
   ],
   "failures_retained": [
     "First pin read happened before endpoint READY; continuation waited for actual liveVersion4",
     "Named ESM import setup failed before corrected parser reproduction",
     "First history comparison used Decimal-to-string JSON; fresh consistent DB comparison matched20/20",
-    "SSH timeout; current public /32 equals previously approved maintenance source; no firewall change yet"
+    "SSH timeout; current public /32 equals previously approved maintenance source; no firewall change during that earlier attempt; separately authorized maintenance later completed and rule removed",
+    "Initial PR159 CI: 3472 passed, two current-proof closure failures; genuinely remeasured successor and exact fixture refresh passed final CI, historical artifacts retained",
+    "Initial postapproval bounded history observation failed completeness; cause not established, later separate fully paginated observation matched 37/37",
+    "Initial merge-commit method refused; permitted squash used without admin bypass; previous local main and files preserved"
   ],
   "native_relay_client": {
     "scope": "Maintained LoopLabs client over actual API Gateway/Lambda/pinned AgentCore v5; read-only scripted server client, not a named hosted user session",
@@ -274,7 +284,7 @@
     "saved": true,
     "owner": "Raj",
     "v4_preserved": true,
-    "shared_approval_installed": false
+    "shared_approval_installed": true
   },
   "company_catalog": {
     "revision": 10,
@@ -287,5 +297,71 @@
     "after_passed": 8,
     "source_commit": "3ee09a4",
     "scope": "Named preparation endpoint only; exact version/account/source/destination checks retained"
+  },
+  "named_hosted_api": {
+    "checkedUtc": "2026-11-02T05:18:52.378768+00:00",
+    "scope": "Named hosted API test; independent native DynamoDB and FetchSandbox provider state, not browser or authenticated initiating-human proof",
+    "runtime_version": "5",
+    "runtime_source": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
+    "looplabs_web_commit": "f6e77f97b1140d291cffdf815296c879ce6b1640",
+    "runId": "prep-v5-api-review-ece793e0-b427-4339-b52a-5473467c6964",
+    "approvalId": "APR-188867d524c523b8",
+    "revision": "dbb2f70179a074e8d68f30cb4936c20b99830da87a265a11039149761e039a0f",
+    "phase": "DONE",
+    "outcome": "ok",
+    "native_decided_by": "U_AD_OWNER",
+    "provider_counts": {
+      "campaigns": 1,
+      "adsets": 1,
+      "adcreatives": 1,
+      "ads": 1
+    },
+    "linked_hierarchy": true,
+    "delivery_objects_paused": true,
+    "daily_budget_minor": 1000,
+    "facebook_feed_only": true,
+    "audience_expansion_disabled": true,
+    "exact_creative_and_destination": true,
+    "saved_action_refs_match_provider": true,
+    "frozen_review_preserved": true,
+    "consistent_dynamodb_readback": true,
+    "reconciliation_matches": 4,
+    "native_meta_egress": false,
+    "self_review_http": 403,
+    "nonreviewer_http": 403,
+    "stale_revision_http": 409,
+    "replay_http": 409,
+    "before_decision_provider_counts": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "original_browser_case_preserved_pending": true,
+    "browser_acceptance": false
+  },
+  "history_after_api": {
+    "checkedUtc": "2026-11-02T05:25:47.705897+00:00",
+    "scope": "Fresh fully paginated CloudWatch observation after named API approval; no backfill",
+    "version": "5",
+    "expected_distinct_events": 37,
+    "observed_matching_events": 37,
+    "total_deliveries": 47,
+    "duplicate_deliveries": 10,
+    "coverage_gaps": 0,
+    "phases": {
+      "self-review": "AWAITING_APPROVAL",
+      "pending-review": "AWAITING_APPROVAL",
+      "api-review": "DONE"
+    },
+    "approved_run_finish_observed": true,
+    "earlier_observation": {
+      "status": "unconfirmed",
+      "detail": "Initial bounded unpaginated observation failed its completeness assertion; missing IDs/counts were not saved. Cause not established. The separate later paginated observation matched all expected records."
+    }
+  },
+  "maintenance": {
+    "temporary_ssh_rule_removed": true,
+    "original_firewall_rules_restored": true
   }
 }

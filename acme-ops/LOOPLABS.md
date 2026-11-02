@@ -101,6 +101,19 @@ cannot bypass this guard. If the requester ID has an administrator-configured
 reviewer mapping, the displayed requester uses that mapping. This is protection
 against inconsistent request metadata, not human authentication: `requestedBy`
 still comes from the trusted invoking integration. Binding that integration's
-authenticated principal, and accepting a real LoopLabs user decision, remain
-separate acceptance checks. Existing explicit demo self-review configuration is
+authenticated principal and accepting a real LoopLabs user decision are
+separate acceptance checks; the later named-account API measurement below
+covers the latter, while actual browser acceptance remains untested. Existing explicit demo self-review configuration is
 preserved; it must never be presented as independent review.
+
+## November 1 v5 release and named-account API acceptance
+
+AgentCore preparation v5 (`3d96f14`) and LoopLabs `f6e77f9` are deployed. The
+exact pinned v5 binding is installed with self-review disabled; v4 remains
+preserved. A separate authenticated named-account API approval produced one
+linked campaign/ad set/creative/ad in FetchSandbox, with delivery paused,
+consistent database read-back and four reconciliation matches. Self-review and
+non-reviewer decisions returned 403; stale and repeated decisions returned 409.
+The actual browser remains signed out, so browser approval is untested. This
+does not establish authenticated initiating-human identity or native Meta /
+Instagram workflow acceptance. See the [separate evidence record](../docs/evidence/ad-preparation-identity-20261101.json).
