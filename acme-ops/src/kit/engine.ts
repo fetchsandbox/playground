@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
-import { checkpoint, validateReviewed, sameScope, type ControlConfig } from "./looplabs-control";
+import { checkpoint, validateReviewed, sameScope, isSelfReview, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
 import { errorCode, errorMessage, SkipAction } from "./errors";
@@ -534,6 +534,10 @@ export class Engine<I> {
       if (r.phase === "RUNNING") return void (outcome = "not_ready");
       if (r.phase === "EXPIRED") return void (outcome = "expired");
       if (r.phase !== "AWAITING_APPROVAL") return void (outcome = r.approval?.decision ? "already_decided" : "closed");
+      if (r.control && this.deps.control && !this.deps.control.allowSelfReview && isSelfReview(r,this.deps.control,cmd.userId)) {
+        this.event(r, "decision refused: independent reviewer required");
+        return void (outcome = "forbidden");
+      }
       const approvers = r.approval?.approvers ?? [];
       if (approvers.length && !approvers.includes(cmd.userId)) {
         this.event(r, `decision by ${cmd.userId} refused: not an approver`);

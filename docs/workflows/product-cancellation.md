@@ -163,6 +163,8 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `exception_approved` | The CX lead's approval cancels the contract subscription and sends the offer | Executable declaration; result comes from a receipt |
 | `exception_rejected` | A rejected exception cancels nothing and tells the customer nothing automatically | Executable declaration; result comes from a receipt |
 | `approve_by_stranger_refused` | Someone who is not an approver cannot approve an exception | Executable declaration; result comes from a receipt |
+| `requester_self_review_refused` | The initiating employee cannot approve their own cancellation exception | Executable declaration; result comes from a receipt |
+| `slack_requester_self_review_refused` | The initiating employee cannot approve their own cancellation exception | Executable declaration; result comes from a receipt |
 | `no_refund_due` | A non-refundable product is cancelled and confirmed with no refund offer; the ticket is solved | Executable declaration; result comes from a receipt |
 | `large_refund_needs_approval` | A refund above the auto-refund limit waits for approval and is issued once approved | Executable declaration; result comes from a receipt |
 | `unknown_customer_not_cancelled` | A request from an address with no Stripe customer cancels nothing and is routed to a person | Executable declaration; result comes from a receipt |
