@@ -37,7 +37,7 @@ def projection(raw,version):
 
 def forward(event,client,*,source,destination,owner,version):
     assert re.fullmatch(r'\d{12}',owner) and re.fullmatch(r'[1-9][0-9]*',version)
-    suffix=next((x for x in ['-DEFAULT','-looplabs_cancel_v'+version] if source.endswith(x)),None)
+    suffix=next((x for x in ['-DEFAULT','-looplabs_cancel_v'+version,'-looplabs_prepare_v'+version] if source.endswith(x)),None)
     assert suffix and source.startswith('/aws/bedrock-agentcore/runtimes/') and source != destination
     assert destination==source.removesuffix(suffix)+'-business-v'+version
     encoded=event['awslogs']['data'];assert isinstance(encoded,str) and len(encoded)<=8388608
