@@ -93,3 +93,14 @@ Declared customer email/native requester metadata does not independently prove
 an authenticated initiating human. Separation between that person and the
 invited approver remains unqualified until identity-bound integration and its
 negative checks are measured.
+
+The follow-up self-review guard compares the saved native requester ID with the
+configured reviewer's native ID inside the decision compare-and-swap, as well as
+retaining the conservative customer-email check. A different customer email
+cannot bypass this guard. If the requester ID has an administrator-configured
+reviewer mapping, the displayed requester uses that mapping. This is protection
+against inconsistent request metadata, not human authentication: `requestedBy`
+still comes from the trusted invoking integration. Binding that integration's
+authenticated principal, and accepting a real LoopLabs user decision, remain
+separate acceptance checks. Existing explicit demo self-review configuration is
+preserved; it must never be presented as independent review.

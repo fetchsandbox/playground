@@ -18,11 +18,18 @@ export function readControlConfig(env:NodeJS.ProcessEnv):ControlConfig|undefined
 }
 export const sameScope=(a:ControlScope,b:ControlScope)=>Object.entries(a).every(([k,v])=>b[k as keyof ControlScope]===v)&&Object.keys(a).length===5&&Object.keys(b).length===5;
 function customer(r:RunRecord){const i=r.input as {customer?:{email?:unknown}};return email(i.customer?.email)?i.customer!.email as string:null;}
+/** Native requester IDs come from the invoking integration, not the customer field.
+ * This comparison does not attest a human identity; the invoker must bind it.
+ */
+export function isSelfReview(r:RunRecord,c:ControlConfig,userId:string){
+ const reviewer=Object.entries(c.reviewerMap).find(([,id])=>id===userId)?.[0];
+ return r.requestedBy.userId===userId||!!(reviewer&&customer(r)?.toLowerCase()===reviewer.toLowerCase());
+}
 function channel(r:RunRecord):"slack"|"email"|"internal"{const c=(r.input as {channel?:string}).channel??r.labels.trigger;return c==="slack"?"slack":c?.includes("email")?"email":"internal";}
 function protectedState(r:RunRecord){return hash([r.workflow,r.input,r.requestedBy,r.agents,r.output,r.actions.map(a=>[a.id,a.kind,a.provider,a.agent,a.gate,a.summary]),r.approval?.approvers,r.approval?.expiresAt]);}
 export function approvalRevision(a:Omit<Approval,"revision">){return hash([a.id,a.runId,a.policyVersion,a.title,a.reason,a.action,a.system,a.before,a.after,a.requestedBy,a.allowedReviewers,a.expiresAt,a.channel]);}
 function freeze(r:RunRecord,c:ControlConfig):Approval|undefined {
- const requestedBy=customer(r);const allowedReviewers=Object.entries(c.reviewerMap).filter(([,id])=>r.approval?.approvers.includes(id)).map(([e])=>e).sort();
+ const requestedBy=Object.entries(c.reviewerMap).find(([,id])=>id===r.requestedBy.userId)?.[0]??customer(r);const allowedReviewers=Object.entries(c.reviewerMap).filter(([,id])=>r.approval?.approvers.includes(id)).map(([e])=>e).sort();
  if(!requestedBy||!allowedReviewers.length||!r.approval||!r.output)return undefined;
  if(r.workflow==="ad-campaign-preparation"){
   const input=r.output.reviewedInput as Record<string,unknown>|undefined;
@@ -82,7 +89,7 @@ export async function controlEnvelope(engine:Engine<unknown>,store:KvStore,c:Con
   if(v.operation==="decide"){
    if(!email(v.reviewer)||!c.reviewerMap[v.reviewer]||! /^[a-f0-9]{64}$/.test(String(v.revision))||! /^[a-f0-9]{64}$/.test(String(v.decisionId))||!["approved","rejected"].includes(String(v.decision)))return fail(409);
    const rows=await engine.controlRuns();const run=rows.find(r=>r.control?.frozen?.id===v.id);const a=run&&approvalView(run,c);
-   if(!run||!a||!a.allowedReviewers.includes(v.reviewer)||(a.requestedBy===v.reviewer&&!c.allowSelfReview)||v.decisionId!==hash([c.scope.tenantId,c.scope.resourceArn,a.id,v.revision,v.reviewer,v.decision]))return fail(409);
+   if(!run||!a||!a.allowedReviewers.includes(v.reviewer)||(!c.allowSelfReview&&isSelfReview(run,c,c.reviewerMap[v.reviewer]!))||v.decisionId!==hash([c.scope.tenantId,c.scope.resourceArn,a.id,v.revision,v.reviewer,v.decision]))return fail(409);
    const reply=await engine.decideReviewed(run.runId,v.reviewer,c.reviewerMap[v.reviewer]!,String(v.decision),String(v.revision),String(v.policyVersion));if(reply.status!==200)return fail(reply.status);
   }
   const requests=(await engine.controlRuns()).map(r=>approvalView(r,c)).filter(x=>x!==null);if(requests.length>100)return fail(503);

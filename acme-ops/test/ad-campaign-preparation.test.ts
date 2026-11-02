@@ -43,6 +43,20 @@ describe("campaign preparation review boundary",()=>{
   expect(requested).toHaveLength(2);expect(requested[0]).not.toBe(requested[1]);expect(requested.every(n=>/ \[FS:[a-f0-9]{24}\]$/.test(n))).toBe(true);
  });
 
+ it.each(["bridge","native"])("refuses requester self-review despite a different customer email through %s",async route=>{
+  const control:ControlConfig={scope:{tenantId:"acme",connectionId:"preparation-test",resourceArn:"arn:aws:bedrock-agentcore:us-west-2:342206308838:runtime/acme_ad_campaign_preparation-demo",version:"4",epoch:"identity-test"},secret:"a".repeat(64),reviewerMap:{"owner@example.test":"U_OWNER"},allowSelfReview:false};
+  const store=new MemoryStore();const makeEngine=()=>w.engine(adCampaignPreparation,{store,now:()=>NOW,approvers:["U_OWNER"],control,requireReviewedDecisions:true});
+  let e=makeEngine();await e.handle({action:"start",runId:"self-review",requestedBy:{userId:"U_OWNER"},input});
+  e=makeEngine();const a=approvalView((await e.load("self-review"))!,control)!;
+  expect(a.requestedBy).toBe("owner@example.test");
+  if(route==="native")expect((await e.decideReviewed(a.runId,"owner@example.test","U_OWNER","approved",a.revision,a.policyVersion)).status).toBe(403);
+  else {
+   const reviewer="owner@example.test",decision="approved";const raw=JSON.stringify({contract:"looplabs-shared-approval-1",scope:control.scope,nonce:randomUUID(),timestamp:String(NOW/1000),operation:"decide",id:a.id,revision:a.revision,policyVersion:a.policyVersion,decision,reviewer,decisionId:adHash([control.scope.tenantId,control.scope.resourceArn,a.id,a.revision,reviewer,decision])});
+   expect((await controlEnvelope(e as Engine<unknown>,store,control,{method:"POST",path:"/looplabs/approval-bridge",raw_body:raw,headers:{"x-looplabs-signature":createHmac("sha256",control.secret).update("request\n"+raw).digest("hex")}},()=>NOW)).status).toBe(409);
+  }
+  await e.idle();expect((await e.load("self-review"))!.phase).toBe("AWAITING_APPROVAL");expect(w.requests.filter(x=>x.method==="POST")).toHaveLength(0);
+ });
+
  it.each(["approve","reject","stale","wrong_reviewer","changed_input","changed_policy"])("binds LoopLabs preparation review and refuses changed authority: %s",async mode=>{
   const control:ControlConfig={scope:{tenantId:"acme",connectionId:"preparation-test",resourceArn:"arn:aws:bedrock-agentcore:us-west-2:342206308838:runtime/acme_ad_campaign_preparation-demo",version:"3",epoch:"test"},secret:"a".repeat(64),reviewerMap:{"owner@example.test":"U_OWNER"},allowSelfReview:false};
   const store=new MemoryStore(),events:Record<string,unknown>[]=[];const e=w.engine(adCampaignPreparation,{store,now:()=>NOW,approvers:["U_OWNER"],control,controlSink:event=>events.push(event),requireReviewedDecisions:true});
