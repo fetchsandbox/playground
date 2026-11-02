@@ -163,6 +163,11 @@ async function seed(legs, log, context) {
     const pi = await call("/v1/payment_intents", { amount: String(PRICES[kind].amount), currency: "usd", customer: cus.id, confirm: "true", payment_method: "pm_card_visa", "metadata[subscription_id]": sub.id });
     if (pi.status !== "succeeded" || !pi.latest_charge) throw new Error(`seed payment for ${caseId} is ${pi.status}`);
     out[caseId] = { customer: cus.id, subscription: sub.id, paymentIntent: pi.id, kind };
+    if(["requester_self_review_refused","slack_requester_self_review_refused"].includes(caseId)){
+      const response=await fetch(`${leg.base_url}/v1/subscriptions/${sub.id}`,{headers:{authorization:`Bearer ${leg.api_key}`}}),stored=await response.json();
+      if(!response.ok||stored.id!==sub.id||stored.status!==sub.status||!["active","trialing","incomplete"].includes(stored.status))throw new Error(`Non-cancelled initial subscription fixture not confirmed for ${caseId}`);
+      out[caseId].initialSubscriptionStatus=stored.status;
+    }
   }
   const zd = async (method,path,body) => {
     const r=await fetch(legs.zendesk.base_url+path,{method,headers:{authorization:`Bearer ${legs.zendesk.api_key}`,"content-type":"application/json"},...(body?{body:JSON.stringify(body)}:{})});
@@ -186,7 +191,7 @@ async function seed(legs, log, context) {
     if(["gift_card_end_to_end","gift_card_balance_readback"].includes(check.id)) {
       check.provider_assertions=[providerCheck("square","gift_cards",[eq("id","{{step2.actions.1.ref}}"),eq("state","ACTIVE"),eq("balance_money.amount",4900),eq("balance_money.currency","USD")]),providerCheck("zendesk","simulated_email_deliveries",[eq("recipient_fingerprint",fingerprint(email(check.id))),eq("delivery_mode","simulated_mailbox"),{select:"body",required:true,contains:"Your gift card number is "},{select:"body",required:true,contains:"{{step2.actions.1.detail.ganLast4}}"}])];
     }
-    if(["requester_self_review_refused","slack_requester_self_review_refused"].includes(check.id))check.provider_assertions=[providerCheck("stripe","subscriptions",[eq("id",out[check.id].subscription),eq("status","active")]),providerCheck("stripe","refunds",[eq("payment_intent",out[check.id].paymentIntent)],0)];
+    if(["requester_self_review_refused","slack_requester_self_review_refused"].includes(check.id))check.provider_assertions=[providerCheck("stripe","subscriptions",[eq("id",out[check.id].subscription),eq("status",out[check.id].initialSubscriptionStatus)]),providerCheck("stripe","refunds",[eq("payment_intent",out[check.id].paymentIntent)],0)];
     if(check.id==="phone_request_opens_ticket") check.provider_assertions=[providerCheck("zendesk","tickets",[eq("id","{{step1.actions.0.ref}}"),eq("requester_id","{{step1.actions.0.detail.requesterId}}")])];
     if(check.id==="customer_email_delivery") check.provider_assertions=[providerCheck("zendesk","simulated_email_deliveries",[eq("recipient_fingerprint",fingerprint(email(check.id))),eq("delivery_mode","simulated_mailbox"),eq("status","delivered"),{select:"body",required:true,contains:"We've refunded $49.00"},{select:"body",required:true,contains:"That completes your cancellation."}])];
 
