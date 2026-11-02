@@ -1,0 +1,39 @@
+{
+  "scope": "New requester-identity regression cases in existing native cancellation fixture only",
+  "deployedSourceBaseline": "3300101ed35225832246897ed2bd2a24894a6bff",
+  "currentMainBase": "daaaa104f50bd92789d7b770e0f19757976f34a2",
+  "reusedGuardCommit": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
+  "command": "vitest run test/looplabs-control.test.ts -t \"authenticated requester\"",
+  "before": {
+    "source": "deployed-source baseline",
+    "failed": 4,
+    "passed": 1,
+    "unselected": 19,
+    "unexpectedStatus": 200
+  },
+  "after": {
+    "source": "minimal fix on current main",
+    "passed": 5,
+    "failed": 0,
+    "unselected": 19
+  },
+  "testCases": [
+    "native raw requester self-review",
+    "native Slack-prefixed requester self-review",
+    "signed raw requester self-review",
+    "signed Slack-prefixed requester self-review",
+    "different requester independent signed reviewer"
+  ],
+  "providerEffects": "Local fixture counter only; zero for all denied cases, one in the independent-review positive control",
+  "actualProviderCalls": 0,
+  "nativeBusinessRuns": 0,
+  "fetchsandboxAcceptance": "unmeasured: existing runner credential input missing in this environment",
+  "deployment": "not deployed; cancellation5 and quote19 policies unchanged",
+  "remaining": [
+    "Fresh application/twin verification through existing relay runner",
+    "Candidate CI",
+    "Native no-self-review policy configuration and source/image acceptance",
+    "Verified initiating employee and reviewer identity bindings",
+    "Native provider outcomes/replay for this fix"
+  ]
+}

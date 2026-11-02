@@ -43,3 +43,19 @@ uses one write attempt, and has no runtime invoke or provider permissions. Its
 subscription matches the reported deployment version; it does not convert
 ordinary diagnostic text into workflow evidence. Native delivery, reader access
 and the selected source must be verified separately.
+
+
+## Independent cancellation review boundary
+
+When `allowSelfReview` is false, both the native decision command and signed
+LoopLabs decision path must reject the initiating employee. The existing Slack
+intake records `slack:<user-id>` while reviewer mapping uses the unprefixed ID;
+these exact two identity forms represent the same requester. Customer email is
+not employee identity, and unrelated identity prefixes are not normalized.
+The invoking integration remains responsible for authenticating that identity.
+
+The November2 source regression record is
+[`independent-review-source.json`](verify/receipts/independent-review-source.json).
+It records local synthetic-fixture checks, not FetchSandbox, native AWS or browser
+acceptance. Deployed cancellationv5 and quote19 still explicitly allow demo
+self-review; this source change alone does not change their policy or bindings.
