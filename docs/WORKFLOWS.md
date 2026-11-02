@@ -52,7 +52,7 @@ adding a result; a local build or a different workflow's receipt is not a substi
 
 | S.no | Workflow | Department / team | Roles | Business guide | Latest known FetchSandbox run |
 |---:|---|---|---:|---|---|
-| 1 | `ad-campaign-preparation` | Marketing / creative-operations | 2 | [Facebook and Instagram paused preparation](workflows/ad-campaign-preparation.md) | [2026-11-01 · 16 passed](https://fetchsandbox.com/runs/49b110197f?flow=vr_d6a7eddea9e0469caec55caac9234797) |
+| 1 | `ad-campaign-preparation` | Marketing / creative-operations | 2 | [Facebook and Instagram paused preparation](workflows/ad-campaign-preparation.md) | [2026-11-01 · 16 passed](https://fetchsandbox.com/runs/baa581e5b0?flow=vr_40cddd2b2da44a96b27b4a878acedb38) |
 | 2 | `ad-creative-publishing` | Marketing / creative-operations | 2 | [Owner-reviewed Meta paused ad](workflows/ad-creative-publishing.md) | [2026-11-01 · 10 passed](https://fetchsandbox.com/runs/297dc0dae1?flow=vr_9a6a4d9b3a43431b889e63686d113e52) |
 | 3 | Account takeover containment | IT / `it-security` | 3 | [account-takeover-containment](workflows/account-takeover-containment.md) | [2026-10-21 · 20 passed, 2 not checked](https://fetchsandbox.com/runs/0af7cb3e63?flow=vr_2e81298bdd5645a38f14efcf2db1dcf0) |
 | 4 | AI support triage (LLM, guarded) | Support / `support-ops` | 3 | [ai-support-triage](workflows/ai-support-triage.md) | [2026-10-22 · 18 passed, 3 failed](https://fetchsandbox.com/runs/8b707a425c?flow=vr_7609225e94cb4126a1649d0772bd8bb1) |

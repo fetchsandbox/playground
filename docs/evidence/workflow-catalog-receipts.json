@@ -1755,13 +1755,13 @@
     },
     "ad-campaign-preparation": {
       "workflow": "ad-campaign-preparation",
-      "receipt_url": "https://fetchsandbox.com/runs/49b110197f?flow=vr_d6a7eddea9e0469caec55caac9234797",
+      "receipt_url": "https://fetchsandbox.com/runs/baa581e5b0?flow=vr_40cddd2b2da44a96b27b4a878acedb38",
       "source": "acme-ops/verify/receipts/ad-campaign-preparation.json",
-      "checked_at": "2026-11-01T17:39:23.104899+00:00",
+      "checked_at": "2026-11-02T02:19:14.830076+00:00",
       "http": 200,
-      "snapshot_at": "2026-11-01T17:32:18.925464+00:00",
+      "snapshot_at": "2026-11-02T02:05:33.787369+00:00",
       "app_version": {
-        "value": "acme-ops-ad-campaign-preparation-1.0.0-2d62db5",
+        "value": "acme-ops-ad-campaign-preparation-1.0.0-3d96f14",
         "source": "declared"
       },
       "verdict": "verified",

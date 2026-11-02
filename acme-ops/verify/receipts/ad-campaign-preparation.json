@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-ad-campaign-preparation-1.0.0-2d62db5",
-  "bundle_sha256": "bf73dd99f2f1057eeaf2b5af14bd013d2b97a4e490bf5680ce60c1f14fc6aadb",
-  "session_id": "vs_327a378b5c3a",
-  "run_id": "vr_d6a7eddea9e0469caec55caac9234797",
-  "receipt_url": "https://fetchsandbox.com/runs/49b110197f?flow=vr_d6a7eddea9e0469caec55caac9234797",
+  "app_version": "acme-ops-ad-campaign-preparation-1.0.0-3d96f14",
+  "bundle_sha256": "7c0f871a7264a34e66626720c1d1affc506a99266cb63ca48b26d264a64119c6",
+  "session_id": "vs_eabe9955c724",
+  "run_id": "vr_40cddd2b2da44a96b27b4a878acedb38",
+  "receipt_url": "https://fetchsandbox.com/runs/baa581e5b0?flow=vr_40cddd2b2da44a96b27b4a878acedb38",
   "status": null,
   "verdict": "verified",
   "app_verified": true,
@@ -96,5 +96,5 @@
       "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     }
   ],
-  "recorded_at": "2026-11-01T17:32:23.853Z"
+  "recorded_at": "2026-11-02T02:05:36.644Z"
 }

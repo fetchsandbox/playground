@@ -1,0 +1,291 @@
+{
+  "recorded_at": "2026-11-02T02:17:16.503766+00:00",
+  "workflow": "ad-campaign-preparation",
+  "runtime_source_commit": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
+  "agentcore_version": "5",
+  "runtime_image": "sha256:523111521e49b49b09602459646049c0e34fcf62500059c6229be9cc92aa0d5f",
+  "bundle_sha256": "7c0f871a7264a34e66626720c1d1affc506a99266cb63ca48b26d264a64119c6",
+  "before": {
+    "native_requester_self_review_tests_failed": 2,
+    "looplabs_saved_review_after_characters": 4001,
+    "looplabs_parser_http": 502,
+    "preparation_release_attachment_test_failed": 1,
+    "named_endpoint_forwarder_test_failed": 1
+  },
+  "local_app": {
+    "test_files": 59,
+    "passed": 399,
+    "typecheck_exit": 0,
+    "bundle_exit": 0
+  },
+  "local_process": {
+    "scope": "Actual local app process and signed bridge against deployed FetchSandbox; not real LoopLabs browser, AWS deployment or native Instagram",
+    "bundle_sha256": "7c0f871a7264a34e66626720c1d1affc506a99266cb63ca48b26d264a64119c6",
+    "results": [
+      {
+        "case": "self_review",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      },
+      {
+        "case": "approve",
+        "decision_http": 200,
+        "phase": "DONE",
+        "provider_counts": {
+          "campaigns": 1,
+          "adsets": 1,
+          "adcreatives": 1,
+          "ads": 1
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      },
+      {
+        "case": "reject",
+        "decision_http": 200,
+        "phase": "REJECTED",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false
+      },
+      {
+        "case": "stale",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false
+      },
+      {
+        "case": "wrong_reviewer",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false
+      },
+      {
+        "case": "changed_input",
+        "decision_http": 409,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      },
+      {
+        "case": "changed_policy",
+        "decision_http": 200,
+        "phase": "DONE",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      }
+    ]
+  },
+  "maintained_looplabs_client_process": {
+    "scope": "Actual local app process and signed bridge against deployed FetchSandbox; not real LoopLabs browser, AWS deployment or native Instagram",
+    "bundle_sha256": "7c0f871a7264a34e66626720c1d1affc506a99266cb63ca48b26d264a64119c6",
+    "results": [
+      {
+        "case": "self_review",
+        "decision_http": 403,
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      },
+      {
+        "case": "approve",
+        "decision_http": 200,
+        "phase": "DONE",
+        "provider_counts": {
+          "campaigns": 1,
+          "adsets": 1,
+          "adcreatives": 1,
+          "ads": 1
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": true
+      },
+      {
+        "case": "reject",
+        "decision_http": 200,
+        "phase": "REJECTED",
+        "provider_counts": {
+          "campaigns": 0,
+          "adsets": 0,
+          "adcreatives": 0,
+          "ads": 0
+        },
+        "durable_readback": true,
+        "direct_bypass_http": 403,
+        "restart_before_decision": false
+      }
+    ]
+  },
+  "hosted": {
+    "receipt_url": "https://fetchsandbox.com/runs/baa581e5b0?flow=vr_40cddd2b2da44a96b27b4a878acedb38",
+    "passed": 16,
+    "failed": 0,
+    "unmeasured": 0,
+    "control_mode": "disabled; unchanged 16-case app contract",
+    "public_summary_http": 200,
+    "independent_writing_cases": 9,
+    "independent_nonwriting_cases": 7,
+    "disposable_key_revoked": true,
+    "relay_closed": true
+  },
+  "native": {
+    "source": "3d96f14cf0b2dc9ccd4e57ab11fa1b9d1b132439",
+    "version": "5",
+    "scope": "Actual AgentCore v5, signed scripted requests, consistent DynamoDB and FetchSandbox provider read-back; not hosted human approval",
+    "results": [
+      {
+        "case": "self-review",
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "native_bypass_http": 403,
+        "consistent_dynamodb_readback": true,
+        "self_review_http": 409
+      },
+      {
+        "case": "pending-review",
+        "phase": "AWAITING_APPROVAL",
+        "provider_counts": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "native_bypass_http": 403,
+        "consistent_dynamodb_readback": true,
+        "awaiting_real_browser_review": true
+      }
+    ],
+    "bad_signature_http": 401,
+    "wrong_scope_http": 409
+  },
+  "history": {
+    "checked_at": "2026-11-02T02:15:50.120894+00:00",
+    "version": "5",
+    "source": "/aws/bedrock-agentcore/runtimes/acme_ad_campaign_preparation-d4VxBH8KHG-looplabs_prepare_v5",
+    "destination": "/aws/bedrock-agentcore/runtimes/acme_ad_campaign_preparation-d4VxBH8KHG-business-v5",
+    "expected_distinct_events": 20,
+    "observed_distinct_events": 20,
+    "coverage_gaps": 0,
+    "runs": [
+      "prep-v5-self-review-8f9df811-8325-4be6-abf7-fbca8eeb9f23",
+      "prep-v5-pending-review-9455a7b3-001b-481d-a6a6-4f0257eb0017"
+    ],
+    "scope": "Fresh native named-endpoint events through actual subscription; compared with fresh consistent DynamoDB records, no backfill",
+    "provider_effects": 0,
+    "prior_observer_failure": "Saved JSON used default=str for DynamoDB Decimal, changing attempt from a number to a string; fresh consistent DynamoDB comparison preserves number semantics"
+  },
+  "looplabs_changes": {
+    "pr": "https://github.com/rnagulapalle/agentgovern/pull/159",
+    "source_commit": "7c8579b",
+    "focused_tests_passed": 56,
+    "deployment": "Not deployed; CI pending at recording time",
+    "parser_after": "Same saved 4,001-character record accepted with exact snapshot/revision",
+    "scope": "after-only 32,768-character bound; total signed response cap remains 131,072 bytes; separately keyed exact preparation ARN, self-review disabled"
+  },
+  "preserved": {
+    "v4_pinned_endpoint": "preparation_reviewed_v4",
+    "v4_secret_unchanged": true,
+    "v4_enrollment_unchanged": true,
+    "native_meta_egress_disabled": true
+  },
+  "remaining": [
+    "Authenticated initiating-human attestation not implemented",
+    "Real hosted LoopLabs user decision not measured",
+    "Native Meta/Instagram full workflow acceptance not measured",
+    "LoopLabs web deployment and exact approval attachment pending"
+  ],
+  "failures_retained": [
+    "First pin read happened before endpoint READY; continuation waited for actual liveVersion4",
+    "Named ESM import setup failed before corrected parser reproduction",
+    "First history comparison used Decimal-to-string JSON; fresh consistent DB comparison matched20/20",
+    "SSH timeout; current public /32 equals previously approved maintenance source; no firewall change yet"
+  ],
+  "native_relay_client": {
+    "scope": "Maintained LoopLabs client over actual API Gateway/Lambda/pinned AgentCore v5; read-only scripted server client, not a named hosted user session",
+    "version": "5",
+    "listed_requests": 2,
+    "exact_pending_review_preserved": true,
+    "response_signature_verified": true,
+    "decision_requests": 0,
+    "after_characters": 4241,
+    "unsigned_http": 401
+  },
+  "enrollment": {
+    "version": "5",
+    "saved": true,
+    "owner": "Raj",
+    "v4_preserved": true,
+    "shared_approval_installed": false
+  },
+  "company_catalog": {
+    "revision": 10,
+    "preparation_version": "5",
+    "team_assignments_preserved": 28,
+    "other_runtime_references_preserved": 27
+  },
+  "forwarder_tests": {
+    "before_failed": 1,
+    "after_passed": 8,
+    "source_commit": "3ee09a4",
+    "scope": "Named preparation endpoint only; exact version/account/source/destination checks retained"
+  }
+}
