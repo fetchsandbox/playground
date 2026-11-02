@@ -39,6 +39,30 @@ R6's old API-version examples are historical reproduction inputs, not a claim th
 those versions are supported today; select and record a currently supported vendor
 version before implementing a compatibility fix.
 
+## Document workflows (DocuSign, Box, Dropbox) — October 29, 2026
+
+Probed with `fetchsandbox-mcp@0.7.30` before building the document workflows
+(signed-agreement-filing, new-hire-paperwork, vendor-compliance-docs,
+external-sharing-audit). Per-workflow results are in the table under
+"Results".
+
+| Provider | Class | Evidence (2026-10-29) |
+|---|---|---|
+| DocuSign | **TM** twin missing | `validate_integration(providers:["docusign","dropbox","box"])` → "Unknown providers: docusign, dropbox"; `list_specs` "docusign" → 0 |
+| Dropbox | **TM** twin missing | same refusal; `list_specs` "dropbox" → 0 |
+| Box · `GET /folders/{id}/items` | **TD** | Body is `{items:[{limit, offset, entries:[sample objects]}]}`, not Box's `{entries, total_count, limit, offset}`; entries are fixed samples (2012 dates, `"sample-value"` owners) and folders created in the session never appear |
+| Box · `POST /folders` | **TD** | Returns `{name, parent, id}` with a UUID id (Box: numeric string, `type: "folder"`); the same name twice → 201 both times (Box: 409 `item_name_in_use`) |
+| Box · `POST /files/content` | **TD** | `entries[0].id` is `obj_…` (R24), `name` is a generated `item-…` instead of the uploaded name, `parent` null |
+| Box · `GET`/`PUT /files/{id}` for an uploaded file | **TD** | 404 "Resource obj_… not found", so a shared link can't be set or removed on a file the session created |
+
+### Requirements added
+
+| # | Requirement | Unblocks | Accept when |
+|---|---|---|---|
+| R27 | **DocuSign eSignature twin.** Envelopes from composite templates with roles, `notification` reminders/expiry, `include=recipients,custom_fields`, `form_data`, `documents/combined?certificate=true` (PDF bytes), list by `from_date`/`status`/`custom_field`, status changes a contract can drive (sent → completed / declined / voided), and Connect events (`envelope-completed`). | signed-agreement-filing, new-hire-paperwork, vendor-compliance-docs, contract-intake | A completed envelope's combined PDF is filed and asserted in the store twin |
+| R28 | **Dropbox API v2 twin.** RPC on `/2/...` (files `get_metadata`, `create_folder_v2`, `list_folder` + `continue`; sharing `list_shared_links`, `modify_shared_link_settings`, `revoke_shared_link`) and content routes (`files/upload` with `Dropbox-API-Arg`, 409 `path/conflict`; `files/download` with `Dropbox-API-Result`). | every document workflow with `store.provider = dropbox`; external-sharing-audit | A file uploaded twice under one path conflicts the second time; a public link narrowed to team reads back `team_only` |
+| R29 | **Stateful Box files, folders and shared links.** Folder items reflect what the session created (Box envelope, marker paging), `POST /folders` conflicts on a duplicate name, uploads keep their name and parent, and `PUT /files|folders/{id}` sets, changes and removes `shared_link` on session-created items. Extends R24. | every document workflow with `store.provider = box`; external-sharing-audit | A file uploaded into a created folder is listed in it, and its open link can be narrowed to `company` and read back |
+
 ## How this was measured
 
 - Four workflows were built specifically to exercise areas the earlier

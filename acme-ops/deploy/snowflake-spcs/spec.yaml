@@ -1,0 +1,36 @@
+# Snowflake Snowpark Container Services: service specification for one workflow.
+# Upload to a stage and create the service with setup.sql. Replace every <...>.
+spec:
+  containers:
+    - name: workflow
+      image: /<db>/<schema>/acme_ops_images/<workflow>:<tag>
+      env:
+        WORKFLOW: <workflow>
+        STATE_FILE: /state/<workflow>.json
+        POLICY_FILE: /policy/<workflow>.json
+        TICK_INTERVAL_MS: "60000"
+        APPROVER_USER_IDS: "<U_APPROVER>"
+      # One entry per provider credential the workflow's guide lists (Snowflake secrets).
+      secrets:
+        - snowflakeSecret: { objectName: <db>.<schema>.acme_docusign_token }
+          secretKeyRef: secret_string
+          envVarName: DOCUSIGN_API_KEY
+        - snowflakeSecret: { objectName: <db>.<schema>.acme_docusign_account }
+          secretKeyRef: secret_string
+          envVarName: DOCUSIGN_ACCOUNT_ID
+      readinessProbe:
+        port: 8080
+        path: /ping
+      volumeMounts:
+        - { name: state, mountPath: /state }
+        - { name: policy, mountPath: /policy }
+  endpoints:
+    # Called from SQL (service functions) or by other services; not public.
+    - name: invocations
+      port: 8080
+      public: false
+  volumes:
+    # Block storage survives restarts; one instance only (FileStore has one writer).
+    - { name: state, source: block, size: 10Gi }
+    # Policy overrides live on a stage, so a policy change is a PUT and a service restart.
+    - { name: policy, source: "@<db>.<schema>.acme_ops_policies" }

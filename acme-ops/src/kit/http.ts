@@ -19,8 +19,8 @@ export interface RequestOptions {
   json?: unknown;
   /** Stripe-style application/x-www-form-urlencoded body (already flattened). */
   form?: Record<string, string | number | boolean | undefined>;
-  /** A body sent as is (e.g. multipart uploads). */
-  raw?: { body: string; contentType: string };
+  /** A body sent as is (e.g. multipart uploads, file bytes). */
+  raw?: { body: string | Uint8Array; contentType: string };
   /** Treat these statuses as data rather than errors (e.g. HubSpot 409). */
   allow?: number[];
   headers?: Record<string, string>;
@@ -49,6 +49,7 @@ function providerCode(body: any, status: number): string {
     if (body.error?.code) return String(body.error.code); // Stripe, Google
     if (body.error?.type) return String(body.error.type);
     if (typeof body.category === "string") return body.category; // HubSpot
+    if (typeof body.error_summary === "string") return body.error_summary.replace(/\/*\.*$/, ""); // Dropbox: "path/conflict/file/.."
     if (Array.isArray(body.errors) && body.errors[0]?.code) return String(body.errors[0].code);
   }
   if (status === 401) return "unauthorized";
@@ -107,7 +108,7 @@ export class ProviderHttp {
       ...this.headers,
       ...opts.headers,
     };
-    let body: string | undefined;
+    let body: string | Uint8Array | undefined;
     if (opts.json !== undefined) {
       headers["content-type"] = "application/json; charset=utf-8";
       body = JSON.stringify(opts.json);

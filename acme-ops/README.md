@@ -274,6 +274,19 @@ These are separate local-runtime proofs through production FetchSandbox twins;
 no live provider, fresh native-Claude run, or AWS application deployment is established.
 See [the scoped verification report](../docs/evidence/risk-workflow-proof-20261019.md).
 
+## Configurable policy (Kit v3)
+
+Workflows can keep their policy (limits, deadlines, routing, folder layouts,
+template ids) in [`policies/<workflow>.json`](policies) instead of code. The
+schema lives with the workflow; values are validated at startup, overridable
+per deployment with `POLICY_FILE` / `POLICY_JSON`, fingerprinted, and recorded
+on every run. See [policies/README.md](policies/README.md).
+
+## Deploy on other clouds
+
+Google Cloud Run and Snowflake SPCS templates, and how to plug in another run
+store, are in [deploy/README.md](deploy/README.md).
+
 ## Deploy (one AgentCore runtime per workflow)
 
 ```bash

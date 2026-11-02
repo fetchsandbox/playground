@@ -1,7 +1,9 @@
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { App } from "aws-cdk-lib";
+import { resolvePolicy } from "../src/kit/policy";
 import { loadWorkflow } from "../src/kit/load";
 import { WorkflowStack } from "./stack";
 
@@ -14,6 +16,22 @@ const WORKFLOWS = (await Promise.all(ids.map(loadWorkflow))).filter((w) => w !==
 // cdk deploy --all                                  → all nineteen, each independent
 const app = new App();
 const ctx = (k: string): string | undefined => app.node.tryGetContext(k);
+
+/**
+ * Kit v3 policy overrides, checked at synth time so an invalid policy never deploys:
+ *   cdk deploy AcmeOps-<id> -c policyFile:<id>=./my-policy.json
+ * The file is merged over policies/<id>.json and shipped as POLICY_JSON. Keep sensitive values
+ * (none of the shipped policies hold any) in the stack's secret under POLICY_JSON instead.
+ */
+function policyOverride(wf: (typeof WORKFLOWS)[number]): string | undefined {
+  const file = ctx(`policyFile:${wf.id}`);
+  if (!file) return undefined;
+  if (!wf.policy) throw new Error(`${wf.id} has no configurable policy; remove -c policyFile:${wf.id}`);
+  const text = readFileSync(file, "utf8");
+  const resolved = resolvePolicy(wf.policy, { POLICY_JSON: text });
+  console.error(`${wf.id}: policy ${resolved.version} from ${file}`);
+  return JSON.stringify(JSON.parse(text));
+}
 
 for (const wf of Object.values(WORKFLOWS)) {
   new WorkflowStack(app, `AcmeOps-${wf.id}`, {
@@ -29,6 +47,7 @@ for (const wf of Object.values(WORKFLOWS)) {
     team: wf.team,
     description: wf.description,
     tickEvery: wf.tickEvery,
+    policyJson: policyOverride(wf),
     approverUserIds: ctx(`approvers:${wf.id}`) ?? ctx("approverUserIds"),
     approvalTtlHours: ctx("approvalTtlHours") ? Number(ctx("approvalTtlHours")) : undefined,
     claudeModel: ctx("claudeModel"),

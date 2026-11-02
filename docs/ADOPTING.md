@@ -42,7 +42,10 @@ Each guide in [`docs/workflows/`](workflows) covers:
 | FetchSandbox verification | The contract's checks and the last recorded receipt |
 
 Then read the workflow file itself. Its header comment states the business
-rules, and its `POLICY` object holds every number you may want to change.
+rules. Workflows with a **Configurable policy** section in their guide keep
+every number, deadline, routing rule and folder layout in
+[`acme-ops/policies/<workflow>.json`](../acme-ops/policies); older ones keep
+them in a `POLICY` object in the workflow file.
 
 ## 3. Prepare provider accounts
 
@@ -106,9 +109,13 @@ Workflows with reminders or deadlines need `tick`. Locally, set
 
 ## 5. Adapt it to your company
 
-- **Policy.** Change the `POLICY` constants in the workflow file: limits,
-  thresholds, deadlines, approval tiers. They are versioned and reviewed like
-  code.
+- **Policy.** For workflows with a policy file, change
+  `acme-ops/policies/<workflow>.json`, or override it per deployment with
+  `POLICY_FILE` or `POLICY_JSON` without touching code. The runtime validates
+  the policy at startup and refuses an invalid one; each run keeps the policy
+  version it started under. See [policies/README.md](../acme-ops/policies/README.md).
+  For older workflows, change the `POLICY` constants in the workflow file.
+  Either way, policies are versioned and reviewed like code.
 - **People.** Approvers, reviewers and channels are inputs, not code. Name
   your own.
 - **Tests.** Update `acme-ops/test/<workflow>.test.ts` to match your policy,
@@ -132,11 +139,21 @@ person or system. Send it to `POST /invocations` with `action: "start"`.
   own. It calls `decide` or `signal` with the person's user id, and the
   runtime enforces who may answer.
 
-## 7. Deploy to AWS (Bedrock AgentCore)
+## 7. Deploy
+
+The same container runs on AWS Bedrock AgentCore, Google Cloud Run, Snowflake
+Snowpark Container Services or any container host.
+[acme-ops/deploy/README.md](../acme-ops/deploy/README.md) compares where state,
+secrets, policy and timers live on each, with templates for Cloud Run and
+SPCS. The AWS path is below.
+
+### AWS (Bedrock AgentCore)
 
 ```bash
 cd acme-ops
 npx cdk deploy AcmeOps-dsar-export -c approvers:dsar-export=U_PRIVACY_LEAD
+# A workflow with a policy file can take a validated override:
+npx cdk deploy AcmeOps-<workflow> -c policyFile:<workflow>=./my-policy.json
 ```
 
 Each workflow is its own stack, `AcmeOps-<workflow>`, and creates:

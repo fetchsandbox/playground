@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { loadWorkflow } from '../src/kit/load';
+import { policyJsonSchema, resolvePolicy } from '../src/kit/policy';
 const ids=readdirSync(new URL('../src/workflows/',import.meta.url)).filter(f=>f.endsWith('.ts')&&f!=='shared.ts').map(f=>f.slice(0,-3)).sort();
 const output=[];
 for(const id of ids){
@@ -11,6 +12,6 @@ for(const id of ids){
  const baseline=contract.checks.find((c:any)=>c.id==='baseline');
  const start=baseline?.actions?.find((a:any)=>a.body?.action==='start');
  if(!start || !wf.input.safeParse(start.body.input).success)throw new Error(`Invalid baseline example for ${id}`);
- output.push({id,title:wf.title,department:wf.org,team:wf.team,business:wf.description,agents:wf.agents.map(a=>({name:a.name,providers:a.needs})),compose:wf.compose?.name??null,actions:wf.catalog,input:z.toJSONSchema(wf.input,{unrepresentable:'any'}),example:baseline?.actions?.find((a:any)=>a.body?.action==='start')?.body??null,tickEvery:wf.tickEvery??null,audit:!!wf.audit,checks:contract.checks.map((c:any)=>({id:c.id,label:c.name,blocked:c.blocker??null})),receipt});
+ output.push({id,title:wf.title,department:wf.org,team:wf.team,business:wf.description,agents:wf.agents.map(a=>({name:a.name,providers:a.needs})),compose:wf.compose?.name??null,actions:wf.catalog,input:z.toJSONSchema(wf.input,{unrepresentable:'any'}),example:baseline?.actions?.find((a:any)=>a.body?.action==='start')?.body??null,tickEvery:wf.tickEvery??null,audit:!!wf.audit,policy:wf.policy?{file:`acme-ops/policies/${id}.json`,values:resolvePolicy(wf.policy).values,schema:policyJsonSchema(wf.policy)}:null,checks:contract.checks.map((c:any)=>({id:c.id,label:c.name,blocked:c.blocker??null})),receipt});
 }
 process.stdout.write(JSON.stringify(output,null,2));
