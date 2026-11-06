@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "noEmit": true
   },
-  "include": ["src", "infra", "test", "vitest.config.ts"]
+  "include": ["src", "infra", "test", "n8n-lead-pilot", "vitest.config.ts"]
 }

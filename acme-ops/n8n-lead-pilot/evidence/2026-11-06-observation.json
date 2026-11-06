@@ -1,0 +1,100 @@
+{
+  "observed_at": "2026-11-06",
+  "scope": "Actual n8n Cloud test webhook, HTTP Request nodes through temporary protected test adapter to hosted FetchSandbox twins; not native vendor nodes or live accounts.",
+  "workflow_id": "dgbSozcfNm03bK5d",
+  "deployed_status": "n8n saved draft tested; not published; FetchSandbox core unchanged",
+  "mcp_version": "0.7.30",
+  "hosted_session_id": "vs_3a88b7593f5f",
+  "cloud_first_attempt": {
+    "http_status": 500,
+    "result": "structuredClone not defined; replaced with JSON clone"
+  },
+  "cloud_second_attempt": {
+    "status": 200,
+    "body": "{\"done\":true,\"lead_id\":\"pilot-control-002\",\"status\":\"failed\",\"reason\":\"Status notification accepted by twin\",\"state\":{\"pk\":\"lead-pilot#pilot-control-002\",\"owner\":\"4\",\"status\":\"failed\",\"operations\":{\"contact\":{\"status\":\"confirmed\",\"id\":\"542485960614\",\"client_status\":201},\"deal\":{\"status\":\"failed\",\"client_status\":404},\"gmail\":{\"status\":\"pending\"},\"calendar\":{\"status\":\"pending\"}},\"version\":6}}",
+    "observed_at": "2026-11-06T23:13:48.958Z"
+  },
+  "cloud_replay": {
+    "status": 200,
+    "body": "{\"done\":true,\"lead_id\":\"pilot-control-002\",\"status\":\"failed\",\"reason\":\"Status notification accepted by twin\",\"state\":{\"pk\":\"lead-pilot#pilot-control-002\",\"owner\":\"5\",\"status\":\"failed\",\"operations\":{\"contact\":{\"status\":\"confirmed\",\"id\":\"542485960614\",\"client_status\":201},\"deal\":{\"status\":\"failed\",\"client_status\":404},\"gmail\":{\"status\":\"pending\"},\"calendar\":{\"status\":\"pending\"}},\"version\":9}}",
+    "observed_at": "2026-11-06T23:16:02.506Z"
+  },
+  "independent_contact_count_for_lead": 1,
+  "independent_contact_ids": [
+    "542485960614"
+  ],
+  "requests_for_lead": [
+    {
+      "provider": "hubspot",
+      "method": "POST",
+      "path": "/crm/v3/objects/contacts/search",
+      "status": 200,
+      "attempt": "4"
+    },
+    {
+      "provider": "hubspot",
+      "method": "POST",
+      "path": "/crm/v3/objects/contacts",
+      "status": 201,
+      "attempt": "4"
+    },
+    {
+      "provider": "hubspot",
+      "method": "POST",
+      "path": "/crm/v3/objects/deals",
+      "status": 404,
+      "attempt": "4"
+    },
+    {
+      "provider": "slack",
+      "method": "POST",
+      "path": "/chat.postMessage",
+      "status": 200,
+      "attempt": "4"
+    },
+    {
+      "provider": "slack",
+      "method": "POST",
+      "path": "/chat.postMessage",
+      "status": 200,
+      "attempt": "5"
+    }
+  ],
+  "provider_scope_gap": "HubSpot catalog enumerated 13 Contacts operations and zero Deal operations. Actual Deal POST 404; full C0 blocked, not passed.",
+  "local_tests": {
+    "new_state_and_mutation_tests": 8,
+    "total_acme_tests": 413,
+    "files": 62,
+    "status": "passed; no native acceptance implied"
+  },
+  "pending": [
+    "Hosted Deal create/read/search support and contract qualification",
+    "Matching Contact/Deal association",
+    "C0 full effects and independent provider-state assertions",
+    "C1-C5 cloud broken/fixed receipts and three repetitions",
+    "Gmail positive-readback execution",
+    "Crash-abandoned in_progress claim recovery",
+    "Multi-process storage qualification",
+    "Friendly recipient rerun"
+  ],
+  "native_export": "Export download not obtained: UI offered MCP setup then download event timed out; generated local export is not a read-back of saved cloud version.",
+  "source_digests": {
+    "machine.mjs": "8921ace7afe9b6d2944197e6d7a582f41fdecba9cf31043d3a5bace8d5da54b1",
+    "state.ts": "2400570c64ea1ae0d9e3cbe377511d4d2f52affd3fc5c4b4c9c7a2640c74833f",
+    "adapter.ts": "c2f62f94a4cc93f9cee5b080c24164853d178dfd0c6ffbcfa7bdc31328b31061",
+    "build-workflow.mjs": "74899ec47bb0c0fbff71a7d1599c38a273db2e22a536c6c601e3a67c517c76ba",
+    "contract.json": "c70b937d70226227db412cfbb687bf74d3b4e84de30fbfca858cd43fa417e9d7"
+  },
+  "source_digest_scope": "Local source; cloud Code source pasted and replayed, native export download not obtained. Not signed code attestation.",
+  "receipt_attempt": {
+    "session_id": "vs_85ae76b38337",
+    "run_id": "vr_d41c216e8736471d8064f7fa6fcbdde0",
+    "status": "cancelled_inconclusive_all_six_checks_unmeasured",
+    "executed": false,
+    "receipt_url": "https://fetchsandbox.com/runs/9079cf79bf?flow=vr_d41c216e8736471d8064f7fa6fcbdde0",
+    "limits": "Coverage/scope reviews incomplete; full-flow setup blocked. Attempt cancelled without claiming proof.",
+    "receipt_readback": "Returned by FetchSandbox cancellation response; public-page read-back not yet measured. Not evidence of executed checks."
+  },
+  "local_command_setup_failure": "npm run check once invoked at repository root (no check script, exit 1); rerun from acme-ops passed.",
+  "cleanup_observed": "Temporary adapter listener and ngrok process absent after stop; managed-tunnel host exited. Saved source, state, traces and screenshots retained."
+}

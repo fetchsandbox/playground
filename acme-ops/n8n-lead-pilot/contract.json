@@ -1,0 +1,119 @@
+{
+  "app_version": "n8n-lead-pilot-8921ace7afe9",
+  "disposable_test_app": true,
+  "require_verifier_token": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "name": "C0 actual n8n full lead control must finish all effects",
+      "before": {
+        "path": "/proof/fs-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.calendar.status",
+            "equals": "confirmed",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "C1",
+      "name": "Duplicate full flow",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "evidence": [
+          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+        ]
+      }
+    },
+    {
+      "id": "C2",
+      "name": "Accepted Deal response lost",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "evidence": [
+          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+        ]
+      }
+    },
+    {
+      "id": "C3",
+      "name": "Gmail rejection after CRM",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "evidence": [
+          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+        ]
+      }
+    },
+    {
+      "id": "C4",
+      "name": "Accepted Gmail response lost with positive readback",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "evidence": [
+          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+        ]
+      }
+    },
+    {
+      "id": "C5",
+      "name": "Unresolved Gmail holds Calendar",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "evidence": [
+          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+        ]
+      }
+    }
+  ]
+}
