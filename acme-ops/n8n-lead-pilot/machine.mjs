@@ -53,7 +53,7 @@ export function advance(input) {
     const records = r.body?.results ?? [];
     if (records.length === 1) return advance({context:{...c,stage:'effect'},result:{status:200,body:records[0]}});
     if (records.length > 1) return stop('Ambiguous contact lookup');
-    return provider('hubspot','POST','/crm/v3/objects/contacts',{properties:{email:c.lead_id+'@example.test',firstname:'Pilot'}},'effect');
+    return provider('hubspot','POST','/crm/v3/objects/contacts',{properties:{email:c.lead_id+'@example.test',firstname:'Pilot'},associations:[]},'effect');
   }
   if (c.stage === 'effect') {
     const op = c.state.operations[c.step];

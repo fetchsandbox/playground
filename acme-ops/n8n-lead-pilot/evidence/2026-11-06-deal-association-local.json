@@ -3,9 +3,9 @@
   "scope": "Local n8n decision code and adapter; later Deal Contact binding guard not yet installed in cloud",
   "deployed": false,
   "source_hashes": {
-    "machine.mjs": "2e2ba60f55ca3a5aa92f6a4bfc23252d0c55fe35260d5da2c36bb00f66cf8777",
-    "adapter.ts": "a63706483d1c94088eb46b86ab42cd1e3a6a9887570762b6cbd0fdf70a5c6b55",
-    "contract.json": "9215dc3ccf537d9fcca8f25f289e0ed03c55ac95cc08f6ec42f5d3b438b949f5"
+    "machine.mjs": "d1fd6a66b227970b908331d3a4d9e059f2ab0ba7bb502964a3ad568cb3684815",
+    "adapter.ts": "e6c394bb415a376da9873523fb89c5b0f02e81c02615afeb96aac246ca1b4734",
+    "contract.json": "27a5aab59ff2d0fe6c3cd661df5f274443dee7001ec235c186c2edf1a34a52ea"
   },
   "checks": {
     "pilot_tests_passed": 9,
@@ -18,5 +18,6 @@
     "Scoped engine release",
     "Updated native n8n export/execute and independent provider readback",
     "Executed proof receipt"
-  ]
+  ],
+  "strict_request_validation": "Enabled in local adapter; Contacts fixture explicitly sends associations: []; not yet measured in cloud"
 }
