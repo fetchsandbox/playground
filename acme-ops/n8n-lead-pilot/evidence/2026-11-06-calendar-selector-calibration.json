@@ -1,0 +1,13 @@
+{
+  "scope": "Contract selector calibration against same observed twin records; no app re-execution",
+  "results": {
+    "fixture_without_attendees_plus_correct_target": true,
+    "target_attendees_missing": false,
+    "target_wrong_recipient": false,
+    "target_wrong_id": false,
+    "target_duplicate_attendee": false,
+    "duplicate_target": false
+  },
+  "reason": "Unrelated fixture event lacks attendees; target must still have exactly one matching attendee under exactly one matching summary and ID.",
+  "evaluator": "app.corpus.probes.spec.Assertion (the actual provider-assertion owner)"
+}

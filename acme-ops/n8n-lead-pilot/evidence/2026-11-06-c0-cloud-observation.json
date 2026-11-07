@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-11-07T02:13:09.781047+00:00",
+  "scope": "Actual unpublished n8n cloud execution; application state observation, not independent verifier or native-provider acceptance",
+  "n8n_workflow_id": "XNOkSPCwhsCbH23J",
+  "execution_id": "8",
+  "backend_commit": "fdd1d243",
+  "outcome": "confirmed",
+  "elapsed_seconds": 13.31,
+  "provider_operation_statuses": {
+    "contact": "confirmed",
+    "deal": "confirmed",
+    "gmail": "confirmed",
+    "calendar": "confirmed"
+  },
+  "deal_confirmation": "positive_readback",
+  "notification_status": "confirmed",
+  "decision_editor_readback_sha256": "821e4b09611a7913e7d8233d7b47e7c7433d858f05ee202486068d6121362d0b",
+  "decision_source_observation": "Exact source copied from saved editor after reload and execution matches local embedded code; full native export not recovered while Mac locked",
+  "retained_failed_attempts": [
+    {
+      "execution": "6",
+      "reason": "Stale private adapter build rejected Deal GET with 400; downstream withheld"
+    },
+    {
+      "execution": "7",
+      "reason": "Strict Contact search required paging/projection fields; downstream withheld"
+    },
+    {
+      "scope": "helper setup only",
+      "reason": "External-package bundle failed to start; rebuilt with dependencies bundled and retained connection-refused observation"
+    }
+  ],
+  "limits": [
+    "C1-C12 unmeasured",
+    "Single-process FileStore, no abandoned-claim recovery",
+    "No native Gmail data-plane measurement",
+    "Not native SaaS nodes or coding-agent persona acceptance",
+    "Independent verifier receipt pending"
+  ],
+  "checkpoint": "Manual execution 8 before the separately recorded verifier executions 9 and 10; this is not the latest receipt."
+}

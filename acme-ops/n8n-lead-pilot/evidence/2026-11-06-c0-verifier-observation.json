@@ -1,0 +1,146 @@
+{
+  "recorded_at": "2026-11-07T02:20:44.755863+00:00",
+  "scope": "Actual unpublished n8n HTTP/Code workflow driven by the existing application_workflow_v1 verifier against four isolated provider twins; no live-provider delivery",
+  "backend_commit": "fdd1d243",
+  "n8n_workflow_id": "XNOkSPCwhsCbH23J",
+  "n8n_execution_id": "10",
+  "app_version": "n8n-lead-pilot-4a3cb75987b6",
+  "app_version_source": "declared; decision editor read-back matches local source; full native workflow export not recovered",
+  "run_id": "vr_1e3ff3dcbf0c4dbba9f04e1f7a760212",
+  "receipt_url": "https://fetchsandbox.com/runs/f320278d1a?flow=vr_1e3ff3dcbf0c4dbba9f04e1f7a760212",
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C2",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C3",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Actual wrong/missing bearer and webhook caller controls have not been exercised in the cloud. A private helper token does not authenticate a production n8n requester."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_assertions": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true
+    },
+    {
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true
+    }
+  ],
+  "window": {
+    "started_at": "2026-11-07T02:18:06.974120+00:00",
+    "finished_at": "2026-11-07T02:18:20.918772+00:00"
+  },
+  "transport": "Existing authenticated HTTPS/ngrok adapter; managed relay was unavailable at capacity after helper restart. This receipt is not managed-relay proof.",
+  "retained_prior_receipt": "https://fetchsandbox.com/runs/f320278d1a?flow=vr_c65b3b42a98449349612a13db2be69ae",
+  "prior_receipt_reason": "C0 unmeasured: unrelated seed event lacked attendees; corrected selector separately calibrated against exact recorded records. Missing/wrong target attendee, wrong target ID, duplicate attendee/target all still fail. Historical receipt unchanged.",
+  "local_after_contact_search_change": {
+    "state_and_mutation_tests_passed": 10,
+    "typecheck_exit": 0
+  },
+  "limits": [
+    "C1-C12 unmeasured; no complete-pilot claim",
+    "No native Gmail qualification",
+    "Not native vendor nodes or coding-agent persona acceptance",
+    "Single-process FileStore; abandoned crash claims/multiple workers unqualified",
+    "No production n8n publication"
+  ],
+  "post_run_cleanup": {
+    "owned_modeled_sandboxes_deleted": 8,
+    "delete_statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "receipt_read_after_deletion": "C0 held; overall inconclusive retained",
+    "helper_and_forward_ports_closed": [
+      8097,
+      18097
+    ],
+    "protected_handoff_files_removed": 3,
+    "scope_limit": "Operational cleanup observation; C11 remains unmeasured under its frozen declaration"
+  },
+  "receipt_ui_limit": "The public diagnostics currently count five provider-state entries without HTTP status in a 10/15 successful-request total. The owner snapshot separately records assertion_held=true for all five; this is not five HTTP failures."
+}

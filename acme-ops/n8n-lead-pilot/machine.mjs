@@ -43,7 +43,7 @@ export function advance(input) {
   }
   if (c.stage === 'dispatch') {
     if (!r?.saved) return stop('State save failed; provider write withheld');
-    if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'contact_found');
+    if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'contact_found');
     if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
     if (c.step === 'gmail') return provider('gmail','POST','/gmail/v1/users/me/messages/send',{raw:c.raw},'effect');
     return provider('google-calendar','POST','/calendars/primary/events',{summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.com'}]},'effect');

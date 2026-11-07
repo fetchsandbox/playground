@@ -1,0 +1,13 @@
+import {build} from 'esbuild';
+import {readFileSync,writeFileSync,chmodSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+const output=process.argv[2];
+if(!output)throw Error('usage: node n8n-lead-pilot/build-adapter.mjs /private/adapter.mjs');
+const source=fileURLToPath(new URL('./adapter.ts',import.meta.url));
+await build({entryPoints:[source],outfile:resolve(output),bundle:true,platform:'node',target:'node22',format:'esm',banner:{js:"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);"}});
+chmodSync(output,0o600);
+const sha=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+writeFileSync(output+'.build.json',JSON.stringify({source_sha256:sha(source),bundle_sha256:sha(output),built_at:new Date().toISOString(),scope:'Build provenance only; not application verification'},null,2)+'\n',{mode:0o600});
+console.log('Built private adapter and hash manifest; verify startup before arming n8n.');

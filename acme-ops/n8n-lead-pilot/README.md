@@ -6,12 +6,16 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**Current full-flow acceptance is blocked.** The hosted HubSpot twin exposes
-Contacts, not Deals. The actual n8n Cloud run created a contact, received 404 on
-Deal creation, held Gmail/Calendar, and posted a failure to the Slack twin.
-Replaying that lead preserved the contact ID. See
-[the dated observation](evidence/2026-11-06-observation.json).
-Node execution success does not mean the business workflow succeeded.
+**C0 passed; the full pilot remains incomplete.** Backend `fdd1d243` is
+publicly deployed with bounded HubSpot Deal create/read/search and Gmail
+sent-message lookup. Actual n8n execution 10 was driven by the existing verifier;
+its C0 baseline and five independent provider-collection assertions held. The
+[receipt](https://fetchsandbox.com/runs/f320278d1a?flow=vr_1e3ff3dcbf0c4dbba9f04e1f7a760212)
+is **inconclusive overall: one passed, twelve not checked**. See the
+[sanitized observation](evidence/2026-11-06-c0-verifier-observation.json).
+The saved workflow `XNOkSPCwhsCbH23J` remains unpublished. Earlier Deal-404 and
+helper/schema failures are retained, including the
+[original cloud observation](evidence/2026-11-06-observation.json).
 
 ## Design and scope
 
@@ -75,7 +79,13 @@ Cloud setup uses the current [FetchSandbox MCP](https://fetchsandbox.com/mcp)
 tool schemas to create a four-provider disposable session. Inspect the actual
 operations first. Save its `legs` and a fresh test-only bearer token privately as
 `PILOT_BINDINGS`; keep all generated exports with tokens outside version control.
-Build `adapter.ts` with the repository's esbuild tooling. Bind a private
+Build the current adapter with dependencies included; retain the adjacent source/bundle hash manifest and verify authenticated `/ping` before arming n8n. A stale helper previously rejected Deal GET, and an external-only bundle failed to start. Do not reuse an unverified old bundle.
+
+```sh
+node n8n-lead-pilot/build-adapter.mjs /private/adapter.mjs
+```
+
+Bind a private
 `STATE_FILE` and `TRACE_FILE`, and a loopback port (measured pilot used 8097).
 The temporary adapter requires a reachable HTTPS origin for n8n Cloud.
 
@@ -98,33 +108,43 @@ the adapter after recording evidence; retain state and sanitized observations.
 
 ## Frozen acceptance and remaining work
 
-[contract.json](contract.json) retains a full-flow baseline requiring confirmed
-contact, deal, Gmail and Calendar. It must not be weakened to call Contacts-only
-execution a pass. C1–C5 remain explicitly blocked/unmeasured. The private evidence
-directory retains HTTP outcomes, twin traces, independent MCP read-back and the
-initial n8n `structuredClone` failure, corrected using JSON cloning.
+[contract.json](contract.json) requires exact identities and counts across Contact,
+Deal, Gmail, Calendar and Slack, plus saved positive Deal read-back and Slack
+acceptance. C0 held in the November 6 run; C1–C12 remain typed blocked/unmeasured.
+The prior receipt stopped on an unrelated seed event without attendees. The
+[selector calibration](evidence/2026-11-06-calendar-selector-calibration.json)
+retains every target identity/count requirement: missing/wrong attendee, wrong
+ID, duplicate attendee and duplicate target fail. The historical receipt remains
+inconclusive and is not relabeled as passing.
 
-The later Deal-association guard and native-derived fixture-domain change are local-only as of this checkpoint; the saved
-cloud draft has not been updated or remeasured with it. The new local test and
-full Acme suite passed (414 tests). Existing cloud observations remain historical
-evidence for their measured revision and are not silently reassigned to this one.
+The measured verifier run used the existing authenticated HTTPS/ngrok adapter.
+Managed relay capacity was unavailable after helper restart; neither the n8n
+Cloud transport nor this receipt establishes managed-relay acceptance. After the run, eight owned modeled sandboxes were deleted and the owner snapshot
+and public receipt reopened with C0 still held. Temporary helpers, forwarding
+ports and protected handoff files were closed/removed. This operational cleanup
+does not mark the separately declared C11 as measured. The saved
+Code node was read back after reload and matched local source. The complete
+native workflow export has not been recovered while the Mac is locked.
 
-1. Add and qualify HubSpot Deal create/read/search in the curated twin, including
-   actual Contact/Deal association and identity-sensitive independent read-back.
-   Existing source is Contacts-only in `backend/specs/hubspot/openapi.yaml` and
-   `backend/configs/hubspot/sandbox_config.yaml`; generic search support already
-   exists. Extend the current engine, not a second CRM emulator.
-2. Qualify each agreed fault at its encountered operation. Hosted Gmail's
-   `send_unavailable` advertises `drafts.send`, while this flow calls
-   `messages.send`; do not claim that scenario exercises this send path.
-3. Execute C0–C5 in real n8n with independent provider assertions, then reject the
-   duplicate, blind-retry, Calendar-on-unknown and mislabeled-outcome defects.
-4. Rerun the same frozen checks against the corrected export from three clean
-   seeds. Save separate receipt URLs and exact workflow/contract/fixture hashes.
-5. Retrieve the saved native export, reopen evidence after stopping the sessions,
-   then give the prospective user rerun instructions and record their acceptance.
+The current app passed ten targeted state/mutation tests and TypeScript after
+the Contact search request gained required paging/projection fields. The prior
+broader checkpoint passed 415 tests; it is not a new full-suite run for this edit.
+The deployed backend gate passed 1,344 tests, with two skipped and two expected
+failures; native Gmail parity remains unmeasured. Native HubSpot qualification
+covered only the documented bounded Deal subset and archived its own fixtures.
 
-No live-provider parity, native vendor-node acceptance, restart recovery, all-case
-regression guarantee, or production deployment is established by this pilot.
+1. Qualify a repeatable authenticated test trigger and C1 duplicate delivery.
+2. Qualify operation-specific C2–C5 faults. Hosted Gmail `send_unavailable`
+   advertises `drafts.send`, while this flow calls `messages.send`; do not claim
+   that scenario exercises this send path. Preserve accepted-but-response-lost
+   outcomes as unknown until exact positive read-back, never blind resend.
+3. Execute deliberately broken variants and reject duplicate effects, blind retry,
+   Calendar-on-unknown and mislabeled outcomes using the same frozen checks.
+4. Run the corrected C0–C5 contract from three clean seeds with separate receipts.
+   Qualify C6–C12 access/schema/concurrency/crash/privacy/cleanup/provider limits.
+5. Recover the complete saved export, retain workflow/contract/fixture hashes,
+   reopen receipts after cleanup, then provide rerun instructions and record the
+   prospective user's acceptance.
 
-The pending C0 contract now requires a saved Slack acceptance result and independently checks Contact, Deal, Gmail, Calendar and Slack twin state. The exported MIME fixture includes explicit sender, recipient and Message-ID headers, accepted by the current engine parser in a setup preflight. These are authored checks and setup observations, not an executed cloud receipt.
+No live-provider parity, native vendor-node acceptance, safe crash recovery,
+all-case regression guarantee or production n8n deployment is established here.

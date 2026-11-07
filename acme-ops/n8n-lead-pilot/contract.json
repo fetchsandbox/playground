@@ -1,5 +1,5 @@
 {
-  "app_version": "n8n-lead-pilot-12d29f9b2d56",
+  "app_version": "n8n-lead-pilot-4a3cb75987b6",
   "disposable_test_app": true,
   "require_verifier_token": true,
   "checks": [
@@ -292,7 +292,7 @@
                   {
                     "select": "attendees[*]",
                     "count": 1,
-                    "required": true,
+                    "required": false,
                     "where": [
                       {
                         "select": "email",
@@ -350,9 +350,10 @@
       "name": "Duplicate full flow",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
         "evidence": [
-          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+          "docs/reviews/hubspot-deal-20261106/native-observation.json",
+          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
         ]
       }
     },
@@ -361,9 +362,10 @@
       "name": "Accepted Deal response lost",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
         "evidence": [
-          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+          "docs/reviews/hubspot-deal-20261106/native-observation.json",
+          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
         ]
       }
     },
@@ -372,9 +374,10 @@
       "name": "Gmail rejection after CRM",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
         "evidence": [
-          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+          "docs/reviews/hubspot-deal-20261106/native-observation.json",
+          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
         ]
       }
     },
@@ -383,9 +386,10 @@
       "name": "Accepted Gmail response lost with positive readback",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
         "evidence": [
-          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+          "docs/reviews/hubspot-deal-20261106/native-observation.json",
+          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
         ]
       }
     },
@@ -394,9 +398,10 @@
       "name": "Unresolved Gmail holds Calendar",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Hosted HubSpot catalog has no Deal operation; full-flow baseline cannot complete. Fault qualifications not yet measured.",
+        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
         "evidence": [
-          "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
+          "docs/reviews/hubspot-deal-20261106/native-observation.json",
+          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
         ]
       }
     },
