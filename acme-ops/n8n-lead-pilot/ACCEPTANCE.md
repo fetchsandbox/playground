@@ -8,6 +8,14 @@ check of the same C3 business case. All 25 independent provider-state assertions
 held. Results are scripted MCP/native-runtime proof only; full quality gates,
 fresh builder acceptance and enterprise readiness remain open.
 
+The [C4 observation](evidence/2026-11-07-c4-deployed-observation.json) adds a
+separate measured receipt: six held, eight unmeasured, all 30 independent
+provider-state assertions held. Native C4 blind-resend rejection remains
+unmeasured pending actual native export access; normal source was republished
+and separately remeasured with the same six checks and all 30 state assertions
+held ([restored observation](evidence/2026-11-07-c4-restored-observation.json)).
+See [C4 proof](C4-PROOF.md). These results do not close full quality gates.
+
 ## Roles and evidence boundary
 
 The workflow builder owns n8n logic, state, input validation and recovery.
@@ -33,7 +41,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 |---|---|---|---|
 | C2 | Deal accepted, response lost | Normal native recovery and deliberately broken blind-retry versions are measured separately. The broken version failed C2 with two committed Deal IDs. Normal source restored and remeasured: C2 held under the same checks. Broader full-contract quality gates remain open. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
 | C3 | Gmail rejected after CRM | Measured: exact direct-send once-only 403 and independent zero-message/Calendar state; explicit recovery retained CRM IDs and created one email/event. Native broken control and full repeatability remain open. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
-| C4 | Gmail accepted, response lost | FetchSandbox qualification: direct-send post-commit response-loss scenario and client-disconnect witness unqualified. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
+| C4 | Gmail accepted, response lost | Measured normal native n8n: one accepted message, client disconnect, exact SENT/recipient/Message-ID read-back, one later Calendar event, no second send. Native blind-resend control unmeasured; Mac relocked during export. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
 | C5 | Gmail outcome remains unknown | Both: qualify unavailable/ambiguous read-back and prove the application withholds Calendar and reports unknown. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
 | C6 | Caller identity boundaries | Builder: shared pilot bearer is not per-requester identity. Qualification: missing/wrong native headers returned 403 outside this contract only. | Denied calls leave state/effects unchanged; intended requester isolation and authenticated identity explicitly specified and tested. |
 | C7 | Invalid input/schema | Qualification: local validation tests only. | Actual published-entry invalid requests with unchanged independent effects and retained rejected-call evidence. |
@@ -59,7 +67,7 @@ are `deal_accepted_response_loss`, `direct_send_rejected` and
 pilot adapter's six-second timeout. The HubSpot control is deployed and C2 has native positive receipts. Backend
 `a952b218` now enables Gmail scenario configuration, including the locally and
 publicly qualified `direct_send_rejected_once`. C3 rejection/recovery has a native
-workflow receipt; C4/C5 remain unmeasured. Zero-step alias rejection remains in
+workflow receipt; C4 normal execution is measured separately; C5 remains unmeasured. Zero-step alias rejection remains in
 the unchanged runtime image. See [C3 proof](C3-PROOF.md) for its separate
 80-passed/one-skipped backend gate and 434 workflow tests. The full three integrity failures observed
 in the expanded gate reproduced on unchanged HEAD provider configs; no baselines

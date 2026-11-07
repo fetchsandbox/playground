@@ -6,6 +6,17 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
+**Latest: C0–C4 normal behavior held, including both C3 phase checks.**
+Backend `a952b218`, MCP `0.7.30` and normal published n8n version
+`03207059-cc93-4ab8-834e-bcb70e46b2ce` produced this
+[separate normal-restoration receipt](https://fetchsandbox.com/runs/b9c6ab0f24?flow=vr_356d50ccd6824e6ea7e08638b0e257ff):
+**six checks held, eight unmeasured; overall inconclusive**, with all 30 independent
+provider-state assertions held. C4's native blind-resend control remains
+unmeasured after the Mac relocked during actual export; the normal source is
+published. See [C4 proof and limits](C4-PROOF.md).
+
+## Earlier C3 and C2 measurements
+
 **C0, C1, C2 positive recovery and both C3 phases held on the published pilot.**
 Backend `a952b218` and published MCP `0.7.30` produced this
 [receipt](https://fetchsandbox.com/runs/63d0624d55?flow=vr_6e00ef2d5af44542b29056646591be18):
@@ -30,6 +41,16 @@ requirements. C2's control work and historical failures are retained in
 [C2-PROOF.md](C2-PROOF.md). Scripted runtime proof is not native SaaS parity.
 Historical [C0/C1 evidence](evidence/2026-11-07-repeatable-c0-c1-observation.json)
 and the original C0 workflow `XNOkSPCwhsCbH23J` remain separate observations.
+
+## Latest C4 measurement — November 7
+
+C4 now has a [published n8n receipt](https://fetchsandbox.com/runs/1826dab130?flow=vr_9b377a85e00d47a6b28890f0129f5ca8):
+six checks held, eight unmeasured; overall inconclusive. All 30 independent
+provider-state assertions held. The same accepted Gmail message was read back
+before Calendar, with no second send. C0–C3 definitions were unchanged.
+[C4-PROOF.md](C4-PROOF.md) preserves the exact sequence, setup failures and limits.
+The native C4 blind-resend control remains unmeasured because the Mac relocked
+while saving its actual export; normal source was republished immediately.
 
 ## Required builder-to-verifier pattern — Raj, November 6, 2026
 
@@ -82,8 +103,8 @@ C1–C12 executable where supported, reject deliberately broken variants and run
 three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
-The scripted MCP/runtime portion has measured C0/C1/C2/C3 results. The complete
-builder acceptance journey, C4–C12, native deployed negative controls and three
+The scripted MCP/runtime portion has measured C0/C1/C2/C3/C4 results. The complete
+builder acceptance journey, C5–C12, remaining native negative controls and three
 clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
@@ -111,7 +132,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4–C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5–C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;
@@ -290,8 +311,8 @@ Current next steps after the November 7 C2 measurement:
    source was restored and republished. Keep that negative receipt separate
    from normal runs and qualify the remaining mutations.
 3. C3 rejection/no-implicit-resend and explicit recovery now held on backend
-   `a952b218`; see [the C3 proof](C3-PROOF.md). Next qualify C4/C5
-   response-loss and unavailable read-back through the actual workflow.
+   `a952b218`; see [the C3 proof](C3-PROOF.md). C4 normal response-loss recovery is also measured; its native broken control
+   remains open. Next qualify C5 unavailable/ambiguous read-back.
    Preserve unknown outcomes until positive read-back, never blind resend.
 4. Reject deliberately broken variants under unchanged business assertions,
    then measure the full contract from three clean seeds with separate receipts.

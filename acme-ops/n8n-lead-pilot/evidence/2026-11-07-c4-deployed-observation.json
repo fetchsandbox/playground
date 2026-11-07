@@ -1,0 +1,245 @@
+{
+  "scope": "Scripted MCP execution of actual published native n8n webhook with isolated provider twins; not native Gmail delivery or fresh builder acceptance",
+  "receipt_url": "https://fetchsandbox.com/runs/1826dab130?flow=vr_9b377a85e00d47a6b28890f0129f5ca8",
+  "run_id": "vr_9b377a85e00d47a6b28890f0129f5ca8",
+  "backend_commit": "a952b218",
+  "backend_release_this_task": false,
+  "mcp": "0.7.30",
+  "workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version": "064da74d-7ba5-4679-9d00-1efe7bb0b264",
+  "version_independently_observed_on_execution": 66,
+  "native_executions": [
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67
+  ],
+  "C4_executions": [
+    65,
+    66,
+    67
+  ],
+  "contract_source_commit": "f9bb886",
+  "contract_sha256": "a8a4d638178f52b9bb491c36fd9bee525f6f4357c71f06313930c4f64e9871ba",
+  "unchanged_previous_check_ids": [
+    "baseline",
+    "C1",
+    "C2",
+    "C3",
+    "C3_recovery"
+  ],
+  "unchanged_adapter_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_state_assertions": {
+    "count": 30,
+    "all_held": true
+  },
+  "C4": {
+    "first_app_status": "unknown",
+    "first_gmail": {
+      "status": "unknown",
+      "client_status": 0
+    },
+    "first_calendar": {
+      "status": "pending"
+    },
+    "accepted_message_id": "8931861818197059",
+    "accepted_write_status": 200,
+    "accepted_at": "2026-11-07T17:18:12.817006Z",
+    "transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:18:12.828241+00:00",
+      "client_disconnected_at": "2026-11-07T17:18:18.758053+00:00",
+      "delay_completed_at": "2026-11-07T17:18:22.837195+00:00"
+    },
+    "positive_direct_read_at": "2026-11-07T17:18:23.280882Z",
+    "positive_read_id": "8931861818197059",
+    "positive_read_status": 200,
+    "final_message_id": "8931861818197059",
+    "recovery_confirmation": "positive_readback",
+    "calendar_write_at": "2026-11-07T17:18:24.935181Z",
+    "gmail_send_count": 1,
+    "calendar_write_count": 1,
+    "CRM_ids_preserved": true,
+    "no_calendar_write_in_initial_unknown_execution": true,
+    "calendar_after_positive_readback": true,
+    "completed_replay_adds_no_provider_requests": true
+  },
+  "local_gates": {
+    "backend_passed": 40,
+    "backend_skipped": 1,
+    "backend_test_files": [
+      "test_n8n_provider_fault_controls.py",
+      "test_gmail_workflow_contract.py",
+      "test_gmail_message_listing.py"
+    ],
+    "workflow_passed": 436,
+    "workflow_files": 65,
+    "typescript": "passed"
+  },
+  "deployed_component_control": {
+    "backend_build": {
+      "commit": "a952b218",
+      "built_at": "2026-11-07T16:28:46.867577+00:00",
+      "env": "unknown"
+    },
+    "client_timeout_observed": true,
+    "client_elapsed_seconds": 6.003,
+    "accepted_effect_read_back": true,
+    "accepted_id": "2248719027946590",
+    "server_transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:14:32.873544+00:00",
+      "client_disconnected_at": "2026-11-07T17:14:38.808396+00:00",
+      "delay_completed_at": "2026-11-07T17:14:42.881558+00:00"
+    },
+    "blind_resend_creates_second_message": true,
+    "scope": "Deployed exact-operation twin component control, not native Gmail or n8n acceptance",
+    "passed": true,
+    "cleanup_statuses": [
+      200
+    ]
+  },
+  "setup_attempts": [
+    {
+      "item": "First deployed component observer",
+      "status": "failed",
+      "reason": "Read archive before fixed 10-second hold completed; disconnect witness not yet persisted at query time",
+      "effect": "Accepted message independently read back; this attempt did not establish required disconnect evidence",
+      "cleanup_statuses": [
+        200
+      ],
+      "artifact": "component-attempt-1/component-private.json"
+    },
+    {
+      "item": "Repeated deployed component observer",
+      "status": "passed",
+      "change": "Bounded archive polling for server-recorded disconnect after hold completion; no engine/application/config change",
+      "artifact": "component-summary.json"
+    },
+    {
+      "item": "Initial adapter build invocation",
+      "status": "setup_failed",
+      "exit_code": 1,
+      "reason": "Required output-path argument omitted; no build performed"
+    },
+    {
+      "item": "Corrected adapter build invocation",
+      "status": "passed",
+      "command": "node n8n-lead-pilot/build-adapter.mjs dist/lead-pilot.mjs",
+      "bundle_unchanged": true,
+      "sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b"
+    }
+  ],
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "native_negative_control": {
+    "status": "blocked_unmeasured",
+    "reason": "Mac relocked during actual native export after variant publication; no negative invocation was made; normal source republished",
+    "restored_normal_version_prefix": "03207059",
+    "published_variant_version_prefix": "649c0743",
+    "normal_restoration": {
+      "version": "03207059-cc93-4ab8-834e-bcb70e46b2ce",
+      "separate_receipt": "https://fetchsandbox.com/runs/b9c6ab0f24?flow=vr_356d50ccd6824e6ea7e08638b0e257ff",
+      "six_checks_held": true,
+      "eight_unmeasured": true
+    }
+  },
+  "remaining": [
+    "C5-C12 unmeasured",
+    "Native C4 blind-resend negative receipt unmeasured",
+    "Three clean full-contract repetitions and fresh native builder acceptance unmeasured",
+    "No native mail, Calendar invitation or Slack delivery qualification",
+    "Source-capture automation deferred by owner"
+  ]
+}

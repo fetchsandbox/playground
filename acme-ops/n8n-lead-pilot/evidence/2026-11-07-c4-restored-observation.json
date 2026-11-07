@@ -1,0 +1,146 @@
+{
+  "scope": "Separate normal-source recheck after restoring uninvoked control publication; not a negative-control receipt",
+  "receipt_url": "https://fetchsandbox.com/runs/b9c6ab0f24?flow=vr_356d50ccd6824e6ea7e08638b0e257ff",
+  "run_id": "vr_356d50ccd6824e6ea7e08638b0e257ff",
+  "backend_commit": "a952b218",
+  "backend_release_this_task": false,
+  "mcp": "0.7.30",
+  "observed_native_version": "03207059-cc93-4ab8-834e-bcb70e46b2ce",
+  "version_independently_observed_on_execution": 78,
+  "native_executions": [
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79
+  ],
+  "C4_executions": [
+    77,
+    78,
+    79
+  ],
+  "cached_actual_normal_export_sha256": "0a2fb34914a2cf2aa955ec49108fee4187cd46cd273511e1f1390d20ddebae35",
+  "source_capture_limit": "Actual prior normal export reused for restored identical decision code and wiring; no fresh export captured. Current native version separately observed on execution 78. Receipt source version is declared, not cryptographic runtime attestation.",
+  "unchanged_adapter_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "identical_14_business_checks_to_initial_C4_run": true,
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_state_assertions": {
+    "count": 30,
+    "all_held": true
+  },
+  "C4": {
+    "first_state": "unknown",
+    "first_calendar": "pending",
+    "accepted_message_id": "8250975533209495",
+    "accepted_transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:24:34.395754+00:00",
+      "client_disconnected_at": "2026-11-07T17:24:40.335008+00:00",
+      "delay_completed_at": "2026-11-07T17:24:44.404177+00:00"
+    },
+    "direct_read_at": "2026-11-07T17:24:44.578944Z",
+    "direct_read_id": "8250975533209495",
+    "final_state": "confirmed",
+    "final_message_id": "8250975533209495"
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "app_port_closed": true,
+    "owned_ngrok_processes_stopped": 1
+  },
+  "negative_control": "Published briefly, never invoked because actual native export blocked on locked Mac; restored normal version above",
+  "remaining": [
+    "Native C4 blind-resend failing receipt",
+    "C5-C12",
+    "Three full-contract clean-seed repetitions",
+    "Fresh builder acceptance",
+    "Source-capture automation deferred"
+  ]
+}

@@ -7,9 +7,9 @@
   "mcp_source": "npm_package",
   "app_version": "n8n-export-0a2fb34914a2cf2aa955ec49108fee4187cd46cd273511e1f1390d20ddebae35-bridge-fe5ca4b82049",
   "bundle_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
-  "session_id": "vs_02e13cbca4e4",
-  "run_id": "vr_139c4907d0e9400cab6879747ca74523",
-  "receipt_url": "https://fetchsandbox.com/runs/03a3465a6f?flow=vr_139c4907d0e9400cab6879747ca74523",
+  "session_id": "vs_72ca8c14acd8",
+  "run_id": "vr_356d50ccd6824e6ea7e08638b0e257ff",
+  "receipt_url": "https://fetchsandbox.com/runs/b9c6ab0f24?flow=vr_356d50ccd6824e6ea7e08638b0e257ff",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -42,8 +42,8 @@
     },
     {
       "id": "C4",
-      "status": "unmeasured",
-      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     },
     {
       "id": "C5",
@@ -86,5 +86,5 @@
       "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
     }
   ],
-  "recorded_at": "2026-11-07T16:47:28.668Z"
+  "recorded_at": "2026-11-07T17:25:08.799Z"
 }
