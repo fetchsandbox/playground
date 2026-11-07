@@ -72,6 +72,64 @@ This section records the required design, not shipped capability. Current proof
 remains C0 only on backend `fdd1d243`; the draft is unpublished, C1–C12 remain
 unmeasured, and the end-to-end builder experience above has not been qualified.
 
+## Repeatable-trigger candidate — not yet cloud-qualified
+
+The successor draft is `PJlTC5gnf6wb0r8e`, named **Friendly lead recovery — MCP
+repeatable verification**. It is separate from the measured C0 draft. Native
+Header Auth is selected on its fixed `friendly-pilot-mcp-20261106` webhook;
+credential entry/save, HTTP-node credential binding and publication are pending.
+Do not publish while either boundary still lacks native credential protection.
+The existing inline-header draft is historical setup, not the target deployment.
+
+The candidate uses the existing `verify/relay-proof.mjs` lifecycle, not another
+verification controller. Its `verify/contracts/n8n-lead-recovery.mjs` module checks
+that a native export is published, has no pinned/disabled nodes, protects both
+network boundaries with native Header Auth references, and matches the app-owned
+six-node source and wiring. The declared application version includes the exact
+export SHA-256. This saved-export comparison still does not independently attest
+that n8n executed that exact version at every instant.
+
+The runner's optional app hooks prepare the same attempt's twin bindings and
+protected startup health request. Existing workflows retain their default
+runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
+reads `/proof/{lead}`, independently checks provider collections and retains the
+receipt through the existing MCP tools. C1 now has two deliveries of the same
+lead and the same exact one-effect assertions; C2–C12 stay typed blocked. An
+executable check is not a passing check.
+
+The bridge accepts only the fixed persistent n8n URL and a private bearer value;
+it refuses temporary/foreign URLs and redirects. It does not retry an ambiguous
+invocation: a timeout may follow successful execution. The generated native
+workflow contains credential references, not inline bearer values. Configure the
+credential for the pilot n8n host and its specific adapter host only. It must not
+contain customer/provider credentials. Header-authenticated application access
+and the FetchSandbox MCP credential are separate boundaries.
+
+After native credential setup and publication, export the actual saved workflow
+privately. From `acme-ops`, with the existing n8n-to-adapter HTTPS transport ready:
+
+```sh
+node n8n-lead-pilot/build-adapter.mjs dist/lead-pilot.mjs
+PILOT_BINDINGS_SOURCE=/private/pilot-bindings.json \
+N8N_WORKFLOW_EXPORT=/private/published-n8n-export.json \
+PROOF_BUNDLE=dist/lead-pilot.mjs PROOF_PORT=8097 \
+node verify/relay-proof.mjs n8n-lead-recovery
+```
+
+The private source binding has `token` (adapter), `n8n_token` (native webhook) and
+`n8n_webhook` (the fixed persistent URL). The workflow generator additionally
+needs `n8n_header_auth: {id, name}` referencing the credential saved in n8n. The
+runner writes session-specific `legs` into its private output directory; never
+reuse an older session's legs. Do not print or commit these files. Each proof
+still uses the standard protected verifier-token handoff.
+
+Current candidate evidence is local only: transport/configuration tests and an
+actual compiled adapter HTTP startup check (missing/wrong bearer 401, valid
+health 200, malformed input 400). No persistent n8n execution, fresh C1 receipt,
+independent builder persona pass or new deployment has been observed for this
+candidate. Historical C0 remains the only measured cloud baseline. The full
+builder journey stays incomplete until the real MCP/runtime path is exercised.
+
 ## Design and scope
 
 `Lead webhook → validate input → decision machine → conditional state / twin I/O
@@ -195,7 +253,9 @@ The deployed backend gate passed 1,344 tests, with two skipped and two expected
 failures; native Gmail parity remains unmeasured. Native HubSpot qualification
 covered only the documented bounded Deal subset and archived its own fixtures.
 
-1. Qualify a repeatable authenticated test trigger and C1 duplicate delivery.
+1. Finish the prepared native credential handoff and HTTP-node binding, publish
+   the separate protected draft with owner authorization, export it and exercise
+   the existing MCP runner for C0/C1 without manual arming.
 2. Qualify operation-specific C2–C5 faults. Hosted Gmail `send_unavailable`
    advertises `drafts.send`, while this flow calls `messages.send`; do not claim
    that scenario exercises this send path. Preserve accepted-but-response-lost

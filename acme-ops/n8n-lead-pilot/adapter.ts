@@ -3,6 +3,7 @@ import {readFileSync, appendFileSync} from 'node:fs';
 import {timingSafeEqual} from 'node:crypto';
 import {FileStore} from '../src/kit/store';
 import {LeadState} from './state';
+import {invokeN8n} from './trigger';
 
 // Private test adapter only: conditional state writes and bounded twin transport.
 // n8n owns the transition/recovery logic. This server does not choose next steps.
@@ -27,9 +28,8 @@ createServer(async(req,res)=>{
   if(req.method!=='POST'||!['/io','/invoke'].includes(req.url??'')) return send(404,{error:'not_found'});
   let raw='';for await(const b of req){raw+=b;if(raw.length>65536)throw new Error('oversize');}
   if(req.url==='/invoke'){
-   if(cfg.n8n_webhook!=='https://fetchsandbox.app.n8n.cloud/webhook-test/friendly-pilot-20261106')return send(503,{error:'test_webhook_not_bound'});
-   const out=await fetch(cfg.n8n_webhook,{method:'POST',headers:{'content-type':'application/json'},body:raw,signal:AbortSignal.timeout(90000)});
-   return send(out.status,await out.json());
+   const out=await invokeN8n(cfg,raw);
+   return send(out.status,out.body);
   }
   const {context:c,request:q}=JSON.parse(raw);
   if(!/^[a-zA-Z0-9_-]{1,100}$/.test(c?.lead_id??'')||typeof c.attempt!=='string')return send(400,{error:'invalid_identity'});
@@ -49,4 +49,4 @@ createServer(async(req,res)=>{
   }else return send(400,{error:'unknown_command'});
   return send(200,{context:c,result});
  }catch{return send(500,{error:'adapter_failure'});}
-}).listen(Number(process.env.PORT??8097),'127.0.0.1',()=>console.log('pilot adapter listening'));
+}).listen(Number(process.env.PORT??8097),'127.0.0.1',()=>console.log(JSON.stringify({msg:'listening',port:Number(process.env.PORT??8097),workflow:process.env.WORKFLOW??'n8n-lead-recovery'})));

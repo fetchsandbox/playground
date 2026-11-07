@@ -1,0 +1,20 @@
+import {describe,it,expect} from 'vitest';
+// @ts-ignore The native workflow generator is also a Node CLI.
+import {buildWorkflow} from '../n8n-lead-pilot/build-workflow.mjs';
+describe('native n8n auth configuration',()=>{
+ it('refuses an unsecured draft and a substituted runtime origin or route',()=>{
+  const c={id:'fixture-reference',name:'Fixture credential (not a secret)'};
+  expect(()=>buildWorkflow('https://adapter.example','friendly-pilot-mcp-20261106',null)).toThrow();
+  for(const origin of ['http://adapter.example','https://user:password@adapter.example','https://adapter.example/path','https://adapter.example?key=value'])expect(()=>buildWorkflow(origin,'friendly-pilot-mcp-20261106',c)).toThrow();
+  expect(()=>buildWorkflow('https://adapter.example','different-route',c)).toThrow();
+ });
+ it('uses native credential references on both network boundaries without inline bearer values',()=>{
+  const c={id:'fixture-reference',name:'Fixture credential (not a secret)'};
+  const workflow=buildWorkflow('https://adapter.example','friendly-pilot-mcp-20261106',c);
+  const webhook=workflow.nodes.find((n:any)=>n.name==='Lead webhook');
+  const io=workflow.nodes.find((n:any)=>n.name==='State or isolated twin I/O');
+  expect(webhook.parameters.authentication).toBe('headerAuth');expect(webhook.credentials.httpHeaderAuth).toEqual(c);
+  expect(io.parameters.authentication).toBe('genericCredentialType');expect(io.parameters.genericAuthType).toBe('httpHeaderAuth');expect(io.credentials.httpHeaderAuth).toEqual(c);
+  expect(JSON.stringify(workflow)).not.toContain('Bearer ');expect(io.parameters).not.toHaveProperty('headerParameters');expect(workflow.active).toBe(false);
+ });
+});

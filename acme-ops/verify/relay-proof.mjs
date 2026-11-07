@@ -46,7 +46,7 @@ const gitSha = (() => {
   }
 })();
 const BUNDLE_SHA256 = createHash("sha256").update(readFileSync(BUNDLE)).digest("hex");
-const APP_VERSION = `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
+const APP_VERSION = contract.appVersion ?? `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
 const OUT_DIR = process.env.PROOF_OUT_DIR ?? join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});
@@ -165,9 +165,11 @@ function twinEnv(legs) {
 
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
   if (app) {
-    const stopped=new Promise(resolve=>app.once("exit",resolve));
-    app.kill("SIGKILL");
-    await stopped;
+    if(app.exitCode === null && app.signalCode === null){
+      const stopped=new Promise(resolve=>app.once("exit",resolve));
+      app.kill("SIGKILL");
+      await stopped;
+    }
   }
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
@@ -184,6 +186,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
     ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
+    ...(await contract.runtimeEnv?.({ legs, outDir: OUT_DIR }) ?? {}),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
   const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
@@ -194,7 +197,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   await listening;
   for (let i = 0; i < 100; i++) {
     try {
-      if ((await fetch(`http://127.0.0.1:${PORT}/ping`)).ok) return;
+      if ((await fetch(`http://127.0.0.1:${PORT}/ping`, {headers:await contract.startupPingHeaders?.() ?? {}})).ok) return;
     } catch {}
     await sleep(100);
   }
@@ -272,8 +275,8 @@ const application_config = {
   app_version: APP_VERSION,
   disposable_test_app: true,
   require_verifier_token: true,
-  coverage_review: coverage(contract.coverage, contract.checks),
-  scope_review: contract.scope_review ?? scope(contract.checks, contract.evidence),
+  coverage_review: contract.applicationConfig?.coverage_review ?? coverage(contract.coverage, contract.checks),
+  scope_review: contract.applicationConfig?.scope_review ?? contract.scope_review ?? scope(contract.checks, contract.evidence),
   checks: contract.checks,
   // Optional contract-specific config, e.g. event_destinations for signed webhooks.
   ...(contract.applicationConfig ?? {}),
