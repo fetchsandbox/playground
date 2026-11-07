@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 // @ts-ignore The native workflow generator is also a Node CLI.
-import {buildWorkflow,decisionSource,blindDealRetry} from '../n8n-lead-pilot/build-workflow.mjs';
+import {buildWorkflow,decisionSource,blindDealRetry,blindGmailResend} from '../n8n-lead-pilot/build-workflow.mjs';
 describe('native n8n auth configuration',()=>{
  it('refuses an unsecured draft and a substituted runtime origin or route',()=>{
   const c={id:'fixture-reference',name:'Fixture credential (not a secret)'};
@@ -28,4 +28,13 @@ it('the explicit broken decision variant replaces reconciliation with a second D
  expect(blindDealRetry(structuredClone(unrelated))).toEqual(unrelated);
  expect(()=>decisionSource('unregistered')).toThrow();
  expect(decisionSource('normal')).not.toContain('const normalAdvance=advance');
+});
+
+it('the explicit Gmail resend mutation changes only unknown-message reconciliation',()=>{
+ const input={context:{stage:'reconciled',raw:'opaque-fixture-mime'},request:{kind:'provider',provider:'gmail',method:'GET',path:'/gmail/v1/users/me/messages?q=rfc822msgid%3Aordinary%40example.com'}};
+ const next=blindGmailResend(structuredClone(input));
+ expect(next.context.stage).toBe('effect');expect(next.request).toEqual({kind:'provider',provider:'gmail',method:'POST',path:'/gmail/v1/users/me/messages/send',body:{raw:'opaque-fixture-mime'}});
+ for(const q of [{kind:'provider',provider:'gmail',method:'GET',path:'/gmail/v1/users/me/messages/exact-id'},{kind:'provider',provider:'hubspot',method:'POST',path:'/crm/v3/objects/deals/search'}]){
+  const other={context:{},request:q};expect(blindGmailResend(structuredClone(other))).toEqual(other);
+ }
 });

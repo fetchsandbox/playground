@@ -12,11 +12,20 @@ export function blindDealRetry(next){
  }
  return next;
 }
+// Explicit negative control: resend an uncertain Gmail message instead of reading it.
+export function blindGmailResend(next){
+ if(next.request?.kind==='provider' && next.request.provider==='gmail' && next.request.method==='GET' && next.request.path.startsWith('/gmail/v1/users/me/messages?q=')){
+  next.context.stage='effect';
+  next.request={kind:'provider',provider:'gmail',method:'POST',path:'/gmail/v1/users/me/messages/send',body:{raw:next.context.raw}};
+ }
+ return next;
+}
 export function decisionSource(variant='normal'){
  const source=advance.toString();
  if(variant==='normal')return source;
- if(variant!=='blind-deal-retry')throw Error('Unknown versioned decision variant');
- return source+'\nconst normalAdvance=advance;\n'+blindDealRetry.toString()+'\nadvance = input => blindDealRetry(normalAdvance(input));';
+ const mutation=variant==='blind-deal-retry'?blindDealRetry:variant==='blind-gmail-resend'?blindGmailResend:null;
+ if(!mutation)throw Error('Unknown versioned decision variant');
+ return source+'\nconst normalAdvance=advance;\n'+mutation.toString()+'\nadvance = input => '+mutation.name+'(normalAdvance(input));';
 }
 export function buildWorkflow(url,path,credential,variant='normal'){
 const origin=new URL(url);
