@@ -1,0 +1,61 @@
+{
+  "workflow_id": "PJlTC5gnf6wb0r8e",
+  "active": false,
+  "export_sha256": "c9d8257fa0c8c6b0a9b7ba54c3848ff00b094f416ed57a1cca777d0098bab94c",
+  "nodes": [
+    {
+      "node": "Lead webhook",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    },
+    {
+      "node": "Validate dummy lead",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    },
+    {
+      "node": "Durable decision machine",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    },
+    {
+      "node": "Finished or held",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    },
+    {
+      "node": "State or isolated twin I/O",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    },
+    {
+      "node": "Return observed workflow status",
+      "type": true,
+      "version": true,
+      "parameters": true,
+      "credential_refs": true,
+      "disabled": false
+    }
+  ],
+  "connections_equal": true,
+  "pinned_nodes": 0,
+  "scope": "Native saved draft configuration comparison, not execution proof",
+  "recorded_at": "2026-11-07T04:10:30.915230+00:00",
+  "credential_saved_by_owner": true,
+  "publication": "Awaiting explicit publication confirmation; not executed"
+}

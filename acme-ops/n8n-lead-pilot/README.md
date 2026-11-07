@@ -77,8 +77,11 @@ unmeasured, and the end-to-end builder experience above has not been qualified.
 The successor draft is `PJlTC5gnf6wb0r8e`, named **Friendly lead recovery — MCP
 repeatable verification**. It is separate from the measured C0 draft. Native
 Header Auth is selected on its fixed `friendly-pilot-mcp-20261106` webhook;
-credential entry/save, HTTP-node credential binding and publication are pending.
-Do not publish while either boundary still lacks native credential protection.
+the owner has saved the credential, and both network boundaries now reference it.
+A saved native export matches all six node types/versions/parameters, credential
+references and connections; there are no pinned or disabled nodes. Publication
+is awaiting explicit owner confirmation. See the
+[prepublication observation](evidence/2026-11-06-prepublication-observation.json).
 The existing inline-header draft is historical setup, not the target deployment.
 
 The candidate uses the existing `verify/relay-proof.mjs` lifecycle, not another
@@ -253,8 +256,8 @@ The deployed backend gate passed 1,344 tests, with two skipped and two expected
 failures; native Gmail parity remains unmeasured. Native HubSpot qualification
 covered only the documented bounded Deal subset and archived its own fixtures.
 
-1. Finish the prepared native credential handoff and HTTP-node binding, publish
-   the separate protected draft with owner authorization, export it and exercise
+1. Native credential handoff and HTTP-node binding are saved and compared.
+   Publish the separate protected draft with owner authorization, export it and exercise
    the existing MCP runner for C0/C1 without manual arming.
 2. Qualify operation-specific C2–C5 faults. Hosted Gmail `send_unavailable`
    advertises `drafts.send`, while this flow calls `messages.send`; do not claim
