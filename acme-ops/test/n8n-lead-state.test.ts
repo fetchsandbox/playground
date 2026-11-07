@@ -8,6 +8,14 @@ import {LeadState} from '../n8n-lead-pilot/state';
 import {advance} from '../n8n-lead-pilot/machine.mjs';
 
 describe('pilot operation state boundary',()=>{
+ it('withholds Gmail unless the Deal read-back names the same saved contact',()=>{
+  const c={lead_id:'bound',attempt:'a',stage:'reconciled_deal',step:'deal',index:1,state:{status:'in_progress',operations:{contact:{status:'confirmed',id:'contact-a'},deal:{status:'unknown',id:'deal-a'},gmail:{status:'pending'}}}};
+  const wrong=advance({context:c,result:{status:200,body:{id:'deal-a',properties:{dealname:'Pilot bound'},associations:{contacts:{results:[{id:'contact-b'}]}}}}});
+  expect(wrong.request.kind).toBe('save');expect(wrong.request.state.status).toBe('unknown');expect(wrong.context.blocked).toBe('deal');
+  expect(wrong.request.state.operations.gmail.status).toBe('pending');
+  const right=advance({context:c,result:{status:200,body:{id:'deal-a',properties:{dealname:'Pilot bound'},associations:{contacts:{results:[{id:'contact-a'}]}}}}});
+  expect(right.request.state.operations.deal).toMatchObject({status:'confirmed',id:'deal-a'});
+ });
  it('only one simultaneous first delivery claims a lead',async()=>{
   const state=new LeadState(new MemoryStore());
   const out=await Promise.all(Array.from({length:8},(_,i)=>state.claim('same-lead','a'+i)));

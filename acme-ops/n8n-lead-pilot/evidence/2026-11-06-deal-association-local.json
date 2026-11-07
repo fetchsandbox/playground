@@ -1,0 +1,22 @@
+{
+  "observed_at": "2026-11-07T00:01:37.874732+00:00",
+  "scope": "Local n8n decision code and adapter; later Deal Contact binding guard not yet installed in cloud",
+  "deployed": false,
+  "source_hashes": {
+    "machine.mjs": "2e2ba60f55ca3a5aa92f6a4bfc23252d0c55fe35260d5da2c36bb00f66cf8777",
+    "adapter.ts": "a63706483d1c94088eb46b86ab42cd1e3a6a9887570762b6cbd0fdf70a5c6b55",
+    "contract.json": "9215dc3ccf537d9fcca8f25f289e0ed03c55ac95cc08f6ec42f5d3b438b949f5"
+  },
+  "checks": {
+    "pilot_tests_passed": 9,
+    "acme_tests_passed": 414,
+    "files": 62,
+    "typescript": "passed"
+  },
+  "pending": [
+    "Native HubSpot scope approval and qualification",
+    "Scoped engine release",
+    "Updated native n8n export/execute and independent provider readback",
+    "Executed proof receipt"
+  ]
+}

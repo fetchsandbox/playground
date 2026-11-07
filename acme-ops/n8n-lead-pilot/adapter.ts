@@ -10,7 +10,7 @@ const cfg = JSON.parse(readFileSync(process.env.PILOT_BINDINGS!, 'utf8'));
 const store = new FileStore(process.env.STATE_FILE!);
 const state = new LeadState(store);
 const allow:Record<string,RegExp> = {
- hubspot:/^\/crm\/v3\/objects\/(contacts|deals)(\/search)?$/,
+ hubspot:/^\/crm\/v3\/objects\/(contacts|deals)(\/search|\/[a-zA-Z0-9_-]+)?(\?associations=contacts)?$/,
  gmail:/^\/gmail\/v1\/users\/me\/messages(\/[a-zA-Z0-9_-]+)?(\?q=[^\s]*)?$/,
  'google-calendar':/^\/calendars\/primary\/events$/,
  slack:/^\/chat.postMessage$/,

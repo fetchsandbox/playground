@@ -30,6 +30,9 @@ This single-operator pilot does not establish production tenant isolation.
 
 Policy version: `machine.mjs` source digest. Calendar is eligible only after
 `gmail.status=confirmed`. An email timeout is `unknown`, never proof of failure.
+The Deal create request names the saved Contact ID. A successful create response
+alone does not release Gmail: a Deal read must confirm that same ID under its
+Contact associations. A wrong/missing association holds the flow as unknown.
 Unknown Gmail sends require a positive read-back matching SENT, Message-ID and
 recipient. Empty/unavailable/ambiguous read-back leaves the operation unknown.
 There is no automatic resend on unknown, and no approval/decline policy in scope.
@@ -61,9 +64,9 @@ npm exec vitest run test/n8n-lead-state.test.ts test/n8n-lead-mutation.test.ts
 npm test
 ```
 
-Eight new tests cover competing first claims, file reconstruction with retained
+Nine new tests cover competing first claims, file reconstruction with retained
 IDs, stale-write rejection, replay identity, known rejection versus unknown,
-Calendar withholding and positive Gmail read-back identity. The mutation test
+Calendar withholding, Deal/Contact identity and positive Gmail read-back identity. The mutation test
 deliberately forgets completed claims: the same one-effect oracle rejects its
 two-effect outcome and accepts the corrected policy. Provider responses in that
 unit test are stubs. **It is not a FetchSandbox or n8n receipt.**
@@ -100,6 +103,11 @@ contact, deal, Gmail and Calendar. It must not be weakened to call Contacts-only
 execution a pass. C1–C5 remain explicitly blocked/unmeasured. The private evidence
 directory retains HTTP outcomes, twin traces, independent MCP read-back and the
 initial n8n `structuredClone` failure, corrected using JSON cloning.
+
+The later Deal-association guard is local-only as of this checkpoint; the saved
+cloud draft has not been updated or remeasured with it. The new local test and
+full Acme suite passed (414 tests). Existing cloud observations remain historical
+evidence for their measured revision and are not silently reassigned to this one.
 
 1. Add and qualify HubSpot Deal create/read/search in the curated twin, including
    actual Contact/Deal association and identity-sensitive independent read-back.

@@ -9,6 +9,7 @@ import {advance} from '../n8n-lead-pilot/machine.mjs';
 async function exercise(disableDedupe:boolean){
  const store=new MemoryStore();const state=new LeadState(store);
  const effects={contact:0,deal:0,gmail:0,calendar:0};
+ const deals:Record<string,any>={};
  async function run(attempt:string){
   let next:any={lead_id:'repeat',attempt,raw:'dummy'};
   for(let i=0;i<80;i++){
@@ -24,7 +25,10 @@ async function exercise(disableDedupe:boolean){
    }else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state);
    else if(q.path.endsWith('/search'))result={status:200,body:{results:[]}};
    else if(q.provider==='slack')result={status:200,body:{ok:true}};
-   else {const step=c.step as keyof typeof effects;effects[step]++;result={status:200,body:{id:step+'-'+effects[step]}};}
+   else if(q.provider==='hubspot' && q.method==='GET')result={status:200,body:deals[c.state.operations.deal.id]};
+   else {const step=c.step as keyof typeof effects;effects[step]++;const id=step+'-'+effects[step];result={status:200,body:{id}};
+    if(step==='deal')deals[id]={id,properties:q.body.properties,associations:{contacts:{results:[{id:q.body.associations[0].to.id,type:'deal_to_contact'}]}}};
+   }
    next={context:c,result};
   }
   throw Error('state machine failed to terminate');

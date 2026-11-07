@@ -1,5 +1,5 @@
 {
-  "app_version": "n8n-lead-pilot-8921ace7afe9",
+  "app_version": "n8n-lead-pilot-2e2ba60f55ca",
   "disposable_test_app": true,
   "require_verifier_token": true,
   "checks": [
@@ -55,6 +55,11 @@
           {
             "select": "operations.calendar.status",
             "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.confirmation",
+            "equals": "positive_readback",
             "required": true
           }
         ]

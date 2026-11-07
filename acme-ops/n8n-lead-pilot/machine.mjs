@@ -44,7 +44,7 @@ export function advance(input) {
   if (c.stage === 'dispatch') {
     if (!r?.saved) return stop('State save failed; provider write withheld');
     if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.test'}]}]},'contact_found');
-    if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'}},'effect');
+    if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
     if (c.step === 'gmail') return provider('gmail','POST','/gmail/v1/users/me/messages/send',{raw:c.raw},'effect');
     return provider('google-calendar','POST','/calendars/primary/events',{summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.test'}]},'effect');
   }
@@ -57,6 +57,11 @@ export function advance(input) {
   }
   if (c.stage === 'effect') {
     const op = c.state.operations[c.step];
+    if (c.step === 'deal' && !failed() && r.body?.id) {
+      op.status='unknown';op.id=r.body.id;op.client_status=r.status;
+      // Keep the claim while reading the accepted Deal's actual relationship.
+      return save('read_deal');
+    }
     const isRejection = r?.status >= 400 && r.status < 500 && ![408,409,429].includes(r.status);
     op.status = !failed() && r.body?.id ? 'confirmed' : isRejection ? 'failed' : 'unknown';
     if (op.status === 'confirmed') op.id = r.body.id;
@@ -70,10 +75,22 @@ export function advance(input) {
     if (!failed() && records?.length === 1 && records[0].id) {
       if (c.step === 'gmail') return provider('gmail','GET','/gmail/v1/users/me/messages/'+encodeURIComponent(records[0].id),null,'reconciled_message');
       if (records[0].properties?.dealname !== 'Pilot '+c.lead_id) { c.state.status='unknown';c.blocked=c.step;return save('notify'); }
-      c.state.operations[c.step] = {status:'confirmed',id:records[0].id,confirmation:'positive_readback'};
-      c.index++; return save('choose');
+      c.state.operations.deal.id=records[0].id;
+      return provider('hubspot','GET','/crm/v3/objects/deals/'+encodeURIComponent(records[0].id)+'?associations=contacts',null,'reconciled_deal');
     }
     c.state.status = 'unknown'; c.blocked = c.step; return save('notify');
+  }
+  if (c.stage === 'read_deal') {
+    if (!r?.saved) return stop('Deal checkpoint failed; downstream writes withheld');
+    return provider('hubspot','GET','/crm/v3/objects/deals/'+encodeURIComponent(c.state.operations.deal.id)+'?associations=contacts',null,'reconciled_deal');
+  }
+  if (c.stage === 'reconciled_deal') {
+    const links=r?.body?.associations?.contacts?.results;
+    if (!failed() && r.body?.id===c.state.operations.deal.id && r.body.properties?.dealname==='Pilot '+c.lead_id && links?.length===1 && links[0].id===c.state.operations.contact.id) {
+      c.state.operations.deal={status:'confirmed',id:r.body.id,confirmation:'positive_readback'};
+      c.index++;return save('choose');
+    }
+    c.state.status='unknown';c.blocked='deal';return save('notify');
   }
   if (c.stage === 'reconciled_message') {
     const headers = r?.body?.payload?.headers ?? [];
