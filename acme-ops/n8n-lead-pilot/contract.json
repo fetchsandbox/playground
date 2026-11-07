@@ -245,6 +245,12 @@
                         "required": true
                       }
                     ]
+                  },
+                  {
+                    "select": "labelIds[*]",
+                    "equals": "SENT",
+                    "count": 1,
+                    "required": true
                   }
                 ]
               }

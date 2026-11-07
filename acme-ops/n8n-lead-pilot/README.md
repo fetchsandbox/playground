@@ -64,7 +64,7 @@ npm exec vitest run test/n8n-lead-state.test.ts test/n8n-lead-mutation.test.ts
 npm test
 ```
 
-Nine new tests cover competing first claims, file reconstruction with retained
+Ten new tests cover competing first claims, file reconstruction with retained
 IDs, stale-write rejection, replay identity, known rejection versus unknown,
 Calendar withholding, Deal/Contact identity and positive Gmail read-back identity. The mutation test
 deliberately forgets completed claims: the same one-effect oracle rejects its
