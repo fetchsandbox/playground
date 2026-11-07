@@ -1098,15 +1098,765 @@
     },
     {
       "id": "C3",
-      "name": "Gmail rejection after CRM",
-      "blocker": {
-        "category": "setup_missing",
-        "reason": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet.",
-        "evidence": [
-          "docs/reviews/hubspot-deal-20261106/native-observation.json",
-          "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
+      "name": "Gmail rejected after CRM: hold email and Calendar even on replay without explicit retry",
+      "before": {
+        "path": "/proof/fs-c3-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c3-{{run_id}}"
+          },
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c3-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-c3-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "failed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.confirmation",
+            "equals": "positive_readback",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.status",
+            "equals": "failed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.client_status",
+            "equals": 403,
+            "required": true
+          },
+          {
+            "select": "operations.calendar.status",
+            "equals": "pending",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          }
         ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step1.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.deal.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "associations.contacts.results[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "id",
+                        "equals": "{{step2.state.operations.contact.id}}",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 0,
+                "required": true,
+                "where": [
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c3-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c3-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 0,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 2,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c3-{{run_id}}\",\"status\":\"failed\",\"blocked_step\":\"gmail\"}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 2,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "contains": "fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "fault": {
+        "provider": "gmail",
+        "scenario": "direct_send_rejected_once",
+        "evidence": "refusal"
       }
+    },
+    {
+      "id": "C3_recovery",
+      "name": "C3 explicit retry preserves CRM identities and creates exactly one email and Calendar effect",
+      "before": {
+        "path": "/proof/fs-c3-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 1,
+          "required": true,
+          "where": [
+            {
+              "select": "status",
+              "equals": "failed",
+              "required": true
+            },
+            {
+              "select": "operations.contact.status",
+              "equals": "confirmed",
+              "required": true
+            },
+            {
+              "select": "operations.deal.status",
+              "equals": "confirmed",
+              "required": true
+            },
+            {
+              "select": "operations.deal.confirmation",
+              "equals": "positive_readback",
+              "required": true
+            },
+            {
+              "select": "operations.gmail.status",
+              "equals": "failed",
+              "required": true
+            },
+            {
+              "select": "operations.gmail.client_status",
+              "equals": 403,
+              "required": true
+            },
+            {
+              "select": "operations.calendar.status",
+              "equals": "pending",
+              "required": true
+            },
+            {
+              "select": "notification.status",
+              "equals": "confirmed",
+              "required": true
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c3-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c3-{{run_id}}",
+            "retry_failed": true
+          },
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c3-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-c3-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.calendar.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.confirmation",
+            "equals": "positive_readback",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.id",
+            "equals": "{{step1.records.0.operations.contact.id}}",
+            "required": true
+          },
+          {
+            "select": "operations.deal.id",
+            "equals": "{{step1.records.0.operations.deal.id}}",
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c3-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step1.records.0.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step1.records.0.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.deal.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "associations.contacts.results[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "id",
+                        "equals": "{{step2.state.operations.contact.id}}",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step1.records.0.operations.deal.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c3-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c3-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.gmail.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c3-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c3-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "labelIds[*]",
+                    "equals": "SENT",
+                    "count": 1,
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c3-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.state.operations.calendar.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "attendees[*]",
+                    "count": 1,
+                    "required": false,
+                    "where": [
+                      {
+                        "select": "email",
+                        "equals": "fs-c3-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 2,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c3-{{run_id}}\",\"status\":\"failed\",\"blocked_step\":\"gmail\"}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c3-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 3,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "contains": "fs-c3-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": "C4",
@@ -1290,7 +2040,8 @@
       "rule_ids": [
         "C3",
         "C5",
-        "C12"
+        "C12",
+        "C3_recovery"
       ]
     },
     {
@@ -1310,7 +2061,8 @@
       "rule_ids": [
         "C3",
         "C4",
-        "C5"
+        "C5",
+        "C3_recovery"
       ]
     },
     {
@@ -1393,6 +2145,15 @@
         "n8n-lead-pilot/machine.mjs:advance",
         "n8n-lead-pilot/state.ts:claim/save",
         "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C3_recovery",
+      "classification": "in_scope",
+      "reason": "Explicit continuation of C3 rejection; independently observe preserved CRM and exactly one downstream effect after retry.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:choose explicit retry_failed gate",
+        "n8n-lead-pilot/state.ts:preserved confirmed operations"
       ]
     },
     {
