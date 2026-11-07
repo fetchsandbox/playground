@@ -46,7 +46,7 @@ const gitSha = (() => {
   }
 })();
 const BUNDLE_SHA256 = createHash("sha256").update(readFileSync(BUNDLE)).digest("hex");
-const APP_VERSION = contract.appVersion ?? `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
+const APP_VERSION = contract.appVersion ? `${contract.appVersion}-bridge-${BUNDLE_SHA256.slice(0,12)}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
 const OUT_DIR = process.env.PROOF_OUT_DIR ?? join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
 const save = (name, data) => writeFileSync(join(OUT_DIR, `${name}.json`), JSON.stringify(data, null, 2), {mode: 0o600});

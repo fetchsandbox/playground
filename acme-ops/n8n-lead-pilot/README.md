@@ -6,16 +6,19 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**C0 passed; the full pilot remains incomplete.** Backend `fdd1d243` is
-publicly deployed with bounded HubSpot Deal create/read/search and Gmail
-sent-message lookup. Actual n8n execution 10 was driven by the existing verifier;
-its C0 baseline and five independent provider-collection assertions held. The
-[receipt](https://fetchsandbox.com/runs/f320278d1a?flow=vr_1e3ff3dcbf0c4dbba9f04e1f7a760212)
-is **inconclusive overall: one passed, twelve not checked**. See the
-[sanitized observation](evidence/2026-11-06-c0-verifier-observation.json).
-The saved workflow `XNOkSPCwhsCbH23J` remains unpublished. Earlier Deal-404 and
-helper/schema failures are retained, including the
-[original cloud observation](evidence/2026-11-06-observation.json).
+**C0 and C1 passed on the published repeatable pilot; the full pilot remains incomplete.**
+Backend `fdd1d243`, published MCP `0.7.30`, and native n8n workflow
+`PJlTC5gnf6wb0r8e` produced this
+[receipt](https://fetchsandbox.com/runs/6aa5d751cf?flow=vr_7adf789251b54c03a59ba39887c02df9):
+**two passed, eleven unmeasured; overall inconclusive**. Native executions 11–13
+ran without manual webhook arming. Ten independent provider-state assertions
+held: Contact, Deal, Gmail, Calendar and Slack for C0 and C1. The
+[sanitized observation](evidence/2026-11-07-repeatable-c0-c1-observation.json)
+records exact workflow/export/bridge versions, earlier failure and cleanup.
+This is scripted MCP/runtime integration proof, not unprimed native-builder
+acceptance or native-provider parity. Earlier workflow `XNOkSPCwhsCbH23J` and its
+[C0-only receipt](https://fetchsandbox.com/runs/f320278d1a?flow=vr_1e3ff3dcbf0c4dbba9f04e1f7a760212)
+remain historical evidence.
 
 ## Required builder-to-verifier pattern — Raj, November 6, 2026
 
@@ -68,21 +71,21 @@ C1–C12 executable where supported, reject deliberately broken variants and run
 three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
-This section records the required design, not shipped capability. Current proof
-remains C0 only on backend `fdd1d243`; the draft is unpublished, C1–C12 remain
-unmeasured, and the end-to-end builder experience above has not been qualified.
+The scripted MCP/runtime portion now has a measured C0/C1 result. The complete
+builder acceptance journey, C2–C12, deployed negative controls and three clean
+repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
-## Repeatable-trigger candidate — not yet cloud-qualified
+## Published repeatable trigger — bounded cloud proof
 
-The successor draft is `PJlTC5gnf6wb0r8e`, named **Friendly lead recovery — MCP
-repeatable verification**. It is separate from the measured C0 draft. Native
-Header Auth is selected on its fixed `friendly-pilot-mcp-20261106` webhook;
-the owner has saved the credential, and both network boundaries now reference it.
-A saved native export matches all six node types/versions/parameters, credential
-references and connections; there are no pinned or disabled nodes. Publication
-is awaiting explicit owner confirmation. See the
+The protected workflow `PJlTC5gnf6wb0r8e` is published with native Header Auth on
+both network boundaries. Its observed version is
+`abd2c751-c25e-459f-99c4-4616910156e6`; export SHA-256 is
+`4b87079ad72a159484466dc6900ef270f8bedda9a28868fe1cb95367e553ef6b`.
+The saved export matched six node types/versions/parameters, credential references
+and wiring, with no pinned/disabled nodes. This replaced the earlier
 [prepublication observation](evidence/2026-11-06-prepublication-observation.json).
-The existing inline-header draft is historical setup, not the target deployment.
+The pilot remains published, but its temporary adapter and ngrok transport were
+stopped after measurement. A fresh proof must start and bind them again.
 
 The candidate uses the existing `verify/relay-proof.mjs` lifecycle, not another
 verification controller. Its `verify/contracts/n8n-lead-recovery.mjs` module checks
@@ -126,12 +129,21 @@ runner writes session-specific `legs` into its private output directory; never
 reuse an older session's legs. Do not print or commit these files. Each proof
 still uses the standard protected verifier-token handoff.
 
-Current candidate evidence is local only: transport/configuration tests and an
-actual compiled adapter HTTP startup check (missing/wrong bearer 401, valid
-health 200, malformed input 400). No persistent n8n execution, fresh C1 receipt,
-independent builder persona pass or new deployment has been observed for this
-candidate. Historical C0 remains the only measured cloud baseline. The full
-builder journey stays incomplete until the real MCP/runtime path is exercised.
+Current evidence: 432 local tests passed across 65 files; TypeScript passed.
+The compiled adapter startup check observed missing/wrong bearer 401, valid
+health 200 and malformed input 400. Separately, the configured native n8n
+webhook rejected missing/wrong headers with 403. Those checks do not complete C6.
+
+### n8n MCP access and managed transport
+
+n8n's MCP access can be a discovery/invocation surface; it is not FetchSandbox's
+behavioral contract or verification engine. Native n8n MCP invocation has not
+been enabled or qualified for this pilot. The measured path is FetchSandbox MCP
+→ managed relay → protected local adapter → published n8n webhook. n8n Cloud
+calls the adapter through separate protected ngrok HTTPS. Do not describe that
+second transport as FetchSandbox managed-tunnel support or remove the adapter
+from the measured architecture. The same contract and independent assertions
+must apply before an alternate native MCP trigger can replace the webhook.
 
 ## Design and scope
 

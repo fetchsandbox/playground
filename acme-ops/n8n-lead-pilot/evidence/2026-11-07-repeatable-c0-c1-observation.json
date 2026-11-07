@@ -1,0 +1,219 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-4b87079ad72a159484466dc6900ef270f8bedda9a28868fe1cb95367e553ef6b-bridge-fe5ca4b82049",
+  "bundle_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "session_id": "vs_0e29a4913dd1",
+  "run_id": "vr_7adf789251b54c03a59ba39887c02df9",
+  "receipt_url": "https://fetchsandbox.com/runs/6aa5d751cf?flow=vr_7adf789251b54c03a59ba39887c02df9",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C3",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Actual wrong/missing bearer and webhook caller controls have not been exercised in the cloud. A private helper token does not authenticate a production n8n requester."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "recorded_at": "2026-11-07T14:53:38.359Z",
+  "backend_deployed": "fdd1d243",
+  "native_workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version_id": "abd2c751-c25e-459f-99c4-4616910156e6",
+  "native_executions": [
+    {
+      "id": "11",
+      "status": "Succeeded",
+      "duration_ms": 12590
+    },
+    {
+      "id": "12",
+      "status": "Succeeded",
+      "duration_ms": 13262
+    },
+    {
+      "id": "13",
+      "status": "Succeeded",
+      "duration_ms": 568
+    }
+  ],
+  "independent_provider_assertions": [
+    {
+      "check_id": "baseline",
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true
+    },
+    {
+      "check_id": "baseline",
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true
+    },
+    {
+      "check_id": "baseline",
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true
+    },
+    {
+      "check_id": "baseline",
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true
+    },
+    {
+      "check_id": "baseline",
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true
+    },
+    {
+      "check_id": "C1",
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true
+    },
+    {
+      "check_id": "C1",
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true
+    },
+    {
+      "check_id": "C1",
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true
+    },
+    {
+      "check_id": "C1",
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true
+    },
+    {
+      "check_id": "C1",
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true
+    }
+  ],
+  "runner_exit_code": 1,
+  "scope": "Scripted published MCP lifecycle through managed relay, protected adapter and published n8n webhook; isolated twins only. Native n8n I/O used separate ngrok transport. No manual webhook arming.",
+  "native_header_rejection": {
+    "missing": 403,
+    "incorrect": 403,
+    "scope": "Separate observations, not a C6 pass"
+  },
+  "cleanup": {
+    "at": "2026-11-07T14:59:49.483463+00:00",
+    "owned_sandbox_deletion_recheck": [
+      {
+        "provider": "hubspot",
+        "http_status": 404
+      },
+      {
+        "provider": "gmail",
+        "http_status": 404
+      },
+      {
+        "provider": "google-calendar",
+        "http_status": 404
+      },
+      {
+        "provider": "slack",
+        "http_status": 404
+      }
+    ],
+    "retained_owner_snapshot_http_status": 200,
+    "own_ngrok_stopped": true,
+    "adapter_port_8097_closed": true,
+    "temporary_bindings_removed": true
+  },
+  "prior_failed_attempt": {
+    "receipt_url": "https://fetchsandbox.com/runs/8960439159?flow=vr_b84a9cc2572e41f18ed101b2eb20b241",
+    "verdict": "inconclusive",
+    "held": 0,
+    "unmeasured": 13,
+    "cause": "Saved Header Auth Value empty; native plaintext 500 was masked by bridge JSON parsing as 504. Owner re-saved Value; bridge now preserves non-JSON upstream error status."
+  },
+  "local_gate": {
+    "tests_passed": 432,
+    "test_files": 65,
+    "typescript": "passed",
+    "scope": "Local implementation/regression tests; not runtime or native-agent acceptance"
+  },
+  "unmeasured": [
+    "C2-C12 runtime assertions",
+    "Unprimed native builder/persona journey",
+    "Native Gmail/Calendar/Slack parity",
+    "Multiworker and crash recovery",
+    "Three repeated clean sessions and deployed mutation controls"
+  ]
+}

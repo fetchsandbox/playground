@@ -23,8 +23,13 @@ describe('persistent n8n trigger safety',()=>{
   expect(await invokeN8n(binding,'{"lead_id":"one"}',transport)).toEqual({status:504,body:{error:'n8n_outcome_unknown',automatic_retry:false}});
   expect(transport).toHaveBeenCalledTimes(1);
  });
- it('retains a native authentication refusal rather than inventing success',async()=>{
-  const transport=vi.fn(async()=>new Response('{"error":"unauthorized"}',{status:401}));
-  expect((await invokeN8n(binding,'{"lead_id":"one"}',transport)).status).toBe(401);
+ it.each([401,403])('retains native authentication refusal %s rather than inventing success',async status=>{
+  const transport=vi.fn(async()=>new Response('{"error":"unauthorized"}',{status}));
+  expect((await invokeN8n(binding,'{"lead_id":"one"}',transport)).status).toBe(status);
+ });
+ it.each([[500,500],[200,502]])('preserves upstream %s when the response is not JSON',async (upstream,expected)=>{
+  const transport=vi.fn(async()=>new Response('Native diagnostic text, no customer data',{status:upstream}));
+  const result=await invokeN8n(binding,'{"lead_id":"one"}',transport);
+  expect(result).toEqual({status:expected,body:{error:'n8n_non_json_response',upstream_status:upstream,automatic_retry:false}});expect(transport).toHaveBeenCalledTimes(1);
  });
 });

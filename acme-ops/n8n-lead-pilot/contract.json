@@ -700,7 +700,7 @@
       "name": "Accepted Deal response lost",
       "blocker": {
         "category": "setup_missing",
-        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
+        "reason": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet.",
         "evidence": [
           "docs/reviews/hubspot-deal-20261106/native-observation.json",
           "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
@@ -712,7 +712,7 @@
       "name": "Gmail rejection after CRM",
       "blocker": {
         "category": "setup_missing",
-        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
+        "reason": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet.",
         "evidence": [
           "docs/reviews/hubspot-deal-20261106/native-observation.json",
           "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
@@ -724,7 +724,7 @@
       "name": "Accepted Gmail response lost with positive readback",
       "blocker": {
         "category": "setup_missing",
-        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
+        "reason": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet.",
         "evidence": [
           "docs/reviews/hubspot-deal-20261106/native-observation.json",
           "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
@@ -736,7 +736,7 @@
       "name": "Unresolved Gmail holds Calendar",
       "blocker": {
         "category": "setup_missing",
-        "reason": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending.",
+        "reason": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet.",
         "evidence": [
           "docs/reviews/hubspot-deal-20261106/native-observation.json",
           "Public backend fdd1d243 HTTP smoke: exact Deal/Contact relation and Gmail direct/draft sent-message lookup; not fault or n8n proof."
@@ -748,7 +748,7 @@
       "name": "Adapter and n8n caller identity boundaries",
       "blocker": {
         "category": "setup_missing",
-        "reason": "Actual wrong/missing bearer and webhook caller controls have not been exercised in the cloud. A private helper token does not authenticate a production n8n requester.",
+        "reason": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity.",
         "evidence": [
           "n8n-lead-pilot/adapter.ts: authorization gate and /invoke"
         ]
@@ -825,7 +825,7 @@
     {
       "dimension": "baseline",
       "relevance": "relevant",
-      "reason": "Sequential intended effects, exact provider identities, Deal/Contact relationship, and saved Slack acceptance are declared in C0; not yet executed.",
+      "reason": "C0 and C1 were measured on the published repeatable n8n workflow on November 7, 2026; historical receipt is separate from future runs.",
       "rule_ids": [
         "baseline"
       ]
@@ -833,7 +833,7 @@
     {
       "dimension": "identity_and_access",
       "relevance": "relevant",
-      "reason": "adapter.ts bearer checks and the unpublished test-webhook trust boundary need explicit rejected-caller evidence.",
+      "reason": "Published Header Auth is configured. Separate native 403 probes do not establish requester identity or complete rejected-caller end-to-end evidence.",
       "rule_ids": [
         "C6"
       ]
