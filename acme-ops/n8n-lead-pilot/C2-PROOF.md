@@ -8,11 +8,15 @@ native version `abd2c751-c25e-459f-99c4-4616910156e6`, and the export/bridge has
 recorded in the receipt. Native execution history independently showed C2's
 first and recovery executions as 27 and 28 under that version.
 
-The full C2 quality milestone remains open: the native deliberately broken
-workflow control has not run. Its versioned source is locally tested; native
-export/publication is pending Mac access. It must fail under the same corrected
-business assertions before this milestone is called closed. A local negative
-control is not that native workflow receipt.
+The native deliberately broken control has now run in a separate
+[failed receipt](https://fetchsandbox.com/runs/57600c06f2?flow=vr_089aa5dd07534b45a9686a2c44403bb9).
+C2 violated with “Accepted response read-back repeated the provider write.” The
+archive records two distinct committed Deals for the same lead even though the
+application reported confirmed. The original business assertions were unchanged.
+See [the negative-control observation](evidence/2026-11-07-c2-native-negative-observation.json).
+Normal source was restored and published; its post-restoration measurement is
+recorded separately below. Full-contract repetition, other cases'
+negative controls and fresh builder acceptance remain open.
 
 ## What actually happened
 
@@ -76,7 +80,7 @@ provider-collection assertions. Use a fresh output directory/session and retain
 the configured contract before invoking the same existing MCP lifecycle. No
 manual test-webhook arming or per-scenario controller is needed.
 
-For the future native negative-control run, `PILOT_VARIANT=blind-deal-retry`
+For the native negative-control run, `PILOT_VARIANT=blind-deal-retry`
 generates an explicitly broken decision source. It changes every unknown-Deal
 reconciliation into a second Deal POST; it does not inspect check IDs or fabricate
 effects. The normal source is unchanged. The export guard accepts this source
@@ -88,3 +92,36 @@ normal workflow. Never set an unobserved export to `active:true` to bypass setup
 Temporary twin sandboxes from both recorded runs were deleted, with four HTTP
 200 responses per run. Their snapshots remained readable after cleanup. Receipts
 are separate evidence; their passing totals must not be merged.
+
+## Native C2 mutation measurement — November 7
+
+The explicitly selected `blind-deal-retry` source was published as version
+`4e0775d2-8ca2-448a-ba5f-721d53987021`, with a real six-node native export.
+Execution 42 independently showed that version in n8n's history. It changes the
+unknown-Deal reconciliation request to a second Deal POST; no check-ID branches
+or oracle changes are involved. The adapter bundle and all 14 business checks
+were identical to the preceding C3-positive run.
+
+The separate negative receipt has four held checks, one violated (C2), and nine
+unmeasured. Two Deal POSTs returned 201 with different IDs. FetchSandbox rejected
+that behavior despite the application's own confirmed status. C0/C1 and both C3
+checks still held. This is measured discrimination of the intended defect, not
+proof of detecting every possible workflow error. Four owned twin sandboxes
+were deleted and that failed receipt remained readable afterward.
+
+## Normal source restored and remeasured
+
+The [separate restored receipt](https://fetchsandbox.com/runs/03a3465a6f?flow=vr_139c4907d0e9400cab6879747ca74523)
+held C0/C1/C2 and both C3 phases: five held, nine unmeasured, overall inconclusive.
+Its 14 business checks exactly match the original C3 run and the negative run;
+only native source/version metadata differs. The adapter bundle was unchanged.
+Native executions 47–55 ran restored version
+`064da74d-7ba5-4679-9d00-1efe7bb0b264`; pages 51 and 54 independently named it.
+The archive contains one C2 Deal POST, and all 25 independent provider-state
+assertions held. See [the restored observation](evidence/2026-11-07-normal-restored-observation.json).
+
+The normal workflow is the published version. Its four owned twin sandboxes
+were deleted, the receipt remained readable, the local adapter and temporary
+ngrok/SSH forwarding were stopped, and the release candidate container was
+stopped. No live provider deliveries were made. Three full-contract clean-seed
+runs, remaining negative controls and fresh builder acceptance remain unmeasured.

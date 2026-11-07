@@ -1,11 +1,12 @@
 # Friendly pilot: acceptance and gap register
 
 Measured cutoff: November 7, 2026. This is an execution plan, not a certification.
-The [current observation](evidence/2026-11-07-repeatable-c0-c1-observation.json)
-records historical C0/C1 proof. The [new C2 observation](evidence/2026-11-07-c2-deployed-observation.json)
-records C0/C1/C2 on deployed backend `33290a2d` and MCP `0.7.30`. Ten requirements
-remain unmeasured. All results are scripted MCP/runtime proof only. No enterprise-readiness
-claim is supported yet.
+The [C3 observation](evidence/2026-11-07-c3-deployed-observation.json) records
+C0/C1/C2 and both C3 phases on backend `a952b218` and MCP `0.7.30`: five checks
+held, nine requirements unmeasured, overall inconclusive. Recovery is a separate
+check of the same C3 business case. All 25 independent provider-state assertions
+held. Results are scripted MCP/native-runtime proof only; full quality gates,
+fresh builder acceptance and enterprise readiness remain open.
 
 ## Roles and evidence boundary
 
@@ -30,8 +31,8 @@ count, identity, association or fault-witness assertions to obtain a pass.
 
 | Check | Required behavior | Current gap and owner | Next acceptance evidence |
 |---|---|---|---|
-| C2 | Deal accepted, response lost | Exact Deal-create control is deployed; normal native workflow passed C2 twice. Native broken-workflow control still needs Mac export access. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
-| C3 | Gmail rejected after CRM | FetchSandbox qualification: existing `send_unavailable` targets **draft send**, but this workflow calls **direct message send**. These are not interchangeable. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
+| C2 | Deal accepted, response lost | Normal native recovery and deliberately broken blind-retry versions are measured separately. The broken version failed C2 with two committed Deal IDs. Normal source restored and remeasured: C2 held under the same checks. Broader full-contract quality gates remain open. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
+| C3 | Gmail rejected after CRM | Measured: exact direct-send once-only 403 and independent zero-message/Calendar state; explicit recovery retained CRM IDs and created one email/event. Native broken control and full repeatability remain open. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
 | C4 | Gmail accepted, response lost | FetchSandbox qualification: direct-send post-commit response-loss scenario and client-disconnect witness unqualified. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
 | C5 | Gmail outcome remains unknown | Both: qualify unavailable/ambiguous read-back and prove the application withholds Calendar and reports unknown. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
 | C6 | Caller identity boundaries | Builder: shared pilot bearer is not per-requester identity. Qualification: missing/wrong native headers returned 403 outside this contract only. | Denied calls leave state/effects unchanged; intended requester isolation and authenticated identity explicitly specified and tested. |
@@ -55,10 +56,12 @@ write-before-client-timeout and exact read-back; deliberately repeating the writ
 creates a second effect which the existing evidence judge rejects. New controls
 are `deal_accepted_response_loss`, `direct_send_rejected` and
 `direct_send_accepted_response_loss`. The 10-second response hold exceeds the
-pilot adapter's six-second timeout. The HubSpot control is deployed and C2 has native positive receipts; C3–C5 do
-not become passes from local tests. Current backend `33290a2d` also rejects
-invalid zero-step aliases before execution. Gmail controls are not enabled in
-the active mounted configuration. The full three integrity failures observed
+pilot adapter's six-second timeout. The HubSpot control is deployed and C2 has native positive receipts. Backend
+`a952b218` now enables Gmail scenario configuration, including the locally and
+publicly qualified `direct_send_rejected_once`. C3 rejection/recovery has a native
+workflow receipt; C4/C5 remain unmeasured. Zero-step alias rejection remains in
+the unchanged runtime image. See [C3 proof](C3-PROOF.md) for its separate
+80-passed/one-skipped backend gate and 434 workflow tests. The full three integrity failures observed
 in the expanded gate reproduced on unchanged HEAD provider configs; no baselines
 were changed. See the backend branch's
 `docs/reviews/n8n-exact-provider-faults-20261107/observation.json` for exact scope.
@@ -81,8 +84,8 @@ were changed. See the backend branch's
    variants and the corrected workflow against the same frozen business checks.
    Export guards reject unregistered decision code. Explicit registered variant
    support is now locally tested; successful source registration is not proof
-   that the engine catches the behavioral mutation. Native execution remains
-   pending Mac export access.
+   that the engine catches the behavioral mutation. The native C2 blind-retry control now has a failing receipt; other behavioral
+   mutations remain unmeasured.
    Each broken behavior must fail its intended oracle, followed by three fresh
    clean repetitions of the corrected application. Report every attempt.
 6. **Native builder acceptance.** A fresh builder agent receives the ordinary

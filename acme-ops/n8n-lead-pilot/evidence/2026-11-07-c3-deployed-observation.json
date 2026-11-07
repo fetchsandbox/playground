@@ -1,0 +1,176 @@
+{
+  "scope": "Scripted published-native-n8n execution with isolated provider twins; not native vendor delivery or fresh builder acceptance",
+  "receipt_url": "https://fetchsandbox.com/runs/63d0624d55?flow=vr_6e00ef2d5af44542b29056646591be18",
+  "run_id": "vr_6e00ef2d5af44542b29056646591be18",
+  "backend_commit": "a952b218",
+  "release_scope": "Mounted Gmail scenario config only; identical runtime image bytes, other 259 config files and environment except build metadata unchanged",
+  "runtime_image_sha256": "1d5d21ebac7defbc6c283605a58c4860b86739021202793a4d61667d43245e53",
+  "mcp": "0.7.30",
+  "workflow_id": "PJlTC5gnf6wb0r8e",
+  "observed_native_version": "abd2c751-c25e-459f-99c4-4616910156e6",
+  "native_executions": {
+    "baseline": 29,
+    "C1": [
+      30,
+      31
+    ],
+    "C2": [
+      32,
+      33
+    ],
+    "C3": [
+      34,
+      35
+    ],
+    "C3_recovery": [
+      36,
+      37
+    ]
+  },
+  "version_independently_observed_on_executions": [
+    34,
+    36
+  ],
+  "contract_sha256": "09f6c3e3bf742941676c7d57f02bb1318256df3ad93edbc9d7c1b3cfb1d1f989",
+  "prior_checks_unchanged_from_9673354": {
+    "baseline": true,
+    "C1": true,
+    "C2": true
+  },
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_state_assertions": {
+    "count": 25,
+    "all_held": true
+  },
+  "C3": {
+    "direct_send_fault": "direct_send_rejected_once, max_applications=1",
+    "app_status_first_and_no_retry_replay": [
+      "failed",
+      "failed"
+    ],
+    "gmail_direct_send_calls": 1,
+    "gmail_status": 403,
+    "independent_counts_before_recovery": {
+      "contacts": 1,
+      "deals": 1,
+      "gmail_messages": 0,
+      "calendar_events": 0,
+      "failed_slack_notifications": 2
+    },
+    "crm_ids": {
+      "contact": "719042948031",
+      "deal": "834629857168"
+    }
+  },
+  "C3_recovery": {
+    "explicit_retry_failed": true,
+    "app_status": "confirmed",
+    "no_new_crm_calls": true,
+    "crm_ids_unchanged": true,
+    "independent_final_counts": {
+      "contacts": 1,
+      "deals": 1,
+      "gmail_messages": 1,
+      "calendar_events": 1,
+      "slack_notifications": 3
+    },
+    "completed_replay_adds_no_effects": true
+  },
+  "local_gates": {
+    "backend_passed": 80,
+    "backend_skipped": 1,
+    "workflow_passed": 434,
+    "typescript": "passed"
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "transports": "Runner closed managed tunnel/local app; own ngrok/SSH helper retained temporarily for C2 continuation"
+  },
+  "limitations": [
+    "Nine C4-C12 requirements remain unmeasured",
+    "C2 native negative control is being measured separately",
+    "C3 deliberate broken variant and three clean full-case repeats unmeasured",
+    "No live mail, invitations or Slack delivery",
+    "Single-process FileStore; crash recovery still open",
+    "Cached native source reused for original run; fresh editor export has identical nodes/connections but different draft metadata, independently read published version on executions 34/36"
+  ]
+}

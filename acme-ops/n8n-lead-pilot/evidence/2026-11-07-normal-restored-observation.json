@@ -1,0 +1,126 @@
+{
+  "scope": "Post-negative-control restored native n8n measurement; separate from original C3 and C2-negative receipts",
+  "receipt_url": "https://fetchsandbox.com/runs/03a3465a6f?flow=vr_139c4907d0e9400cab6879747ca74523",
+  "run_id": "vr_139c4907d0e9400cab6879747ca74523",
+  "backend_commit": "a952b218",
+  "mcp": "0.7.30",
+  "source_variant": "normal",
+  "native_version": "064da74d-7ba5-4679-9d00-1efe7bb0b264",
+  "native_export_sha256": "0a2fb34914a2cf2aa955ec49108fee4187cd46cd273511e1f1390d20ddebae35",
+  "native_executions": [
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55
+  ],
+  "independently_observed_version_executions": [
+    51,
+    54
+  ],
+  "same_business_checks_before_negative_after": true,
+  "same_adapter_bundle_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "provider_state_assertions": {
+    "count": 25,
+    "all_held": true
+  },
+  "C2_exact_Deal_POSTs": 1,
+  "C2_deal_id": "158413733611",
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "app_port_closed": true,
+    "owned_ngrok_processes_stopped": 1,
+    "owned_candidate_stopped": true,
+    "owned_candidate_forward_stopped": true
+  },
+  "limits": [
+    "C4-C12 unmeasured",
+    "C3 deliberately broken variant unmeasured",
+    "Three clean full-contract runs and fresh native builder acceptance remain open",
+    "All provider effects are isolated twins; no native delivery claims"
+  ]
+}

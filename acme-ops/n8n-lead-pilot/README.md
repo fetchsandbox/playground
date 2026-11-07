@@ -6,22 +6,29 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**C0, C1 and C2 held on the published pilot; the full pilot remains incomplete.**
-Current backend `33290a2d` and published MCP `0.7.30` produced this
-[receipt](https://fetchsandbox.com/runs/2bf995e8ee?flow=vr_7b4d8b1954a24a49a1246317b363a6ca):
-**three passed, ten unmeasured; overall inconclusive**. Native executions 24–28
-ran without manual webhook arming under observed version
-`abd2c751-c25e-459f-99c4-4616910156e6`. All fifteen independent provider-state
-assertions held. C2 observed an accepted Deal, actual client disconnect and exact
-read-back with no second Deal. See [the C2 proof and retained failures](C2-PROOF.md)
-and [the sanitized observation](evidence/2026-11-07-c2-deployed-observation.json).
+**C0, C1, C2 positive recovery and both C3 phases held on the published pilot.**
+Backend `a952b218` and published MCP `0.7.30` produced this
+[receipt](https://fetchsandbox.com/runs/63d0624d55?flow=vr_6e00ef2d5af44542b29056646591be18):
+**five checks held, nine unmeasured; overall inconclusive**. C3 has separate
+rejection/no-implicit-retry and explicit-recovery checks. All 25 independent
+provider-state assertions held. Native executions 29–37 used the unchanged
+published workflow; pages 34 and 36 independently named version
+`abd2c751-c25e-459f-99c4-4616910156e6`.
+See [the C3 proof](C3-PROOF.md) and [the observation](evidence/2026-11-07-c3-deployed-observation.json).
 
-The native broken-workflow control remains unmeasured because native export is
-blocked by the locked Mac. Its source is locally tested. The normal published
-workflow was never changed; the unpublished Code editor was restored to normal.
-The full C2 quality milestone is open until that negative control is measured.
-Scripted MCP/runtime proof is not unprimed builder acceptance or native SaaS parity.
-Historical [C0/C1-only evidence](evidence/2026-11-07-repeatable-c0-c1-observation.json)
+Subsequently, the [native C2 broken control](https://fetchsandbox.com/runs/57600c06f2?flow=vr_089aa5dd07534b45a9686a2c44403bb9)
+failed on a duplicate Deal. The normal source was restored as version
+`064da74d-7ba5-4679-9d00-1efe7bb0b264`; this
+[separate post-restoration receipt](https://fetchsandbox.com/runs/03a3465a6f?flow=vr_139c4907d0e9400cab6879747ca74523)
+held the same five checks with all 25 provider-state assertions. Nine requirements
+remain unmeasured. See [the restored observation](evidence/2026-11-07-normal-restored-observation.json).
+
+
+The full pilot and quality milestones remain open. Deliberately broken native
+controls, full-contract repeatability and fresh builder acceptance are separate
+requirements. C2's control work and historical failures are retained in
+[C2-PROOF.md](C2-PROOF.md). Scripted runtime proof is not native SaaS parity.
+Historical [C0/C1 evidence](evidence/2026-11-07-repeatable-c0-c1-observation.json)
 and the original C0 workflow `XNOkSPCwhsCbH23J` remain separate observations.
 
 ## Required builder-to-verifier pattern — Raj, November 6, 2026
@@ -75,8 +82,8 @@ C1–C12 executable where supported, reject deliberately broken variants and run
 three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
-The scripted MCP/runtime portion has measured C0/C1/C2 results. The complete
-builder acceptance journey, C3–C12, native deployed negative controls and three
+The scripted MCP/runtime portion has measured C0/C1/C2/C3 results. The complete
+builder acceptance journey, C4–C12, native deployed negative controls and three
 clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
@@ -104,7 +111,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3–C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4–C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;
@@ -278,14 +285,14 @@ Current next steps after the November 7 C2 measurement:
    arming. Their separate failed and positive receipts are retained in
    [the C2 proof](C2-PROOF.md). Backend `33290a2d` and the final native run held all
    three, with fifteen independent provider-state assertions.
-2. Finish C2's native blind-retry negative control once native export is
-   accessible. The registered source variant is locally tested; the native
-   broken-workflow receipt remains unmeasured. The normal published version was
-   never changed and the unpublished Code editor was restored to normal.
-3. Qualify and enable the exact Gmail direct-send faults for C3–C5. The active
-   hosted `send_unavailable` targets `drafts.send`, while this app calls
-   `messages.send`; do not substitute it. Preserve unknown outcomes until
-   positive read-back, never blind resend.
+2. C2's native blind-retry negative control now failed its unchanged business
+   checks with two distinct Deal IDs; see [the C2 proof](C2-PROOF.md). The normal
+   source was restored and republished. Keep that negative receipt separate
+   from normal runs and qualify the remaining mutations.
+3. C3 rejection/no-implicit-resend and explicit recovery now held on backend
+   `a952b218`; see [the C3 proof](C3-PROOF.md). Next qualify C4/C5
+   response-loss and unavailable read-back through the actual workflow.
+   Preserve unknown outcomes until positive read-back, never blind resend.
 4. Reject deliberately broken variants under unchanged business assertions,
    then measure the full contract from three clean seeds with separate receipts.
    Qualify C6–C12 access/schema/concurrency/crash/privacy/cleanup/provider limits.

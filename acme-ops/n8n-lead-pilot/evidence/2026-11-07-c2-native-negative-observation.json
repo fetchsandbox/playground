@@ -1,0 +1,136 @@
+{
+  "scope": "Native published deliberately broken C2 workflow; separate receipt from normal runs",
+  "receipt_url": "https://fetchsandbox.com/runs/57600c06f2?flow=vr_089aa5dd07534b45a9686a2c44403bb9",
+  "run_id": "vr_089aa5dd07534b45a9686a2c44403bb9",
+  "backend_commit": "a952b218",
+  "mcp": "0.7.30",
+  "variant": "blind-deal-retry",
+  "native_version": "4e0775d2-8ca2-448a-ba5f-721d53987021",
+  "version_independently_observed_on_execution": 42,
+  "native_executions": [
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "source_sha256": "59946f4204353bc50bd6a9faa20d3a05469f7a4f624e18986a8d5f85bf01b706",
+  "contract_sha256": "09f6c3e3bf742941676c7d57f02bb1318256df3ad93edbc9d7c1b3cfb1d1f989",
+  "verdict": "failing",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "violated",
+      "explanation": "Accepted response read-back repeated the provider write"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "C2": {
+    "status": "violated",
+    "explanation": "Accepted response read-back repeated the provider write",
+    "app_reported": "confirmed",
+    "separate_committed_deals": [
+      {
+        "at": "2026-11-07T16:42:08.973899Z",
+        "status": 201,
+        "id": "885476346299"
+      },
+      {
+        "at": "2026-11-07T16:42:18.857956Z",
+        "status": 201,
+        "id": "427870841892"
+      }
+    ]
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "restoration": {
+    "native_version": "064da74d-7ba5-4679-9d00-1efe7bb0b264",
+    "separate_receipt_url": "https://fetchsandbox.com/runs/03a3465a6f?flow=vr_139c4907d0e9400cab6879747ca74523",
+    "C2_status": "held",
+    "C3_status": "held",
+    "C3_recovery_status": "held",
+    "business_assertions_unchanged": true
+  },
+  "limitations": [
+    "Negative result establishes this intended duplicate-write detection, not every defect class",
+    "Nine C4-C12 requirements remain unmeasured",
+    "Full-contract three-clean-seed repetition and fresh native builder acceptance remain open"
+  ]
+}
