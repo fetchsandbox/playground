@@ -393,6 +393,359 @@
           "Hosted operations-hubspot.json contains Contacts only; actual n8n Deal POST returned 404."
         ]
       }
+    },
+    {
+      "id": "C6",
+      "name": "Adapter and n8n caller identity boundaries",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Actual wrong/missing bearer and webhook caller controls have not been exercised in the cloud. A private helper token does not authenticate a production n8n requester.",
+        "evidence": [
+          "n8n-lead-pilot/adapter.ts: authorization gate and /invoke"
+        ]
+      }
+    },
+    {
+      "id": "C7",
+      "name": "Malformed lead and schema boundaries",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded.",
+        "evidence": [
+          "n8n-lead-pilot/build-workflow.mjs: Validate dummy lead; machine.mjs: lead_id validation"
+        ]
+      }
+    },
+    {
+      "id": "C8",
+      "name": "Overlapping first deliveries and stale writers",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified.",
+        "evidence": [
+          "n8n-lead-pilot/state.ts: claim/save; machine.mjs: claimed/dispatch"
+        ]
+      }
+    },
+    {
+      "id": "C9",
+      "name": "Restart and abandoned in-progress claim",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured.",
+        "evidence": [
+          "n8n-lead-pilot/state.ts: claim; adapter.ts: single FileStore process"
+        ]
+      }
+    },
+    {
+      "id": "C10",
+      "name": "Evidence privacy and transport boundaries",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured.",
+        "evidence": [
+          "n8n-lead-pilot/adapter.ts: allowlist and twin binding guard"
+        ]
+      }
+    },
+    {
+      "id": "C11",
+      "name": "Cleanup, fresh-session isolation and retained receipt",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run.",
+        "evidence": [
+          "n8n-lead-pilot/README.md: isolated setup and close transports"
+        ]
+      }
+    },
+    {
+      "id": "C12",
+      "name": "Provider scope and rate-limit failures",
+      "blocker": {
+        "category": "setup_missing",
+        "reason": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow.",
+        "evidence": [
+          "n8n-lead-pilot/machine.mjs: effect rejection classification"
+        ]
+      }
+    }
+  ],
+  "coverage_review": [
+    {
+      "dimension": "baseline",
+      "relevance": "relevant",
+      "reason": "Sequential intended effects, exact provider identities, Deal/Contact relationship, and saved Slack acceptance are declared in C0; not yet executed.",
+      "rule_ids": [
+        "baseline"
+      ]
+    },
+    {
+      "dimension": "identity_and_access",
+      "relevance": "relevant",
+      "reason": "adapter.ts bearer checks and the unpublished test-webhook trust boundary need explicit rejected-caller evidence.",
+      "rule_ids": [
+        "C6"
+      ]
+    },
+    {
+      "dimension": "schema_and_value_boundaries",
+      "relevance": "relevant",
+      "reason": "build-workflow.mjs validates lead_id before any state/provider action; rejected-input native-cloud evidence is missing.",
+      "rule_ids": [
+        "C7"
+      ]
+    },
+    {
+      "dimension": "amount_currency_quantity",
+      "relevance": "not_applicable",
+      "reason": "No money, price, currency or seat quantity is accepted by this lead workflow. Deal creation uses only name/pipeline/stage.",
+      "rule_ids": []
+    },
+    {
+      "dimension": "duplicate_replay",
+      "relevance": "relevant",
+      "reason": "machine.mjs and state.ts use lead_id as the durable business identity, distinct from n8n attempt ID; full replay effects remain unmeasured.",
+      "rule_ids": [
+        "C1"
+      ]
+    },
+    {
+      "dimension": "concurrency",
+      "relevance": "relevant",
+      "reason": "state.ts uses conditional create and versioned saves. Local claim tests do not establish overlapping cloud execution or multiple-worker behavior.",
+      "rule_ids": [
+        "C8"
+      ]
+    },
+    {
+      "dimension": "ordering_and_stale_events",
+      "relevance": "relevant",
+      "reason": "Version/owner CAS must refuse stale attempt writes. The app is lead intake, not a versioned provider-event consumer; unseen provider-event ordering is outside that path.",
+      "rule_ids": [
+        "C8"
+      ]
+    },
+    {
+      "dimension": "delayed_or_missing_events",
+      "relevance": "relevant",
+      "reason": "The relevant delayed/missing outcomes are request responses and positive read-back. There are no downstream provider webhook consumers in this reference app.",
+      "rule_ids": [
+        "C2",
+        "C4",
+        "C5"
+      ]
+    },
+    {
+      "dimension": "provider_auth_and_scopes",
+      "relevance": "relevant",
+      "reason": "Native positive HubSpot access does not prove refusal/retry behavior for missing scopes across all providers.",
+      "rule_ids": [
+        "C12"
+      ]
+    },
+    {
+      "dimension": "rate_limit_server_error_timeout",
+      "relevance": "relevant",
+      "reason": "machine.mjs distinguishes explicit rejection from uncertain transport/429/5xx outcomes; actual fault controls and provider read-back are pending.",
+      "rule_ids": [
+        "C3",
+        "C5",
+        "C12"
+      ]
+    },
+    {
+      "dimension": "accepted_effect_response_loss",
+      "relevance": "relevant",
+      "reason": "A server-recorded accepted effect and lost response must precede recovery checks; authored state alone is insufficient.",
+      "rule_ids": [
+        "C2",
+        "C4",
+        "C5"
+      ]
+    },
+    {
+      "dimension": "partial_effects_and_recovery",
+      "relevance": "relevant",
+      "reason": "CRM must remain while Gmail failure/unknown withholds Calendar; no claim of proved recovery before actual cloud faults.",
+      "rule_ids": [
+        "C3",
+        "C4",
+        "C5"
+      ]
+    },
+    {
+      "dimension": "restart_and_durability",
+      "relevance": "relevant",
+      "reason": "state.ts FileStore reconstruction is local-only; live crash recovery and cross-worker storage are not implemented/qualified.",
+      "rule_ids": [
+        "C9"
+      ]
+    },
+    {
+      "dimension": "reconciliation",
+      "relevance": "relevant",
+      "reason": "machine.mjs requires exact Deal/Contact and Gmail SENT/Message-ID/recipient evidence; empty reads do not authorize resend.",
+      "rule_ids": [
+        "C2",
+        "C4",
+        "C5"
+      ]
+    },
+    {
+      "dimension": "cancellation_refund_entitlements",
+      "relevance": "not_applicable",
+      "reason": "No cancellation, refund, subscription entitlement or payment action exists in this lead workflow.",
+      "rule_ids": []
+    },
+    {
+      "dimension": "data_and_privacy_boundaries",
+      "relevance": "relevant",
+      "reason": "adapter.ts forbids non-twin hosts and arbitrary operations; saved/public evidence safety still needs actual receipt inspection.",
+      "rule_ids": [
+        "C10"
+      ]
+    },
+    {
+      "dimension": "cleanup_and_isolation",
+      "relevance": "relevant",
+      "reason": "Use fresh session and lead identity, stop test transports, and verify retained receipt independently; not yet measured for the full cloud run.",
+      "rule_ids": [
+        "C11"
+      ]
+    }
+  ],
+  "scope_review": [
+    {
+      "check_id": "baseline",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C1",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C2",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C3",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C4",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C5",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C6",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C7",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C8",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C9",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C10",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C11",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
+    },
+    {
+      "check_id": "C12",
+      "classification": "in_scope",
+      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "evidence": [
+        "n8n-lead-pilot/machine.mjs:advance",
+        "n8n-lead-pilot/state.ts:claim/save",
+        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+      ]
     }
   ]
 }
