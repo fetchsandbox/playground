@@ -6,7 +6,10 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**Latest: C5 unavailable lookup and C8 overlapping first delivery are measured.**
+**C7 update: a direct native input-validation defect was reproduced; the fix is local and not deployed.**
+See [C7 failure and pending native remeasurement](C7-INPUT-HARDENING.md).
+
+**Latest business receipt: C5 unavailable lookup and C8 overlapping first delivery are measured.**
 The [C8 receipt](https://fetchsandbox.com/runs/7f05cd5343?flow=vr_68013d37ab44438e8aca5f6a652f908e)
 on backend configuration `8f2ee848`, MCP `0.7.30` and unchanged native normal
 version `03207059-cc93-4ab8-834e-bcb70e46b2ce` has **eight checks held, six

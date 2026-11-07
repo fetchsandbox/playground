@@ -1,0 +1,49 @@
+{
+  "scope": "Independent HTTP/component probe of adapter versus native webhook; not a FetchSandbox business receipt",
+  "authentication_denials": [
+    {
+      "surface": "adapter",
+      "auth": "missing",
+      "status": 401
+    },
+    {
+      "surface": "native_webhook",
+      "auth": "missing",
+      "status": 403
+    },
+    {
+      "surface": "adapter",
+      "auth": "invalid",
+      "status": 401
+    },
+    {
+      "surface": "native_webhook",
+      "auth": "invalid",
+      "status": 403
+    }
+  ],
+  "adapter_extra_field": {
+    "status": 400,
+    "no_state": true
+  },
+  "native_extra_field": {
+    "status": 200,
+    "business_status": "confirmed",
+    "state_records": 1,
+    "provider_write_counts": {
+      "hubspot": 2,
+      "gmail": 1,
+      "google-calendar": 1,
+      "slack": 1
+    },
+    "rejection_expectation_held": false,
+    "native_owner": "115"
+  },
+  "result": "failed_expected_native_schema_rejection",
+  "cleanup_statuses": {
+    "hubspot": 200,
+    "gmail": 200,
+    "google-calendar": 200,
+    "slack": 200
+  }
+}

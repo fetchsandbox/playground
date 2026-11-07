@@ -3,6 +3,9 @@
  * An in-flight operation found on resume is unknown, never safe to repeat.
  */
 export function advance(input) {
+  // This marker is emitted only after the native first-node validator rejects
+  // the external body. It must terminate before claim, save or provider I/O.
+  if (input?.input_rejected === true) return {done:true,status:'rejected',reason:'invalid_input'};
   // n8n Cloud Code sandbox does not expose structuredClone.
   const c = JSON.parse(JSON.stringify(input.context ?? input));
   const r = input.result;
