@@ -60,9 +60,9 @@ describe('pilot operation state boundary',()=>{
   const c={lead_id:'mail',attempt:'a',stage:'reconciled',step:'gmail',index:2,state:{operations:{gmail:{status:'unknown'}}}};
   const lookup=advance({context:c,result:{status:200,body:{messages:[{id:'msg'}]}}});
   expect(lookup.request.path).toBe('/gmail/v1/users/me/messages/msg');
-  const wrong=advance({context:lookup.context,result:{status:200,body:{id:'msg',labelIds:['SENT'],payload:{headers:[{name:'To',value:'other@example.test'}]}}}});
+  const wrong=advance({context:lookup.context,result:{status:200,body:{id:'msg',labelIds:['SENT'],payload:{headers:[{name:'To',value:'other@example.com'}]}}}});
   expect(wrong.request.state.status).toBe('unknown');
-  const right=advance({context:lookup.context,result:{status:200,body:{id:'msg',labelIds:['SENT'],payload:{headers:[{name:'To',value:'mail@example.test'},{name:'Message-ID',value:'<mail@example.test>'}]}}}});
+  const right=advance({context:lookup.context,result:{status:200,body:{id:'msg',labelIds:['SENT'],payload:{headers:[{name:'To',value:'mail@example.com'},{name:'Message-ID',value:'<mail@example.com>'}]}}}});
   expect(right.request.state.operations.gmail).toMatchObject({status:'confirmed',id:'msg'});
  });
 });

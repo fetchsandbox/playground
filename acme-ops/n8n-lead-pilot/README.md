@@ -21,7 +21,7 @@ Node execution success does not mean the business workflow succeeded.
 The decision machine is embedded in an n8n Code node; all network calls use an
 HTTP Request node. These are **not native HubSpot/Gmail/Calendar/Slack nodes**.
 There is no LLM step, LoopLabs dependency, live email, calendar invitation or
-Slack delivery. Dummy identities use `example.test`. There are no payment actions.
+Slack delivery. Dummy identities use reserved `example.com`; the native HubSpot qualification rejected `.test` addresses. There are no payment actions.
 
 The trigger accepts `lead_id` (1–100 ASCII letters, digits, `_` or `-`) and an
 explicit `retry_failed` boolean. The n8n execution ID is the attempt identity.
@@ -104,7 +104,7 @@ execution a pass. C1–C5 remain explicitly blocked/unmeasured. The private evid
 directory retains HTTP outcomes, twin traces, independent MCP read-back and the
 initial n8n `structuredClone` failure, corrected using JSON cloning.
 
-The later Deal-association guard is local-only as of this checkpoint; the saved
+The later Deal-association guard and native-derived fixture-domain change are local-only as of this checkpoint; the saved
 cloud draft has not been updated or remeasured with it. The new local test and
 full Acme suite passed (414 tests). Existing cloud observations remain historical
 evidence for their measured revision and are not silently reassigned to this one.

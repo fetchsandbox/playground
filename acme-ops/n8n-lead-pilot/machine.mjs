@@ -31,8 +31,8 @@ export function advance(input) {
     const op = c.state.operations[c.step];
     if (op.status === 'unknown') {
       // Reliable positive read-back can confirm; absence does not authorize resend.
-      if (c.step === 'gmail') return provider('gmail', 'GET', '/gmail/v1/users/me/messages?q=' + encodeURIComponent('rfc822msgid:' + c.lead_id + '@example.test'), null, 'reconciled');
-      if (c.step === 'deal') return provider('hubspot', 'POST', '/crm/v3/objects/deals/search', {filterGroups:[{filters:[{propertyName:'dealname',operator:'EQ',value:'Pilot '+c.lead_id}]}]}, 'reconciled');
+      if (c.step === 'gmail') return provider('gmail', 'GET', '/gmail/v1/users/me/messages?q=' + encodeURIComponent('rfc822msgid:' + c.lead_id + '@example.com'), null, 'reconciled');
+      if (c.step === 'deal') return provider('hubspot', 'POST', '/crm/v3/objects/deals/search', {filterGroups:[{filters:[{propertyName:'dealname',operator:'EQ',value:'Pilot '+c.lead_id}]}],properties:['dealname','pipeline','dealstage']}, 'reconciled');
       c.state.status = 'unknown'; c.blocked = c.step; return save('notify');
     }
     if (op.status === 'failed' && !c.retry_failed) { c.state.status = 'failed'; c.blocked = c.step; return save('notify'); }
@@ -43,17 +43,17 @@ export function advance(input) {
   }
   if (c.stage === 'dispatch') {
     if (!r?.saved) return stop('State save failed; provider write withheld');
-    if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.test'}]}]},'contact_found');
+    if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'contact_found');
     if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
     if (c.step === 'gmail') return provider('gmail','POST','/gmail/v1/users/me/messages/send',{raw:c.raw},'effect');
-    return provider('google-calendar','POST','/calendars/primary/events',{summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.test'}]},'effect');
+    return provider('google-calendar','POST','/calendars/primary/events',{summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.com'}]},'effect');
   }
   if (c.stage === 'contact_found') {
     if (failed()) { c.step = 'contact'; c.stage = 'effect'; return advance({context:c,result:r}); }
     const records = r.body?.results ?? [];
     if (records.length === 1) return advance({context:{...c,stage:'effect'},result:{status:200,body:records[0]}});
     if (records.length > 1) return stop('Ambiguous contact lookup');
-    return provider('hubspot','POST','/crm/v3/objects/contacts',{properties:{email:c.lead_id+'@example.test',firstname:'Pilot'},associations:[]},'effect');
+    return provider('hubspot','POST','/crm/v3/objects/contacts',{properties:{email:c.lead_id+'@example.com',firstname:'Pilot'},associations:[]},'effect');
   }
   if (c.stage === 'effect') {
     const op = c.state.operations[c.step];
@@ -95,7 +95,7 @@ export function advance(input) {
   if (c.stage === 'reconciled_message') {
     const headers = r?.body?.payload?.headers ?? [];
     const header = name => headers.find(h=>h.name.toLowerCase()===name)?.value;
-    if (!failed() && r.body?.id && r.body.labelIds?.includes('SENT') && header('message-id') === '<'+c.lead_id+'@example.test>' && header('to') === c.lead_id+'@example.test') {
+    if (!failed() && r.body?.id && r.body.labelIds?.includes('SENT') && header('message-id') === '<'+c.lead_id+'@example.com>' && header('to') === c.lead_id+'@example.com') {
       c.state.operations.gmail={status:'confirmed',id:r.body.id,confirmation:'positive_readback'};
       c.index++;return save('choose');
     }
