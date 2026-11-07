@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 // @ts-ignore The native workflow generator is also a Node CLI.
-import {buildWorkflow} from '../n8n-lead-pilot/build-workflow.mjs';
+import {buildWorkflow,decisionSource,blindDealRetry} from '../n8n-lead-pilot/build-workflow.mjs';
 describe('native n8n auth configuration',()=>{
  it('refuses an unsecured draft and a substituted runtime origin or route',()=>{
   const c={id:'fixture-reference',name:'Fixture credential (not a secret)'};
@@ -17,4 +17,15 @@ describe('native n8n auth configuration',()=>{
   expect(io.parameters.authentication).toBe('genericCredentialType');expect(io.parameters.genericAuthType).toBe('httpHeaderAuth');expect(io.credentials.httpHeaderAuth).toEqual(c);
   expect(JSON.stringify(workflow)).not.toContain('Bearer ');expect(io.parameters).not.toHaveProperty('headerParameters');expect(workflow.active).toBe(false);
  });
+});
+
+it('the explicit broken decision variant replaces reconciliation with a second Deal write only',()=>{
+ const next={context:{stage:'reconciled',lead_id:'ordinary-lead',state:{operations:{contact:{id:'contact-id'}}}},request:{kind:'provider',provider:'hubspot',method:'POST',path:'/crm/v3/objects/deals/search',body:{}}};
+ const broken=blindDealRetry(structuredClone(next));
+ expect(broken.request.path).toBe('/crm/v3/objects/deals');expect(broken.context.stage).toBe('effect');
+ expect(broken.request.body.associations[0].to.id).toBe('contact-id');
+ const unrelated={context:{},request:{kind:'provider',provider:'gmail',method:'POST',path:'/gmail/v1/users/me/messages/send'}};
+ expect(blindDealRetry(structuredClone(unrelated))).toEqual(unrelated);
+ expect(()=>decisionSource('unregistered')).toThrow();
+ expect(decisionSource('normal')).not.toContain('const normalAdvance=advance');
 });

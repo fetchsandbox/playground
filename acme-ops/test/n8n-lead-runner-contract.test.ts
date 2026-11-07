@@ -5,16 +5,16 @@ import {join} from 'node:path';
 import {spawnSync,execFileSync} from 'node:child_process';
 const builderUrl=new URL('../n8n-lead-pilot/build-workflow.mjs',import.meta.url).href;
 const moduleUrl=new URL('../verify/contracts/n8n-lead-recovery.mjs',import.meta.url).href;
-function fixture(change:(w:any)=>void=()=>{}){
+function fixture(change:(w:any)=>void=()=>{},variant='normal'){
  const dir=mkdtempSync(join(tmpdir(),'n8n-contract-'));
- const workflow=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',`const {buildWorkflow}=await import(${JSON.stringify(builderUrl)});console.log(JSON.stringify(buildWorkflow('https://adapter.example','friendly-pilot-mcp-20261106',{id:'fixture',name:'Fixture credential reference'})));`],{encoding:'utf8'}));
+ const workflow=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',`const {buildWorkflow}=await import(${JSON.stringify(builderUrl)});console.log(JSON.stringify(buildWorkflow('https://adapter.example','friendly-pilot-mcp-20261106',{id:'fixture',name:'Fixture credential reference'},${JSON.stringify(variant)})));`],{encoding:'utf8'}));
  workflow.active=true;change(workflow);
  const path=join(dir,'workflow.json');writeFileSync(path,JSON.stringify(workflow));
  const source=join(dir,'bindings.json');writeFileSync(source,JSON.stringify({token:'fixture-only',n8n_token:'fixture-only',n8n_webhook:'https://fetchsandbox.app.n8n.cloud/webhook/friendly-pilot-mcp-20261106'}),{mode:0o600});
  return {dir,path,source};
 }
-function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({checks:c.checks.map(x=>({id:x.id,executable:!!x.actions})),dimensions:c.applicationConfig.coverage_review.length,version:c.appVersion}));'){
- return spawnSync(process.execPath,['--input-type=module','-e',`const c=(await import(${JSON.stringify(moduleUrl)})).default;${code}`],{env:{PATH:process.env.PATH,N8N_WORKFLOW_EXPORT:f.path,PILOT_BINDINGS_SOURCE:f.source},encoding:'utf8'});
+function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({checks:c.checks.map(x=>({id:x.id,executable:!!x.actions})),dimensions:c.applicationConfig.coverage_review.length,version:c.appVersion}));',variant='normal'){
+ return spawnSync(process.execPath,['--input-type=module','-e',`const c=(await import(${JSON.stringify(moduleUrl)})).default;${code}`],{env:{PATH:process.env.PATH,N8N_WORKFLOW_EXPORT:f.path,PILOT_BINDINGS_SOURCE:f.source,PILOT_VARIANT:variant},encoding:'utf8'});
 }
 describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>{
  it('retains all thirteen requirements and reviewed default dimensions',()=>{
@@ -35,4 +35,12 @@ describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>
    expect(result.status).toBe(0);const file=JSON.parse(result.stdout).file;expect(statSync(file).mode&0o777).toBe(0o600);expect(JSON.parse(readFileSync(file,'utf8')).legs.hubspot.api_key).toBe('fixture-key-only');
   }finally{rmSync(f.dir,{recursive:true,force:true});}
  });
+});
+
+it('requires explicit matching source attestation for the deliberately broken native variant',()=>{
+ const f=fixture(()=>{},'blind-deal-retry');try{
+  expect(load(f).status).not.toBe(0);
+  const accepted=load(f,'console.log(c.sourceVariant);','blind-deal-retry');
+  expect(accepted.status).toBe(0);expect(accepted.stdout.trim()).toBe('blind-deal-retry');
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
 });

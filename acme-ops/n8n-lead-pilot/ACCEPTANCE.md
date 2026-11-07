@@ -2,8 +2,9 @@
 
 Measured cutoff: November 7, 2026. This is an execution plan, not a certification.
 The [current observation](evidence/2026-11-07-repeatable-c0-c1-observation.json)
-proves C0/C1 through scripted MCP orchestration only. Backend `fdd1d243` and MCP
-`0.7.30` were used. Eleven requirements remain unmeasured. No enterprise-readiness
+records historical C0/C1 proof. The [new C2 observation](evidence/2026-11-07-c2-deployed-observation.json)
+records C0/C1/C2 on deployed backend `33290a2d` and MCP `0.7.30`. Ten requirements
+remain unmeasured. All results are scripted MCP/runtime proof only. No enterprise-readiness
 claim is supported yet.
 
 ## Roles and evidence boundary
@@ -29,7 +30,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 
 | Check | Required behavior | Current gap and owner | Next acceptance evidence |
 |---|---|---|---|
-| C2 | Deal accepted, response lost | FetchSandbox qualification: no exact Deal-create accepted-response-loss scenario in the current provider YAML. Builder recovery is implemented but not cloud-tested. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
+| C2 | Deal accepted, response lost | Exact Deal-create control is deployed; normal native workflow passed C2 twice. Native broken-workflow control still needs Mac export access. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
 | C3 | Gmail rejected after CRM | FetchSandbox qualification: existing `send_unavailable` targets **draft send**, but this workflow calls **direct message send**. These are not interchangeable. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
 | C4 | Gmail accepted, response lost | FetchSandbox qualification: direct-send post-commit response-loss scenario and client-disconnect witness unqualified. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
 | C5 | Gmail outcome remains unknown | Both: qualify unavailable/ambiguous read-back and prove the application withholds Calendar and reports unknown. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
@@ -45,7 +46,7 @@ These are not eleven confirmed core-engine defects. They include provider
 scenario gaps, application gaps and missing runtime qualification. Classify a
 core defect only after reproducing it in the existing engine path.
 
-## Local fault-control candidate — not deployed
+## HubSpot deployment and separate Gmail candidate
 
 Candidate branch `fix/n8n-exact-provider-faults` extends the existing HubSpot/Gmail
 scenario YAML and shared HTTP/archive/evidence paths. The final local gate is
@@ -54,8 +55,10 @@ write-before-client-timeout and exact read-back; deliberately repeating the writ
 creates a second effect which the existing evidence judge rejects. New controls
 are `deal_accepted_response_loss`, `direct_send_rejected` and
 `direct_send_accepted_response_loss`. The 10-second response hold exceeds the
-pilot adapter's six-second timeout. Production remains `fdd1d243`; C2–C5 do not
-become passes from these local tests. The full three integrity failures observed
+pilot adapter's six-second timeout. The HubSpot control is deployed and C2 has native positive receipts; C3–C5 do
+not become passes from local tests. Current backend `33290a2d` also rejects
+invalid zero-step aliases before execution. Gmail controls are not enabled in
+the active mounted configuration. The full three integrity failures observed
 in the expanded gate reproduced on unchanged HEAD provider configs; no baselines
 were changed. See the backend branch's
 `docs/reviews/n8n-exact-provider-faults-20261107/observation.json` for exact scope.
@@ -76,9 +79,10 @@ were changed. See the backend branch's
    and fencing/reconciliation rather than removing abandoned claims blindly.
 5. **Negative controls and repeatability.** Deploy separately identified broken
    variants and the corrected workflow against the same frozen business checks.
-   Current export guards intentionally reject changed decision code: that is a
-   setup rejection, not proof that the engine catches the behavioral mutation.
-   Add explicit versioned variant support without disabling source attestation.
+   Export guards reject unregistered decision code. Explicit registered variant
+   support is now locally tested; successful source registration is not proof
+   that the engine catches the behavioral mutation. Native execution remains
+   pending Mac export access.
    Each broken behavior must fail its intended oracle, followed by three fresh
    clean repetitions of the corrected application. Report every attempt.
 6. **Native builder acceptance.** A fresh builder agent receives the ordinary

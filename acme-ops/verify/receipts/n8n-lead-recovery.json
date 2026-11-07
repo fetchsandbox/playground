@@ -7,9 +7,9 @@
   "mcp_source": "npm_package",
   "app_version": "n8n-export-4b87079ad72a159484466dc6900ef270f8bedda9a28868fe1cb95367e553ef6b-bridge-fe5ca4b82049",
   "bundle_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
-  "session_id": "vs_0e29a4913dd1",
-  "run_id": "vr_7adf789251b54c03a59ba39887c02df9",
-  "receipt_url": "https://fetchsandbox.com/runs/6aa5d751cf?flow=vr_7adf789251b54c03a59ba39887c02df9",
+  "session_id": "vs_15e27eb4c909",
+  "run_id": "vr_7b4d8b1954a24a49a1246317b363a6ca",
+  "receipt_url": "https://fetchsandbox.com/runs/2bf995e8ee?flow=vr_7b4d8b1954a24a49a1246317b363a6ca",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -27,28 +27,28 @@
     },
     {
       "id": "C2",
-      "status": "unmeasured",
-      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     },
     {
       "id": "C3",
       "status": "unmeasured",
-      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
     },
     {
       "id": "C4",
       "status": "unmeasured",
-      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
     },
     {
       "id": "C5",
       "status": "unmeasured",
-      "explanation": "HubSpot Deal create/read/search and Gmail sent-message lookup are deployed in backend fdd1d243 and passed public component checks. This actual n8n fault/recovery case has not yet been executed; a repeatable test trigger and fault qualification remain pending."
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
     },
     {
       "id": "C6",
       "status": "unmeasured",
-      "explanation": "Actual wrong/missing bearer and webhook caller controls have not been exercised in the cloud. A private helper token does not authenticate a production n8n requester."
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
     },
     {
       "id": "C7",
@@ -81,5 +81,5 @@
       "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
     }
   ],
-  "recorded_at": "2026-11-07T14:53:38.359Z"
+  "recorded_at": "2026-11-07T15:55:13.154Z"
 }

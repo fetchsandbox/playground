@@ -17,7 +17,8 @@ const io=workflow.nodes?.find(n=>n.name==='State or isolated twin I/O');
 if(io?.parameters.authentication!=='genericCredentialType' || io?.parameters.genericAuthType!=='httpHeaderAuth' || io?.credentials?.httpHeaderAuth?.id!==trigger.credentials.httpHeaderAuth.id || io?.parameters.headerParameters)throw Error('Native credential references required on both pilot boundaries; inline bearer headers refused');
 if(workflow.active!==true)throw Error('Persistent workflow must be published before the end-to-end proof');
 if(Object.keys(workflow.pinData??{}).length || workflow.nodes.some(n=>n.disabled))throw Error('Pinned/disabled nodes cannot establish this workflow contract');
-const expected=buildWorkflow(new URL(io.parameters.url).origin,'friendly-pilot-mcp-20261106',trigger.credentials.httpHeaderAuth);
+const variant=process.env.PILOT_VARIANT??'normal';
+const expected=buildWorkflow(new URL(io.parameters.url).origin,'friendly-pilot-mcp-20261106',trigger.credentials.httpHeaderAuth,variant);
 const normalize=params=>{
  const result={...params};
  if(typeof result.jsCode==='string')result.jsCode=result.jsCode.replace(/\s*return \[\{json:advance\(\$json\)\}\];\s*$/, '\nreturn [{json:advance($json)}];');
@@ -32,7 +33,8 @@ const sha=createHash('sha256').update(bytes).digest('hex');
 export default {
  workflow:'n8n-lead-recovery', providers:['hubspot','gmail','google-calendar','slack'],
  appVersion:'n8n-export-'+sha,
- context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; exported workflow SHA256 '+sha,entry_points:['POST /invoke'],state_store:'Single-process FileStore conditional claims/CAS, read through GET /proof/{lead}; abandoned claims and multi-worker crash recovery remain unqualified.'},
+ sourceVariant:variant,
+ context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke'],state_store:'Single-process FileStore conditional claims/CAS, read through GET /proof/{lead}; abandoned claims and multi-worker crash recovery remain unqualified.'},
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review},
  startupPingHeaders(){const source=JSON.parse(readFileSync(sourcePath,'utf8'));return {authorization:'Bearer '+source.token};},

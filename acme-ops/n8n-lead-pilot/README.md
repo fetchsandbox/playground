@@ -6,19 +6,23 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**C0 and C1 passed on the published repeatable pilot; the full pilot remains incomplete.**
-Backend `fdd1d243`, published MCP `0.7.30`, and native n8n workflow
-`PJlTC5gnf6wb0r8e` produced this
-[receipt](https://fetchsandbox.com/runs/6aa5d751cf?flow=vr_7adf789251b54c03a59ba39887c02df9):
-**two passed, eleven unmeasured; overall inconclusive**. Native executions 11–13
-ran without manual webhook arming. Ten independent provider-state assertions
-held: Contact, Deal, Gmail, Calendar and Slack for C0 and C1. The
-[sanitized observation](evidence/2026-11-07-repeatable-c0-c1-observation.json)
-records exact workflow/export/bridge versions, earlier failure and cleanup.
-This is scripted MCP/runtime integration proof, not unprimed native-builder
-acceptance or native-provider parity. Earlier workflow `XNOkSPCwhsCbH23J` and its
-[C0-only receipt](https://fetchsandbox.com/runs/f320278d1a?flow=vr_1e3ff3dcbf0c4dbba9f04e1f7a760212)
-remain historical evidence.
+**C0, C1 and C2 held on the published pilot; the full pilot remains incomplete.**
+Current backend `33290a2d` and published MCP `0.7.30` produced this
+[receipt](https://fetchsandbox.com/runs/2bf995e8ee?flow=vr_7b4d8b1954a24a49a1246317b363a6ca):
+**three passed, ten unmeasured; overall inconclusive**. Native executions 24–28
+ran without manual webhook arming under observed version
+`abd2c751-c25e-459f-99c4-4616910156e6`. All fifteen independent provider-state
+assertions held. C2 observed an accepted Deal, actual client disconnect and exact
+read-back with no second Deal. See [the C2 proof and retained failures](C2-PROOF.md)
+and [the sanitized observation](evidence/2026-11-07-c2-deployed-observation.json).
+
+The native broken-workflow control remains unmeasured because native export is
+blocked by the locked Mac. Its source is locally tested. The normal published
+workflow was never changed; the unpublished Code editor was restored to normal.
+The full C2 quality milestone is open until that negative control is measured.
+Scripted MCP/runtime proof is not unprimed builder acceptance or native SaaS parity.
+Historical [C0/C1-only evidence](evidence/2026-11-07-repeatable-c0-c1-observation.json)
+and the original C0 workflow `XNOkSPCwhsCbH23J` remain separate observations.
 
 ## Required builder-to-verifier pattern — Raj, November 6, 2026
 
@@ -71,9 +75,9 @@ C1–C12 executable where supported, reject deliberately broken variants and run
 three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
-The scripted MCP/runtime portion now has a measured C0/C1 result. The complete
-builder acceptance journey, C2–C12, deployed negative controls and three clean
-repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
+The scripted MCP/runtime portion has measured C0/C1/C2 results. The complete
+builder acceptance journey, C3–C12, native deployed negative controls and three
+clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
 
@@ -100,7 +104,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2–C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3–C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;
@@ -129,7 +133,7 @@ runner writes session-specific `legs` into its private output directory; never
 reuse an older session's legs. Do not print or commit these files. Each proof
 still uses the standard protected verifier-token handoff.
 
-Current evidence: 432 local tests passed across 65 files; TypeScript passed.
+Current evidence: 434 local tests passed across 65 files; TypeScript passed.
 The compiled adapter startup check observed missing/wrong bearer 401, valid
 health 200 and malformed input 400. Separately, the configured native n8n
 webhook rejected missing/wrong headers with 403. Those checks do not complete C6.
@@ -261,28 +265,34 @@ for the SHA-256 and exact comparison. This is saved-source inspection after the
 run, not immutable attestation of the historical executed source. The original
 receipt and its declared-version limitation remain unchanged.
 
-The current app passed ten targeted state/mutation tests and TypeScript after
+The earlier app checkpoint passed ten targeted state/mutation tests and TypeScript after
 the Contact search request gained required paging/projection fields. The prior
 broader checkpoint passed 415 tests; it is not a new full-suite run for this edit.
 The deployed backend gate passed 1,344 tests, with two skipped and two expected
 failures; native Gmail parity remains unmeasured. Native HubSpot qualification
 covered only the documented bounded Deal subset and archived its own fixtures.
 
-1. Native credential handoff and HTTP-node binding are saved and compared.
-   Publish the separate protected draft with owner authorization, export it and exercise
-   the existing MCP runner for C0/C1 without manual arming.
-2. Qualify operation-specific C2–C5 faults. Hosted Gmail `send_unavailable`
-   advertises `drafts.send`, while this flow calls `messages.send`; do not claim
-   that scenario exercises this send path. Preserve accepted-but-response-lost
-   outcomes as unknown until exact positive read-back, never blind resend.
-3. Execute deliberately broken variants and reject duplicate effects, blind retry,
-   Calendar-on-unknown and mislabeled outcomes using the same frozen checks.
-4. Run the corrected C0–C5 contract from three clean seeds with separate receipts.
-   Qualify C6–C12 access/schema/concurrency/crash/privacy/cleanup/provider limits.
-5. The complete saved export has now been retained privately with its hash and
-   comparison; receipts reopened after cleanup. Tie a future full fault run to
-   its exact exported workflow/contract/fixture hashes, then provide rerun
-   instructions and record the prospective user's acceptance.
+Current next steps after the November 7 C2 measurement:
 
-No live-provider parity, native vendor-node acceptance, safe crash recovery,
-all-case regression guarantee or production n8n deployment is established here.
+1. C0/C1/C2 now execute through the protected published webhook without manual
+   arming. Their separate failed and positive receipts are retained in
+   [the C2 proof](C2-PROOF.md). Backend `33290a2d` and the final native run held all
+   three, with fifteen independent provider-state assertions.
+2. Finish C2's native blind-retry negative control once native export is
+   accessible. The registered source variant is locally tested; the native
+   broken-workflow receipt remains unmeasured. The normal published version was
+   never changed and the unpublished Code editor was restored to normal.
+3. Qualify and enable the exact Gmail direct-send faults for C3–C5. The active
+   hosted `send_unavailable` targets `drafts.send`, while this app calls
+   `messages.send`; do not substitute it. Preserve unknown outcomes until
+   positive read-back, never blind resend.
+4. Reject deliberately broken variants under unchanged business assertions,
+   then measure the full contract from three clean seeds with separate receipts.
+   Qualify C6–C12 access/schema/concurrency/crash/privacy/cleanup/provider limits.
+5. Retain actual published exports and observed native execution versions,
+   contract/fixture hashes, rerun instructions and prospective-user acceptance.
+   A saved export does not independently attest every runtime instant.
+
+This is a published isolated test pilot. Native-provider parity, native vendor-node
+acceptance, safe crash recovery and an all-case regression guarantee remain
+unqualified.

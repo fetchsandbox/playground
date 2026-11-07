@@ -1,0 +1,349 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-4b87079ad72a159484466dc6900ef270f8bedda9a28868fe1cb95367e553ef6b-bridge-fe5ca4b82049",
+  "bundle_sha256": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "session_id": "vs_15e27eb4c909",
+  "run_id": "vr_7b4d8b1954a24a49a1246317b363a6ca",
+  "receipt_url": "https://fetchsandbox.com/runs/2bf995e8ee?flow=vr_7b4d8b1954a24a49a1246317b363a6ca",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C4",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Repeatable published n8n invocation is measured for C0/C1. This failure/recovery case still needs an exact-operation qualified twin fault, executable actions and independent runtime assertions; no n8n fault/recovery receipt yet."
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "recorded_at": "2026-11-07T15:55:13.154Z",
+  "backend_deployed": "33290a2d",
+  "backend_image": "sha256:1d5d21ebac7defbc6c283605a58c4860b86739021202793a4d61667d43245e53",
+  "active_provider_change": "HubSpot Deal response-loss scenario; Gmail mounted configuration unchanged",
+  "contract_correction": "Fresh corrected contract; previous invalid-reference failure retained separately, not a same-contract application fix.",
+  "native_workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version_observed": "abd2c751-c25e-459f-99c4-4616910156e6",
+  "native_executions": [
+    {
+      "id": 24,
+      "duration_ms": 12833
+    },
+    {
+      "id": 25,
+      "duration_ms": 10653
+    },
+    {
+      "id": 26,
+      "duration_ms": 542
+    },
+    {
+      "id": 27,
+      "duration_ms": 12215
+    },
+    {
+      "id": 28,
+      "duration_ms": 7718
+    }
+  ],
+  "independent_provider_assertions": [
+    {
+      "check_id": "baseline",
+      "provider": "hubspot",
+      "collection": "contacts",
+      "held": true
+    },
+    {
+      "check_id": "baseline",
+      "provider": "hubspot",
+      "collection": "deals",
+      "held": true
+    },
+    {
+      "check_id": "baseline",
+      "provider": "gmail",
+      "collection": "messages",
+      "held": true
+    },
+    {
+      "check_id": "baseline",
+      "provider": "google-calendar",
+      "collection": "events",
+      "held": true
+    },
+    {
+      "check_id": "baseline",
+      "provider": "slack",
+      "collection": "messages",
+      "held": true
+    },
+    {
+      "check_id": "C1",
+      "provider": "hubspot",
+      "collection": "contacts",
+      "held": true
+    },
+    {
+      "check_id": "C1",
+      "provider": "hubspot",
+      "collection": "deals",
+      "held": true
+    },
+    {
+      "check_id": "C1",
+      "provider": "gmail",
+      "collection": "messages",
+      "held": true
+    },
+    {
+      "check_id": "C1",
+      "provider": "google-calendar",
+      "collection": "events",
+      "held": true
+    },
+    {
+      "check_id": "C1",
+      "provider": "slack",
+      "collection": "messages",
+      "held": true
+    },
+    {
+      "check_id": "C2",
+      "provider": "hubspot",
+      "collection": "contacts",
+      "held": true
+    },
+    {
+      "check_id": "C2",
+      "provider": "hubspot",
+      "collection": "deals",
+      "held": true
+    },
+    {
+      "check_id": "C2",
+      "provider": "gmail",
+      "collection": "messages",
+      "held": true
+    },
+    {
+      "check_id": "C2",
+      "provider": "google-calendar",
+      "collection": "events",
+      "held": true
+    },
+    {
+      "check_id": "C2",
+      "provider": "slack",
+      "collection": "messages",
+      "held": true
+    }
+  ],
+  "C2_fault_witnesses": [
+    {
+      "role": "hubspot",
+      "method": "POST",
+      "path": "/crm/v3/objects/deals",
+      "status": 201,
+      "response_transport": {
+        "state": "delay_completed",
+        "delay_ms": 10000,
+        "delay_started_at": "2026-11-07T15:54:44.110567+00:00",
+        "client_disconnected_at": "2026-11-07T15:54:50.056748+00:00",
+        "delay_completed_at": "2026-11-07T15:54:54.118880+00:00"
+      },
+      "started_at": "2026-11-07T15:54:44.100710Z"
+    },
+    {
+      "role": "hubspot",
+      "method": "GET",
+      "path": "/crm/v3/objects/deals/185015127262",
+      "status": 200,
+      "response_transport": null,
+      "started_at": "2026-11-07T15:54:54.756408Z"
+    }
+  ],
+  "independent_request_order": {
+    "check_id": "C2",
+    "observed_requests": [
+      {
+        "role": "hubspot",
+        "at": "2026-11-07T15:54:41.921965Z",
+        "method": "POST",
+        "path": "/crm/v3/objects/contacts/search",
+        "status": 200
+      },
+      {
+        "role": "hubspot",
+        "at": "2026-11-07T15:54:42.503227Z",
+        "method": "POST",
+        "path": "/crm/v3/objects/contacts",
+        "status": 201
+      },
+      {
+        "role": "hubspot",
+        "at": "2026-11-07T15:54:44.100710Z",
+        "method": "POST",
+        "path": "/crm/v3/objects/deals",
+        "status": 201
+      },
+      {
+        "role": "slack",
+        "at": "2026-11-07T15:54:51.385148Z",
+        "method": "POST",
+        "path": "/chat.postMessage",
+        "status": 200
+      },
+      {
+        "role": "hubspot",
+        "at": "2026-11-07T15:54:54.136125Z",
+        "method": "POST",
+        "path": "/crm/v3/objects/deals/search",
+        "status": 200
+      },
+      {
+        "role": "hubspot",
+        "at": "2026-11-07T15:54:54.756408Z",
+        "method": "GET",
+        "path": "/crm/v3/objects/deals/185015127262",
+        "status": 200
+      },
+      {
+        "role": "gmail",
+        "at": "2026-11-07T15:54:56.338408Z",
+        "method": "POST",
+        "path": "/gmail/v1/users/me/messages/send",
+        "status": 200
+      },
+      {
+        "role": "google-calendar",
+        "at": "2026-11-07T15:54:57.966048Z",
+        "method": "POST",
+        "path": "/calendars/primary/events",
+        "status": 200
+      },
+      {
+        "role": "slack",
+        "at": "2026-11-07T15:54:59.644236Z",
+        "method": "POST",
+        "path": "/chat.postMessage",
+        "status": 200
+      }
+    ],
+    "deal_write_count": 1,
+    "gmail_write_count": 1,
+    "calendar_write_count": 1,
+    "observed_order": "Deal direct read before Gmail send before Calendar create"
+  },
+  "window": {
+    "started_at": "2026-11-07T15:54:12.289157+00:00",
+    "finished_at": "2026-11-07T15:55:01.083053+00:00"
+  },
+  "cleanup": {
+    "owned_sandboxes": [
+      {
+        "provider": "hubspot",
+        "status": 200
+      },
+      {
+        "provider": "gmail",
+        "status": 200
+      },
+      {
+        "provider": "google-calendar",
+        "status": 200
+      },
+      {
+        "provider": "slack",
+        "status": 200
+      }
+    ],
+    "retained_snapshot_http_status": 200,
+    "adapter_port_8097_closed": true,
+    "temporary_provider_bindings_removed": true,
+    "stopped_helpers": [
+      "own_candidate_forward_18097",
+      "own_ngrok_8097"
+    ],
+    "owned_candidate_stopped": true
+  },
+  "local_gates": {
+    "backend_passed": 343,
+    "backend_skipped": 1,
+    "workflow_passed": 434,
+    "workflow_files": 65,
+    "typescript": "passed"
+  },
+  "native_negative_control": "Prepared and locally tested; not published or executed. Native export blocked by locked Mac. Unpublished Code editor restored to normal source; published normal version never changed.",
+  "quality_milestone_closed": false,
+  "limitations": [
+    "C3-C12 unmeasured",
+    "Native broken-workflow control unmeasured",
+    "No unprimed builder/persona acceptance",
+    "No native SaaS parity claim",
+    "Not an enterprise-readiness certification"
+  ]
+}

@@ -799,7 +799,7 @@
                   },
                   {
                     "select": "id",
-                    "equals": "{{step1.state.operations.contact.id}}",
+                    "equals": "{{step2.state.operations.contact.id}}",
                     "required": true
                   }
                 ]
@@ -816,7 +816,7 @@
                   },
                   {
                     "select": "id",
-                    "equals": "{{step0.state.operations.contact.id}}",
+                    "equals": "{{step1.state.operations.contact.id}}",
                     "required": true
                   }
                 ]
@@ -853,7 +853,7 @@
                   },
                   {
                     "select": "id",
-                    "equals": "{{step1.state.operations.deal.id}}",
+                    "equals": "{{step2.state.operations.deal.id}}",
                     "required": true
                   },
                   {
@@ -863,7 +863,7 @@
                     "where": [
                       {
                         "select": "id",
-                        "equals": "{{step1.state.operations.contact.id}}",
+                        "equals": "{{step2.state.operations.contact.id}}",
                         "required": true
                       }
                     ]
@@ -926,7 +926,7 @@
                 "where": [
                   {
                     "select": "id",
-                    "equals": "{{step1.state.operations.gmail.id}}",
+                    "equals": "{{step2.state.operations.gmail.id}}",
                     "required": true
                   },
                   {
@@ -1003,7 +1003,7 @@
                   },
                   {
                     "select": "id",
-                    "equals": "{{step1.state.operations.calendar.id}}",
+                    "equals": "{{step2.state.operations.calendar.id}}",
                     "required": true
                   },
                   {

@@ -2,7 +2,23 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {advance} from './machine.mjs';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
-export function buildWorkflow(url,path,credential){
+// Explicit negative-control source variant, never selected from lead/check IDs.
+// Its runtime behavior is intentionally wrong: retry an unknown Deal write.
+export function blindDealRetry(next){
+ if(next.request?.kind==='provider' && next.request.provider==='hubspot' && next.request.path==='/crm/v3/objects/deals/search'){
+  const c=next.context;
+  c.stage='effect';
+  next.request={kind:'provider',provider:'hubspot',method:'POST',path:'/crm/v3/objects/deals',body:{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]}};
+ }
+ return next;
+}
+export function decisionSource(variant='normal'){
+ const source=advance.toString();
+ if(variant==='normal')return source;
+ if(variant!=='blind-deal-retry')throw Error('Unknown versioned decision variant');
+ return source+'\nconst normalAdvance=advance;\n'+blindDealRetry.toString()+'\nadvance = input => blindDealRetry(normalAdvance(input));';
+}
+export function buildWorkflow(url,path,credential,variant='normal'){
 const origin=new URL(url);
 if(origin.protocol!=='https:' || origin.username || origin.password || origin.search || origin.hash || origin.pathname!=='/')throw Error('HTTPS adapter origin required');
 if(path!=='friendly-pilot-mcp-20261106')throw Error('Fixed qualified pilot route required');
@@ -12,7 +28,7 @@ const init=`const x=$json.body ?? $json;\nif(!/^[a-zA-Z0-9_-]{1,100}$/.test(x.le
 const nodes=[
  {id:'trigger',name:'Lead webhook',type:'n8n-nodes-base.webhook',typeVersion:2,position:[0,0],parameters:{httpMethod:'POST',path,authentication:'headerAuth',responseMode:'responseNode',options:{}},credentials:{httpHeaderAuth:credential},webhookId:path},
  {id:'init',name:'Validate dummy lead',type:'n8n-nodes-base.code',typeVersion:2,position:[240,0],parameters:{jsCode:init}},
- {id:'plan',name:'Durable decision machine',type:'n8n-nodes-base.code',typeVersion:2,position:[480,0],parameters:{jsCode:advance.toString()+'\nreturn [{json:advance($json)}];'}},
+ {id:'plan',name:'Durable decision machine',type:'n8n-nodes-base.code',typeVersion:2,position:[480,0],parameters:{jsCode:decisionSource(variant)+'\nreturn [{json:advance($json)}];'}},
  {id:'done',name:'Finished or held',type:'n8n-nodes-base.if',typeVersion:2.2,position:[720,0],parameters:{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},conditions:[{id:'is-done',leftValue:'={{ $json.done === true }}',rightValue:true,operator:{type:'boolean',operation:'true',singleValue:true}}],combinator:'and'},options:{}}},
  {id:'http',name:'State or isolated twin I/O',type:'n8n-nodes-base.httpRequest',typeVersion:4.2,position:[960,150],parameters:{method:'POST',url:url+'/io',authentication:'genericCredentialType',genericAuthType:'httpHeaderAuth',sendBody:true,specifyBody:'json',jsonBody:'={{ JSON.stringify($json) }}',options:{timeout:15000}},credentials:{httpHeaderAuth:credential}},
  {id:'reply',name:'Return observed workflow status',type:'n8n-nodes-base.respondToWebhook',typeVersion:1.4,position:[960,-100],parameters:{respondWith:'json',responseBody:'={{ JSON.stringify($json) }}',options:{}}}
@@ -24,5 +40,5 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
  const [url,path,output]=process.argv.slice(2);
  if(!url||!path||!output)throw Error('usage: build-workflow https-adapter-origin fixed-pilot-path private-output.json');
  const config=JSON.parse(readFileSync(process.env.PILOT_BINDINGS,'utf8'));
- writeFileSync(output,JSON.stringify(buildWorkflow(url,path,config.n8n_header_auth),null,2),{mode:0o600});
+ writeFileSync(output,JSON.stringify(buildWorkflow(url,path,config.n8n_header_auth,process.env.PILOT_VARIANT??'normal'),null,2),{mode:0o600});
 }
