@@ -6,14 +6,27 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**Latest: C0–C4 normal behavior held, including both C3 phase checks.**
-Backend `a952b218`, MCP `0.7.30` and normal published n8n version
-`03207059-cc93-4ab8-834e-bcb70e46b2ce` produced this
-[separate normal-restoration receipt](https://fetchsandbox.com/runs/b9c6ab0f24?flow=vr_356d50ccd6824e6ea7e08638b0e257ff):
-**six checks held, eight unmeasured; overall inconclusive**, with all 30 independent
-provider-state assertions held. C4's native blind-resend control remains
-unmeasured after the Mac relocked during actual export; the normal source is
-published. See [C4 proof and limits](C4-PROOF.md).
+**Latest: C5 unavailable lookup and C8 overlapping first delivery are measured.**
+The [C8 receipt](https://fetchsandbox.com/runs/7f05cd5343?flow=vr_68013d37ab44438e8aca5f6a652f908e)
+on backend configuration `8f2ee848`, MCP `0.7.30` and unchanged native normal
+version `03207059-cc93-4ab8-834e-bcb70e46b2ce` has **eight checks held, six
+unmeasured; overall inconclusive**, with all 40 independent provider-state
+assertions held. Four requests overlapped; one owner produced one set of effects,
+and completed replay added none. C0–C5 business checks were unchanged.
+See [C8 proof and limits](C8-PROOF.md). This is one adapter/FileStore process;
+stale-writer, crash, multiple-worker and native mutation gates remain open.
+
+## Separate C5 unavailable-lookup measurement
+
+An accepted email remains unknown while lookup is unavailable.
+Configuration release `8f2ee848`, published MCP `0.7.30` and the unchanged normal
+n8n source produced this [C5 receipt](https://fetchsandbox.com/runs/2e1288bcc5?flow=vr_20680065467a46948593bbe0c99e259d):
+**seven checks held, seven unmeasured; overall inconclusive**, with all 35
+independent provider-state assertions held. One accepted message remained,
+lookup returned 503 twice, CRM IDs stayed unchanged, and Calendar stayed empty
+without a resend even on explicit failed-operation retry.
+See [C5 proof and limits](C5-PROOF.md). Native C4/C5 broken controls, other read-back
+variants, full-contract repeatability and fresh builder acceptance remain open.
 
 ## Earlier C3 and C2 measurements
 
@@ -103,8 +116,8 @@ C1–C12 executable where supported, reject deliberately broken variants and run
 three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
-The scripted MCP/runtime portion has measured C0/C1/C2/C3/C4 results. The complete
-builder acceptance journey, C5–C12, remaining native negative controls and three
+The scripted MCP/runtime portion has measured C0/C1/C2/C3/C4/C5 unavailable-lookup results. The complete
+builder acceptance journey, C6/C7/C9–C12, remaining C8 and native negative controls and three
 clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
@@ -132,7 +145,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5–C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5 unavailable-lookup hold is executable; C8 first-delivery overlap is executable; C6/C7/C9–C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;

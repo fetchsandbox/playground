@@ -16,6 +16,18 @@ and separately remeasured with the same six checks and all 30 state assertions
 held ([restored observation](evidence/2026-11-07-c4-restored-observation.json)).
 See [C4 proof](C4-PROOF.md). These results do not close full quality gates.
 
+The [C5 observation](evidence/2026-11-07-c5-deployed-observation.json) measures
+the unavailable-lookup subtype: seven held, seven unmeasured, all 35 independent
+provider-state assertions held on configuration release `8f2ee848`. Empty and
+ambiguous read-back variants and a native C5 broken control remain unmeasured.
+See [C5 proof](C5-PROOF.md).
+
+The [C8 observation](evidence/2026-11-07-c8-concurrent-observation.json) records
+four overlapping first deliveries and completed replay through one adapter
+process: eight checks held, six unmeasured, all 40 independent provider-state
+assertions held. Native stale-writer/claim-bypass and distributed/crash scope
+remain open; see [C8 proof](C8-PROOF.md).
+
 ## Roles and evidence boundary
 
 The workflow builder owns n8n logic, state, input validation and recovery.
@@ -42,10 +54,10 @@ count, identity, association or fault-witness assertions to obtain a pass.
 | C2 | Deal accepted, response lost | Normal native recovery and deliberately broken blind-retry versions are measured separately. The broken version failed C2 with two committed Deal IDs. Normal source restored and remeasured: C2 held under the same checks. Broader full-contract quality gates remain open. | Actual client timeout after one committed Deal; positive exact Deal/Contact read-back; no second Deal. Blind-retry variant must fail. |
 | C3 | Gmail rejected after CRM | Measured: exact direct-send once-only 403 and independent zero-message/Calendar state; explicit recovery retained CRM IDs and created one email/event. Native broken control and full repeatability remain open. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
 | C4 | Gmail accepted, response lost | Measured normal native n8n: one accepted message, client disconnect, exact SENT/recipient/Message-ID read-back, one later Calendar event, no second send. Native blind-resend control unmeasured; Mac relocked during export. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
-| C5 | Gmail outcome remains unknown | Both: qualify unavailable/ambiguous read-back and prove the application withholds Calendar and reports unknown. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
+| C5 | Gmail outcome remains unknown | Unavailable-lookup subtype measured through native n8n: one accepted email, two lookup 503s, three unknown outcomes including retry_failed, no resend or Calendar. Empty/ambiguous read-back and native broken control remain unmeasured. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
 | C6 | Caller identity boundaries | Builder: shared pilot bearer is not per-requester identity. Qualification: missing/wrong native headers returned 403 outside this contract only. | Denied calls leave state/effects unchanged; intended requester isolation and authenticated identity explicitly specified and tested. |
 | C7 | Invalid input/schema | Qualification: local validation tests only. | Actual published-entry invalid requests with unchanged independent effects and retained rejected-call evidence. |
-| C8 | Concurrent first deliveries | Qualification: local conditional-claim/CAS tests only. | Overlapping real n8n executions, exact one-effect counts and identities, stale writer rejected; claim-bypass variant fails. |
+| C8 | Concurrent first deliveries | Four overlapping native deliveries measured: one owner, one set of effects and no effects on completed replay. Single adapter/FileStore only; stale-writer native exercise, claim-bypass mutation, crash and multi-worker scope unmeasured. | Overlapping real n8n executions, exact one-effect counts and identities, stale writer rejected; claim-bypass variant fails. |
 | C9 | Restart/abandoned claim | Builder implementation gap: no safe lease/fencing/reconciliation for abandoned `in_progress`; single-process FileStore. | Crash at each write/checkpoint boundary; restart with durable conditional store; no duplicated or lost effects, stale owner fenced. |
 | C10 | Privacy/transport | Qualification: allowlist implementation exists, deployed denied-route/redaction checks absent. | Blocked arbitrary destination, redirect and secret-bearing attempts; independently inspected receipt/export for credential leaks. |
 | C11 | Cleanup/isolation/receipt | Qualification: four owned sandboxes absent on recheck, receipt retained; full fresh-session isolation contract not executed. | New session cannot read/reuse prior state/credentials; receipt retained after cleanup; temporary transports and handoff files removed. |
@@ -67,7 +79,7 @@ are `deal_accepted_response_loss`, `direct_send_rejected` and
 pilot adapter's six-second timeout. The HubSpot control is deployed and C2 has native positive receipts. Backend
 `a952b218` now enables Gmail scenario configuration, including the locally and
 publicly qualified `direct_send_rejected_once`. C3 rejection/recovery has a native
-workflow receipt; C4 normal execution is measured separately; C5 remains unmeasured. Zero-step alias rejection remains in
+workflow receipt; C4 normal recovery and C5 unavailable-lookup hold now have separate native runtime receipts; other C5 variants remain unmeasured. Zero-step alias rejection remains in
 the unchanged runtime image. See [C3 proof](C3-PROOF.md) for its separate
 80-passed/one-skipped backend gate and 434 workflow tests. The full three integrity failures observed
 in the expanded gate reproduced on unchanged HEAD provider configs; no baselines

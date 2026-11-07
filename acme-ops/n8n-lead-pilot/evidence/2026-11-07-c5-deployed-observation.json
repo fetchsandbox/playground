@@ -1,0 +1,291 @@
+{
+  "scope": "Scripted actual native n8n runtime with isolated twins; bounded C5 unavailable-lookup subtype, not native SaaS outage parity or full C5 quality acceptance",
+  "receipt_url": "https://fetchsandbox.com/runs/2e1288bcc5?flow=vr_20680065467a46948593bbe0c99e259d",
+  "run_id": "vr_20680065467a46948593bbe0c99e259d",
+  "backend_commit": "8f2ee848",
+  "release_scope": "Gmail mounted scenario YAML only; identical runtime image bytes and environment except build metadata",
+  "deployment_environment_comparison": {
+    "runtime_image_bytes_identical": true,
+    "runtime_image_id": "sha256:1d5d21ebac7defbc6c283605a58c4860b86739021202793a4d61667d43245e53",
+    "environment_except_build_metadata_identical": true,
+    "config_files_compared": 260,
+    "changed_config_files": [
+      "gmail/scenarios.yaml"
+    ]
+  },
+  "deployment_helper_source": "864d2c54 (existing committed warm-setting preservation; guard retained)",
+  "mcp": "0.7.30",
+  "native_workflow": "PJlTC5gnf6wb0r8e",
+  "normal_native_version_last_observed": "03207059-cc93-4ab8-834e-bcb70e46b2ce",
+  "native_executions_from_response_owners": {
+    "C5": [
+      "92",
+      "93",
+      "94"
+    ]
+  },
+  "native_export_sha256_cached": "0a2fb34914a2cf2aa955ec49108fee4187cd46cd273511e1f1390d20ddebae35",
+  "source_capture": "Actual prior normal export reused with no native edits; execution 94 independently named current normal version. Declared source hash is not cryptographic runtime attestation.",
+  "contract_freeze": {
+    "sha256": "6e070fbc918cf4387b968de5f7687446c14557f2d972e92bc5005ba5887df5ca",
+    "source_commit": "c89d16a",
+    "previous_checks_unchanged": {
+      "baseline": true,
+      "C1": true,
+      "C2": true,
+      "C3": true,
+      "C3_recovery": true,
+      "C4": true
+    },
+    "scope": "C5 unavailable-lookup subtype; ambiguous/empty readback and native mutation control remain unmeasured"
+  },
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Local conditional claims/CAS were checked. Concurrent actual n8n executions and exact provider-effect read-back are not yet qualified."
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_state_assertions": {
+    "count": 35,
+    "all_held": true
+  },
+  "C5": {
+    "accepted_message_id": "0433070226261465",
+    "accepted_write_status": 200,
+    "transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:44:06.653395+00:00",
+      "client_disconnected_at": "2026-11-07T17:44:12.623877+00:00",
+      "delay_completed_at": "2026-11-07T17:44:16.661719+00:00"
+    },
+    "app_statuses": [
+      "unknown",
+      "unknown",
+      "unknown"
+    ],
+    "app_original_send_statuses": [
+      0,
+      0,
+      0
+    ],
+    "lookup_statuses": [
+      503,
+      503
+    ],
+    "native_invocations": 3,
+    "final_invocation_retry_failed": true,
+    "gmail_send_count": 1,
+    "calendar_request_count": 0,
+    "unknown_slack_notification_count": 3,
+    "CRM_ids_preserved": true,
+    "independent_final_counts": {
+      "contacts": 1,
+      "deals": 1,
+      "gmail_messages": 1,
+      "calendar_events": 0,
+      "slack_unknown_notifications": 3
+    },
+    "automatic_fault_gate": "Actual unavailable message-list refusal; accepted send/disconnect additionally observed in archive, not a C5 accepted-readback verdict"
+  },
+  "gates": {
+    "backend_passed": 81,
+    "backend_skipped": 1,
+    "workflow_passed": 436,
+    "typescript": "passed"
+  },
+  "candidate_component": {
+    "backend_build": {
+      "commit": "8f2ee848",
+      "built_at": "2026-11-07T17:35:06.795582+00:00",
+      "env": "unknown"
+    },
+    "client_timeout_observed": true,
+    "client_elapsed_seconds": 6.004,
+    "repeated_message_lookup_statuses": [
+      503,
+      503
+    ],
+    "accepted_effect_retained": true,
+    "accepted_id": "6358892493266869",
+    "server_transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:36:46.051089+00:00",
+      "client_disconnected_at": "2026-11-07T17:36:52.008992+00:00",
+      "delay_completed_at": "2026-11-07T17:36:56.057056+00:00"
+    },
+    "direct_owner_read_scope": "Component inspection using accepted ID from archive; not app recovery or lookup success",
+    "blind_resend_creates_second_message": true,
+    "default_lookup_restored": true,
+    "passed": true,
+    "scope": "candidate exact-operation twin component control; not native Gmail or n8n acceptance",
+    "cleanup_statuses": [
+      200
+    ]
+  },
+  "public_component": {
+    "backend_build": {
+      "commit": "8f2ee848",
+      "built_at": "2026-11-07T17:39:17.798025+00:00",
+      "env": "unknown"
+    },
+    "client_timeout_observed": true,
+    "client_elapsed_seconds": 6.004,
+    "repeated_message_lookup_statuses": [
+      503,
+      503
+    ],
+    "accepted_effect_retained": true,
+    "accepted_id": "5250232337168787",
+    "server_transport": {
+      "state": "delay_completed",
+      "delay_ms": 10000,
+      "delay_started_at": "2026-11-07T17:39:50.731049+00:00",
+      "client_disconnected_at": "2026-11-07T17:39:56.649768+00:00",
+      "delay_completed_at": "2026-11-07T17:40:00.739264+00:00"
+    },
+    "direct_owner_read_scope": "Component inspection using accepted ID from archive; not app recovery or lookup success",
+    "blind_resend_creates_second_message": true,
+    "default_lookup_restored": true,
+    "passed": true,
+    "scope": "public exact-operation twin component control; not native Gmail or n8n acceptance",
+    "cleanup_statuses": [
+      200
+    ]
+  },
+  "setup_attempts": [
+    {
+      "item": "Missing C5 exact-operation control test",
+      "result": "failed",
+      "failed": 1,
+      "reason": "direct_send_accepted_lookup_unavailable absent",
+      "artifact": "before-control.log"
+    },
+    {
+      "item": "Post-config existing backend gate",
+      "result": "passed_with_skip",
+      "passed": 81,
+      "skipped": 1,
+      "artifact": "backend-regression.log"
+    },
+    {
+      "item": "First private candidate connection attempts",
+      "result": "setup_failed",
+      "attempts": 2,
+      "reason": "SSH remote Docker template quoting error prevented forwarding; no candidate requests could connect",
+      "artifact": "candidate-transport-setup-attempt-1/"
+    },
+    {
+      "item": "Corrected candidate forwarding",
+      "result": "passed",
+      "evidence": "Candidate /api/build returned 8f2ee848 before qualification retries"
+    },
+    {
+      "item": "First promotion",
+      "result": "rejected_by_guard",
+      "reason": "Older helper copied from another checkout would omit SANDBOX_WARM_SANDBOX_IDS",
+      "rollback_observed": "Canonical a952b218, original setting retained, canonical nginx routing restored",
+      "artifact": "release/promotion-attempt-1-private.log"
+    },
+    {
+      "item": "Promotion retry",
+      "result": "promoted",
+      "change": "Used already-committed helper from 864d2c54, retaining setting; drift guard unchanged",
+      "build": "8f2ee848",
+      "artifact": "release/promotion-private.log"
+    }
+  ],
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "remaining": [
+    "Ambiguous and empty/unavailable-to-available read-back variants not measured",
+    "Native C5 broken-workflow control unmeasured",
+    "C4 native control export pending Mac unlock",
+    "C6-C12 unmeasured in this receipt",
+    "Full-contract repeatability and fresh native builder acceptance unmeasured",
+    "Source-capture automation deferred"
+  ],
+  "native_version_observed_this_run": "03207059-cc93-4ab8-834e-bcb70e46b2ce",
+  "version_independently_observed_on_execution": 94,
+  "C5_execution_ids_observed_in_history": [
+    92,
+    93,
+    94
+  ]
+}

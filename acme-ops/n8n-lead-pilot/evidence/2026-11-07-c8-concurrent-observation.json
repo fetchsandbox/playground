@@ -1,0 +1,259 @@
+{
+  "scope": "Scripted MCP/native n8n, four overlapping first deliveries through one adapter/FileStore process and completed replay; not distributed durability or complete C8 quality acceptance",
+  "receipt_url": "https://fetchsandbox.com/runs/7f05cd5343?flow=vr_68013d37ab44438e8aca5f6a652f908e",
+  "run_id": "vr_68013d37ab44438e8aca5f6a652f908e",
+  "backend_commit": "8f2ee848",
+  "mcp": "0.7.30",
+  "native_workflow": "PJlTC5gnf6wb0r8e",
+  "native_version_independently_observed": "03207059-cc93-4ab8-834e-bcb70e46b2ce",
+  "version_observed_on_execution": 110,
+  "native_concurrent_executions_observed": [
+    110,
+    111,
+    112,
+    113
+  ],
+  "native_completed_replay_execution_observed": 114,
+  "native_owner": "110",
+  "source_export_sha256_cached": "0a2fb34914a2cf2aa955ec49108fee4187cd46cd273511e1f1390d20ddebae35",
+  "adapter_sha256_unchanged": "fe5ca4b82049e66ec4d83e135ee71ce0ff308e4f3c57c34785ed28439a9eae5b",
+  "contract_source_commit": "e8718d9",
+  "contract_freeze": {
+    "sha256": "e7b3af2b434bc3b52fdb39c2f5d8e2e7968ea55d978ee0bce539e123590ab4ca",
+    "prior_C0_C5_checks_unchanged": true,
+    "scope": "Single adapter process, four overlapping first deliveries and completed replay; stale writes, crashes, multiple workers, native mutation control unmeasured"
+  },
+  "C0_C5_business_checks_unchanged_from_C5_run": true,
+  "verdict": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded."
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "independent_provider_state_assertions": {
+    "count": 40,
+    "all_held": true
+  },
+  "C8": {
+    "four_HTTP_requests_overlap_seconds": 2.008216,
+    "batch_HTTP_statuses": [
+      200,
+      200,
+      200,
+      200
+    ],
+    "batch_business_statuses": [
+      "in_progress",
+      "in_progress",
+      "in_progress",
+      "confirmed"
+    ],
+    "batch_returned_saved_owners": [
+      "110",
+      "110",
+      "110",
+      "110"
+    ],
+    "request_windows": [
+      {
+        "started_at": "2026-11-07T17:49:33.313855+00:00",
+        "finished_at": "2026-11-07T17:49:35.478607+00:00"
+      },
+      {
+        "started_at": "2026-11-07T17:49:33.327238+00:00",
+        "finished_at": "2026-11-07T17:49:35.590894+00:00"
+      },
+      {
+        "started_at": "2026-11-07T17:49:33.337668+00:00",
+        "finished_at": "2026-11-07T17:49:35.356360+00:00"
+      },
+      {
+        "started_at": "2026-11-07T17:49:33.348144+00:00",
+        "finished_at": "2026-11-07T17:49:45.430606+00:00"
+      }
+    ],
+    "final_status": "confirmed",
+    "final_owner": "110",
+    "final_operations": {
+      "contact": {
+        "status": "confirmed",
+        "id": "966512147588",
+        "client_status": 201
+      },
+      "deal": {
+        "status": "confirmed",
+        "id": "117447458288",
+        "confirmation": "positive_readback"
+      },
+      "gmail": {
+        "status": "confirmed",
+        "id": "9812569017692072",
+        "client_status": 200
+      },
+      "calendar": {
+        "status": "confirmed",
+        "id": "ca49393958990394",
+        "client_status": 200
+      }
+    },
+    "independent_final_counts": {
+      "contacts": 1,
+      "deals": 1,
+      "gmail_messages": 1,
+      "calendar_events": 1,
+      "slack_notifications": 1
+    },
+    "provider_requests": {
+      "hubspot": [
+        {
+          "method": "GET",
+          "path": "/crm/v3/objects/deals/117447458288",
+          "status": 200,
+          "count": 1
+        },
+        {
+          "method": "POST",
+          "path": "/crm/v3/objects/deals",
+          "status": 201,
+          "count": 1
+        },
+        {
+          "method": "POST",
+          "path": "/crm/v3/objects/contacts",
+          "status": 201,
+          "count": 1
+        },
+        {
+          "method": "POST",
+          "path": "/crm/v3/objects/contacts/search",
+          "status": 200,
+          "count": 1
+        }
+      ],
+      "gmail": [
+        {
+          "method": "POST",
+          "path": "/gmail/v1/users/me/messages/send",
+          "status": 200,
+          "count": 1
+        }
+      ],
+      "google-calendar": [
+        {
+          "method": "POST",
+          "path": "/calendars/primary/events",
+          "status": 200,
+          "count": 1
+        }
+      ],
+      "slack": [
+        {
+          "method": "POST",
+          "path": "/chat.postMessage",
+          "status": 200,
+          "count": 1
+        }
+      ]
+    },
+    "all_provider_scenarios_default": true,
+    "completed_replay_adds_no_provider_requests": true,
+    "provider_call_attempts_in_adapter_trace": [
+      "110"
+    ]
+  },
+  "gates": {
+    "workflow_passed": 436,
+    "typescript": "passed",
+    "new_backend_runtime_or_config_change_for_C8": false
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "app_port_closed": true,
+    "owned_ngrok_processes_stopped": 1
+  },
+  "limits": [
+    "Single adapter/FileStore process only",
+    "Stale-writer native exercise not measured; local CAS tests remain separate",
+    "Native deliberate claim-bypass control not measured",
+    "Crash, abandoned claims and multiple workers not measured",
+    "C6 C7 C9 C10 C11 C12 unmeasured in this receipt",
+    "Native C4 bad control still pending actual export after Mac unlock",
+    "Other C5 lookup variants and native C5 bad control unmeasured",
+    "Three clean full-contract repeats and fresh builder acceptance unmeasured",
+    "Source capture automation deferred"
+  ]
+}
