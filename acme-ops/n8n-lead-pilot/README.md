@@ -124,7 +124,14 @@ and public receipt reopened with C0 still held. Temporary helpers, forwarding
 ports and protected handoff files were closed/removed. This operational cleanup
 does not mark the separately declared C11 as measured. The saved
 Code node was read back after reload and matched local source. The complete
-native workflow export has not been recovered while the Mac is locked.
+native workflow export was subsequently downloaded after Mac unlock and compared
+with the reference: all six node types/versions and parameters match, allowing
+only an added empty webhook `options` object; connections match, no nodes are
+pinned or disabled, and `active=false`. See the
+[native export observation](evidence/2026-11-06-native-export-observation.json)
+for the SHA-256 and exact comparison. This is saved-source inspection after the
+run, not immutable attestation of the historical executed source. The original
+receipt and its declared-version limitation remain unchanged.
 
 The current app passed ten targeted state/mutation tests and TypeScript after
 the Contact search request gained required paging/projection fields. The prior
@@ -142,9 +149,10 @@ covered only the documented bounded Deal subset and archived its own fixtures.
    Calendar-on-unknown and mislabeled outcomes using the same frozen checks.
 4. Run the corrected C0–C5 contract from three clean seeds with separate receipts.
    Qualify C6–C12 access/schema/concurrency/crash/privacy/cleanup/provider limits.
-5. Recover the complete saved export, retain workflow/contract/fixture hashes,
-   reopen receipts after cleanup, then provide rerun instructions and record the
-   prospective user's acceptance.
+5. The complete saved export has now been retained privately with its hash and
+   comparison; receipts reopened after cleanup. Tie a future full fault run to
+   its exact exported workflow/contract/fixture hashes, then provide rerun
+   instructions and record the prospective user's acceptance.
 
 No live-provider parity, native vendor-node acceptance, safe crash recovery,
 all-case regression guarantee or production n8n deployment is established here.

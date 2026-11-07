@@ -1,0 +1,73 @@
+{
+  "recorded_at": "2026-11-07T03:03:02.566076+00:00",
+  "scope": "Saved native n8n workflow export after the C0 executions; not independent server attestation of historical executed source",
+  "workflow_id": "XNOkSPCwhsCbH23J",
+  "workflow_name": "Friendly lead recovery \u2014 C0 candidate",
+  "active": false,
+  "export_sha256": "58dd8dd3e839d2dc58916c554052d4f8ba3d52162099660f6ef65b9e71a59ee2",
+  "nodes": [
+    {
+      "node": "Lead webhook",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": false,
+      "parameters_match_after_empty_default_normalization": true
+    },
+    {
+      "node": "Validate dummy lead",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": true,
+      "parameters_match_after_empty_default_normalization": true
+    },
+    {
+      "node": "Durable decision machine",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": true,
+      "parameters_match_after_empty_default_normalization": true
+    },
+    {
+      "node": "Finished or held",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": true,
+      "parameters_match_after_empty_default_normalization": true
+    },
+    {
+      "node": "State or isolated twin I/O",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": true,
+      "parameters_match_after_empty_default_normalization": true
+    },
+    {
+      "node": "Return observed workflow status",
+      "type": true,
+      "typeVersion": true,
+      "not_disabled": true,
+      "parameters_exact": true,
+      "parameters_match_after_empty_default_normalization": true
+    }
+  ],
+  "connections_equal": true,
+  "execution_order": "v1",
+  "reference_source": "Generated C0 candidate, with corrected decision code previously read back after reload. Header bearer values compared privately, never included in this observation.",
+  "deployed_backend": "fdd1d243 (previously measured; not rechecked in this export-only step)",
+  "remaining_checks": "C1-C12 unmeasured; full receipt inconclusive. No workflow publication or execution in this export step.",
+  "normalization": {
+    "Lead webhook": "Native export adds options: {}; generated reference omits it. All other parameters equal."
+  },
+  "pinned_nodes": 0,
+  "native_credential_references": [],
+  "native_settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "private_export_handling": "Raw export contains only the private disposable adapter bearer, not native provider credentials; retained privately with mode 0600, never committed."
+}
