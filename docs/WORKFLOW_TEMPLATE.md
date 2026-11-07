@@ -15,6 +15,14 @@ Provide these items before advertising it as reusable:
 10. Evidence with exact app/contract version and all blocked, skipped or unmeasured cases.
 11. Recovery/retry/restart and reconciliation behavior, distinguishing design from measurement.
 12. Known limitations, production requirements and code/test/receipt links.
+13. Builder journey and acceptance: one user request -> actual builder agent ->
+    MCP behavioral contract (happy path, customer rules, applicable default risks)
+    -> protected twins -> FetchSandbox-driven runtime execution -> independent
+    effects -> retained receipt. Name the contract/execution owners, authenticated
+    repeatable trigger, same-job polling and exact builder-client evidence. Mark
+    manual webhook arming or scripted-only runs as partial setup/component proof,
+    not a delivered builder integration. Include this as the first planning
+    milestone and final acceptance gate, not a follow-up after component work.
 
 Keep live account IDs, tokens, private logs and customer content out of examples.
 Use `example.test` identities. Do not publish a demo as production-certified.

@@ -4,6 +4,28 @@ Applies to every workflow and integration in this repository. Read the selected
 workflow's README/business guide before editing it. These are development
 instructions; they do not add FetchSandbox calls to a deployed runtime agent.
 
+## Plan the builder experience before implementation
+
+For every new workflow or builder integration, make the intended user journey an
+explicit first milestone and final acceptance gate: one user request -> actual
+app/workflow builder agent -> FetchSandbox MCP contract -> protected isolated
+bindings -> FetchSandbox-driven execution -> independent effects -> retained
+receipt. Use the same MCP pattern across Claude, Replit, n8n and other builders;
+do not replace it with a separate workflow-specific verification engine.
+
+The behavioral contract must include the happy path, the customer's requirements
+and every applicable default production-risk dimension discovered through MCP.
+The customer should not have to enumerate standard failure cases. Preserve typed
+blocked/unmeasured requirements when controls or observations are unavailable.
+
+Before building components, record who proposes/freezes the contract, who starts
+and polls execution, how the real runtime is invoked repeatedly, and what exact
+receipt proves the journey. A manually armed webhook, hand-written helper or
+scripted control can establish a bounded component result, but cannot satisfy
+native builder/client acceptance. Qualify the authenticated repeatable trigger
+and existing MCP lifecycle before treating the integration as delivered. Keep
+component, application and builder-journey milestones distinct in the plan.
+
 ## Establish the business contract first
 
 1. Identify the workflow, business purpose, input/trigger, actual agents, providers,

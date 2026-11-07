@@ -28,6 +28,24 @@ isolation. A read-only research role and an approval-controlled writer have
 different expectations. Unsupported business features stay outside app scope;
 missing verification machinery remains an explicit engine/setup gap.
 
+## Builder integration acceptance
+
+Plan and measure two distinct outcomes. Application checks prove the scoped
+business behavior under the frozen contract. Builder-journey acceptance proves
+that the actual app/workflow builder uses MCP to prepare that contract, bind the
+isolated environment, start FetchSandbox-driven execution, follow its job and
+retrieve the receipt from one user request. Applicable default production risks
+and customer-specific rules both belong in the reviewed contract; unsupported
+controls stay visible, not silently omitted.
+
+Name the authenticated, repeatable runtime entry point in the initial plan.
+Manually arming a temporary n8n webhook can unblock a component experiment but
+leaves this builder-journey milestone incomplete. A separate hand-authored
+controller is not evidence that the actual builder adopted the MCP flow. Use the
+existing runner/evaluation owners for actual client acceptance and report their
+observed limits. A proposed plan or edited instruction file is not caller
+adoption, a completed runtime integration or a fresh verification result.
+
 ## Existing Acme runner
 
 Requires Node 22+, package dependencies, an authenticated FetchSandbox account at
