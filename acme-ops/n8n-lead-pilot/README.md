@@ -17,6 +17,61 @@ The saved workflow `XNOkSPCwhsCbH23J` remains unpublished. Earlier Deal-404 and
 helper/schema failures are retained, including the
 [original cloud observation](evidence/2026-11-06-observation.json).
 
+## Required builder-to-verifier pattern — Raj, November 6, 2026
+
+This pilot must follow the same MCP development loop as an app built in Claude
+or Replit. The app/workflow builder agent owns the application and talks to
+FetchSandbox MCP. n8n is the application runtime; it does not need a second
+verification engine or a separate hand-written verification controller.
+
+One user request starts a multi-turn MCP interaction:
+
+1. The builder inspects the actual saved workflow, intended business behavior,
+   provider operations, state, identities and public test entry points. It submits
+   that bounded context through the existing `validate_integration` interface.
+2. The builder and FetchSandbox develop the behavioral contract: the happy path,
+   Friendly's explicit requirements, and every applicable default production-risk
+   dimension. Friendly should not have to enumerate standard failure scenarios.
+   The model may propose rules; deterministic observations own the verdict.
+3. Freeze the reviewed checks and workflow version before execution. Bind isolated
+   twins through the protected credential handoff. Qualify faults against the
+   exact provider operations the saved workflow calls, not a nearby API operation.
+4. FetchSandbox drives the authenticated, repeatable n8n entry point from beginning
+   to end. It orchestrates applicable inputs, duplicates, concurrency and qualified
+   faults through the existing `application_workflow_v1` executor. It checks saved
+   app state and provider effects independently, then persists the receipt. The
+   builder follows the same job until its result and handles setup/continuations;
+   no manual webhook arming or human per-scenario triggering in the target flow.
+5. If a rule fails, the builder fixes the application and remeasures under the
+   same frozen contract where feasible. If setup or assertions change, preserve
+   the earlier receipt and identify the changed contract. Never silently weaken
+   an invariant or treat an HTTP 200 / workflow success badge as business proof.
+
+Default risk review includes applicable identity/input boundaries, duplicate and
+concurrent delivery, timeouts and accepted-but-response-lost outcomes, provider
+rejection/rate limits, partial completion and recovery, restart/durability,
+privacy and cleanup. Irrelevant dimensions need an explicit reason. Missing
+engine capability, safe trigger, fault control or evidence must remain a typed
+blocked/unmeasured check; 'defaults included' does not mean unsupported scenarios
+were executed or every possible production failure is covered.
+
+Friendly-specific invariants include preserving completed CRM effects, verifying
+the exact Deal/Contact relationship, reconciling unknown email outcomes without
+blind resend, withholding Calendar until email confirmation, and exposing the
+blocked operation accurately in Slack.
+
+Acceptance for the next integration milestone: from one builder request, MCP
+contract preparation, protected twin binding, preflight, actual repeatable n8n
+execution and receipt retrieval proceed without manually arming a test webhook.
+Retain workflow/contract hashes and separate failed/control receipts. Then make
+C1–C12 executable where supported, reject deliberately broken variants and run
+three clean repetitions. Do not require a new customer prompt to discover the
+applicable default risks.
+
+This section records the required design, not shipped capability. Current proof
+remains C0 only on backend `fdd1d243`; the draft is unpublished, C1–C12 remain
+unmeasured, and the end-to-end builder experience above has not been qualified.
+
 ## Design and scope
 
 `Lead webhook → validate input → decision machine → conditional state / twin I/O
