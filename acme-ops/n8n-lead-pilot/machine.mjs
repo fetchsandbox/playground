@@ -105,6 +105,10 @@ export function advance(input) {
     if (!r?.saved) return stop('Final state save failed');
     return provider('slack','POST','/chat.postMessage',{channel:'C_PILOT',text:JSON.stringify({lead_id:c.lead_id,status:c.state.status,blocked_step:c.blocked})},'notified');
   }
-  if (c.stage === 'notified') return stop(r?.status === 200 && r.body?.ok === true ? 'Status notification accepted by twin' : 'Status notification unconfirmed');
+  if (c.stage === 'notified') {
+    c.state.notification = {status:r?.status === 200 && r.body?.ok === true ? 'confirmed' : 'unknown',client_status:r?.status ?? null};
+    return save('notification_saved');
+  }
+  if (c.stage === 'notification_saved') return stop(r?.saved && c.state.notification?.status === 'confirmed' ? 'Status notification accepted by twin' : 'Status notification unconfirmed');
   throw new Error('Unsupported state');
 }

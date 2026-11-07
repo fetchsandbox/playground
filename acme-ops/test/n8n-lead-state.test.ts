@@ -16,6 +16,16 @@ describe('pilot operation state boundary',()=>{
   const right=advance({context:c,result:{status:200,body:{id:'deal-a',properties:{dealname:'Pilot bound'},associations:{contacts:{results:[{id:'contact-a'}]}}}}});
   expect(right.request.state.operations.deal).toMatchObject({status:'confirmed',id:'deal-a'});
  });
+ it('persists unconfirmed Slack separately from completed business effects',()=>{
+  const c={lead_id:'notify',attempt:'a',stage:'notified',state:{status:'confirmed',operations:{calendar:{status:'confirmed'}}}};
+  const failed=advance({context:c,result:{status:200,body:{ok:false,error:'invalid_auth'}}});
+  expect(failed.request.kind).toBe('save');expect(failed.request.state.notification.status).toBe('unknown');
+  expect(failed.request.state.operations.calendar.status).toBe('confirmed');
+  const good=advance({context:c,result:{status:200,body:{ok:true,ts:'1'}}});
+  expect(good.request.state.notification.status).toBe('confirmed');
+  const stopped=advance({context:good.context,result:{saved:false}});
+  expect(stopped.reason).toBe('Status notification unconfirmed');
+ });
  it('only one simultaneous first delivery claims a lead',async()=>{
   const state=new LeadState(new MemoryStore());
   const out=await Promise.all(Array.from({length:8},(_,i)=>state.claim('same-lead','a'+i)));

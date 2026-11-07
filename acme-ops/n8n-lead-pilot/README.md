@@ -126,3 +126,5 @@ evidence for their measured revision and are not silently reassigned to this one
 
 No live-provider parity, native vendor-node acceptance, restart recovery, all-case
 regression guarantee, or production deployment is established by this pilot.
+
+The pending C0 contract now requires a saved Slack acceptance result and independently checks Contact, Deal, Gmail, Calendar and Slack twin state. The exported MIME fixture includes explicit sender, recipient and Message-ID headers, accepted by the current engine parser in a setup preflight. These are authored checks and setup observations, not an executed cloud receipt.

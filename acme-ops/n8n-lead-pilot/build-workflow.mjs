@@ -3,7 +3,7 @@ import {advance} from './machine.mjs';
 const [url, path, output] = process.argv.slice(2);
 if(!url||!path||!output)throw Error('usage: build-workflow relay-origin webhook-path output.json');
 const config=JSON.parse(readFileSync(process.env.PILOT_BINDINGS,'utf8'));
-const init=`const x=$json.body ?? $json;\nif(!/^[a-zA-Z0-9_-]{1,100}$/.test(x.lead_id??'')) throw Error('Invalid lead_id');\nconst raw=Buffer.from('To: '+x.lead_id+'@example.com\\r\\nSubject: Pilot '+x.lead_id+'\\r\\nMessage-ID: <'+x.lead_id+'@example.com>\\r\\n\\r\\nDummy-data lead follow-up').toString('base64url');\nreturn [{json:{lead_id:x.lead_id,attempt:String($execution.id),retry_failed:x.retry_failed===true,raw}}];`;
+const init=`const x=$json.body ?? $json;\nif(!/^[a-zA-Z0-9_-]{1,100}$/.test(x.lead_id??'')) throw Error('Invalid lead_id');\nconst raw=Buffer.from('From: FetchSandbox Pilot <pilot@example.com>\\r\\nTo: '+x.lead_id+'@example.com\\r\\nSubject: Pilot '+x.lead_id+'\\r\\nMessage-ID: <'+x.lead_id+'@example.com>\\r\\n\\r\\nDummy-data lead follow-up').toString('base64url');\nreturn [{json:{lead_id:x.lead_id,attempt:String($execution.id),retry_failed:x.retry_failed===true,raw}}];`;
 const nodes=[
  {id:'trigger',name:'Lead webhook',type:'n8n-nodes-base.webhook',typeVersion:2,position:[0,0],parameters:{httpMethod:'POST',path,responseMode:'responseNode'},webhookId:path},
  {id:'init',name:'Validate dummy lead',type:'n8n-nodes-base.code',typeVersion:2,position:[240,0],parameters:{jsCode:init}},

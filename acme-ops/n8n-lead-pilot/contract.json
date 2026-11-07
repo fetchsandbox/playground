@@ -1,5 +1,5 @@
 {
-  "app_version": "n8n-lead-pilot-a1330234e574",
+  "app_version": "n8n-lead-pilot-12d29f9b2d56",
   "disposable_test_app": true,
   "require_verifier_token": true,
   "checks": [
@@ -61,9 +61,283 @@
             "select": "operations.deal.confirmation",
             "equals": "positive_readback",
             "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
           }
         ]
-      }
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step1.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step1.state.operations.deal.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "associations.contacts.results[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "id",
+                        "equals": "{{step1.state.operations.contact.id}}",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step1.state.operations.gmail.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step1.state.operations.calendar.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "attendees[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "email",
+                        "equals": "fs-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": "C1",
