@@ -45,6 +45,21 @@ These are not eleven confirmed core-engine defects. They include provider
 scenario gaps, application gaps and missing runtime qualification. Classify a
 core defect only after reproducing it in the existing engine path.
 
+## Local fault-control candidate — not deployed
+
+Candidate branch `fix/n8n-exact-provider-faults` extends the existing HubSpot/Gmail
+scenario YAML and shared HTTP/archive/evidence paths. The final local gate is
+77 passed and one not-applicable parameter skipped. Real socket tests establish
+write-before-client-timeout and exact read-back; deliberately repeating the write
+creates a second effect which the existing evidence judge rejects. New controls
+are `deal_accepted_response_loss`, `direct_send_rejected` and
+`direct_send_accepted_response_loss`. The 10-second response hold exceeds the
+pilot adapter's six-second timeout. Production remains `fdd1d243`; C2–C5 do not
+become passes from these local tests. The full three integrity failures observed
+in the expanded gate reproduced on unchanged HEAD provider configs; no baselines
+were changed. See the backend branch's
+`docs/reviews/n8n-exact-provider-faults-20261107/observation.json` for exact scope.
+
 ## Milestones, in order
 
 1. **Qualify exact provider faults.** Extend the existing YAML/scenario/router
