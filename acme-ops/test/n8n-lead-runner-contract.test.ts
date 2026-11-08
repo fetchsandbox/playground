@@ -18,7 +18,7 @@ function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({che
 }
 describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>{
  it('retains original requirements, C3 recovery subcheck and reviewed default dimensions',()=>{
-  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(14);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C8']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
+  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(14);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C7','C8']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
  });
  it.each(['unpublished','pinned','inline-header','no-native-auth','changed-decision'])('refuses %s before starting the runtime',kind=>{
   const f=fixture(w=>{
@@ -43,4 +43,16 @@ it.each(['blind-deal-retry','blind-gmail-resend'])('requires explicit matching s
   const accepted=load(f,'console.log(c.sourceVariant);',variant);
   expect(accepted.status).toBe(0);expect(accepted.stdout.trim()).toBe(variant);
  }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+it('C7 reaches both public entry points with identical invalid payloads and zero-effect checks',()=>{
+ const contract=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+ const c=contract.checks.find((x:any)=>x.id==='C7');
+ expect(c.actions).toHaveLength(10);
+ expect(c.actions.slice(0,5).map((x:any)=>x.body)).toEqual(c.actions.slice(5).map((x:any)=>x.body));
+ expect(c.actions.every((x:any)=>x.expect_status===400)).toBe(true);
+ expect(c.actions.slice(0,5).every((x:any)=>x.path==='/invoke')).toBe(true);
+ expect(c.actions.slice(5).every((x:any)=>x.path==='/native-invoke')).toBe(true);
+ expect(c.provider_assertions).toHaveLength(5);
+ expect(c.provider_assertions.every((x:any)=>x.assertion.count===0 && x.assertion.required)).toBe(true);
 });

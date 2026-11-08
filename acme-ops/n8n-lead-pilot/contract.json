@@ -2646,14 +2646,226 @@
     },
     {
       "id": "C7",
-      "name": "Malformed lead and schema boundaries",
-      "blocker": {
-        "category": "setup_missing",
-        "reason": "Lead validation is implemented locally; rejected-input cloud runs with independently unchanged provider state are not yet recorded.",
-        "evidence": [
-          "n8n-lead-pilot/build-workflow.mjs: Validate dummy lead; machine.mjs: lead_id validation"
-        ]
-      }
+      "name": "C7 both protected entry points reject five malformed field/type payloads before effects",
+      "before": {
+        "path": "/proof/c7-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "unexpected": true
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": "yes"
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": 1
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": []
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "input_rejected": true
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/native-invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "unexpected": true
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/native-invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": "yes"
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/native-invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": 1
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/native-invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "retry_failed": []
+          },
+          "expect_status": 400
+        },
+        {
+          "method": "POST",
+          "path": "/native-invoke",
+          "body": {
+            "lead_id": "c7-{{run_id}}",
+            "input_rejected": true
+          },
+          "expect_status": 400
+        }
+      ],
+      "observe": {
+        "path": "/proof/c7-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 0,
+        "required": true
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.email",
+                "equals": "c7-{{run_id}}@example.com",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.dealname",
+                "equals": "Pilot c7-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "To",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "c7-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "Message-ID",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "<c7-{{run_id}}@example.com>",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "summary",
+                "equals": "Pilot c7-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "text",
+                "equals": "{\"lead_id\":\"c7-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": "C8",
@@ -3101,7 +3313,7 @@
     {
       "dimension": "schema_and_value_boundaries",
       "relevance": "relevant",
-      "reason": "build-workflow.mjs validates lead_id before any state/provider action; rejected-input native-cloud evidence is missing.",
+      "reason": "Five malformed field/type payloads are sent to both adapter-validation and fixed native-entry transport. Native source must reject before state/provider I/O. Independent provider-state zero-effect checks remain authoritative; broader schema fuzzing is not implied.",
       "rule_ids": [
         "C7"
       ]

@@ -3,7 +3,7 @@ import {readFileSync, appendFileSync} from 'node:fs';
 import {timingSafeEqual} from 'node:crypto';
 import {FileStore} from '../src/kit/store';
 import {LeadState} from './state';
-import {invokeN8n} from './trigger';
+import {invokeN8n,invokeNativeN8n} from './trigger';
 
 // Private test adapter only: conditional state writes and bounded twin transport.
 // n8n owns the transition/recovery logic. This server does not choose next steps.
@@ -25,10 +25,10 @@ createServer(async(req,res)=>{
   if(req.method==='GET' && req.url==='/ping') return send(200,{ok:true,scope:'disposable-n8n-pilot'});
   if(req.method==='GET' && req.url?.startsWith('/state/')) return send(200,{records:await store.list('lead-pilot#'+decodeURIComponent(req.url.slice(7)))});
   if(req.method==='GET' && req.url?.startsWith('/proof/')) return send(200,{records:await store.list('lead-pilot#'+decodeURIComponent(req.url.slice(7)))});
-  if(req.method!=='POST'||!['/io','/invoke'].includes(req.url??'')) return send(404,{error:'not_found'});
+  if(req.method!=='POST'||!['/io','/invoke','/native-invoke'].includes(req.url??'')) return send(404,{error:'not_found'});
   let raw='';for await(const b of req){raw+=b;if(raw.length>65536)throw new Error('oversize');}
-  if(req.url==='/invoke'){
-   const out=await invokeN8n(cfg,raw);
+  if(req.url==='/invoke' || req.url==='/native-invoke'){
+   const out=await (req.url==='/native-invoke'?invokeNativeN8n:invokeN8n)(cfg,raw);
    return send(out.status,out.body);
   }
   const {context:c,request:q}=JSON.parse(raw);

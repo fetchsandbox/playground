@@ -34,7 +34,7 @@ export default {
  workflow:'n8n-lead-recovery', providers:['hubspot','gmail','google-calendar','slack'],
  appVersion:'n8n-export-'+sha,
  sourceVariant:variant,
- context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke'],state_store:'Single-process FileStore conditional claims/CAS, read through GET /proof/{lead}; abandoned claims and multi-worker crash recovery remain unqualified.'},
+ context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:'Single-process FileStore conditional claims/CAS, read through GET /proof/{lead}; abandoned claims and multi-worker crash recovery remain unqualified.'},
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review},
  startupPingHeaders(){const source=JSON.parse(readFileSync(sourcePath,'utf8'));return {authorization:'Bearer '+source.token};},
