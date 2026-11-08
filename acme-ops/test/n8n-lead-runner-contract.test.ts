@@ -100,3 +100,17 @@ it('freezes all 13 earlier check oracles and stays inside the engine configurati
  expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBeLessThanOrEqual(65536);
  expect(c.checks.find((x:any)=>x.id==='C12_recover').actions.filter((x:any)=>x.delay_seconds).reduce((sum:number,x:any)=>sum+x.delay_seconds,0)).toBe(35);
 });
+
+
+it('C6 candidate preserves every other check and requires the new protected requester profiles',()=>{
+ const original=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+ const overlay=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.identity.json',import.meta.url),'utf8'));
+ expect(overlay.checks).toHaveLength(1);expect(overlay.checks[0].id).toBe('C6');
+ const f=fixture();try{
+  const result=load(f,'console.log(JSON.stringify({checks:c.checks,...c.applicationConfig}));','normal',{PILOT_CONTRACT:'identity'});expect(result.status).toBe(0);const identity=JSON.parse(result.stdout);
+  expect(identity.checks.filter((x:any)=>x.id!=='C6')).toEqual(original.checks.filter((x:any)=>x.id!=='C6'));
+  expect(identity.requester_profiles).toEqual(['requester_a','requester_b']);
+  const c=identity.checks.find((x:any)=>x.id==='C6');expect(c.provider_assertions).toHaveLength(5);expect(JSON.stringify(c.provider_assertions)).not.toContain('step1.state.');expect(JSON.stringify(c.provider_assertions)).toContain('step1.records.0.operations.contact.id');expect(c.actions.map((a:any)=>a.expect_status)).toEqual([200,200,401,401,401,401,403,403,200]);
+  const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify({app_version:'n8n-export-'+'a'.repeat(64)+'-bridge-'+'b'.repeat(12),disposable_test_app:true,require_verifier_token:true,...identity}),encoding:'utf8'});expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBe(71268);expect(Number(bytes.stdout)).toBeLessThanOrEqual(131072);
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});

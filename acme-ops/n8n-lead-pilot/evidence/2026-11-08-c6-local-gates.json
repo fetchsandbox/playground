@@ -1,0 +1,35 @@
+{
+  "scope": "Local application/state/HTTP and generated-source gates; not a hosted C6 receipt",
+  "vitest_passed": 528,
+  "vitest_files": 73,
+  "typescript": "passed",
+  "initial_ownership_tests": {
+    "failed": 2,
+    "passed": 2
+  },
+  "bundle": {
+    "source_sha256": "717d00dedefc8e95a4aeb4e1e372303c4d053c23864437bcc85a967e963ebd8b",
+    "bundle_sha256": "71d1c03d59e28c56893e5fb5751cdf4751d75a825ecc850af6c1af41ba522f6b",
+    "built_at": "2026-11-08T16:07:14.254Z",
+    "scope": "Build provenance only; not application verification"
+  },
+  "contract_candidate": {
+    "bytes_with_full_version": 71268,
+    "earlier_check_definitions_unchanged": 15,
+    "requires_candidate_backend_authentication_profiles_and_128k_cap": true
+  },
+  "deployment": {
+    "native": "bc0acc3f-d72b-4d5d-aadc-12df4001c4ee",
+    "adapter": "built locally, not running/deployed",
+    "backend": "candidate only; not deployed",
+    "actual_export_source_guard": "pending native Save dialog unlock"
+  },
+  "not_measured": [
+    "Full hosted C6 authentication-profile run",
+    "Independent provider-effect read-back for C6",
+    "Positive authorized C6 native invocation",
+    "OIDC/real customer identity and revocation",
+    "C9 live crash/distributed recovery",
+    "Native builder acceptance"
+  ]
+}

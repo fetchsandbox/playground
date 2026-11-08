@@ -1,6 +1,16 @@
 # Friendly pilot: acceptance and gap register
 
-**Latest C12 measurement:** [before](https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb)
+**C6 implementation and partial proof:** requester-bound state and signed native
+invocations are implemented locally; 528 application tests and TypeScript pass.
+Published native version `bc0acc3f` returned the expected 403/403/403/400 in four
+direct entry probes after correcting a retained HTTP-200 configuration failure.
+The backend authentication-profile extension and full C6 contract are candidates;
+actual export/source guard, backend rollout and hosted C6 effect proof are pending.
+**C6 is not closed.** See [C6 evidence, scope and execution plan](C6-CALLER-IDENTITY.md).
+The C12 receipt below remains historical evidence of its recorded earlier version.
+
+
+**Earlier full C12 measurement:** [before](https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb)
 recorded 12 passed and four unmeasured; [after](https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba)
 records **14 passed, 0 failed, 2 unmeasured**, with all **65 independent provider-state
 assertions passing**. The same frozen contract measured HubSpot scope denial,
@@ -99,7 +109,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 | C3 | Gmail rejected after CRM | Measured: exact direct-send once-only 403 and independent zero-message/Calendar state; explicit recovery retained CRM IDs and created one email/event. Native broken control and full repeatability remain open. | Exact direct-send rejection witnessed, CRM identities retained, no email/Calendar effects; explicit safe retry retains CRM identities. |
 | C4 | Gmail accepted, response lost | Measured normal native n8n: one accepted message, client disconnect, exact SENT/recipient/Message-ID read-back, one later Calendar event, no second send. Native blind-resend control now caught C4 with two distinct modeled messages; corrected source restored and remeasured. Actual restored export subsequently captured and passed the normal source guard. | One committed message, actual app timeout, positive Message-ID/recipient/SENT read-back, one Calendar event; blind-resend variant fails. |
 | C5 | Gmail outcome remains unknown | Unavailable-lookup subtype measured through native n8n: one accepted email, two lookup 503s, three unknown outcomes including retry_failed, no resend or Calendar. Empty/ambiguous read-back and native broken control remain unmeasured. | Fault witness plus independent absence of Calendar effects, correct saved unknown state and Slack outcome. |
-| C6 | Caller identity boundaries | Builder: shared pilot bearer is not per-requester identity. Qualification: missing/wrong native headers returned 403 outside this contract only. | Denied calls leave state/effects unchanged; intended requester isolation and authenticated identity explicitly specified and tested. |
+| C6 | Caller identity boundaries | Requester ownership/internal invocation changes pass local tests; four native entry probes measured. Backend profile support, actual export guard and full hosted proof pending. | See [C6 plan and partial evidence](C6-CALLER-IDENTITY.md). Keep C6 unmeasured until the frozen actor suite and independent effect checks actually run. |
 | C7 | Invalid input/schema | Native defect reproduced; shared validator deployed as `2b310b22`. MCP measured five malformed forms at adapter and native entry (ten HTTP 400s), zero C7 provider I/O, five independent zero-effect assertions. Broader fuzzing remains outside measured scope. | See [C7 proof](C7-INPUT-HARDENING.md); native identity and full quality gates remain separate. |
 | C8 | Concurrent first deliveries | Four overlapping native deliveries measured: one owner, one set of effects and no effects on completed replay. Single adapter/FileStore only; stale-writer native exercise, claim-bypass mutation, crash and multi-worker scope unmeasured. | Overlapping real n8n executions, exact one-effect counts and identities, stale writer rejected; claim-bypass variant fails. |
 | C9 | Restart/abandoned claim | Builder implementation gap: no safe lease/fencing/reconciliation for abandoned `in_progress`; single-process FileStore. | Crash at each write/checkpoint boundary; restart with durable conditional store; no duplicated or lost effects, stale owner fenced. |

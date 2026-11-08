@@ -1,6 +1,16 @@
 # n8n lead recovery pilot — implementation in progress
 
-**Latest C12 measurement:** [before](https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb)
+**C6 implementation and partial proof:** requester-bound state and signed native
+invocations are implemented locally; 528 application tests and TypeScript pass.
+Published native version `bc0acc3f` returned the expected 403/403/403/400 in four
+direct entry probes after correcting a retained HTTP-200 configuration failure.
+The backend authentication-profile extension and full C6 contract are candidates;
+actual export/source guard, backend rollout and hosted C6 effect proof are pending.
+**C6 is not closed.** See [C6 evidence, scope and execution plan](C6-CALLER-IDENTITY.md).
+The C12 receipt below remains historical evidence of its recorded earlier version.
+
+
+**Earlier full C12 measurement:** [before](https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb)
 recorded 12 passed and four unmeasured; [after](https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba)
 records **14 passed, 0 failed, 2 unmeasured**, with all **65 independent provider-state
 assertions passing**. The same frozen contract measured HubSpot scope denial,

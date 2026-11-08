@@ -1,0 +1,12 @@
+{
+  "scope": "Native entry probe only; failing status retained",
+  "observed_at": "2026-11-08T15:56:12.338642+00:00",
+  "probe": "valid-native-credential-without-invocation",
+  "expected_status": 403,
+  "observed_status": 200,
+  "response": {
+    "done": true,
+    "status": "forbidden",
+    "reason": "caller_not_authorized"
+  }
+}

@@ -15,7 +15,7 @@ describe('native n8n first-input boundary (generated source, not a cloud receipt
   expect(next).not.toHaveProperty('request');expect(first).not.toHaveProperty('raw');
  });
  it.each([undefined,false,true])('preserves valid lead semantics with retry %s',retry=>{
-  const first=nativeStart({lead_id:'ordinary-123',...(retry===undefined?{}:{retry_failed:retry})});
+  const first=nativeStart({_invocation:'fixture-only-ticket',lead_id:'ordinary-123',...(retry===undefined?{}:{retry_failed:retry})});
   expect(first).toMatchObject({lead_id:'ordinary-123',attempt:'native-fixture',retry_failed:retry===true});
   expect(Buffer.from(first.raw,'base64url').toString()).toContain('Message-ID: <ordinary-123@example.com>');
   expect(advance(first).request.kind).toBe('claim');
@@ -24,7 +24,7 @@ describe('native n8n first-input boundary (generated source, not a cloud receipt
   const expression=workflow.nodes.find((n:any)=>n.name==='Return observed workflow status').parameters.options.responseCode;
   expect(typeof expression).toBe('string');
   const status=new Function('$json','return ('+expression.slice(3,-2)+');');
-  expect(status({status:'rejected'})).toBe(400);
+  expect(status({status:'rejected'})).toBe(400);expect(status({status:'forbidden'})).toBe(403);
   for(const value of ['confirmed','unknown','failed','in_progress'])expect(status({status:value})).toBe(200);
  });
 });
@@ -36,3 +36,5 @@ it.each(bad.map((value,i)=>({i,value})))('adapter and generated native validator
  expect(result.status).toBe(400);expect(transport).not.toHaveBeenCalled();
  expect(advance(nativeStart(value)).status).toBe('rejected');
 });
+
+it('native input without a trusted invocation stops before state or provider I/O',()=>{expect(advance(nativeStart({lead_id:'ordinary'}))).toEqual({done:true,status:'forbidden',reason:'caller_not_authorized'});});

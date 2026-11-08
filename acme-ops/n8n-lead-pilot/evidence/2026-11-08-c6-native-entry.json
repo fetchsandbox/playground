@@ -1,0 +1,49 @@
+{
+  "scope": "Four direct native HTTP entry rejections only; no full C6 contract execution or independent provider-state qualification",
+  "observations": [
+    {
+      "probe": "native-missing-header",
+      "status": 403,
+      "expected_status": 403,
+      "response": {
+        "non_json": true,
+        "byte_count": 28
+      },
+      "observed_at": "2026-11-08T15:57:42.224647+00:00"
+    },
+    {
+      "probe": "native-wrong-header",
+      "status": 403,
+      "expected_status": 403,
+      "response": {
+        "non_json": true,
+        "byte_count": 28
+      },
+      "observed_at": "2026-11-08T15:57:42.509049+00:00"
+    },
+    {
+      "probe": "native-runtime-credential-without-invocation",
+      "status": 403,
+      "expected_status": 403,
+      "response": {
+        "done": true,
+        "status": "forbidden",
+        "reason": "caller_not_authorized"
+      },
+      "observed_at": "2026-11-08T15:57:44.545822+00:00"
+    },
+    {
+      "probe": "native-invalid-business-input",
+      "status": 400,
+      "expected_status": 400,
+      "response": {
+        "done": true,
+        "status": "rejected",
+        "reason": "invalid_input"
+      },
+      "observed_at": "2026-11-08T15:57:44.958077+00:00"
+    }
+  ],
+  "native_version_observed": "bc0acc3f-d72b-4d5d-aadc-12df4001c4ee",
+  "native_execution_observed": 370
+}

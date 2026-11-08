@@ -5,20 +5,21 @@
 import {parseLeadInput} from './input.mjs';
 export const N8N_PILOT_WEBHOOK='https://fetchsandbox.app.n8n.cloud/webhook/friendly-pilot-mcp-20261106';
 export type TriggerBinding={n8n_webhook?:string;n8n_token?:string};
-export async function invokeN8n(cfg:TriggerBinding,raw:string,transport:typeof fetch=fetch){
+export async function invokeN8n(cfg:TriggerBinding,raw:string,transport:typeof fetch=fetch,invocation?:string){
  if(cfg.n8n_webhook!==N8N_PILOT_WEBHOOK || !cfg.n8n_token || /[\r\n]/.test(cfg.n8n_token))return {status:503,body:{error:'authenticated_webhook_not_bound'}};
  let parsed:unknown;
  try{parsed=JSON.parse(raw);}catch{return {status:400,body:{error:'invalid_input'}};}
  const input=parseLeadInput(parsed);
  if(!input)return {status:400,body:{error:'invalid_input'}};
- return invokeNativeN8n(cfg,JSON.stringify(input),transport);
+ return invokeNativeN8n(cfg,JSON.stringify(input),transport,invocation);
 }
 
 /** Authenticated fixed-destination transport. Raw business input is validated by
  * the native webhook; this path must not mask a native schema defect. */
-export async function invokeNativeN8n(cfg:TriggerBinding,raw:string,transport:typeof fetch=fetch){
+export async function invokeNativeN8n(cfg:TriggerBinding,raw:string,transport:typeof fetch=fetch,invocation?:string){
  if(cfg.n8n_webhook!==N8N_PILOT_WEBHOOK || !cfg.n8n_token || /[\r\n]/.test(cfg.n8n_token))return {status:503,body:{error:'authenticated_webhook_not_bound'}};
  try{
+  if(invocation){try{const body=JSON.parse(raw);if(parseLeadInput(body))raw=JSON.stringify({...body,_invocation:invocation});}catch{}}
   const out=await transport(N8N_PILOT_WEBHOOK,{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+cfg.n8n_token},body:raw,redirect:'error',signal:AbortSignal.timeout(24000)});
   const text=await out.text();
   try{return {status:out.status,body:JSON.parse(text)};}
