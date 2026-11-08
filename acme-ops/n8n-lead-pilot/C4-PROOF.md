@@ -1,3 +1,7 @@
+Latest November7 evening update: the actual native blind-resend control was
+caught by C4. See [native control and restoration](C4-NATIVE-CONTROL.md).
+The historical measurements and earlier export blocker below are retained.
+
 # C4: recover a Gmail send after acceptance but lost response
 
 The [November 7 receipt](https://fetchsandbox.com/runs/1826dab130?flow=vr_9b377a85e00d47a6b28890f0129f5ca8)

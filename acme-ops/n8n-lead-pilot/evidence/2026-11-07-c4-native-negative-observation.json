@@ -1,0 +1,119 @@
+{
+  "scope": "Native blind-Gmail-resend negative control; same frozen business checks as C7 normal run",
+  "source_variant": "blind-gmail-resend",
+  "receipt_url": "https://fetchsandbox.com/runs/8e2fa15525?flow=vr_758094bf2b174147bcb99822da7cb093",
+  "run_id": "vr_758094bf2b174147bcb99822da7cb093",
+  "overall": "failing",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "violated",
+      "explanation": "Accepted response read-back repeated the provider write"
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Declared provider fault was not independently observed; state alone cannot prove fault recovery"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "counts": {
+    "held": 7,
+    "violated": 1,
+    "unmeasured": 6
+  },
+  "native_version": "875af695-d8cb-406f-a47e-1e96dca52d4f",
+  "native_export_sha256": "4fb0d615a05c89903b646de6789bb5f1b5967c3b29173429851d2bc7c5bd439e",
+  "native_C4_execution": 151,
+  "native_execution_version_observed": true,
+  "checks_sha256": "7eff6745346d8c13ea2c56501b2636d2fd95bc98871ee4bc1afdceea7d0b8b02",
+  "independent_duplicate_observations": {
+    "c4": {
+      "messages": 2,
+      "distinct_ids": 2,
+      "observation_check": "C8",
+      "scope": "Independent later Gmail collection in the same negative run, not a separate receipt"
+    },
+    "c5": {
+      "messages": 2,
+      "distinct_ids": 2,
+      "observation_check": "C8",
+      "scope": "Independent later Gmail collection in the same negative run, not a separate receipt"
+    }
+  },
+  "provider_state_assertions_recorded": 35,
+  "provider_state_assertions_held": 35,
+  "C4_failed_before_its_state_assertion_phase": true,
+  "C5_limit": "Unmeasured: declared read-back fault was not independently observed. Two messages are observed, but this does not establish qualified unavailable-readback fault recovery.",
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "restoration": "Normal version 0397f00d-f536-4975-935b-fb705b780055 republished and independently observed in native C4 execution 177. Fresh separate receipt: 9 held, 5 unmeasured, all45 provider-state assertions held. Actual restored export subsequently captured and passed the normal source guard; separate restored observation records its hash.",
+  "restored_receipt_url": "https://fetchsandbox.com/runs/68783d0529?flow=vr_93d192ffcd8c4c0298711534d4b3192b"
+}

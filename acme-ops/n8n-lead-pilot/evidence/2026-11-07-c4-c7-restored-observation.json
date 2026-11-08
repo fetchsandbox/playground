@@ -1,0 +1,135 @@
+{
+  "scope": "Fresh restored normal run, same frozen business checks as negative control",
+  "measured_at": "2026-11-08T03:06:14.169Z",
+  "receipt_url": "https://fetchsandbox.com/runs/68783d0529?flow=vr_93d192ffcd8c4c0298711534d4b3192b",
+  "run_id": "vr_93d192ffcd8c4c0298711534d4b3192b",
+  "native_restored_version": "0397f00d-f536-4975-935b-fb705b780055",
+  "native_publication_observed": "n8n Version history marks Published November7 18:59:22 Pacific",
+  "actual_latest_export_capture": "Saved subsequently through native n8n Export JSON and Chrome Save dialog; actual metadata unchanged",
+  "source_registration": "Reused unchanged actual prior normal export 2b310b22; no metadata rewritten; published source restored verbatim",
+  "declared_export_sha256": "9364f3dbdd9be37bbd188ada820c1869cd88d304768a43c4f3440785bef6060a",
+  "native_execution_version_observed": 191,
+  "C4_native_recovery_execution": 177,
+  "checks_sha256": "7eff6745346d8c13ea2c56501b2636d2fd95bc98871ee4bc1afdceea7d0b8b02",
+  "overall": "inconclusive",
+  "counts": {
+    "held": 9,
+    "unmeasured": 5
+  },
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "provider_state_assertions": {
+    "held": 45,
+    "failed": 0
+  },
+  "C7_rejected_actions": 10,
+  "independent_gmail_counts": {
+    "c4": {
+      "messages": 1,
+      "distinct_ids": 1
+    },
+    "c5": {
+      "messages": 1,
+      "distinct_ids": 1
+    }
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "temporary_app_and_ngrok_ports_closed": true,
+  "remaining": [
+    "C6",
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "Remaining negative controls and three full-contract repetitions",
+    "Fresh builder acceptance and native SaaS parity"
+  ],
+  "subsequent_source_check": {
+    "observed_at": "2026-11-08T03:30:49.001052+00:00",
+    "actual_export_sha256": "28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4",
+    "versionId": "0397f00d-f536-4975-935b-fb705b780055",
+    "active": true,
+    "node_count": 6,
+    "source_guard": "passed: normal variant node parameters, credential references and wiring",
+    "scope": "Later source capture/check, not a new behavioral run; original receipt declared export hash remains unchanged"
+  }
+}

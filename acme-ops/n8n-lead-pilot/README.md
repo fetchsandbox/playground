@@ -6,10 +6,26 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
-**C7 update: a direct native input-validation defect was reproduced; the fix is local and not deployed.**
-See [C7 failure and pending native remeasurement](C7-INPUT-HARDENING.md).
+**Latest native C4 control and restoration:** the deliberately broken Gmail
+resend version [failed C4](https://fetchsandbox.com/runs/8e2fa15525?flow=vr_758094bf2b174147bcb99822da7cb093),
+with two independently observed modeled messages. The corrected workflow was
+restored as `0397f00d-f536-4975-935b-fb705b780055` and
+[remeasured separately](https://fetchsandbox.com/runs/68783d0529?flow=vr_93d192ffcd8c4c0298711534d4b3192b):
+**nine checks held, five unmeasured; overall inconclusive**, all 45 independent
+provider-state assertions held. C4 kept one message and C7 rejected all ten invalid
+requests. The actual restored export was subsequently saved and passed the normal source
+guard. The behavioral run used the unchanged prior actual normal export; its
+declared hash remains unchanged. See [native C4 control and limits](C4-NATIVE-CONTROL.md).
 
-**Latest business receipt: C5 unavailable lookup and C8 overlapping first delivery are measured.**
+**C7 native input rejection is now deployed and measured.**
+The [C7 receipt](https://fetchsandbox.com/runs/65f5fcf6f9?flow=vr_d8a77b680e2c4d4b80da36395e709f87)
+has **nine checks held, five unmeasured; overall inconclusive**, with all 45
+independent provider-state assertions held. Five malformed forms were rejected
+at both entry points (ten HTTP 400s), including the actual native webhook.
+All eight previously executable business checks held again; their definitions
+were unchanged. See [C7 fix, original failure and proof limits](C7-INPUT-HARDENING.md).
+
+**Earlier business receipt: C5 unavailable lookup and C8 overlapping first delivery are measured.**
 The [C8 receipt](https://fetchsandbox.com/runs/7f05cd5343?flow=vr_68013d37ab44438e8aca5f6a652f908e)
 on backend configuration `8f2ee848`, MCP `0.7.30` and unchanged native normal
 version `03207059-cc93-4ab8-834e-bcb70e46b2ce` has **eight checks held, six
@@ -28,7 +44,7 @@ n8n source produced this [C5 receipt](https://fetchsandbox.com/runs/2e1288bcc5?f
 independent provider-state assertions held. One accepted message remained,
 lookup returned 503 twice, CRM IDs stayed unchanged, and Calendar stayed empty
 without a resend even on explicit failed-operation retry.
-See [C5 proof and limits](C5-PROOF.md). Native C4/C5 broken controls, other read-back
+See [C5 proof and limits](C5-PROOF.md). Native C5 broken controls, other read-back
 variants, full-contract repeatability and fresh builder acceptance remain open.
 
 ## Earlier C3 and C2 measurements
@@ -65,8 +81,9 @@ six checks held, eight unmeasured; overall inconclusive. All 30 independent
 provider-state assertions held. The same accepted Gmail message was read back
 before Calendar, with no second send. C0–C3 definitions were unchanged.
 [C4-PROOF.md](C4-PROOF.md) preserves the exact sequence, setup failures and limits.
-The native C4 blind-resend control remains unmeasured because the Mac relocked
-while saving its actual export; normal source was republished immediately.
+At that earlier cutoff the native C4 blind-resend control was unmeasured because
+the Mac relocked. The evening [native control](C4-NATIVE-CONTROL.md) subsequently
+failed as intended, followed by restoration and separate remeasurement.
 
 ## Required builder-to-verifier pattern — Raj, November 6, 2026
 

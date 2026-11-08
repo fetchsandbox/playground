@@ -1,0 +1,121 @@
+{
+  "measured_at": "2026-11-08T02:51:48.600Z",
+  "scope": "Actual protected native n8n via existing FetchSandbox MCP lifecycle and managed relay; isolated provider twins only",
+  "receipt_url": "https://fetchsandbox.com/runs/65f5fcf6f9?flow=vr_d8a77b680e2c4d4b80da36395e709f87",
+  "run_id": "vr_d8a77b680e2c4d4b80da36395e709f87",
+  "native_version": "2b310b22-53cc-4beb-a936-095a41c6b121",
+  "native_export_sha256": "9364f3dbdd9be37bbd188ada820c1869cd88d304768a43c4f3440785bef6060a",
+  "app_source_commit": "e2bd930",
+  "transport_and_contract_commit": "e9413e2",
+  "bundle_sha256": "14c04b61f0858e24f954796bf5b691efe57173ae9676f098211c60ef2f299ddb",
+  "mcp_version": "0.7.30",
+  "backend_runtime_metadata": {
+    "backend_image": "fetchsandbox-backend:8f2ee848",
+    "image_id": "sha256:1d5d21ebac7defbc6c283605a58c4860b86739021202793a4d61667d43245e53",
+    "FS_GIT_COMMIT": "8f2ee848",
+    "DEPLOYMENT_VERSION": "fdd1d243",
+    "scope": "Read-only current runtime metadata; no backend deployment made by C7 work; does not attest overlay file hashes"
+  },
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held"
+    },
+    {
+      "id": "C1",
+      "status": "held"
+    },
+    {
+      "id": "C2",
+      "status": "held"
+    },
+    {
+      "id": "C3",
+      "status": "held"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held"
+    },
+    {
+      "id": "C4",
+      "status": "held"
+    },
+    {
+      "id": "C5",
+      "status": "held"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured"
+    },
+    {
+      "id": "C7",
+      "status": "held"
+    },
+    {
+      "id": "C8",
+      "status": "held"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured"
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured"
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured"
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured"
+    }
+  ],
+  "overall": "inconclusive",
+  "provider_state_assertions": {
+    "passed": 45,
+    "failed": 0
+  },
+  "C7": {
+    "invalid_forms": [
+      "unexpected field",
+      "retry_failed string",
+      "retry_failed number",
+      "retry_failed array",
+      "forged rejection marker"
+    ],
+    "adapter_calls_rejected_400": 5,
+    "native_calls_rejected_400": 5,
+    "before_and_after_app_records": 0,
+    "provider_request_trace_entries": 0,
+    "independent_provider_state_assertions_passed": 5
+  },
+  "other_thirteen_check_definitions": "unchanged from previous committed contract; C7 changed from declared blocker to executable",
+  "previous_eight_executable_checks": "all held in this run",
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "remaining": [
+    "C6 requester identity",
+    "C9 crash/abandoned-claim/multiworker",
+    "C10 privacy/transport qualification",
+    "C11 full session isolation",
+    "C12 scopes/rate limits",
+    "Remaining native negative controls, full-contract repeats and fresh builder acceptance"
+  ],
+  "not_claimed": [
+    "Native SaaS delivery/parity",
+    "Production readiness",
+    "Same frozen MCP contract before/after original C7 bug; before was separate HTTP component probe"
+  ]
+}

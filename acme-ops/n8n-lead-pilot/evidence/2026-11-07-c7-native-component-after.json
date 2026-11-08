@@ -1,0 +1,66 @@
+{
+  "scope": "C7 direct native HTTP/component after deployment; not MCP business receipt",
+  "native_workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version": "2b310b22-53cc-4beb-a936-095a41c6b121",
+  "native_export_sha256": "9364f3dbdd9be37bbd188ada820c1869cd88d304768a43c4f3440785bef6060a",
+  "source_commit": "e2bd930",
+  "transport_contract_commit": "e9413e2",
+  "result": {
+    "scope": "Independent HTTP/component probe of adapter versus native webhook; not a FetchSandbox business receipt",
+    "authentication_denials": [
+      {
+        "surface": "adapter",
+        "auth": "missing",
+        "status": 401
+      },
+      {
+        "surface": "native_webhook",
+        "auth": "missing",
+        "status": 403
+      },
+      {
+        "surface": "adapter",
+        "auth": "invalid",
+        "status": 401
+      },
+      {
+        "surface": "native_webhook",
+        "auth": "invalid",
+        "status": 403
+      }
+    ],
+    "adapter_extra_field": {
+      "status": 400,
+      "no_state": true
+    },
+    "native_extra_field": {
+      "status": 400,
+      "business_status": "rejected",
+      "state_records": 0,
+      "provider_write_counts": {
+        "hubspot": 0,
+        "gmail": 0,
+        "google-calendar": 0,
+        "slack": 0
+      },
+      "rejection_expectation_held": true,
+      "native_owner": null
+    },
+    "result": "passed",
+    "cleanup_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    }
+  },
+  "native_ui_execution": 116,
+  "native_ui_version_observed": true,
+  "local_verification": {
+    "tests": 467,
+    "test_files": 66,
+    "typescript": "passed"
+  },
+  "setup_failure_retained": "component-20261108T024058Z: bundle dynamic require startup failure, before native invocation; own four twins deleted",
+  "remaining": "C7 MCP full-contract run pending; native broken control and remaining pilot checks not established"
+}
