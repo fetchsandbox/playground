@@ -110,6 +110,10 @@ export function advance(input) {
   }
   if (c.stage === 'notified') {
     c.state.notification = {status:r?.status === 200 && r.body?.ok === true ? 'confirmed' : 'unknown',client_status:r?.status ?? null};
+    if (r?.status===429 && Number.isSafeInteger(r.retry_after_seconds) && r.retry_after_seconds>=0
+      && r.retry_after_seconds<=86400 && Number.isFinite(Date.parse(r.retry_not_before))) {
+      c.state.notification={status:'rate_limited',client_status:429,retry_after_seconds:r.retry_after_seconds,retry_not_before:r.retry_not_before};
+    }
     return save('notification_saved');
   }
   if (c.stage === 'notification_saved') return stop(r?.saved && c.state.notification?.status === 'confirmed' ? 'Status notification accepted by twin' : 'Status notification unconfirmed');

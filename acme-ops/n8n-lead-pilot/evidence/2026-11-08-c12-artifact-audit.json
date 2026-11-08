@@ -1,0 +1,43 @@
+{
+  "run_id": "vr_2300d889291e48b7914bf87b5ec98fba",
+  "receipt_url": "https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba",
+  "scope": "Read-only artifact audit supplementing this single frozen-contract receipt; isolated twins only",
+  "same_contract_before_after": true,
+  "checks": {
+    "baseline": "held",
+    "C1": "held",
+    "C2": "held",
+    "C3": "held",
+    "C3_recovery": "held",
+    "C4": "held",
+    "C5": "held",
+    "C6": "unmeasured",
+    "C7": "held",
+    "C8": "held",
+    "C9": "unmeasured",
+    "C10": "held",
+    "C11": "held",
+    "C12": "held",
+    "C12_hold": "held",
+    "C12_recover": "held"
+  },
+  "provider_state_assertions": 65,
+  "provider_state_assertions_held": 65,
+  "slack_posts_for_rate_limited_lead": 2,
+  "first_status": 429,
+  "retry_after_seconds": 30,
+  "seconds_between_provider_posts": 42.044,
+  "explicit_early_retry_finished_before_deadline": true,
+  "confirmed_business_ids_preserved": true,
+  "business_write_counts": {
+    "contact": 1,
+    "deal": 1,
+    "gmail": 1,
+    "calendar": 1
+  },
+  "notification_final_status": "confirmed",
+  "limitations": [
+    "No native SaaS quota/OAuth qualification",
+    "No crash/distributed recovery or authenticated requester identity proof"
+  ]
+}

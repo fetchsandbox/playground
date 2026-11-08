@@ -36,13 +36,13 @@ createServer(async(req,res)=>{
   const {context:c,request:q}=JSON.parse(raw);
   if(!/^[a-zA-Z0-9_-]{1,100}$/.test(c?.lead_id??'')||typeof c.attempt!=='string')return send(400,{error:'invalid_identity'});
   let result;
-  if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt);
+  if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt,c.retry_failed===true);
   else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state);
   else if(q.kind==='provider'){
    if(!allowedProviderOperation(q))return send(400,{error:'operation_not_allowed'});
    const started=new Date().toISOString();
    result=await callTwin(cfg.legs[q.provider],q,process.env.X_FLOW_RUN_ID);
-   appendFileSync(process.env.TRACE_FILE!,JSON.stringify({at:started,lead_id:c.lead_id,attempt:c.attempt,provider:q.provider,method:q.method,path:q.path,status:result.status,body:result.body})+'\n',{mode:0o600});
+   appendFileSync(process.env.TRACE_FILE!,JSON.stringify({at:started,lead_id:c.lead_id,attempt:c.attempt,provider:q.provider,method:q.method,path:q.path,status:result.status,body:result.body,...('retry_not_before' in result?{retry_after_seconds:result.retry_after_seconds,retry_not_before:result.retry_not_before}:{})})+'\n',{mode:0o600});
   }else return send(400,{error:'unknown_command'});
   return send(200,{context:c,result});
  }catch{return send(500,{error:'adapter_failure'});}

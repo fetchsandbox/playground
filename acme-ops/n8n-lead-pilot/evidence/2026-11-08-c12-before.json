@@ -1,0 +1,126 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-8e7c2dc11598",
+  "bundle_sha256": "8e7c2dc11598eb251322939e8fd22b36ff4ee93a2449a5a349c2ee93e6ed95c1",
+  "session_id": "vs_f2e51c72def2",
+  "run_id": "vr_cab3c45cbce34987b400f233ff8380bb",
+  "receipt_url": "https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C11",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_hold",
+      "status": "unmeasured",
+      "explanation": "assertion could not read evidence: required observation 'notification.retry_after_seconds' is missing"
+    },
+    {
+      "id": "C12_recover",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    }
+  ],
+  "recorded_at": "2026-11-08T15:23:56.282Z",
+  "scope": "Single before-change receipt; isolated provider twins; no live-provider qualification",
+  "provider_state_assertions": 60,
+  "provider_state_assertions_held": 60,
+  "native_version": "0397f00d-f536-4975-935b-fb705b780055",
+  "hubspot_scope_denial_status": 403,
+  "slack_rate_limit_status": 429,
+  "retry_after_header": "30",
+  "local_reproduction": {
+    "tests_failed": 3,
+    "log_private": "/Users/raj/promo/content/reddit/2026-11-08-friendly-c12/local-before.log"
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "temporary_state_absent": true,
+    "ports_closed": {
+      "8097": true,
+      "4040": true
+    }
+  }
+}

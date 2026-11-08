@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-8e7c2dc11598",
-  "bundle_sha256": "8e7c2dc11598eb251322939e8fd22b36ff4ee93a2449a5a349c2ee93e6ed95c1",
-  "session_id": "vs_03f91b96d062",
-  "run_id": "vr_8db50d4f9ef74348845204e0a919cbb3",
-  "receipt_url": "https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3",
+  "app_version": "n8n-export-93f733eceab8658b39c1994c327208f49e871e7fab5266d0af2604cd61aafc71-bridge-994cff511a30",
+  "bundle_sha256": "994cff511a307ecd8c1fd8205518902cf75d389ff9447372d4c2b839973cebfd",
+  "session_id": "vs_7f3565d439bb",
+  "run_id": "vr_2300d889291e48b7914bf87b5ec98fba",
+  "receipt_url": "https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -82,9 +82,19 @@
     },
     {
       "id": "C12",
-      "status": "unmeasured",
-      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_hold",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_recover",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     }
   ],
-  "recorded_at": "2026-11-08T07:16:15.053Z"
+  "recorded_at": "2026-11-08T15:30:43.623Z"
 }

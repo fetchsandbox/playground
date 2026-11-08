@@ -3920,21 +3920,428 @@
     },
     {
       "id": "C12",
-      "name": "Provider scope and rate-limit failures",
-      "blocker": {
-        "category": "setup_missing",
-        "reason": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow.",
-        "evidence": [
-          "n8n-lead-pilot/machine.mjs: effect rejection classification"
+      "name": "HubSpot scope denial",
+      "before": {
+        "path": "/proof/s-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "s-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/s-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "failed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "failed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.client_status",
+            "equals": 403,
+            "required": true
+          }
         ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.email",
+                "equals": "s-{{run_id}}@example.com",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.dealname",
+                "equals": "Pilot s-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "To",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "s-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "summary",
+                "equals": "Pilot s-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        }
+      ],
+      "fault": {
+        "provider": "hubspot",
+        "scenario": "scope_denied"
       }
+    },
+    {
+      "id": "C12_hold",
+      "name": "Slack early retry held",
+      "before": {
+        "path": "/proof/r-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "r-{{run_id}}"
+          },
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "r-{{run_id}}",
+            "retry_failed": true
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/r-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "rate_limited",
+            "required": true
+          },
+          {
+            "select": "notification.retry_after_seconds",
+            "equals": 30,
+            "required": true
+          },
+          {
+            "select": "notification.retry_not_before",
+            "count": 1,
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "text",
+                "equals": "{\"lead_id\":\"r-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                "required": true
+              }
+            ]
+          }
+        }
+      ],
+      "fault": {
+        "provider": "slack",
+        "scenario": "rate_limited"
+      }
+    },
+    {
+      "id": "C12_recover",
+      "name": "Slack notification retry",
+      "before": {
+        "path": "/proof/r-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 1,
+          "required": true,
+          "where": [
+            {
+              "select": "notification.status",
+              "equals": "rate_limited",
+              "required": true
+            }
+          ]
+        }
+      },
+      "actions": [
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "method": "GET",
+          "path": "/proof/r-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "r-{{run_id}}",
+            "retry_failed": true
+          },
+          "expect_status": 200,
+          "concurrency": 2
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "r-{{run_id}}",
+            "retry_failed": true
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/r-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.id",
+            "equals": "{{step1.records.0.operations.contact.id}}",
+            "required": true
+          },
+          {
+            "select": "operations.deal.id",
+            "equals": "{{step1.records.0.operations.deal.id}}",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.id",
+            "equals": "{{step1.records.0.operations.gmail.id}}",
+            "required": true
+          },
+          {
+            "select": "operations.calendar.id",
+            "equals": "{{step1.records.0.operations.calendar.id}}",
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "select": "records[*]",
+            "count": 1,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.email",
+                "equals": "r-{{run_id}}@example.com",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "select": "records[*]",
+            "count": 1,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.dealname",
+                "equals": "Pilot r-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 1,
+            "required": true,
+            "where": [
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "To",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "r-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "labelIds[*]",
+                "equals": "SENT",
+                "count": 1,
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "select": "records[*]",
+            "count": 1,
+            "required": true,
+            "where": [
+              {
+                "select": "summary",
+                "equals": "Pilot r-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 1,
+            "required": true,
+            "where": [
+              {
+                "select": "text",
+                "equals": "{\"lead_id\":\"r-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "coverage_review": [
     {
       "dimension": "baseline",
       "relevance": "relevant",
-      "reason": "C0 and C1 were measured on the published repeatable n8n workflow on November 7, 2026; historical receipt is separate from future runs.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "baseline"
       ]
@@ -3942,7 +4349,7 @@
     {
       "dimension": "identity_and_access",
       "relevance": "relevant",
-      "reason": "Published Header Auth is configured. Separate native 403 probes do not establish requester identity or complete rejected-caller end-to-end evidence.",
+      "reason": "Requester identity remains open.",
       "rule_ids": [
         "C6"
       ]
@@ -3950,7 +4357,7 @@
     {
       "dimension": "schema_and_value_boundaries",
       "relevance": "relevant",
-      "reason": "Five malformed field/type payloads are sent to both adapter-validation and fixed native-entry transport. Native source must reject before state/provider I/O. Independent provider-state zero-effect checks remain authoritative; broader schema fuzzing is not implied.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C7"
       ]
@@ -3958,13 +4365,13 @@
     {
       "dimension": "amount_currency_quantity",
       "relevance": "not_applicable",
-      "reason": "No money, price, currency or seat quantity is accepted by this lead workflow. Deal creation uses only name/pipeline/stage.",
+      "reason": "Not part of this lead workflow.",
       "rule_ids": []
     },
     {
       "dimension": "duplicate_replay",
       "relevance": "relevant",
-      "reason": "machine.mjs and state.ts use lead_id as the durable business identity, distinct from n8n attempt ID; full replay effects remain unmeasured.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C1"
       ]
@@ -3972,7 +4379,7 @@
     {
       "dimension": "concurrency",
       "relevance": "relevant",
-      "reason": "state.ts uses conditional create and versioned saves. Local claim tests do not establish overlapping cloud execution or multiple-worker behavior.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C8"
       ]
@@ -3980,7 +4387,7 @@
     {
       "dimension": "ordering_and_stale_events",
       "relevance": "relevant",
-      "reason": "Version/owner CAS must refuse stale attempt writes. The app is lead intake, not a versioned provider-event consumer; unseen provider-event ordering is outside that path.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C8"
       ]
@@ -3988,7 +4395,7 @@
     {
       "dimension": "delayed_or_missing_events",
       "relevance": "relevant",
-      "reason": "The relevant delayed/missing outcomes are request responses and positive read-back. There are no downstream provider webhook consumers in this reference app.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C2",
         "C4",
@@ -3998,7 +4405,7 @@
     {
       "dimension": "provider_auth_and_scopes",
       "relevance": "relevant",
-      "reason": "Native positive HubSpot access does not prove refusal/retry behavior for missing scopes across all providers.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C12"
       ]
@@ -4006,18 +4413,19 @@
     {
       "dimension": "rate_limit_server_error_timeout",
       "relevance": "relevant",
-      "reason": "machine.mjs distinguishes explicit rejection from uncertain transport/429/5xx outcomes; actual fault controls and provider read-back are pending.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C3",
+        "C3_recovery",
         "C5",
-        "C12",
-        "C3_recovery"
+        "C12_hold",
+        "C12_recover"
       ]
     },
     {
       "dimension": "accepted_effect_response_loss",
       "relevance": "relevant",
-      "reason": "A server-recorded accepted effect and lost response must precede recovery checks; authored state alone is insufficient.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C2",
         "C4",
@@ -4027,7 +4435,7 @@
     {
       "dimension": "partial_effects_and_recovery",
       "relevance": "relevant",
-      "reason": "CRM must remain while Gmail failure/unknown withholds Calendar; no claim of proved recovery before actual cloud faults.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C3",
         "C4",
@@ -4038,7 +4446,7 @@
     {
       "dimension": "restart_and_durability",
       "relevance": "relevant",
-      "reason": "state.ts FileStore reconstruction is local-only; live crash recovery and cross-worker storage are not implemented/qualified.",
+      "reason": "Crash/worker recovery remains open.",
       "rule_ids": [
         "C9"
       ]
@@ -4046,7 +4454,7 @@
     {
       "dimension": "reconciliation",
       "relevance": "relevant",
-      "reason": "machine.mjs requires exact Deal/Contact and Gmail SENT/Message-ID/recipient evidence; empty reads do not authorize resend.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C2",
         "C4",
@@ -4056,13 +4464,13 @@
     {
       "dimension": "cancellation_refund_entitlements",
       "relevance": "not_applicable",
-      "reason": "No cancellation, refund, subscription entitlement or payment action exists in this lead workflow.",
+      "reason": "Not part of this lead workflow.",
       "rule_ids": []
     },
     {
       "dimension": "data_and_privacy_boundaries",
       "relevance": "relevant",
-      "reason": "C10 drives denied operation/method/URL combinations through the real managed-relay adapter and independently checks zero provider effects. Dummy secret markers in denied bodies support separate retained-receipt redaction inspection; this does not establish arbitrary PII removal or tenant/requester isolation.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C10"
       ]
@@ -4070,7 +4478,7 @@
     {
       "dimension": "cleanup_and_isolation",
       "relevance": "relevant",
-      "reason": "C11 uses the same business lead in separate real MCP sessions. State is namespaced by issued twin identities, even when reusing one physical state file. Retired/current credential probes, cleanup and retained-receipt checks are separate lifecycle observations, not implied by the within-session verdict.",
+      "reason": "See linked checks.",
       "rule_ids": [
         "C11"
       ]
@@ -4080,140 +4488,129 @@
     {
       "check_id": "baseline",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C1",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C2",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C3",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C3_recovery",
       "classification": "in_scope",
-      "reason": "Explicit continuation of C3 rejection; independently observe preserved CRM and exactly one downstream effect after retry.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:choose explicit retry_failed gate",
-        "n8n-lead-pilot/state.ts:preserved confirmed operations"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C4",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C5",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C6",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C7",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C8",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C9",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C10",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C11",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     },
     {
       "check_id": "C12",
       "classification": "in_scope",
-      "reason": "Required by this reference lead workflow boundary; declared checks and blockers are not execution proof.",
+      "reason": "Lead workflow.",
       "evidence": [
-        "n8n-lead-pilot/machine.mjs:advance",
-        "n8n-lead-pilot/state.ts:claim/save",
-        "n8n-lead-pilot/adapter.ts:state and bounded provider I/O"
+        "n8n-lead-pilot/ACCEPTANCE.md"
+      ]
+    },
+    {
+      "check_id": "C12_hold",
+      "classification": "in_scope",
+      "reason": "Lead workflow.",
+      "evidence": [
+        "n8n-lead-pilot/ACCEPTANCE.md"
+      ]
+    },
+    {
+      "check_id": "C12_recover",
+      "classification": "in_scope",
+      "reason": "Lead workflow.",
+      "evidence": [
+        "n8n-lead-pilot/ACCEPTANCE.md"
       ]
     }
   ]

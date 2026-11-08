@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {describe,it,expect} from 'vitest';
 import {mkdtempSync,writeFileSync,rmSync,readFileSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -18,7 +19,7 @@ function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({che
 }
 describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>{
  it('retains original requirements, C3 recovery subcheck and reviewed default dimensions',()=>{
-  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(14);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C7','C8','C10','C11']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
+  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(16);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C7','C8','C10','C11','C12','C12_hold','C12_recover']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
  });
  it.each(['unpublished','pinned','inline-header','no-native-auth','changed-decision'])('refuses %s before starting the runtime',kind=>{
   const f=fixture(w=>{
@@ -86,4 +87,16 @@ it('keeps an explicitly requested replay handoff private and refuses to overwrit
   expect(first.status).toBe(0);expect(JSON.parse(first.stdout).state).toBe(state);expect(statSync(replay).mode&0o777).toBe(0o600);expect(readFileSync(replay,'utf8')).toBe(readFileSync(original,'utf8'));
   expect(load(f,code,'normal',env).status).not.toBe(0);expect(readFileSync(replay,'utf8')).toBe(readFileSync(original,'utf8'));
  }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+
+it('freezes all 13 earlier check oracles and stays inside the engine configuration byte cap',()=>{
+ const c=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+ const earlier=c.checks.filter((x:any)=>!['C12','C12_hold','C12_recover'].includes(x.id));
+ expect(earlier).toHaveLength(13);
+ expect(createHash('sha256').update(JSON.stringify(earlier)).digest('hex')).toBe('12b75e6ce89bc6ffab265c306c8127d4b2498155fc6416b514ec706e4a10299c');
+ const config={app_version:'n8n-export-'+ 'a'.repeat(64)+'-bridge-'+ 'b'.repeat(12),disposable_test_app:true,require_verifier_token:true,coverage_review:c.coverage_review,scope_review:c.scope_review,checks:c.checks};
+ const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify(config),encoding:'utf8'});
+ expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBeLessThanOrEqual(65536);
+ expect(c.checks.find((x:any)=>x.id==='C12_recover').actions.filter((x:any)=>x.delay_seconds).reduce((sum:number,x:any)=>sum+x.delay_seconds,0)).toBe(35);
 });

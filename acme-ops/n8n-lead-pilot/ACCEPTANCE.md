@@ -1,6 +1,19 @@
 # Friendly pilot: acceptance and gap register
 
-**Latest C11 qualification:** [session A](https://fetchsandbox.com/runs/ee4b7a52e3?flow=vr_3c414b27034c47ec8cd6d4735b16f38d)
+**Latest C12 measurement:** [before](https://fetchsandbox.com/runs/0abc26a3c8?flow=vr_cab3c45cbce34987b400f233ff8380bb)
+recorded 12 passed and four unmeasured; [after](https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba)
+records **14 passed, 0 failed, 2 unmeasured**, with all **65 independent provider-state
+assertions passing**. The same frozen contract measured HubSpot scope denial,
+Slack early-retry hold and notification-only recovery. Archives show 42.044 seconds
+between the rejected and accepted Slack posts and one write for each business
+effect. Native version `17807f35` was published and independently observed in
+executions 363/366. The temporary adapter was measured separately; no backend
+release was deployed. **C6 identity and C9 crash recovery remain unmeasured; the
+full receipt is inconclusive.** Live-provider quota/OAuth and broader quality gates
+are not established. See [C12 proof and limits](C12-PERMISSIONS-BACKOFF.md).
+
+
+**Earlier C11 qualification:** [session A](https://fetchsandbox.com/runs/ee4b7a52e3?flow=vr_3c414b27034c47ec8cd6d4735b16f38d)
 and [session B](https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3)
 each record **11 passed, 0 failed, 3 unmeasured**, with 55 passing independent
 provider-state assertions per receipt. The same lead and physical file were reused:
@@ -9,7 +22,7 @@ denied, both receipts survived cleanup, and temporary secrets/transports were
 removed. This is a bounded session-isolation result, not per-requester identity or
 crash recovery. An earlier relay-disconnected attempt and unsupported Calendar
 positive control are retained as nonpassing evidence. See [C11 proof and limits](C11-SESSION-ISOLATION.md).
-C6, C9 and C12 remain unmeasured. Native n8n stayed on `0397f00d`; the changed
+At that C11 cutoff, C6, C9 and C12 were unmeasured. Native n8n stayed on `0397f00d`; the changed
 temporary adapter was measured and stopped. No backend release was deployed.
 
 **Latest C10 measurement:** [the denied-operation/privacy run](https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813)
@@ -92,7 +105,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 | C9 | Restart/abandoned claim | Builder implementation gap: no safe lease/fencing/reconciliation for abandoned `in_progress`; single-process FileStore. | Crash at each write/checkpoint boundary; restart with durable conditional store; no duplicated or lost effects, stale owner fenced. |
 | C10 | Privacy/transport | Measured: seven forbidden operations returned 400, unknown route 404, zero C10 effects; separate saved owner/anonymous artifact audit passed for tested dummy secrets and supplied credentials. Full proof requires authentication. | Exact measured methods/paths, independent zero-effect checks, retained-artifact canary masks; no claim of arbitrary PII removal, exhaustive SSRF coverage or native 3xx fault injection. |
 | C11 | Cleanup/isolation/receipt | Measured two real sessions with same lead/file: old rows retained, new namespaced state; retired verifier/provider credentials denied; receipts retained after cleanup and temporary state/handoffs/transports removed. | See C11 proof. Shared app credential/requester identity, stale callback/owner fencing and cross-worker crash recovery remain outside this result. |
-| C12 | Scope/rate-limit failures | FetchSandbox qualification: existing faults need exact-operation qualification, not inferred support. | Native-shaped rejection/429, observed Retry-After handling, no false confirmation/unsafe resend, independently unchanged or bounded effects. |
+| C12 | Scope/rate-limit failures | HubSpot scope denial, Slack 30-second hold and explicit notification-only recovery measured in one frozen native run. Other providers, OAuth/quota fidelity and native broken controls remain unqualified. | See [C12 proof](C12-PERMISSIONS-BACKOFF.md): three checks held, real timing audit, retained business identities and independent bounded effects. |
 
 These are not eleven confirmed core-engine defects. They include provider
 scenario gaps, application gaps and missing runtime qualification. Classify a

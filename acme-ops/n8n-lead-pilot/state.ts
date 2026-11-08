@@ -7,12 +7,17 @@ export class LeadState {
   }
   private key(lead:string){return `lead-pilot#${this.scope}#${lead}`;}
   async records(lead:string){const item=await this.store.get(this.key(lead));return item?[item]:[];}
-  async claim(lead: string, owner: string) {
+  async claim(lead: string, owner: string, retryFailed = false) {
     const pk = this.key(lead);
     const initial = {pk, owner, status:'in_progress', operations:Object.fromEntries(['contact','deal','gmail','calendar'].map(s=>[s,{status:'pending'}]))};
     if (await this.store.create(initial)) return {claimed:true,state:await this.store.get(pk)};
     const state = await this.store.get(pk);
-    if (!state || !['unknown','failed'].includes(String(state.status))) return {claimed:false,state};
+    if (!state) return {claimed:false,state};
+    const notification=state.notification as {status?:string;retry_not_before?:string}|undefined;
+    const deadline=Date.parse(notification?.retry_not_before ?? '');
+    const notificationDue=state.status==='confirmed' && notification?.status==='rate_limited'
+      && retryFailed && Number.isFinite(deadline) && deadline<=Date.now();
+    if (!['unknown','failed'].includes(String(state.status)) && !notificationDue) return {claimed:false,state};
     if (!await this.store.replace({...state,owner,status:'in_progress'})) return {claimed:false};
     return {claimed:true,state:await this.store.get(pk)};
   }

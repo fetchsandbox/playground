@@ -258,6 +258,12 @@ if (!sid) {
   await finish(3);
 }
 log("session", sid, Object.keys(session.legs ?? {}).join(","));
+// Discover each declared fault on the actual issued twin before configuring it.
+for(const provider of new Set(contract.checks.flatMap(c=>c.fault?[c.fault.provider]:[]))){
+ const discovery=await mcp.call("list_scenarios",{sandbox_id:session.legs[provider].sandbox_id});
+ save(`discovery-scenarios-${provider}`,discovery);
+ for(const check of contract.checks.filter(c=>c.fault?.provider===provider))if(!discovery.scenarios?.some(s=>s.name===check.fault.scenario))throw Error(`Declared scenario unavailable: ${provider}/${check.fault.scenario}`);
+}
 // Optional per-contract fixtures written straight to the session's twins (e.g. one
 // Stripe customer per check, so checks never share provider state).
 if (contract.seed) {

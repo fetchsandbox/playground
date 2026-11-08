@@ -1,0 +1,176 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-93f733eceab8658b39c1994c327208f49e871e7fab5266d0af2604cd61aafc71-bridge-994cff511a30",
+  "bundle_sha256": "994cff511a307ecd8c1fd8205518902cf75d389ff9447372d4c2b839973cebfd",
+  "session_id": "vs_7f3565d439bb",
+  "run_id": "vr_2300d889291e48b7914bf87b5ec98fba",
+  "receipt_url": "https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C11",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_hold",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_recover",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    }
+  ],
+  "recorded_at": "2026-11-08T15:30:43.623Z",
+  "scope": "Single after-change receipt; native n8n with isolated provider twins",
+  "native_version": "17807f35-9106-41f2-84a7-f6586680261d",
+  "native_version_observed_on_executions": [
+    363,
+    366
+  ],
+  "local_validation": {
+    "vitest_tests_passed": 520,
+    "vitest_files_passed": 71,
+    "typescript_check": "passed"
+  },
+  "artifact_audit": {
+    "run_id": "vr_2300d889291e48b7914bf87b5ec98fba",
+    "receipt_url": "https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba",
+    "scope": "Read-only artifact audit supplementing this single frozen-contract receipt; isolated twins only",
+    "same_contract_before_after": true,
+    "checks": {
+      "baseline": "held",
+      "C1": "held",
+      "C2": "held",
+      "C3": "held",
+      "C3_recovery": "held",
+      "C4": "held",
+      "C5": "held",
+      "C6": "unmeasured",
+      "C7": "held",
+      "C8": "held",
+      "C9": "unmeasured",
+      "C10": "held",
+      "C11": "held",
+      "C12": "held",
+      "C12_hold": "held",
+      "C12_recover": "held"
+    },
+    "provider_state_assertions": 65,
+    "provider_state_assertions_held": 65,
+    "slack_posts_for_rate_limited_lead": 2,
+    "first_status": 429,
+    "retry_after_seconds": 30,
+    "seconds_between_provider_posts": 42.044,
+    "explicit_early_retry_finished_before_deadline": true,
+    "confirmed_business_ids_preserved": true,
+    "business_write_counts": {
+      "contact": 1,
+      "deal": 1,
+      "gmail": 1,
+      "calendar": 1
+    },
+    "notification_final_status": "confirmed",
+    "limitations": [
+      "No native SaaS quota/OAuth qualification",
+      "No crash/distributed recovery or authenticated requester identity proof"
+    ]
+  },
+  "actual_application_config_bytes": 65396,
+  "backend_release_deployed": false,
+  "setup_failure": {
+    "out": "/Users/raj/promo/content/reddit/2026-11-08-friendly-c12/after-20261108T152508Z",
+    "cause": "absolute bundle path joined twice",
+    "session_created": false
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true,
+    "temporary_state_absent": true,
+    "ports_closed": {
+      "8097": true,
+      "4040": true
+    }
+  }
+}

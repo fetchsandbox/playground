@@ -18,6 +18,13 @@ export async function callTwin(leg:TwinLeg,q:{method:string;path:string;body?:un
  if(!leg || typeof leg.base_url!=='string' || !/^https:\/\/fetchsandbox\.com\/sandbox\/[a-zA-Z0-9_-]+\/?$/.test(leg.base_url) || typeof leg.api_key!=='string' || !leg.api_key || /[\r\n]/.test(leg.api_key))throw Error('non-twin binding refused');
  try{
   const out=await transport(leg.base_url.replace(/\/$/,'')+q.path,{method:q.method,redirect:'error',headers:{authorization:`Bearer ${leg.api_key}`,'content-type':'application/json','user-agent':'fetchsandbox-n8n-pilot/1.0','x-sandbox-strict-validation':'1',...(flowId?{'x-flow-run-id':flowId}:{})},body:q.method==='POST'?JSON.stringify(q.body):undefined,signal:AbortSignal.timeout(6000)});
-  return {status:out.status,body:await out.json()};
+  const retry=out.status===429 ? out.headers.get('retry-after') : null;
+  const now=Date.now();
+  const seconds=retry && /^\d+$/.test(retry.trim()) ? Number(retry.trim()) : retry && /^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(retry) ? Math.ceil((Date.parse(retry)-now)/1000) : NaN;
+  // Only a bounded, unambiguous rejection carries a retry deadline. Never pass
+  // arbitrary provider headers through the workflow's persisted state.
+  const timing=Number.isSafeInteger(seconds) && seconds>=0 && seconds<=86400
+    ? {retry_after_seconds:seconds,retry_not_before:new Date(now+seconds*1000).toISOString()} : {};
+  return {status:out.status,body:await out.json(),...timing};
  }catch{return {status:0,body:null,transport:'unknown'};}
 }
