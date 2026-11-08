@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "n8n-export-93f733eceab8658b39c1994c327208f49e871e7fab5266d0af2604cd61aafc71-bridge-994cff511a30",
-  "bundle_sha256": "994cff511a307ecd8c1fd8205518902cf75d389ff9447372d4c2b839973cebfd",
-  "session_id": "vs_7f3565d439bb",
-  "run_id": "vr_2300d889291e48b7914bf87b5ec98fba",
-  "receipt_url": "https://fetchsandbox.com/runs/bbde15a1ff?flow=vr_2300d889291e48b7914bf87b5ec98fba",
+  "app_version": "n8n-export-16caa45b9057fb4cf1e35588882c25d3950ba6eb39f0fc3b4410a7c9c0a4a7ec-bridge-71d1c03d59e2",
+  "bundle_sha256": "71d1c03d59e28c56893e5fb5751cdf4751d75a825ecc850af6c1af41ba522f6b",
+  "session_id": "vs_7b0f4f39911b",
+  "run_id": "vr_65ed9d3fd6b844cca0dc7089200d6eaf",
+  "receipt_url": "https://fetchsandbox.com/runs/195b1f5273?flow=vr_65ed9d3fd6b844cca0dc7089200d6eaf",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -52,8 +52,8 @@
     },
     {
       "id": "C6",
-      "status": "unmeasured",
-      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     },
     {
       "id": "C7",
@@ -96,5 +96,5 @@
       "explanation": "expected exactly 1, found 1"
     }
   ],
-  "recorded_at": "2026-11-08T15:30:43.623Z"
+  "recorded_at": "2026-11-08T17:28:35.531Z"
 }

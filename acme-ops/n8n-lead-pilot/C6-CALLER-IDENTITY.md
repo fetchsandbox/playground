@@ -2,9 +2,11 @@
 
 **Partial evidence, not a completed C6 milestone.** The application changes pass
 local tests, and four native entry-rejection probes have observed HTTP outcomes.
-The backend authentication-profile extension is a local candidate. The actual
-current native export, source guard, backend rollout and full hosted C6 receipt
-are still pending. Do not count the previous C12 receipt as proof of this version.
+Backend authentication-profile commit `f7eeee67` was deployed on November 8.
+Public build/health, source hashes and capability discovery passed. The actual
+`bc0acc3f` native export passed the source/wiring/credential guard. The full hosted
+C6 receipt now records 15 held checks, including C6, and C9 unmeasured.
+This is one hosted run, not completion of the broader acceptance gates. Do not count the previous C12 receipt as proof of this version.
 
 ## Inspected gaps and intended journey
 
@@ -122,3 +124,38 @@ app self-test endpoint or merge manual probes into an engine pass.
 Real customer identity-provider integration, production credential revocation,
 crash/distributed recovery, remaining negative controls, fresh builder acceptance
 and three clean full-contract repetitions remain outside the measured result.
+
+## November 8 deployment and first hosted attempt
+
+Backend `f7eeee67` passed independent public build/health/capability checks and
+PostgreSQL usage start/completion readback. Actual native export `bc0acc3f` passed
+the six-node source, wiring and credential guard. The first hosted attempt
+returned an [inconclusive receipt](https://fetchsandbox.com/runs/df36e2f364?flow=vr_b40b864aafab4539ba22f98f178a91d4):
+all 16 checks are unmeasured because baseline returned HTTP 500. Native execution
+372 identifies the I/O node's resource-not-found error. The required existing
+n8n-to-adapter ngrok connection had been stopped after earlier cleanup. Restarting
+that same origin/port repairs setup, not application behavior; a fresh run with
+unchanged code and contract subsequently recorded 15 held checks and C9 unmeasured. The local adapter preflight did not
+cover this reverse connection. Keep both attempts and never count setup repair
+as a behavioral pass.
+
+## Hosted C6 result after setup repair
+
+[Measured receipt](https://fetchsandbox.com/runs/195b1f5273?flow=vr_65ed9d3fd6b844cca0dc7089200d6eaf),
+backend `f7eeee67`, native `bc0acc3f`, npm MCP `0.7.30`: **15 held, C9 unmeasured**.
+The runner correctly exits 1 because the whole-suite gate is not met;
+`app_verified` and `complete` remain false. See the separate
+[artifact audit](evidence/2026-11-08-c6-hosted-observation.json).
+
+The C6 trace records 11 requests: requester B authenticates at `/ping` (200), but
+cannot read or resume A's lead (403 each); missing/invalid credentials return 401
+for reads and writes; A can read/replay (200). The entire saved record is identical
+before/after, including requester, execution owner 373, version 13 and all four
+business IDs. Five C6 provider assertions held. Across this single receipt,
+all 70 independent provider-state assertions held. Native execution 373
+independently displays the exact exported `bc0acc3f` version.
+
+C9 remains unimplemented/unmeasured. A deliberately broken native C6 control,
+three clean full-contract repetitions, independent fresh builder acceptance and
+native SaaS qualification are still untested. This receipt does not merge or
+replace the earlier inconclusive setup receipt.

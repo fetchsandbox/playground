@@ -1,0 +1,8 @@
+{
+  "source": "actual native Export JSON download (7)",
+  "id": "PJlTC5gnf6wb0r8e",
+  "active": true,
+  "versionId": "bc0acc3f-d72b-4d5d-aadc-12df4001c4ee",
+  "sha256": "16caa45b9057fb4cf1e35588882c25d3950ba6eb39f0fc3b4410a7c9c0a4a7ec",
+  "source_guard": "passed: six node parameters, credential references, wiring; normal variant"
+}

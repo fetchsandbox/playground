@@ -1,0 +1,100 @@
+{
+  "scope": "One hosted frozen-contract run on isolated twins; not whole-product or native SaaS qualification",
+  "backend_revision": "f7eeee67",
+  "native_version": "bc0acc3f-d72b-4d5d-aadc-12df4001c4ee",
+  "native_baseline_execution": 373,
+  "native_export_sha256": "16caa45b9057fb4cf1e35588882c25d3950ba6eb39f0fc3b4410a7c9c0a4a7ec",
+  "receipt_url": "https://fetchsandbox.com/runs/195b1f5273?flow=vr_65ed9d3fd6b844cca0dc7089200d6eaf",
+  "run_id": "vr_65ed9d3fd6b844cca0dc7089200d6eaf",
+  "checks_held": 15,
+  "checks_unmeasured": [
+    "C9"
+  ],
+  "runner_exit": 1,
+  "runner_exit_reason": "Strict whole-suite gate requires every check held; C9 is explicitly unmeasured",
+  "c6_requests": [
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "configured",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "requester_a",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/ping",
+      "authentication": "requester_b",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "omitted",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "route": "/invoke",
+      "authentication": "omitted",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "invalid",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "route": "/invoke",
+      "authentication": "invalid",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "requester_b",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "route": "/invoke",
+      "authentication": "requester_b",
+      "status": 403
+    },
+    {
+      "method": "POST",
+      "route": "/invoke",
+      "authentication": "requester_a",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "route": "/proof/{lead}",
+      "authentication": "configured",
+      "status": 200
+    }
+  ],
+  "c6_same_entire_saved_record_before_after": true,
+  "c6_execution_owner": "373",
+  "c6_version_before_after": 13,
+  "c6_four_business_ids_preserved": true,
+  "c6_provider_assertions_held": 5,
+  "all_provider_assertions_held": 70,
+  "app_verified": false,
+  "complete": false,
+  "limitations": [
+    "C9 crash/distributed recovery unimplemented and unmeasured",
+    "Single hosted identity run; three clean repetitions not completed",
+    "Native C6 deliberately broken control not run",
+    "Fresh independent builder-agent acceptance unmeasured",
+    "Native SaaS OAuth/API parity not established"
+  ],
+  "earlier_failed_receipt": "https://fetchsandbox.com/runs/df36e2f364?flow=vr_b40b864aafab4539ba22f98f178a91d4",
+  "setup_failure": "Required reverse ngrok connection absent; repaired without changing code or checks"
+}

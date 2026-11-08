@@ -5,7 +5,7 @@ invocations are implemented locally; 528 application tests and TypeScript pass.
 Published native version `bc0acc3f` returned the expected 403/403/403/400 in four
 direct entry probes after correcting a retained HTTP-200 configuration failure.
 The backend authentication-profile extension and full C6 contract are candidates;
-actual export/source guard, backend rollout and hosted C6 effect proof are pending.
+Backend `f7eeee67` is deployed and actual native `bc0acc3f` export/source guard passed; one hosted receipt records 15 held checks including C6, with C9 unmeasured. Broader acceptance gates remain pending.
 **C6 is not closed.** See [C6 evidence, scope and execution plan](C6-CALLER-IDENTITY.md).
 The C12 receipt below remains historical evidence of its recorded earlier version.
 
