@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "n8n-export-9364f3dbdd9be37bbd188ada820c1869cd88d304768a43c4f3440785bef6060a-bridge-14c04b61f085",
-  "bundle_sha256": "14c04b61f0858e24f954796bf5b691efe57173ae9676f098211c60ef2f299ddb",
-  "session_id": "vs_fe6a186d0a1f",
-  "run_id": "vr_93d192ffcd8c4c0298711534d4b3192b",
-  "receipt_url": "https://fetchsandbox.com/runs/68783d0529?flow=vr_93d192ffcd8c4c0298711534d4b3192b",
+  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-6ae831332940",
+  "bundle_sha256": "6ae831332940c4a124405cbfdbed61c2a82d42d54b77169c3030d822cff5180f",
+  "session_id": "vs_b22793bd7219",
+  "run_id": "vr_5617af5dac3549c28afe4240d9317813",
+  "receipt_url": "https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -72,8 +72,8 @@
     },
     {
       "id": "C10",
-      "status": "unmeasured",
-      "explanation": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured."
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
     },
     {
       "id": "C11",
@@ -86,5 +86,5 @@
       "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
     }
   ],
-  "recorded_at": "2026-11-08T03:06:14.169Z"
+  "recorded_at": "2026-11-08T06:08:30.728Z"
 }

@@ -1,5 +1,15 @@
 # Friendly pilot: acceptance and gap register
 
+**Latest C10 measurement:** [the denied-operation/privacy run](https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813)
+records **10 passed, 0 failed, 4 unmeasured**, with all 50 independent provider-state
+assertions passing. Seven denied operations returned 400, an unknown route returned
+404, and C10 created no app/provider effects. A separate retained owner/anonymous
+summary audit verified the tested dummy-secret masks and absence of seven supplied
+credential values. The other nine executable checks passed again. C6, C9, C11 and
+C12 remain unmeasured. See [C10 scope, before/after evidence and limits](C10-PRIVACY-BOUNDARIES.md).
+The native workflow stayed on `0397f00d`; the changed temporary adapter was tested,
+then stopped. No backend release was deployed.
+
 Latest evening measurements: [C7 native rejection](C7-INPUT-HARDENING.md) and
 [C4 native broken-control/restoration](C4-NATIVE-CONTROL.md) are recorded. The
 restored normal run has nine held, five unmeasured and all 45 independent
@@ -68,7 +78,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 | C7 | Invalid input/schema | Native defect reproduced; shared validator deployed as `2b310b22`. MCP measured five malformed forms at adapter and native entry (ten HTTP 400s), zero C7 provider I/O, five independent zero-effect assertions. Broader fuzzing remains outside measured scope. | See [C7 proof](C7-INPUT-HARDENING.md); native identity and full quality gates remain separate. |
 | C8 | Concurrent first deliveries | Four overlapping native deliveries measured: one owner, one set of effects and no effects on completed replay. Single adapter/FileStore only; stale-writer native exercise, claim-bypass mutation, crash and multi-worker scope unmeasured. | Overlapping real n8n executions, exact one-effect counts and identities, stale writer rejected; claim-bypass variant fails. |
 | C9 | Restart/abandoned claim | Builder implementation gap: no safe lease/fencing/reconciliation for abandoned `in_progress`; single-process FileStore. | Crash at each write/checkpoint boundary; restart with durable conditional store; no duplicated or lost effects, stale owner fenced. |
-| C10 | Privacy/transport | Qualification: allowlist implementation exists, deployed denied-route/redaction checks absent. | Blocked arbitrary destination, redirect and secret-bearing attempts; independently inspected receipt/export for credential leaks. |
+| C10 | Privacy/transport | Measured: seven forbidden operations returned 400, unknown route 404, zero C10 effects; separate saved owner/anonymous artifact audit passed for tested dummy secrets and supplied credentials. Full proof requires authentication. | Exact measured methods/paths, independent zero-effect checks, retained-artifact canary masks; no claim of arbitrary PII removal, exhaustive SSRF coverage or native 3xx fault injection. |
 | C11 | Cleanup/isolation/receipt | Qualification: four owned sandboxes absent on recheck, receipt retained; full fresh-session isolation contract not executed. | New session cannot read/reuse prior state/credentials; receipt retained after cleanup; temporary transports and handoff files removed. |
 | C12 | Scope/rate-limit failures | FetchSandbox qualification: existing faults need exact-operation qualification, not inferred support. | Native-shaped rejection/429, observed Retry-After handling, no false confirmation/unsafe resend, independently unchanged or bounded effects. |
 

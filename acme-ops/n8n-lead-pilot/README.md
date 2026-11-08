@@ -6,6 +6,16 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
+**Latest C10 measurement:** [the denied-operation/privacy run](https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813)
+records **10 passed, 0 failed, 4 unmeasured**, with all 50 independent provider-state
+assertions passing. Seven denied operations returned 400, an unknown route returned
+404, and C10 created no app/provider effects. A separate retained owner/anonymous
+summary audit verified the tested dummy-secret masks and absence of seven supplied
+credential values. The other nine executable checks passed again. C6, C9, C11 and
+C12 remain unmeasured. See [C10 scope, before/after evidence and limits](C10-PRIVACY-BOUNDARIES.md).
+The native workflow stayed on `0397f00d`; the changed temporary adapter was tested,
+then stopped. No backend release was deployed.
+
 **Latest native C4 control and restoration:** the deliberately broken Gmail
 resend version [failed C4](https://fetchsandbox.com/runs/8e2fa15525?flow=vr_758094bf2b174147bcb99822da7cb093),
 with two independently observed modeled messages. The corrected workflow was
@@ -137,13 +147,13 @@ three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
 The scripted MCP/runtime portion has measured C0/C1/C2/C3/C4/C5 unavailable-lookup results. The complete
-builder acceptance journey, C6/C7/C9–C12, remaining C8 and native negative controls and three
+builder acceptance journey, C6/C9/C11/C12, remaining native negative controls and three
 clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
 
 The protected workflow `PJlTC5gnf6wb0r8e` is published with native Header Auth on
-both network boundaries. Its observed version is
+both network boundaries. Its initial repeatable-trigger observed version was
 `abd2c751-c25e-459f-99c4-4616910156e6`; export SHA-256 is
 `4b87079ad72a159484466dc6900ef270f8bedda9a28868fe1cb95367e553ef6b`.
 The saved export matched six node types/versions/parameters, credential references
@@ -165,7 +175,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5 unavailable-lookup hold is executable; C8 first-delivery overlap is executable; C6/C7/C9–C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5 unavailable-lookup hold is executable; C8 first-delivery overlap is executable; C7 and C10 are now executable; C6/C9/C11/C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;

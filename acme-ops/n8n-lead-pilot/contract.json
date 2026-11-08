@@ -3261,14 +3261,320 @@
     },
     {
       "id": "C10",
-      "name": "Evidence privacy and transport boundaries",
-      "blocker": {
-        "category": "setup_missing",
-        "reason": "Allowlisted isolated-twin transport and bearer checks are implemented. Actual configured receipt redaction and denied-route cloud attempts remain unmeasured.",
-        "evidence": [
-          "n8n-lead-pilot/adapter.ts: allowlist and twin binding guard"
-        ]
-      }
+      "name": "Deny out-of-bound provider operations with no effects; inspect saved canary redaction separately",
+      "before": {
+        "path": "/proof/c10-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "slack",
+              "method": "GET",
+              "path": "/chat.postMessage"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "gmail",
+              "method": "DELETE",
+              "path": "/gmail/v1/users/me/messages/m_1"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "gmail",
+              "method": "GET",
+              "path": "https://gmail.googleapis.com/gmail/v1/users/me/messages"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "gmail",
+              "method": "GET",
+              "path": "//outside.example/"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "gmail",
+              "method": "GET",
+              "path": "/gmail/v1/users/me/messages/../send"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "gmail",
+              "method": "POST",
+              "path": "/gmail/v1/users/me/messages/m_1"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/io",
+          "expect_status": 400,
+          "body": {
+            "context": {
+              "lead_id": "c10-{{run_id}}",
+              "attempt": "c10-boundary"
+            },
+            "request": {
+              "kind": "provider",
+              "provider": "hubspot",
+              "method": "POST",
+              "path": "/crm/v3/objects/deals/d_1"
+            },
+            "c10_marker": "c10-public-marker-{{run_id}}",
+            "authorization": "c10-dummy-auth-{{run_id}}",
+            "api_key": "c10-dummy-api-key-{{run_id}}",
+            "nested": {
+              "password": "c10-dummy-password-{{run_id}}",
+              "cookie": "c10-dummy-cookie-{{run_id}}",
+              "note": "fsk_C10DUMMYSECRETNOTVALID1234567890"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/not-an-allowed-route",
+          "expect_status": 404,
+          "body": {
+            "lead_id": "c10-{{run_id}}",
+            "token": "c10-dummy-route-token-{{run_id}}"
+          }
+        }
+      ],
+      "observe": {
+        "path": "/proof/c10-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 0,
+        "required": true
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.email",
+                "equals": "c10-{{run_id}}@example.com",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.dealname",
+                "equals": "Pilot c10-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "To",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "c10-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "Message-ID",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "<c10-{{run_id}}@example.com>",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "summary",
+                "equals": "Pilot c10-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "text",
+                "equals": "{\"lead_id\":\"c10-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                "required": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": "C11",
@@ -3425,7 +3731,7 @@
     {
       "dimension": "data_and_privacy_boundaries",
       "relevance": "relevant",
-      "reason": "adapter.ts forbids non-twin hosts and arbitrary operations; saved/public evidence safety still needs actual receipt inspection.",
+      "reason": "C10 drives denied operation/method/URL combinations through the real managed-relay adapter and independently checks zero provider effects. Dummy secret markers in denied bodies support separate retained-receipt redaction inspection; this does not establish arbitrary PII removal or tenant/requester isolation.",
       "rule_ids": [
         "C10"
       ]

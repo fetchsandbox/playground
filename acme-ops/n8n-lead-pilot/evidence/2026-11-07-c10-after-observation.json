@@ -1,0 +1,87 @@
+{
+  "scope": "C10 actual denied-route behavior plus separate retained-artifact privacy audit",
+  "measured_at": "2026-11-08T06:10:47.856938+00:00",
+  "receipt_url": "https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813",
+  "run_id": "vr_5617af5dac3549c28afe4240d9317813",
+  "native_version": "0397f00d-f536-4975-935b-fb705b780055",
+  "native_version_independently_observed_execution": 241,
+  "native_export_sha256": "28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4",
+  "adapter_bundle_sha256": "6ae831332940c4a124405cbfdbed61c2a82d42d54b77169c3030d822cff5180f",
+  "checks_sha256": "82c80ae5d20febaa34f44dd7f59dabfbe4f88c18a3590e840342845c59e79c3c",
+  "same_check_definitions_as_before_run": true,
+  "overall": "inconclusive",
+  "counts": {
+    "held": 10,
+    "violated": 0,
+    "unmeasured": 4
+  },
+  "C10": {
+    "id": "C10",
+    "status": "held",
+    "explanation": "expected exactly 0, found 0"
+  },
+  "denied_request_statuses": [
+    400,
+    400,
+    400,
+    400,
+    400,
+    400,
+    400,
+    404
+  ],
+  "C10_adapter_provider_io_entries": 0,
+  "provider_state_assertions": {
+    "held": 50,
+    "failed": 0,
+    "C10_zero_effect_assertions": 5
+  },
+  "privacy_artifact_audit": {
+    "run_id": "vr_5617af5dac3549c28afe4240d9317813",
+    "denied_io_requests": 7,
+    "denied_unknown_routes": 1,
+    "positive_body_witnesses": 7,
+    "retained_owner_canary_redaction": true,
+    "anonymous_summary_canary_redaction": true,
+    "credential_values_scanned": 7,
+    "scope": "Sensitive field names and one key-shaped dummy value, plus supplied actual credentials. Not arbitrary PII or all secret formats."
+  },
+  "receipt_access": {
+    "anonymous_summary_status": 200,
+    "anonymous_full_proof_status": 401
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "ports_closed": {
+    "8097": true,
+    "4040": true
+  },
+  "local_validation": {
+    "tests_passed": 494,
+    "files_passed": 68,
+    "typescript": "passed"
+  },
+  "audit_setup_failure": {
+    "initial_attempt": "failed: auditor expected run_id inside anonymous receipt object",
+    "root_cause": "anonymous summary identifies its run with top-level flow_run_id",
+    "repair": "require matching top-level flow_run_id and summary_only=true; reran audit and local gates",
+    "scope": "Audit schema mismatch, not an observed redaction leak"
+  },
+  "deployment": "Temporary changed adapter measured with real published n8n; transports stopped. Native source unchanged; no backend release deployed.",
+  "remaining": [
+    "C6 requester identity and denied-caller isolation",
+    "C9 abandoned-claim crash recovery",
+    "C11 complete fresh-session cleanup/isolation gate",
+    "C12 provider scope/rate-limit faults",
+    "Remaining negative controls, full-contract repetitions, fresh builder acceptance and native SaaS parity",
+    "Arbitrary PII/all-secret-format redaction and native provider redirect fault injection are not established"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "scope": "Old adapter measured with the new frozen C10 contract; not a passing C10 result",
+  "receipt_url": "https://fetchsandbox.com/runs/1e60267e46?flow=vr_27fa4a86e4c24df693f8f7bd954b2659",
+  "run_id": "vr_27fa4a86e4c24df693f8f7bd954b2659",
+  "native_version": "0397f00d-f536-4975-935b-fb705b780055",
+  "adapter_bundle_sha256": "14c04b61f0858e24f954796bf5b691efe57173ae9676f098211c60ef2f299ddb",
+  "C10": {
+    "id": "C10",
+    "status": "unmeasured",
+    "explanation": "app action expected HTTP 400, received 200"
+  },
+  "observed_first_denied_request": {
+    "path": "/io",
+    "operation": "GET /chat.postMessage",
+    "expected_status": 400,
+    "actual_status": 200,
+    "forwarded_to_slack_twin_status": 404
+  },
+  "counts": {
+    "held": 9,
+    "unmeasured": 5
+  },
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "limits": [
+    "HTTP mismatch is recorded unmeasured by the engine, not violated",
+    "C10 stopped at the first request; remaining C10 actions and provider-state assertions were not executed in this run",
+    "Separate artifact audit awaits the corrected run"
+  ],
+  "checks_sha256": "82c80ae5d20febaa34f44dd7f59dabfbe4f88c18a3590e840342845c59e79c3c"
+}
