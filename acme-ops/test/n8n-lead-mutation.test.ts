@@ -7,7 +7,7 @@ import {advance} from '../n8n-lead-pilot/machine.mjs';
 // Unit-level fault experiment only. Provider replies here are stubs, NOT twins
 // or a FetchSandbox receipt. The same oracle checks both state implementations.
 async function exercise(disableDedupe:boolean){
- const store=new MemoryStore();const state=new LeadState(store);
+ const store=new MemoryStore();const state=new LeadState(store,'fixture');
  const effects={contact:0,deal:0,gmail:0,calendar:0};
  const deals:Record<string,any>={};
  async function run(attempt:string){

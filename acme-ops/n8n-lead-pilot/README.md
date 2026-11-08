@@ -6,6 +6,18 @@ preserve completed work, and Calendar must wait for confirmed Gmail acceptance.
 It was built from the prospective user's described flow, not their private code.
 Owner: the configurable pilot operator, Sales Operations / lead intake team.
 
+**Latest C11 qualification:** [session A](https://fetchsandbox.com/runs/ee4b7a52e3?flow=vr_3c414b27034c47ec8cd6d4735b16f38d)
+and [session B](https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3)
+each record **11 passed, 0 failed, 3 unmeasured**, with 55 passing independent
+provider-state assertions per receipt. The same lead and physical file were reused:
+old rows stayed unchanged, new scoped state was created, retired session keys were
+denied, both receipts survived cleanup, and temporary secrets/transports were
+removed. This is a bounded session-isolation result, not per-requester identity or
+crash recovery. An earlier relay-disconnected attempt and unsupported Calendar
+positive control are retained as nonpassing evidence. See [C11 proof and limits](C11-SESSION-ISOLATION.md).
+C6, C9 and C12 remain unmeasured. Native n8n stayed on `0397f00d`; the changed
+temporary adapter was measured and stopped. No backend release was deployed.
+
 **Latest C10 measurement:** [the denied-operation/privacy run](https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813)
 records **10 passed, 0 failed, 4 unmeasured**, with all 50 independent provider-state
 assertions passing. Seven denied operations returned 400, an unknown route returned
@@ -147,7 +159,7 @@ three clean repetitions. Do not require a new customer prompt to discover the
 applicable default risks.
 
 The scripted MCP/runtime portion has measured C0/C1/C2/C3/C4/C5 unavailable-lookup results. The complete
-builder acceptance journey, C6/C9/C11/C12, remaining native negative controls and three
+builder acceptance journey, C6/C9/C12, remaining native negative controls and three
 clean repetitions remain unqualified. See [the acceptance and gap register](ACCEPTANCE.md).
 
 ## Published repeatable trigger — bounded cloud proof
@@ -175,7 +187,7 @@ protected startup health request. Existing workflows retain their default
 runtime. FetchSandbox prepares the contract/session, executes through `/invoke`,
 reads `/proof/{lead}`, independently checks provider collections and retains the
 receipt through the existing MCP tools. C1 now has two deliveries of the same
-lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5 unavailable-lookup hold is executable; C8 first-delivery overlap is executable; C7 and C10 are now executable; C6/C9/C11/C12 stay typed blocked. An
+lead and the same exact one-effect assertions; C2 is executable with accepted-response-readback evidence; C3 rejection and explicit recovery are executable; C4 is executable with accepted-response-readback evidence; C5 unavailable-lookup hold is executable; C8 first-delivery overlap is executable; C7, C10 and C11 are now executable; C6/C9/C12 stay typed blocked. An
 executable check is not a passing check.
 
 The bridge accepts only the fixed persistent n8n URL and a private bearer value;

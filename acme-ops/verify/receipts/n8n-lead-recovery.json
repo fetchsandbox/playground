@@ -5,11 +5,11 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-6ae831332940",
-  "bundle_sha256": "6ae831332940c4a124405cbfdbed61c2a82d42d54b77169c3030d822cff5180f",
-  "session_id": "vs_b22793bd7219",
-  "run_id": "vr_5617af5dac3549c28afe4240d9317813",
-  "receipt_url": "https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813",
+  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-8e7c2dc11598",
+  "bundle_sha256": "8e7c2dc11598eb251322939e8fd22b36ff4ee93a2449a5a349c2ee93e6ed95c1",
+  "session_id": "vs_03f91b96d062",
+  "run_id": "vr_8db50d4f9ef74348845204e0a919cbb3",
+  "receipt_url": "https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -77,8 +77,8 @@
     },
     {
       "id": "C11",
-      "status": "unmeasured",
-      "explanation": "No customer records or live delivery are in scope. Own temporary native fixtures were archived, but the full cloud session cleanup/retained receipt check has not run."
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     },
     {
       "id": "C12",
@@ -86,5 +86,5 @@
       "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
     }
   ],
-  "recorded_at": "2026-11-08T06:08:30.728Z"
+  "recorded_at": "2026-11-08T07:16:15.053Z"
 }

@@ -17,7 +17,7 @@
  */
 import { execFileSync, spawn } from "node:child_process";
 import {createHash} from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, appendFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -84,7 +84,7 @@ function mcpClient() {
       }
     }
   });
-  child.stderr.on("data", () => {});
+  child.stderr.on("data", chunk => appendFileSync(join(OUT_DIR,"mcp-stderr-private.log"),chunk,{mode:0o600}));
   const send = (method, params) => {
     const id = next++;
     child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n");
@@ -174,7 +174,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   // Inherit the host environment (proxy, CA bundle), but never any provider or
   // FetchSandbox credential: the runtime only gets the twins and the handoff file.
   const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !/^(META|STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|OPENAI|SHOPIFY|NETSUITE|EASYPOST|PLAID|TWILIO_VERIFY|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
+    Object.entries(process.env).filter(([k]) => !/^(META|STRIPE|HUBSPOT|GMAIL|GCAL|GOOGLE_CALENDAR|SLACK|ZENDESK|ASANA|WORKOS|GH|GITHUB|TWILIO|PAGERDUTY|NOTION|BOX|TRADE_GOV|SCREENING|SQUARE|OPENAI|SHOPIFY|NETSUITE|EASYPOST|PLAID|TWILIO_VERIFY|FETCHSANDBOX|ANTHROPIC|X_FLOW)_/.test(k)),
   );
   const env = {
     ...inherited,
@@ -186,7 +186,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
     ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
-    ...(await contract.runtimeEnv?.({ legs, outDir: OUT_DIR }) ?? {}),
+    ...(await contract.runtimeEnv?.({ legs, outDir: OUT_DIR, credentialFile }) ?? {}),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
   const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];

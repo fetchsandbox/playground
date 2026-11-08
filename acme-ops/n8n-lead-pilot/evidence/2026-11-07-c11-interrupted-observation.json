@@ -1,0 +1,103 @@
+{
+  "scope": "C11 interrupted run; separate retained receipt",
+  "receipt_url": "https://fetchsandbox.com/runs/c8d78c6024?flow=vr_1e388808d7d64e2fb409066101453a1c",
+  "run_id": "vr_1e388808d7d64e2fb409066101453a1c",
+  "app_version": "n8n-export-28dd4054ebe1986ff2d4e232baa0d70898a6efa3f5f7d3740300514bd13712d4-bridge-8e7c2dc11598",
+  "bundle_sha256": "8e7c2dc11598eb251322939e8fd22b36ff4ee93a2449a5a349c2ee93e6ed95c1",
+  "counts": {
+    "held": 6,
+    "violated": 0,
+    "unmeasured": 8
+  },
+  "overall": "inconclusive",
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "unmeasured",
+      "explanation": "Application request timed out before recovery could be observed; no recovery verdict was established"
+    },
+    {
+      "id": "C6",
+      "status": "unmeasured",
+      "explanation": "Separate native missing/wrong header probes returned 403 after credential repair. End-to-end caller identity, denied-call unchanged-state assertions and requester separation remain unqualified; shared bearer access is not a production requester identity."
+    },
+    {
+      "id": "C7",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "C8",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "C11",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "C12",
+      "status": "unmeasured",
+      "explanation": "Native HubSpot positive access was measured. Deliberate provider scope rejection and 429 behavior have not been qualified across the cloud workflow."
+    }
+  ],
+  "provider_state_assertions": {
+    "passed": 30,
+    "failed": 0
+  },
+  "checks_sha256": "62b8cbc028a68e0174690d19565477ac167e0bcde87f6b9bff917cf31afa41dc",
+  "cleanup": {
+    "sandbox_delete_statuses": {
+      "hubspot": 200,
+      "gmail": 200,
+      "google-calendar": 200,
+      "slack": 200
+    },
+    "snapshot_after_cleanup_status": 200,
+    "temporary_bindings_absent": true
+  },
+  "native_version": "0397f00d-f536-4975-935b-fb705b780055",
+  "deployment": "Changed temporary adapter measured against real published n8n; no backend release deployed. All test transports now stopped.",
+  "limitation": "C5 outer read timed out; relay then returned 503 Local tunnel disconnected and 404 Tunnel unavailable. C11 was not executed. Underlying disconnect cause unconfirmed."
+}

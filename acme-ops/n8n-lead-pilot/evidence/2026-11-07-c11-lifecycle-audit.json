@@ -1,0 +1,124 @@
+{
+  "scope": "Separate C11 cross-session lifecycle artifact audit, not a merged behavioral receipt",
+  "observed_at": "2026-11-08T07:21:42.061640+00:00",
+  "qualified_receipts": [
+    "https://fetchsandbox.com/runs/ee4b7a52e3?flow=vr_3c414b27034c47ec8cd6d4735b16f38d",
+    "https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3"
+  ],
+  "lifecycle_audit": {
+    "sessions": 2,
+    "same_business_lead": true,
+    "same_physical_store_reused": true,
+    "prior_scope_records_retained_unchanged": true,
+    "distinct_provider_sandboxes": 8,
+    "retired_verifier_requests_denied": 3,
+    "provider_credential_pairs_denied": 4,
+    "retained_receipts": 2,
+    "cleanup_passed": true,
+    "scope": "Single adapter/FileStore, independent sandbox sessions. Shared app credential revocation, per-requester identity, stale callback/owner fencing and multi-worker crash recovery are not established."
+  },
+  "credential_probes": {
+    "session_scope": "dd4e95a9e21ec21e9b3fb96f94bf68d5428417fa92ce9f4d273ec212a8329e21",
+    "runtime_identity_source": "application_reported",
+    "observed_os_child_pid": 59019,
+    "current_verifier_status": 200,
+    "retired_verifier_statuses": [
+      401,
+      401,
+      401
+    ],
+    "provider_credentials": [
+      {
+        "provider": "hubspot",
+        "keys_differ": true,
+        "current_status": 200,
+        "retired_status": 401,
+        "current_authorized": true,
+        "retired_authorized": false
+      },
+      {
+        "provider": "gmail",
+        "keys_differ": true,
+        "current_status": 200,
+        "retired_status": 401,
+        "current_authorized": true,
+        "retired_authorized": false
+      },
+      {
+        "provider": "google-calendar",
+        "keys_differ": true,
+        "current_status": 200,
+        "retired_status": 401,
+        "current_authorized": true,
+        "retired_authorized": false
+      },
+      {
+        "provider": "slack",
+        "keys_differ": true,
+        "current_status": 200,
+        "retired_status": 200,
+        "current_authorized": true,
+        "retired_authorized": false
+      }
+    ],
+    "retired_sandbox_url_statuses": [
+      404,
+      404,
+      404,
+      404
+    ],
+    "state_sha_before": "a2358d6da27460767e35fbcb28e514c57176d349584471cbe8595444d9b3a106",
+    "state_sha_after": "a2358d6da27460767e35fbcb28e514c57176d349584471cbe8595444d9b3a106"
+  },
+  "cleanup": {
+    "sessions": [
+      {
+        "sandbox_delete_statuses": {
+          "hubspot": 200,
+          "gmail": 200,
+          "google-calendar": 200,
+          "slack": 200
+        },
+        "snapshot_after_cleanup_status": 200,
+        "temporary_bindings_absent": true
+      },
+      {
+        "sandbox_delete_statuses": {
+          "hubspot": 200,
+          "gmail": 200,
+          "google-calendar": 200,
+          "slack": 200
+        },
+        "snapshot_after_cleanup_status": 200,
+        "temporary_bindings_absent": true
+      }
+    ],
+    "original_handoffs_absent": true,
+    "replay_handoffs_absent": true,
+    "shared_state_removed": true,
+    "app_port_closed": true,
+    "ngrok_port_closed": true,
+    "all_three_attempt_bindings_absent": true
+  },
+  "storage_evidence_source": "Native runner configuration and direct local FileStore reads; not independent remote database attestation",
+  "local_validation": {
+    "passed_tests": 508,
+    "passed_files": 70,
+    "typescript": "passed",
+    "python_and_native_worker_syntax": "passed"
+  },
+  "retained_nonpassing_observations": [
+    "Original local same-file/session claim test failed before namespace fix",
+    "One initial contract fixture lacked complete binding identities, then corrected to actual four-role shape",
+    "Missing namespace test exposed JavaScript undefined string coercion, fixed with an explicit string type guard",
+    "Interrupted cloud receipt: six passed, eight unmeasured; C11 not executed",
+    "Initial lifecycle Calendar collection positive control returned 501 unsupported; not counted. Replaced with supported GET of independently saved session-B event identity. No provider writes added."
+  ],
+  "remaining": [
+    "C6 requester identity and shared long-lived app credential boundaries",
+    "C9 crash/abandoned claim, stale native callback/owner fencing and multi-worker recovery",
+    "C12 provider scopes/rate limits",
+    "Remaining negative controls, three full-contract repetitions and fresh native builder acceptance",
+    "Native SaaS parity and production operation"
+  ]
+}

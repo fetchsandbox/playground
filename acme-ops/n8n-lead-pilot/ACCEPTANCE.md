@@ -1,5 +1,17 @@
 # Friendly pilot: acceptance and gap register
 
+**Latest C11 qualification:** [session A](https://fetchsandbox.com/runs/ee4b7a52e3?flow=vr_3c414b27034c47ec8cd6d4735b16f38d)
+and [session B](https://fetchsandbox.com/runs/85dba866b9?flow=vr_8db50d4f9ef74348845204e0a919cbb3)
+each record **11 passed, 0 failed, 3 unmeasured**, with 55 passing independent
+provider-state assertions per receipt. The same lead and physical file were reused:
+old rows stayed unchanged, new scoped state was created, retired session keys were
+denied, both receipts survived cleanup, and temporary secrets/transports were
+removed. This is a bounded session-isolation result, not per-requester identity or
+crash recovery. An earlier relay-disconnected attempt and unsupported Calendar
+positive control are retained as nonpassing evidence. See [C11 proof and limits](C11-SESSION-ISOLATION.md).
+C6, C9 and C12 remain unmeasured. Native n8n stayed on `0397f00d`; the changed
+temporary adapter was measured and stopped. No backend release was deployed.
+
 **Latest C10 measurement:** [the denied-operation/privacy run](https://fetchsandbox.com/runs/deb9b73db1?flow=vr_5617af5dac3549c28afe4240d9317813)
 records **10 passed, 0 failed, 4 unmeasured**, with all 50 independent provider-state
 assertions passing. Seven denied operations returned 400, an unknown route returned
@@ -79,7 +91,7 @@ count, identity, association or fault-witness assertions to obtain a pass.
 | C8 | Concurrent first deliveries | Four overlapping native deliveries measured: one owner, one set of effects and no effects on completed replay. Single adapter/FileStore only; stale-writer native exercise, claim-bypass mutation, crash and multi-worker scope unmeasured. | Overlapping real n8n executions, exact one-effect counts and identities, stale writer rejected; claim-bypass variant fails. |
 | C9 | Restart/abandoned claim | Builder implementation gap: no safe lease/fencing/reconciliation for abandoned `in_progress`; single-process FileStore. | Crash at each write/checkpoint boundary; restart with durable conditional store; no duplicated or lost effects, stale owner fenced. |
 | C10 | Privacy/transport | Measured: seven forbidden operations returned 400, unknown route 404, zero C10 effects; separate saved owner/anonymous artifact audit passed for tested dummy secrets and supplied credentials. Full proof requires authentication. | Exact measured methods/paths, independent zero-effect checks, retained-artifact canary masks; no claim of arbitrary PII removal, exhaustive SSRF coverage or native 3xx fault injection. |
-| C11 | Cleanup/isolation/receipt | Qualification: four owned sandboxes absent on recheck, receipt retained; full fresh-session isolation contract not executed. | New session cannot read/reuse prior state/credentials; receipt retained after cleanup; temporary transports and handoff files removed. |
+| C11 | Cleanup/isolation/receipt | Measured two real sessions with same lead/file: old rows retained, new namespaced state; retired verifier/provider credentials denied; receipts retained after cleanup and temporary state/handoffs/transports removed. | See C11 proof. Shared app credential/requester identity, stale callback/owner fencing and cross-worker crash recovery remain outside this result. |
 | C12 | Scope/rate-limit failures | FetchSandbox qualification: existing faults need exact-operation qualification, not inferred support. | Native-shaped rejection/429, observed Retry-After handling, no false confirmation/unsafe resend, independently unchanged or bounded effects. |
 
 These are not eleven confirmed core-engine defects. They include provider

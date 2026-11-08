@@ -13,12 +13,12 @@ function fixture(change:(w:any)=>void=()=>{},variant='normal'){
  const source=join(dir,'bindings.json');writeFileSync(source,JSON.stringify({token:'fixture-only',n8n_token:'fixture-only',n8n_webhook:'https://fetchsandbox.app.n8n.cloud/webhook/friendly-pilot-mcp-20261106'}),{mode:0o600});
  return {dir,path,source};
 }
-function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({checks:c.checks.map(x=>({id:x.id,executable:!!x.actions})),dimensions:c.applicationConfig.coverage_review.length,version:c.appVersion}));',variant='normal'){
- return spawnSync(process.execPath,['--input-type=module','-e',`const c=(await import(${JSON.stringify(moduleUrl)})).default;${code}`],{env:{PATH:process.env.PATH,N8N_WORKFLOW_EXPORT:f.path,PILOT_BINDINGS_SOURCE:f.source,PILOT_VARIANT:variant},encoding:'utf8'});
+function load(f:ReturnType<typeof fixture>,code='console.log(JSON.stringify({checks:c.checks.map(x=>({id:x.id,executable:!!x.actions})),dimensions:c.applicationConfig.coverage_review.length,version:c.appVersion}));',variant='normal',extraEnv:Record<string,string>={}){
+ return spawnSync(process.execPath,['--input-type=module','-e',`const c=(await import(${JSON.stringify(moduleUrl)})).default;${code}`],{env:{PATH:process.env.PATH,N8N_WORKFLOW_EXPORT:f.path,PILOT_BINDINGS_SOURCE:f.source,PILOT_VARIANT:variant,...extraEnv},encoding:'utf8'});
 }
 describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>{
  it('retains original requirements, C3 recovery subcheck and reviewed default dimensions',()=>{
-  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(14);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C7','C8','C10']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
+  const f=fixture();try{const result=load(f);expect(result.status).toBe(0);const out=JSON.parse(result.stdout);expect(out.dimensions).toBe(17);expect(out.checks).toHaveLength(14);expect(out.checks.filter((x:any)=>x.executable).map((x:any)=>x.id)).toEqual(['baseline','C1','C2','C3','C3_recovery','C4','C5','C7','C8','C10','C11']);expect(out.version).toMatch(/^n8n-export-[0-9a-f]{64}$/);}finally{rmSync(f.dir,{recursive:true,force:true});}
  });
  it.each(['unpublished','pinned','inline-header','no-native-auth','changed-decision'])('refuses %s before starting the runtime',kind=>{
   const f=fixture(w=>{
@@ -31,8 +31,8 @@ describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>
  });
  it('writes attempt bindings privately for the existing runtime lifecycle',()=>{
   const f=fixture();try{
-   const result=load(f,`const env=await c.runtimeEnv({outDir:${JSON.stringify(f.dir)},legs:{hubspot:{base_url:'https://fetchsandbox.com/sandbox/fixture',api_key:'fixture-key-only'}}});console.log(JSON.stringify({file:env.PILOT_BINDINGS}));`);
-   expect(result.status).toBe(0);const file=JSON.parse(result.stdout).file;expect(statSync(file).mode&0o777).toBe(0o600);expect(JSON.parse(readFileSync(file,'utf8')).legs.hubspot.api_key).toBe('fixture-key-only');
+   const result=load(f,`const env=await c.runtimeEnv({outDir:${JSON.stringify(f.dir)},legs:Object.fromEntries(['hubspot','gmail','google-calendar','slack'].map(role=>[role,{sandbox_id:role+'-fixture',base_url:'https://fetchsandbox.com/sandbox/'+role+'-fixture',api_key:'fixture-key-only'}]))});console.log(JSON.stringify({file:env.PILOT_BINDINGS,scope:JSON.parse((await import('node:fs')).readFileSync(env.PILOT_BINDINGS,'utf8')).session_scope}));`);
+   expect(result.status).toBe(0);const output=JSON.parse(result.stdout);expect(output.scope).toMatch(/^[a-f0-9]{64}$/);const file=output.file;expect(statSync(file).mode&0o777).toBe(0o600);expect(JSON.parse(readFileSync(file,'utf8')).legs.hubspot.api_key).toBe('fixture-key-only');
   }finally{rmSync(f.dir,{recursive:true,force:true});}
  });
 });
@@ -66,4 +66,24 @@ it('C10 exercises the real denied routes and records harmless canaries without i
  expect(c.actions[0].body).toMatchObject({authorization:'c10-dummy-auth-{{run_id}}',c10_marker:'c10-public-marker-{{run_id}}'});
  expect(c.before.assertion.count).toBe(0);expect(c.assertion.count).toBe(0);
  expect(c.provider_assertions).toHaveLength(5);expect(c.provider_assertions.every((x:any)=>x.assertion.count===0)).toBe(true);
+});
+
+it('C11 reuses the same business identity across independent sessions and independently checks all five effects',()=>{
+ const contract=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+ const c=contract.checks.find((x:any)=>x.id==='C11');
+ expect(c.blocker).toBeUndefined();expect(c.before).toMatchObject({path:'/proof/friendly-session-isolation',assertion:{count:0,required:true}});
+ expect(c.actions).toEqual([{method:'POST',path:'/invoke',body:{lead_id:'friendly-session-isolation'},expect_status:200}]);
+ expect(c.provider_assertions).toHaveLength(5);expect(c.assertion.count).toBe(1);
+});
+
+it('keeps an explicitly requested replay handoff private and refuses to overwrite it',()=>{
+ const f=fixture();try{
+  const original=join(f.dir,'original.env'),replay=join(f.dir,'replay.env'),state=join(f.dir,'retained-state.json');
+  writeFileSync(original,'FETCHSANDBOX_VERIFIER_TOKEN=disposable-fixture-only\n',{mode:0o600});
+  const legs="Object.fromEntries(['hubspot','gmail','google-calendar','slack'].map(role=>[role,{sandbox_id:role+'-fixture',base_url:'https://fetchsandbox.com/sandbox/'+role+'-fixture',api_key:'fixture-key-only'}]))";
+  const code=`const env=await c.runtimeEnv({outDir:${JSON.stringify(f.dir)},legs:${legs},credentialFile:${JSON.stringify(original)}});console.log(JSON.stringify({state:env.STATE_FILE}));`;
+  const env={PILOT_REPLAY_HANDOFF:replay,PILOT_STATE_FILE:state};const first=load(f,code,'normal',env);
+  expect(first.status).toBe(0);expect(JSON.parse(first.stdout).state).toBe(state);expect(statSync(replay).mode&0o777).toBe(0o600);expect(readFileSync(replay,'utf8')).toBe(readFileSync(original,'utf8'));
+  expect(load(f,code,'normal',env).status).not.toBe(0);expect(readFileSync(replay,'utf8')).toBe(readFileSync(original,'utf8'));
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
 });

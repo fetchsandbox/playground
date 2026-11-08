@@ -27,18 +27,18 @@ describe('pilot operation state boundary',()=>{
   expect(stopped.reason).toBe('Status notification unconfirmed');
  });
  it('only one simultaneous first delivery claims a lead',async()=>{
-  const state=new LeadState(new MemoryStore());
+  const state=new LeadState(new MemoryStore(),'fixture');
   const out=await Promise.all(Array.from({length:8},(_,i)=>state.claim('same-lead','a'+i)));
   expect(out.filter(x=>x.claimed)).toHaveLength(1);
  });
  it('retains confirmed resource IDs after recreating the store; refuses stale saves',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'lead-state-'));const path=join(dir,'state.json');
   try{
-   const state=new LeadState(new FileStore(path));const first=await state.claim('restart','a');
+   const state=new LeadState(new FileStore(path),'fixture');const first=await state.claim('restart','a');
    const saved=await state.save('restart','a',{...first.state!,status:'unknown',operations:{gmail:{status:'unknown'},deal:{status:'confirmed',id:'42'}}});
    expect(saved.saved).toBe(true);
    expect((await state.save('restart','a',first.state!)).saved).toBe(false);
-   const resumed=await new LeadState(new FileStore(path)).claim('restart','b');
+   const resumed=await new LeadState(new FileStore(path),'fixture').claim('restart','b');
    expect(resumed.claimed).toBe(true);
    expect(resumed.state?.operations).toMatchObject({deal:{status:'confirmed',id:'42'},gmail:{status:'unknown'}});
   }finally{rmSync(dir,{recursive:true,force:true});}

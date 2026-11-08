@@ -1,5 +1,6 @@
 /** App-owned contract for the existing proof runner, not a second verifier. */
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,copyFileSync,chmodSync,constants} from 'node:fs';
+import {sessionScope} from '../../n8n-lead-pilot/session-scope.mjs';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
@@ -38,11 +39,13 @@ export default {
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review},
  startupPingHeaders(){const source=JSON.parse(readFileSync(sourcePath,'utf8'));return {authorization:'Bearer '+source.token};},
- async runtimeEnv({legs,outDir}){
+ async runtimeEnv({legs,outDir,credentialFile}){
   const source=JSON.parse(readFileSync(sourcePath,'utf8'));
   if(source.n8n_webhook!=='https://fetchsandbox.app.n8n.cloud/webhook/friendly-pilot-mcp-20261106' || !source.n8n_token || !source.token)throw Error('Private native trigger and adapter bindings required');
   const file=join(outDir,'n8n-bindings-private.json');
-  writeFileSync(file,JSON.stringify({token:source.token,n8n_token:source.n8n_token,n8n_webhook:source.n8n_webhook,legs:legs??{}}),{mode:0o600});
-  return {PILOT_BINDINGS:file,TRACE_FILE:join(outDir,'n8n-twin-trace-private.jsonl')};
+  const scope=sessionScope(legs);
+  if(credentialFile && process.env.PILOT_REPLAY_HANDOFF){copyFileSync(credentialFile,process.env.PILOT_REPLAY_HANDOFF,constants.COPYFILE_EXCL);chmodSync(process.env.PILOT_REPLAY_HANDOFF,0o600);}
+  writeFileSync(file,JSON.stringify({session_scope:scope,token:source.token,n8n_token:source.n8n_token,n8n_webhook:source.n8n_webhook,legs:legs??{}}),{mode:0o600});
+  return {PILOT_BINDINGS:file,TRACE_FILE:join(outDir,'n8n-twin-trace-private.jsonl'),...(process.env.PILOT_STATE_FILE?{STATE_FILE:process.env.PILOT_STATE_FILE}:{})};
  },
 };
