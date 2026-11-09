@@ -61,6 +61,19 @@ describe.skipIf(!endpoint)('C9 actual SIGKILL / independent workers / DynamoDB L
   const oneDealOracle=()=>effects.deal!.length===1;
   expect(oneDealOracle()).toBe(false);
  },20000);
+ it('the same confirmed-flow oracle rejects skipping Calendar readback after an accepted-write crash',async()=>{
+  effects={contact:[],deal:[],gmail:[],calendar:[],slack:[]};const scope='s'+randomUUID();
+  await worker(scope,'old',m=>write(m,'google-calendar'));
+  await new Promise(resolve=>setTimeout(resolve,1100));
+  const result=await worker(scope,'broken',undefined,'skip-calendar-readback');
+  const row=await new DynamoStore(table,client).get('lead-pilot#'+scope+'#crash');
+  expect(effects.calendar).toHaveLength(1);
+  expect((row?.operations as any).calendar).toMatchObject({status:'unknown'});
+  expect((row?.operations as any).calendar.id).toBeUndefined();
+  expect(result.status).toBe('unknown');
+  const confirmedFlowOracle=()=>result.status==='confirmed' && Object.values(counts()).every(n=>n===1);
+  expect(confirmedFlowOracle()).toBe(false);
+ },20000);
  it('two independent replacement processes cannot both acquire the abandoned lead',async()=>{
   effects={contact:[],deal:[],gmail:[],calendar:[],slack:[]};const scope='s'+randomUUID();
   await worker(scope,'old',m=>write(m,'gmail'));

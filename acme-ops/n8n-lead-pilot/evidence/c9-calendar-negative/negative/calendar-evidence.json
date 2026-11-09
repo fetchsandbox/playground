@@ -1,0 +1,286 @@
+{
+  "scope": "Stored verifier evidence plus separate application-owned transport log; not a new verifier",
+  "receipt_url": "https://fetchsandbox.com/runs/7efd2455e8?flow=vr_9e8e4d4566b14965a494e9b8db63081b",
+  "run_id": "vr_9e8e4d4566b14965a494e9b8db63081b",
+  "archive_sha256": "129c3ced7efed6e900d84e3e34059c37e3a0520537b909422837863da8a08dbd",
+  "provider_assertions": {
+    "total": 84,
+    "held": 83,
+    "not_held": 1
+  },
+  "calendar_check": {
+    "id": "C9_calendar_crash",
+    "status": "violated",
+    "explanation": "Provider-state assertion failed: records[*]: expected exactly 1, found 1; records[*]: expected exactly 1, found 0"
+  },
+  "calendar_effect_observations": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "482413097867"
+      ],
+      "at": "2026-11-09T20:20:30.479351+00:00"
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "048510401017"
+      ],
+      "at": "2026-11-09T20:20:30.481083+00:00"
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "9670078050850388"
+      ],
+      "at": "2026-11-09T20:20:30.488335+00:00"
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": false,
+      "matching_records": 1,
+      "identities": [
+        "f66732d63392d63616c656e6461722d76725f3965386534643435363662313439363561343934653962386462363330383162"
+      ],
+      "at": "2026-11-09T20:20:30.489992+00:00"
+    }
+  ],
+  "calendar_app_requests": [
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+      "status": 200,
+      "started_at": "2026-11-09T20:19:35.606805+00:00",
+      "finished_at": "2026-11-09T20:19:35.809512+00:00",
+      "response": {
+        "records": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 502,
+      "started_at": "2026-11-09T20:19:35.811315+00:00",
+      "finished_at": "2026-11-09T20:19:45.339877+00:00",
+      "response": {
+        "_non_json_response": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+      "status": 200,
+      "started_at": "2026-11-09T20:19:45.341510+00:00",
+      "finished_at": "2026-11-09T20:19:45.546057+00:00",
+      "response": {
+        "records": [
+          {
+            "owner": "549",
+            "requester": "pilot-team:pilot-owner",
+            "lease_expires_at": 1794255614760,
+            "operations": {
+              "gmail": {
+                "client_status": 200,
+                "status": "confirmed",
+                "id": "9670078050850388"
+              },
+              "calendar": {
+                "status": "in_flight",
+                "requested_id": "f66732d63392d63616c656e6461722d76725f3965386534643435363662313439363561343934653962386462363330383162"
+              },
+              "deal": {
+                "status": "confirmed",
+                "id": "048510401017",
+                "confirmation": "positive_readback"
+              },
+              "contact": {
+                "client_status": 201,
+                "status": "confirmed",
+                "id": "482413097867"
+              }
+            },
+            "epoch": 1,
+            "pk": "lead-pilot#d452df4ca3935706db06ff094d732b05c9df14cfd070badfabe7f065ad74cdc2#fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+            "version": 16,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 200,
+      "started_at": "2026-11-09T20:20:20.581161+00:00",
+      "finished_at": "2026-11-09T20:20:26.186579+00:00",
+      "response": {
+        "done": true,
+        "lead_id": "fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+        "status": "unknown",
+        "reason": "Status notification accepted by twin",
+        "state": {
+          "owner": "550",
+          "requester": "pilot-team:pilot-owner",
+          "notification": {
+            "blocked_step": "calendar",
+            "client_status": 200,
+            "accepted_ids": [
+              "17QJZ9KXTT.2QFN5C"
+            ],
+            "outcome": "unknown",
+            "status": "confirmed",
+            "ts": "17QJZ9KXTT.2QFN5C"
+          },
+          "lease_expires_at": 1794255655769,
+          "operations": {
+            "gmail": {
+              "client_status": 200,
+              "status": "confirmed",
+              "id": "9670078050850388"
+            },
+            "calendar": {
+              "status": "unknown",
+              "requested_id": "f66732d63392d63616c656e6461722d76725f3965386534643435363662313439363561343934653962386462363330383162"
+            },
+            "deal": {
+              "status": "confirmed",
+              "id": "048510401017",
+              "confirmation": "positive_readback"
+            },
+            "contact": {
+              "client_status": 201,
+              "status": "confirmed",
+              "id": "482413097867"
+            }
+          },
+          "epoch": 2,
+          "pk": "lead-pilot#d452df4ca3935706db06ff094d732b05c9df14cfd070badfabe7f065ad74cdc2#fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+          "version": 22,
+          "status": "unknown"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 200,
+      "started_at": "2026-11-09T20:20:26.189320+00:00",
+      "finished_at": "2026-11-09T20:20:30.110842+00:00",
+      "response": {
+        "done": true,
+        "lead_id": "fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+        "status": "unknown",
+        "reason": "Status notification accepted by twin",
+        "state": {
+          "owner": "551",
+          "requester": "pilot-team:pilot-owner",
+          "notification": {
+            "blocked_step": "calendar",
+            "client_status": 200,
+            "accepted_ids": [
+              "17QJZ9KXTT.2QFN5C",
+              "17C5BJP9Q5.YUTXHA"
+            ],
+            "outcome": "unknown",
+            "status": "confirmed",
+            "ts": "17C5BJP9Q5.YUTXHA"
+          },
+          "lease_expires_at": 1794255659641,
+          "operations": {
+            "gmail": {
+              "client_status": 200,
+              "status": "confirmed",
+              "id": "9670078050850388"
+            },
+            "calendar": {
+              "status": "unknown",
+              "requested_id": "f66732d63392d63616c656e6461722d76725f3965386534643435363662313439363561343934653962386462363330383162"
+            },
+            "deal": {
+              "status": "confirmed",
+              "id": "048510401017",
+              "confirmation": "positive_readback"
+            },
+            "contact": {
+              "client_status": 201,
+              "status": "confirmed",
+              "id": "482413097867"
+            }
+          },
+          "epoch": 3,
+          "pk": "lead-pilot#d452df4ca3935706db06ff094d732b05c9df14cfd070badfabe7f065ad74cdc2#fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+          "version": 28,
+          "status": "unknown"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+      "status": 200,
+      "started_at": "2026-11-09T20:20:30.212603+00:00",
+      "finished_at": "2026-11-09T20:20:30.476947+00:00",
+      "response": {
+        "records": [
+          {
+            "owner": "551",
+            "requester": "pilot-team:pilot-owner",
+            "notification": {
+              "blocked_step": "calendar",
+              "client_status": 200,
+              "accepted_ids": [
+                "17QJZ9KXTT.2QFN5C",
+                "17C5BJP9Q5.YUTXHA"
+              ],
+              "outcome": "unknown",
+              "status": "confirmed",
+              "ts": "17C5BJP9Q5.YUTXHA"
+            },
+            "lease_expires_at": 1794255659641,
+            "operations": {
+              "gmail": {
+                "client_status": 200,
+                "status": "confirmed",
+                "id": "9670078050850388"
+              },
+              "calendar": {
+                "status": "unknown",
+                "requested_id": "f66732d63392d63616c656e6461722d76725f3965386534643435363662313439363561343934653962386462363330383162"
+              },
+              "deal": {
+                "status": "confirmed",
+                "id": "048510401017",
+                "confirmation": "positive_readback"
+              },
+              "contact": {
+                "client_status": 201,
+                "status": "confirmed",
+                "id": "482413097867"
+              }
+            },
+            "epoch": 3,
+            "pk": "lead-pilot#d452df4ca3935706db06ff094d732b05c9df14cfd070badfabe7f065ad74cdc2#fs-c9-calendar-vr_9e8e4d4566b14965a494e9b8db63081b",
+            "version": 28,
+            "status": "unknown"
+          }
+        ]
+      }
+    }
+  ],
+  "application_trace_exact_calendar_reads": [],
+  "backend": {
+    "commit": "f7eeee67",
+    "built_at": "2026-11-08T17:12:46.575660+00:00",
+    "env": "unknown"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "date": "2026-11-09",
+  "base_commit": "032c44e",
+  "scope": "One native Calendar recovery-completeness negative control, followed by restored full 19-check remeasurement through the existing MCP runner; isolated twins only",
+  "tests": {
+    "vitest_passed": 569,
+    "vitest_skipped": 0,
+    "typecheck": "passed",
+    "new_cases": [
+      "Calendar crash with skip-readback source must fail confirmed-flow oracle (recording HTTP fixture)",
+      "Source guard requires explicit matching skip-calendar-readback variant"
+    ]
+  },
+  "phase_results": {
+    "negative": {
+      "native_version": "abaa5cb0-ca4f-470b-8927-ce3fa3642384",
+      "native_export_sha256": "45560e8ad77abb4a26cd7389ee7262b2d2b1bbf1f4320dcb6363f4905c068b91",
+      "run_id": "vr_9e8e4d4566b14965a494e9b8db63081b",
+      "receipt_url": "https://fetchsandbox.com/runs/7efd2455e8?flow=vr_9e8e4d4566b14965a494e9b8db63081b",
+      "verdict": "failing",
+      "checks": {
+        "held": 17,
+        "violated": 1,
+        "unmeasured": 1
+      },
+      "runtime_fault_qualified": true,
+      "provider_assertions": {
+        "total": 84,
+        "held": 83,
+        "not_held": 1
+      },
+      "calendar_final_status": "unknown",
+      "calendar_epoch": 3,
+      "calendar_exact_get_count": 0
+    },
+    "restored": {
+      "native_version": "d0f034f4-61b7-46cd-8568-3580aab5fb36",
+      "native_export_sha256": "3b46792ce8c431dd1488ef34a4d1e4bc37898eba8cca7659f45848cff82b07c4",
+      "run_id": "vr_166c040032b947d285043309d1ddb967",
+      "receipt_url": "https://fetchsandbox.com/runs/2ed20aa2ab?flow=vr_166c040032b947d285043309d1ddb967",
+      "verdict": "inconclusive",
+      "checks": {
+        "held": 18,
+        "unmeasured": 1
+      },
+      "runtime_fault_qualified": true,
+      "provider_assertions": {
+        "total": 85,
+        "held": 85,
+        "not_held": 0
+      },
+      "calendar_final_status": "confirmed",
+      "calendar_epoch": 2,
+      "calendar_exact_get_count": 1
+    }
+  },
+  "normal_machine_and_adapter_bundle_unchanged": true,
+  "backend_commit": "f7eeee67",
+  "strict_runner_exit": {
+    "negative": 1,
+    "restored": 1
+  },
+  "remaining": [
+    "Original full C9 matrix unmeasured",
+    "Slack native negative control pending",
+    "Three clean full-contract repetitions pending",
+    "Fresh independent builder-agent acceptance pending",
+    "Native n8n worker-host termination not tested",
+    "AWS database loss/restore not tested",
+    "Live provider parity not tested"
+  ],
+  "evidence_limits": [
+    "Calendar negative control holds unknown; does not create duplicate Calendar events",
+    "Only four provider-state assertions recorded for failed Calendar case; later Slack assertion did not run",
+    "Application-owned transport logs are separate supplemental evidence",
+    "OS witness records attest adapter SIGKILL; public business receipt alone does not",
+    "Database is DynamoDB Local and stays running across adapter crashes"
+  ],
+  "known_credential_value_scan": "No configured Cursor, pilot or issued-binding credential values found in public text artifacts",
+  "backend_source_inspection": {
+    "commit": "f7eeee67",
+    "path": "backend/app/flows/validation_session.py",
+    "lines": [
+      1479,
+      1501
+    ],
+    "scope": "Provider assertion loop records each judgment and raises at first mismatch; no whole-file or whole-engine audit claimed"
+  },
+  "cleanup": {
+    "at": "2026-11-09T20:35:35.602869+00:00",
+    "managed_tunnel": "Closed by each runner",
+    "owned_adapter": "Stopped by runner; no listener on 8097 afterward",
+    "owned_ngrok": "Stopped",
+    "owned_disposable_database": "Removed after both consistent reads were retained",
+    "native_source": "Correct normal d0f034f4 remains published; temporary I/O transport offline"
+  }
+}

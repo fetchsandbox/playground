@@ -1,0 +1,15 @@
+
+> acme-ops@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+
+ Test Files  77 passed (77)
+      Tests  569 passed (569)
+   Start at  12:12:52
+   Duration  21.27s (tests 64%, import 33%, transform 2%, worker 1%)
+
+    Isolate  77 workers spawned · ~129ms startup each (spawn + environment, per file)
+             at least ~1.29s faster with isolate: false — reuses workers across files instead of one per file

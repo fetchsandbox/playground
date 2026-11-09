@@ -1,0 +1,45 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:28
+ if(!mutation)throw Error('Unknown versioned decision variant');
+                    ^
+
+Error: Unknown versioned decision variant
+    at decisionSource (file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:28:21)
+    at buildWorkflow (file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:41:122)
+    at file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/[eval1]:1:177
+
+Node.js v23.11.0
+ ❯ test/n8n-lead-runner-contract.test.ts (17 tests | 1 failed) 981ms
+   × requires explicit matching source attestation for skip-calendar-readback 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/n8n-lead-runner-contract.test.ts > requires explicit matching source attestation for skip-calendar-readback
+Error: Command failed: /opt/homebrew/Cellar/node/23.11.0/bin/node --input-type=module -e const {buildWorkflow}=await import("file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs");console.log(JSON.stringify(buildWorkflow('https://adapter.example','friendly-pilot-mcp-20261106',{id:'fixture',name:'Fixture credential reference'},"skip-calendar-readback")));
+file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:28
+ if(!mutation)throw Error('Unknown versioned decision variant');
+                    ^
+
+Error: Unknown versioned decision variant
+    at decisionSource (file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:28:21)
+    at buildWorkflow (file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/n8n-lead-pilot/build-workflow.mjs:41:122)
+    at file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/[eval1]:1:177
+
+Node.js v23.11.0
+
+ ❯ decisionSource n8n-lead-pilot/build-workflow.mjs:28:21
+ ❯ buildWorkflow n8n-lead-pilot/build-workflow.mjs:41:122
+ ❯ [eval1]:1:177
+ ❯ fixture test/n8n-lead-runner-contract.test.ts:11:28
+
+ ❯ test/n8n-lead-runner-contract.test.ts:42:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  12:12:28
+   Duration  1.08s (tests 97%, transform 2%, import 1%)

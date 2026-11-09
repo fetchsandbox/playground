@@ -1,0 +1,46 @@
+{
+  "scope": "Fresh consistent reader of still-running DynamoDB Local after native run",
+  "at": "2026-11-09T20:33:14.719Z",
+  "records": [
+    {
+      "lead_id": "fs-c9-calendar-vr_166c040032b947d285043309d1ddb967",
+      "status": "confirmed",
+      "epoch": 2,
+      "owner": "592",
+      "version": 24,
+      "operations": {
+        "gmail": {
+          "client_status": 200,
+          "status": "confirmed",
+          "id": "2002058450551553"
+        },
+        "calendar": {
+          "id": "f66732d63392d63616c656e6461722d76725f3136366330343030333262393437643238353034333330396431646462393637",
+          "confirmation": "positive_readback",
+          "status": "confirmed",
+          "requested_id": "f66732d63392d63616c656e6461722d76725f3136366330343030333262393437643238353034333330396431646462393637"
+        },
+        "deal": {
+          "status": "confirmed",
+          "id": "647216361661",
+          "confirmation": "positive_readback"
+        },
+        "contact": {
+          "client_status": 201,
+          "status": "confirmed",
+          "id": "067244700217"
+        }
+      },
+      "notification": {
+        "blocked_step": null,
+        "client_status": 200,
+        "accepted_ids": [
+          "172YGFIZUH.4NO5JC"
+        ],
+        "outcome": "confirmed",
+        "status": "confirmed",
+        "ts": "172YGFIZUH.4NO5JC"
+      }
+    }
+  ]
+}

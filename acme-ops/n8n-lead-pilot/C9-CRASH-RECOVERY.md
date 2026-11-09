@@ -1,9 +1,10 @@
 # C9: abandoned claims and process crashes
 
 **Calendar/Slack recovery candidate published; full C9 matrix remains open.**
-Native candidate `5e260355-bfba-43f9-9a67-fb11509d4de3` adds positive Calendar
-and Slack read-back. The latest measured native result is recorded at the end of
-this document. Backend `f7eeee67` is unchanged.
+The protected pilot now publishes restored native version
+`d0f034f4-61b7-46cd-8568-3580aab5fb36`. Its Calendar negative control and
+same-contract restoration results are recorded at the end of this document.
+Backend `f7eeee67` is unchanged.
 The earlier native `bc0acc3f` 15-passed/C9-unmeasured receipt is historical evidence.
 C9 is still typed unmeasured in the unchanged, frozen FetchSandbox contract. Its historical blocker wording remains byte-for-byte preserved; this document records the newer implementation and bounded native results. No new engine receipt
 or native builder acceptance follows from the local tests. Native attempts are recorded separately below.
@@ -356,3 +357,113 @@ fresh builder acceptance and the other failure/interleaving boundaries. Temporar
 transports and the disposable database are stopped after evidence capture; the
 protected native workflow retains this published source, but its temporary I/O
 transport must be re-established for another run.
+
+
+## Calendar negative control and restoration, November 9
+
+This iteration adds the explicit `skip-calendar-readback` source variant to the
+existing workflow builder. It suppresses the exact Calendar GET after an uncertain
+write and persists unknown rather than recovering the accepted event identity. It
+is selected only when generating that deliberately broken source. It adds no
+request-controlled mutation switch, verifier bypass or normal-machine change.
+The adapter binary and all three contract files are unchanged.
+
+Local gates: 569 tests passed, zero skipped with DynamoDB Local enabled; TypeScript
+passed. The added process test uses a real SIGKILL, shared conditional store and
+recording HTTP fixture, then requires the confirmed-flow oracle to reject skipped
+Calendar recovery. The added source guard requires an explicitly matching variant
+and refuses the broken export when normal source is expected. The earlier test
+for the new variant failed because it was not yet registered; that is a retained
+setup/registration failure, not a before-fix production regression.
+
+Negative native version `abaa5cb0-ca4f-470b-8927-ce3fa3642384`, actual export SHA256
+`45560e8ad77abb4a26cd7389ee7262b2d2b1bbf1f4320dcb6363f4905c068b91`,
+was published only to the protected isolated pilot. The existing MCP runner and
+unchanged 19-check crash contract returned [the failing receipt](https://fetchsandbox.com/runs/7efd2455e8?flow=vr_9e8e4d4566b14965a494e9b8db63081b):
+**17 held, one violated (`C9_calendar_crash`), original C9 unmeasured**.
+Overall `failing`, `app_verified=false`, `complete=false`, strict exit 1. All
+three actual accepted-write crashes were independently qualified.
+
+The negative Calendar target was independently accepted once while the checkpoint
+was still pending. PID 81689 exited by SIGKILL and replacement PID 81749 started;
+native crash execution 549 lost its I/O connection. Recovery/replay returned HTTP
+200 but left Calendar unknown with no saved ID. A fresh consistent reader of
+DynamoDB Local observed that same missing identity and epoch 3 after replay. The
+application-owned transport log recorded zero reads of that event ID. This control
+tests recovery completeness, not duplicate-event creation: one event still existed.
+
+The stored verifier archive records 84 provider-state assertions: 83 held, one did
+not. The Calendar assertion found an event but could not link its identity to the
+app's missing saved ID. In this failed case only four of the five provider-state
+observations were recorded; the later Slack assertion did not run after Calendar
+failed and is not counted as passed. The other 17 executable checks held, including
+the Deal and Slack accepted-write crash controls.
+
+Normal source was restored as native version
+`d0f034f4-61b7-46cd-8568-3580aab5fb36`, actual export SHA256
+`3b46792ce8c431dd1488ef34a4d1e4bc37898eba8cca7659f45848cff82b07c4`.
+All restored node parameters and wiring match the prior correct export. The
+restored full-contract remeasurement is recorded below; publication alone was not its proof.
+The original C9 matrix, Slack negative control, three clean repetitions, fresh
+builder acceptance, native-worker-host death, AWS database loss/restore and
+live-provider parity remain open.
+
+
+### Restored result and exact comparison
+
+[Restored receipt](https://fetchsandbox.com/runs/2ed20aa2ab?flow=vr_166c040032b947d285043309d1ddb967):
+**18 held, zero violated, original C9 unmeasured**. All 85 recorded independent
+provider-state assertions held. Overall remains `inconclusive`, `app_verified=false`,
+`complete=false`; strict exit remains 1. All three real accepted-write crashes
+qualified independently. Backend remains `f7eeee67`; no backend rollout was needed.
+
+Restored Calendar crash execution 591 errored after acceptance; execution 592
+used the restored `d0f034f4` version and succeeded. The exact event-ID GET appeared
+once in the application-owned transport trace, and a fresh consistent DynamoDB
+Local reader found that accepted ID confirmed with `positive_readback`, epoch 2.
+All five independent provider observations held with one matching effect each,
+including after replay. The corresponding negative recovery execution 550 used
+`abaa5cb0` and was labelled Succeeded by n8n even though its business result was
+unknown. The saved FetchSandbox verdict rejected it. Thus this control establishes
+recovery-completeness discrimination, not duplicate-event detection or all crash
+interleavings.
+
+The actual stored manifests have identical 19 check definitions, scope reviews,
+coverage reviews and requester-profile definitions. App versions and disposable
+bindings differ as intended. No oracle was changed to distinguish these outcomes.
+The deployed `f7eeee67` source at
+`backend/app/flows/validation_session.py:1493-1501` records each provider judgment
+and raises immediately on a failed one, explaining the missing later Slack
+observation in the negative case. That unexecuted observation remains uncounted.
+
+| Observation | Negative `abaa5cb0` | Restored `d0f034f4` |
+|---|---|---|
+| C9 Calendar crash verdict | Violated | Held |
+| Accepted Calendar event exists | One | One |
+| Exact event read-back in app transport trace | Zero GETs | One GET |
+| Fresh database Calendar state | Unknown; no saved ID | Confirmed; exact accepted ID |
+| Overall declared checks | 17 held / 1 violated / 1 unmeasured | 18 held / 0 violated / 1 unmeasured |
+| Recorded provider assertions | 83 held / 1 not held; later Slack not run | 85 held / 0 not held |
+
+Evidence is separate: [negative receipt](evidence/c9-calendar-negative/negative/receipt-summary.json),
+[restored receipt](evidence/c9-calendar-negative/restored/receipt-summary.json),
+[negative Calendar OS witness](evidence/c9-calendar-negative/negative/crash-observation-calendar.json),
+[restored Calendar OS witness](evidence/c9-calendar-negative/restored/crash-observation-calendar.json),
+[negative recorded evidence](evidence/c9-calendar-negative/negative/calendar-evidence.json),
+[restored recorded evidence](evidence/c9-calendar-negative/restored/calendar-evidence.json),
+[negative database read](evidence/c9-calendar-negative/negative/direct-store-readback.json),
+[restored database read](evidence/c9-calendar-negative/restored/direct-store-readback.json),
+[actual manifest parity](evidence/c9-calendar-negative/actual-manifest-parity.json),
+[source hashes](evidence/c9-calendar-negative/source-hashes.json),
+[native source comparison](evidence/c9-calendar-negative/source-variant-parity.json),
+[569-test log](evidence/c9-calendar-negative/full-suite.log),
+[registration setup failure](evidence/c9-calendar-negative/before-variant-guard.log),
+[negative screenshot](evidence/c9-calendar-negative/negative/receipt.png) and
+[restored screenshot](evidence/c9-calendar-negative/restored/receipt.png).
+[Observation and remaining limits](evidence/c9-calendar-negative/observation.json)
+retains exact versions, outcomes and scope. The full original C9 milestone is
+not closed. This is one restored full-contract run, not the three-repeat gate.
+
+The correct native source stays published. Temporary adapters/transports and
+the disposable DynamoDB Local container are stopped after evidence retention;
+another run requires re-establishing the isolated test transport.

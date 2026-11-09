@@ -1,0 +1,13 @@
+{
+  "prior_native_version": "5e260355-bfba-43f9-9a67-fb11509d4de3",
+  "negative_native_version": "abaa5cb0-ca4f-470b-8927-ce3fa3642384",
+  "changed_node_parameters": [
+    "Durable decision machine"
+  ],
+  "connections_unchanged": true,
+  "normal_code_sha256": "b7ba2e3dd8bd56a88662c9a8df8bcc7a00204ed939e64eaf57a4b04cbbd7c866",
+  "negative_code_sha256": "14a6dc3e4301dbf3597874cdbda326e0d87ffcf4b06ebf674579726637d1100d",
+  "business_contract": "All original checks/coverage/scope remain unchanged; only explicitly selected native source differs",
+  "restored_native_version": "d0f034f4-61b7-46cd-8568-3580aab5fb36",
+  "restored_normal_node_parameters_and_wiring_match_prior": true
+}

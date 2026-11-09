@@ -21,10 +21,20 @@ export function blindGmailResend(next){
  }
  return next;
 }
+// Explicit negative control: hold the uncertain Calendar action without its ID read-back.
+// Selected by source variant only, never by a lead, check ID or verifier response.
+export function skipCalendarReadback(next){
+ if(next.request?.kind==='provider' && next.request.provider==='google-calendar' && next.request.method==='GET' && next.request.path.startsWith('/calendars/primary/events/')){
+  const c=next.context;
+  c.state.status='unknown';c.blocked='calendar';c.stage='notify';
+  next.request={kind:'save',state:c.state};
+ }
+ return next;
+}
 export function decisionSource(variant='normal'){
  const source=advance.toString();
  if(variant==='normal')return source;
- const mutation=variant==='blind-deal-retry'?blindDealRetry:variant==='blind-gmail-resend'?blindGmailResend:null;
+ const mutation=variant==='blind-deal-retry'?blindDealRetry:variant==='blind-gmail-resend'?blindGmailResend:variant==='skip-calendar-readback'?skipCalendarReadback:null;
  if(!mutation)throw Error('Unknown versioned decision variant');
  return source+'\nconst normalAdvance=advance;\n'+mutation.toString()+'\nadvance = input => '+mutation.name+'(normalAdvance(input));';
 }
