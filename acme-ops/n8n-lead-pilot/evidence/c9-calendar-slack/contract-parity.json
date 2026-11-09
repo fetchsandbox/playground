@@ -1,0 +1,8 @@
+{
+  "original_contract_unchanged": true,
+  "prior_deal_crash_check_unchanged": true,
+  "new_checks": [
+    "C9_calendar_crash",
+    "C9_slack_crash"
+  ]
+}

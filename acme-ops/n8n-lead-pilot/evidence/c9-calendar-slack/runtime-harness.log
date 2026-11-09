@@ -1,0 +1,15 @@
+✔ real accepted HTTP id is witnessed before SIGKILL and no checkpoint is saved (75.306209ms)
+✔ real accepted HTTP ts is witnessed before SIGKILL and no checkpoint is saved (53.660292ms)
+✔ missing independent witness releases the real response and never claims a crash (51.066875ms)
+✔ wrong nonce cannot trigger the crash controller (25.586083ms)
+✔ refuses an occupied port instead of trusting another runtime ping (8.704ms)
+✔ requires this child to report the exact workflow and port (33.092208ms)
+✔ refuses early process failure and wrong listener identity (52.986625ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 260.125625

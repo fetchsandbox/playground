@@ -16,11 +16,11 @@ if(['identity','crash'].includes(contractName)){
 }
 if(contractName==='crash'){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.crash.json',import.meta.url),'utf8'));
- if(overlay.checks?.length!==1 || overlay.checks[0].id!=='C9_deal_crash')throw Error('Crash overlay must add only the bounded Deal crash check');
- config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,overlay.checks[0]);
- config.scope_review.push({check_id:'C9_deal_crash',classification:'in_scope',reason:'Bounded actual Deal-accepted adapter process crash; original C9 matrix stays blocked.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
+ if(overlay.checks?.length!==3 || overlay.checks.map(c=>c.id).join(',')!=='C9_deal_crash,C9_calendar_crash,C9_slack_crash')throw Error('Crash overlay must add only the three bounded accepted-write crashes');
+ config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,...overlay.checks);
+ config.scope_review.push(...overlay.checks.map(c=>({check_id:c.id,classification:'in_scope',reason:'Bounded accepted-write adapter process crash; original C9 matrix stays blocked.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']})));
  const restart=config.coverage_review.find(x=>x.dimension==='restart_and_durability');
- restart.rule_ids.push('C9_deal_crash');
+ restart.rule_ids.push(...overlay.checks.map(c=>c.id));
 }
 const exportPath=process.env.N8N_WORKFLOW_EXPORT;
 const sourcePath=process.env.PILOT_BINDINGS_SOURCE;
@@ -55,19 +55,28 @@ export default {
  context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:process.env.PILOT_STATE_TABLE?'Shared DynamoDB conditional claims/CAS and leases; native crash recovery remains unqualified.':'Single-process FileStore conditional claims/CAS; not independent-worker storage. Native crash recovery remains unqualified.'},
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review,...(config.requester_profiles?{requester_profiles:config.requester_profiles}:{})},
- crashSimulation:contractName==='crash'?({legs,flowRunId})=>({
-   nonce:randomBytes(24).toString('hex'),url:legs.hubspot.base_url.replace(/\/$/,'')+'/crm/v3/objects/deals',method:'POST',body_path:['properties','dealname'],body_equals:'Pilot fs-c9-'+flowRunId,
- }):undefined,
- async witnessCrash({legs,flowRunId,effectId,port,env}){
-   const lead='fs-c9-'+flowRunId;
-   const response=await fetch('https://fetchsandbox.com/api/sandboxes/'+encodeURIComponent(legs.hubspot.sandbox_id)+'/state',{headers:{authorization:'Bearer '+process.env.FETCHSANDBOX_API_KEY}});
+ crashSimulationCount:contractName==='crash'?3:0,
+ crashSimulation:contractName==='crash'?({legs,flowRunId,faultIndex=0})=>{
+   const targets=[{id:'deal',provider:'hubspot',path:'/crm/v3/objects/deals',body_path:['properties','dealname'],body_equals:'Pilot fs-c9-'+flowRunId,response_identity:'id'},
+    {id:'calendar',provider:'google-calendar',path:'/calendars/primary/events',body_path:['summary'],body_equals:'Pilot fs-c9-calendar-'+flowRunId,response_identity:'id'},
+    {id:'slack',provider:'slack',path:'/chat.postMessage',body_path:['text'],body_equals:JSON.stringify({lead_id:'fs-c9-slack-'+flowRunId,status:'confirmed',blocked_step:null}),response_identity:'ts'}];
+   const t=targets[faultIndex];return t?{...t,nonce:randomBytes(24).toString('hex'),url:legs[t.provider].base_url.replace(/\/$/,'')+t.path,method:'POST'}:null;
+ }:undefined,
+ async witnessCrash({legs,flowRunId,effectId,port,env,plan}){
+   const kind=plan.id,lead='fs-c9-'+(kind==='deal'?'':kind+'-')+flowRunId;
+   const response=await fetch('https://fetchsandbox.com/api/sandboxes/'+encodeURIComponent(legs[plan.provider].sandbox_id)+'/state',{headers:{authorization:'Bearer '+process.env.FETCHSANDBOX_API_KEY}});
    if(!response.ok)throw Error('Independent provider state read failed');
-   const data=await response.json();const matches=(data.deals??[]).filter(x=>x.id===effectId&&x.properties?.dealname==='Pilot '+lead);
+   const data=await response.json();
+   const matches=kind==='deal'?(data.deals??[]).filter(x=>x.id===effectId&&x.properties?.dealname==='Pilot '+lead)
+    :kind==='calendar'?(data.events??[]).filter(x=>x.id===effectId&&x.summary==='Pilot '+lead)
+    :(data.messages??[]).filter(x=>x.ts===effectId&&x.channel==='C_PILOT'&&x.text===plan.body_equals);
    const binding=JSON.parse(readFileSync(env.PILOT_BINDINGS,'utf8'));
    const saved=await fetch('http://127.0.0.1:'+port+'/proof/'+lead,{headers:{authorization:'Bearer '+binding.requesters[0].token}});
    if(!saved.ok)throw Error('Saved checkpoint read failed');
    const rows=(await saved.json()).records;const state=rows?.length===1?rows[0]:null;
-   return {provider_accepted:matches.length===1,checkpoint_pending:state?.status==='in_progress'&&state?.operations?.deal?.status==='in_flight'&&!state.operations.deal.id,lead_id:lead,owner_before:state?.owner,version_before:state?.version,epoch_before:state?.epoch,provider_matching_records:matches.length};
+   const op=kind==='slack'?state?.notification:state?.operations?.[kind];
+   const pending=op?.status==='in_flight' && !(kind==='slack'?op.ts:op.id) && (kind!=='calendar'||op.requested_id===effectId);
+   return {provider_accepted:matches.length===1,checkpoint_pending:!!pending,step:kind,lead_id:lead,owner_before:state?.owner,version_before:state?.version,epoch_before:state?.epoch,provider_matching_records:matches.length};
  },
  startupPingHeaders(){const source=JSON.parse(readFileSync(sourcePath,'utf8'));return {authorization:'Bearer '+source.token};},
  async runtimeEnv({legs,outDir,credentialFile}){

@@ -1,0 +1,88 @@
+[
+  {
+    "provider": "google-calendar",
+    "method": "POST",
+    "path": "/calendars/primary/events",
+    "status": 200,
+    "data": {
+      "summary": "Pilot c9qualification",
+      "start": {
+        "dateTime": "2026-12-01T16:00:00Z"
+      },
+      "end": {
+        "dateTime": "2026-12-01T16:15:00Z"
+      },
+      "attendees": [
+        {
+          "email": "c9qualification@example.com"
+        }
+      ],
+      "status": "confirmed",
+      "id": "ca61960007976804"
+    }
+  },
+  {
+    "provider": "google-calendar",
+    "method": "GET",
+    "path": "/calendars/primary/events?q=Pilot%20c9qualification",
+    "status": 501,
+    "data": {
+      "error": {
+        "type": "sandbox_unsupported_operation",
+        "code": "not_simulated",
+        "message": "Outside the currently verified workflow scope. This contract is catalogued but its stateful behavior is not simulated yet.",
+        "endpoint": "/calendars/{calendarId}/events",
+        "docs_url": null
+      }
+    }
+  },
+  {
+    "provider": "slack",
+    "method": "POST",
+    "path": "/chat.postMessage",
+    "status": 200,
+    "data": {
+      "channel": "C_PILOT",
+      "message": {
+        "bot_id": "bot_259bf17f749f427ab31f207e6d",
+        "client_msg_id": "cli_9dd240362035478f8a963b7478",
+        "name": "item-645be5",
+        "old_name": "Sample Old",
+        "parent_user_id": "par_e90eaca2fef94d9a951aa51626",
+        "permalink": "my-resource",
+        "reply_count": 0,
+        "reply_users_count": 0,
+        "text": "Sample text content",
+        "ts": "sample-value",
+        "type": "default",
+        "unread_count": 0,
+        "username": "acme-corp"
+      },
+      "ok": true,
+      "ts": "17JJYBHFJM.D463I8"
+    }
+  },
+  {
+    "provider": "slack",
+    "method": "GET",
+    "path": "/conversations.history?channel=C_PILOT&limit=100",
+    "status": 200,
+    "data": {
+      "messages": [
+        {
+          "text": "{\"lead_id\":\"c9qualification\",\"status\":\"confirmed\",\"blocked_step\":null}",
+          "ts": "17JJYBHFJM.D463I8",
+          "type": "sample-value"
+        }
+      ],
+      "has_more": false,
+      "next_cursor": null,
+      "ok": true,
+      "pin_count": 17,
+      "channel_actions_ts": [
+        43
+      ],
+      "channel_actions_count": 82
+    }
+  }
+]

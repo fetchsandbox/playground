@@ -38,11 +38,13 @@ export function advance(input) {
       if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'reconciled_contact');
       if (c.step === 'gmail') return provider('gmail', 'GET', '/gmail/v1/users/me/messages?q=' + encodeURIComponent('rfc822msgid:' + c.lead_id + '@example.com'), null, 'reconciled');
       if (c.step === 'deal') return provider('hubspot', 'POST', '/crm/v3/objects/deals/search', {filterGroups:[{filters:[{propertyName:'dealname',operator:'EQ',value:'Pilot '+c.lead_id}]}],properties:['dealname','pipeline','dealstage']}, 'reconciled');
+      if(c.step==='calendar' && typeof op.requested_id==='string')return provider('google-calendar','GET','/calendars/primary/events/'+encodeURIComponent(op.requested_id),null,'reconciled_calendar');
       c.state.status = 'unknown'; c.blocked = c.step; return save('notify');
     }
     if (op.status === 'failed' && !c.retry_failed) { c.state.status = 'failed'; c.blocked = c.step; return save('notify'); }
     // Calendar is never eligible until modeled Gmail acceptance is confirmed.
     if (c.step === 'calendar' && c.state.operations.gmail.status !== 'confirmed') throw new Error('Calendar gate violated');
+    if(c.step==='calendar' && !op.requested_id)op.requested_id='f'+Array.from(c.lead_id).map(x=>x.charCodeAt(0).toString(16).padStart(2,'0')).join('');
     op.status = 'in_flight'; c.state.status = 'in_progress';
     return save('dispatch');
   }
@@ -51,7 +53,7 @@ export function advance(input) {
     if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'contact_found');
     if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
     if (c.step === 'gmail') return provider('gmail','POST','/gmail/v1/users/me/messages/send',{raw:c.raw},'effect');
-    return provider('google-calendar','POST','/calendars/primary/events',{summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.com'}]},'effect');
+    return provider('google-calendar','POST','/calendars/primary/events',{id:c.state.operations.calendar.requested_id,summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.com'}]},'effect');
   }
   if (c.stage === 'contact_found') {
     if (failed()) { c.step = 'contact'; c.stage = 'effect'; return advance({context:c,result:r}); }
@@ -68,7 +70,7 @@ export function advance(input) {
       return save('read_deal');
     }
     const isRejection = r?.status >= 400 && r.status < 500 && ![408,409,429].includes(r.status);
-    op.status = !failed() && r.body?.id ? 'confirmed' : isRejection ? 'failed' : 'unknown';
+    op.status = !failed() && r.body?.id && (c.step!=='calendar'||r.body.id===op.requested_id) ? 'confirmed' : isRejection ? 'failed' : 'unknown';
     if (op.status === 'confirmed') op.id = r.body.id;
     op.client_status = r?.status ?? null;
     if (op.status !== 'confirmed') { c.state.status = op.status; c.blocked = c.step; return save('notify'); }
@@ -105,6 +107,14 @@ export function advance(input) {
     }
     c.state.status='unknown';c.blocked='deal';return save('notify');
   }
+  if(c.stage==='reconciled_calendar'){
+    const event=r?.body,op=c.state.operations.calendar;
+    const exact=!failed() && event?.id===op.requested_id && event.status==='confirmed' && event.summary==='Pilot '+c.lead_id
+      && Date.parse(event.start?.dateTime)===Date.parse('2026-12-01T16:00:00Z') && Date.parse(event.end?.dateTime)===Date.parse('2026-12-01T16:15:00Z')
+      && event.attendees?.length===1 && event.attendees[0].email===c.lead_id+'@example.com';
+    if(exact){op.id=event.id;op.status='confirmed';op.confirmation='positive_readback';c.index++;return save('choose');}
+    c.state.status='unknown';c.blocked='calendar';return save('notify');
+  }
   if (c.stage === 'reconciled_message') {
     const headers = r?.body?.payload?.headers ?? [];
     const header = name => headers.find(h=>h.name.toLowerCase()===name)?.value;
@@ -121,16 +131,29 @@ export function advance(input) {
     // A new attempt may report the same held outcome again after a confirmed
     // notification (the existing business contract requires those updates).
     // An uncertain prior dispatch cannot safely be repeated.
-    if(same && ['unknown','in_flight'].includes(notice.status))return stop('Notification outcome unknown; no duplicate send');
-    c.state.notification={status:'in_flight',outcome:c.state.status,blocked_step:c.blocked??null};
+    if(same && ['unknown','in_flight'].includes(notice.status))return provider('slack','GET','/conversations.history?channel=C_PILOT&limit=100',null,'reconciled_notification');
+    const accepted=Array.isArray(notice?.accepted_ids)?notice.accepted_ids:[];
+    c.state.notification={status:'in_flight',outcome:c.state.status,blocked_step:c.blocked??null,accepted_ids:[...new Set([...accepted,...(typeof notice?.ts==='string'?[notice.ts]:[])])]};
     return save('dispatch_notification');
   }
   if(c.stage === 'dispatch_notification'){
     if(!r?.saved)return stop('Notification checkpoint failed; send withheld');
     return provider('slack','POST','/chat.postMessage',{channel:'C_PILOT',text:JSON.stringify({lead_id:c.lead_id,status:c.state.status,blocked_step:c.blocked})},'notified');
   }
+  if(c.stage==='reconciled_notification'){
+    const notice=c.state.notification;
+    const expected=JSON.stringify({lead_id:c.lead_id,status:notice.outcome,blocked_step:notice.blocked_step});
+    const rows=r?.body?.messages;
+    const complete=!failed() && r.body?.ok===true && r.body.has_more===false && !r.body.next_cursor && !r.body.response_metadata?.next_cursor && Array.isArray(rows);
+    const matches=complete?rows.filter(x=>typeof x.ts==='string' && x.ts && x.text===expected && (!x.channel || x.channel==='C_PILOT') && !(notice.accepted_ids??[]).includes(x.ts)):[];
+    if(matches.length===1){notice.status='confirmed';notice.ts=matches[0].ts;notice.confirmation='positive_readback';notice.accepted_ids=[...new Set([...(notice.accepted_ids??[]),notice.ts])];}
+    else notice.status='unknown';
+    return save('notification_saved');
+  }
   if (c.stage === 'notified') {
-    c.state.notification = {...c.state.notification,status:r?.status === 200 && r.body?.ok === true ? 'confirmed' : 'unknown',client_status:r?.status ?? null};
+    const confirmed=r?.status===200 && r.body?.ok===true && typeof r.body.ts==='string' && !!r.body.ts;
+    c.state.notification = {...c.state.notification,status:confirmed?'confirmed':'unknown',client_status:r?.status ?? null};
+    if(confirmed){c.state.notification.ts=r.body.ts;c.state.notification.accepted_ids=[...new Set([...(c.state.notification.accepted_ids??[]),r.body.ts])];}
     if (r?.status===429 && Number.isSafeInteger(r.retry_after_seconds) && r.retry_after_seconds>=0
       && r.retry_after_seconds<=86400 && Number.isFinite(Date.parse(r.retry_not_before))) {
       c.state.notification={...c.state.notification,status:'rate_limited',client_status:429,retry_after_seconds:r.retry_after_seconds,retry_not_before:r.retry_not_before};

@@ -36,7 +36,9 @@ describe('C9 lease and unknown-outcome recovery',()=>{
  it('does not repeat an uncertain notification after a crash',()=>{
   const c={lead_id:'mail',attempt:'new',stage:'notify',blocked:null,state:{status:'confirmed',notification:{status:'unknown',outcome:'confirmed',blocked_step:null},operations:{}}};
   const out=advance({context:c,result:{saved:true,state:c.state}});
-  expect(out.done).toBe(true);expect(out.request).toBeUndefined();
+  expect(out.request).toMatchObject({kind:'provider',provider:'slack',method:'GET'});
+  const missing=advance({context:out.context,result:{status:200,body:{ok:true,has_more:false,messages:[]}}});
+  expect(missing.request.kind).toBe('save');expect(missing.request.state.notification.status).toBe('unknown');
  });
  it('a new held attempt reports again after a confirmed notification, while checkpointing before dispatch',()=>{
   const c={lead_id:'mail',attempt:'new',stage:'notify',blocked:'gmail',state:{status:'failed',notification:{status:'confirmed',outcome:'failed',blocked_step:'gmail'},operations:{}}};

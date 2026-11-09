@@ -24,11 +24,14 @@ describe.skipIf(!endpoint)('C9 actual SIGKILL / independent workers / DynamoDB L
    else if(path.includes('/objects/deals/')&&req.method==='GET')out=effects.deal![0];
    else if(path.includes('/messages?'))out={messages:effects.gmail!.map(x=>({id:x.id}))};
    else if(path.includes('/messages/')&&req.method==='GET')out=effects.gmail![0];
+   else if(path.includes('/events?')&&req.method==='GET')out={items:effects.calendar};
+   else if(path.includes('/events/')&&req.method==='GET')out=effects.calendar![0];
+   else if(path.includes('/conversations.history?')&&req.method==='GET')out={ok:true,has_more:false,messages:effects.slack};
    else{
     const kind=path.includes('/contacts')?'contact':path.includes('/deals')?'deal':path.includes('/gmail/')?'gmail':path.includes('/events')?'calendar':'slack';
     if(blockWrite)await blockWrite(kind);
     const id=kind+'-'+(effects[kind]!.length+1);
-    out=kind==='contact'?{id,properties:body.properties}:kind==='deal'?{id,properties:body.properties,associations:{contacts:{results:[{id:effects.contact![0].id}]}}}:kind==='gmail'?{id,labelIds:['SENT'],payload:{headers:[{name:'To',value:'crash@example.com'},{name:'Message-ID',value:'<crash@example.com>'}]}}:kind==='slack'?{ok:true,ts:id}:{id,...body};
+    out=kind==='contact'?{id,properties:body.properties}:kind==='deal'?{id,properties:body.properties,associations:{contacts:{results:[{id:effects.contact![0].id}]}}}:kind==='gmail'?{id,labelIds:['SENT'],payload:{headers:[{name:'To',value:'crash@example.com'},{name:'Message-ID',value:'<crash@example.com>'}]}}:kind==='slack'?{ok:true,ts:id,...body}:{status:'confirmed',...body,id:body.id??id};
     effects[kind]!.push(out);
    }
    send();
@@ -100,8 +103,8 @@ describe.skipIf(!endpoint)('C9 actual SIGKILL / independent workers / DynamoDB L
   expect(row?.owner).toBe('replacement');
   expect(Object.values(counts()).every(n=>n<=1)).toBe(true);
   expect(effects[step]).toHaveLength(1);
-  if(['contact','deal','gmail'].includes(step)){expect(result.status).toBe('confirmed');expect(counts()).toEqual({contact:1,deal:1,gmail:1,calendar:1,slack:1});}
-  if(step==='calendar'){expect(result.status).toBe('unknown');expect((row?.operations as any).calendar.status).toBe('unknown');}
-  if(step==='slack'){expect((row?.notification as any).status).toBe('unknown');expect(result.reason).toContain('no duplicate send');}
+  if(['contact','deal','gmail','calendar','slack'].includes(step)){expect(result.status).toBe('confirmed');expect(counts()).toEqual({contact:1,deal:1,gmail:1,calendar:1,slack:1});}
+  if(step==='calendar')expect((row?.operations as any).calendar).toMatchObject({status:'confirmed',id:effects.calendar![0].id,confirmation:'positive_readback'});
+  if(step==='slack')expect(row?.notification).toMatchObject({status:'confirmed',ts:'slack-1',confirmation:'positive_readback'});
  },20000);
 });

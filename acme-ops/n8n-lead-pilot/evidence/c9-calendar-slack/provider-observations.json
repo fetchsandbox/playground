@@ -1,0 +1,175 @@
+{
+  "archive_sha256": "b05d7ebea5dcce64cf19cef6b219e973e329fa9a949795f01519e86e3e03c8cc",
+  "provider_assertions": 85,
+  "held": 85,
+  "cases": [
+    {
+      "check_id": "C9_deal_crash",
+      "lead_id": "fs-c9-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "provider_observations": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "145002497893"
+          ],
+          "at": "2026-11-09T18:42:59.151181+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "035771482891"
+          ],
+          "at": "2026-11-09T18:42:59.152588+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "7412978790422591"
+          ],
+          "at": "2026-11-09T18:42:59.158822+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d76725f6238353566383231376331613431633239613632646262383032663030613964"
+          ],
+          "at": "2026-11-09T18:42:59.159984+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17JI3DWWX0.87ASNQ"
+          ],
+          "at": "2026-11-09T18:42:59.163872+00:00"
+        }
+      ]
+    },
+    {
+      "check_id": "C9_calendar_crash",
+      "lead_id": "fs-c9-calendar-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "provider_observations": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "189726423230"
+          ],
+          "at": "2026-11-09T18:43:52.033532+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "719264417171"
+          ],
+          "at": "2026-11-09T18:43:52.035288+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "7498438526271138"
+          ],
+          "at": "2026-11-09T18:43:52.043582+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d63616c656e6461722d76725f6238353566383231376331613431633239613632646262383032663030613964"
+          ],
+          "at": "2026-11-09T18:43:52.044912+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17Q2AUNO4P.VK1UIU"
+          ],
+          "at": "2026-11-09T18:43:52.048154+00:00"
+        }
+      ]
+    },
+    {
+      "check_id": "C9_slack_crash",
+      "lead_id": "fs-c9-slack-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "provider_observations": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "564490642490"
+          ],
+          "at": "2026-11-09T18:44:48.139502+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "575360956749"
+          ],
+          "at": "2026-11-09T18:44:48.141253+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "9130332254604019"
+          ],
+          "at": "2026-11-09T18:44:48.149159+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d736c61636b2d76725f6238353566383231376331613431633239613632646262383032663030613964"
+          ],
+          "at": "2026-11-09T18:44:48.150760+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17MY1HTCN0.TLE5G9"
+          ],
+          "at": "2026-11-09T18:44:48.155564+00:00"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  10:38:36
+   Duration  1.12s (tests 97%, transform 2%, import 1%)

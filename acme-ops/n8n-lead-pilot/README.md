@@ -1,8 +1,8 @@
-**C9 candidate update:** local lease/CAS/shared-store implementation and process-kill tests are recorded in [C9 recovery](C9-CRASH-RECOVERY.md). This candidate is not deployed; the published receipt still has C9 unmeasured.
+**Current C9 extension:** Calendar/Slack positive read-back is published to the isolated native pilot as `5e260355-bfba-43f9-9a67-fb11509d4de3`. Local DynamoDB/process tests pass (567 tests, zero skips). The [separate native receipt](https://fetchsandbox.com/runs/ee47e36e23?flow=vr_b855f8217c1a41c29a62dbb802f00a9d) records 18 held, zero violated, original C9 unmeasured, including real accepted-write Calendar/Slack adapter crashes and no duplicate effects. Overall remains inconclusive. See [C9 recovery and limits](C9-CRASH-RECOVERY.md). The full original C9 matrix remains unmeasured. Backend `f7eeee67` is unchanged.
 
 # n8n lead recovery pilot — implementation in progress
 
-**C6 implementation and partial proof:** requester-bound state and signed native
+**Historical C6 implementation and partial proof:** requester-bound state and signed native
 invocations are implemented locally; 528 application tests and TypeScript pass.
 Published native version `bc0acc3f` returned the expected 403/403/403/400 in four
 direct entry probes after correcting a retained HTTP-200 configuration failure.

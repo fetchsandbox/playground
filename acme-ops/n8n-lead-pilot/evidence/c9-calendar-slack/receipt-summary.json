@@ -1,0 +1,116 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "runtime_fault_qualified": true,
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-58bc4cbc2cfa1ddedf3c8f628994eda24a8b01f763f232f9c7e1ce8396f32ffd-bridge-abb53505484a",
+  "bundle_sha256": "abb53505484a145223b288bee42b893b5a13f5645125054c505f2afe05c65c39",
+  "session_id": "vs_3f41fdc33436",
+  "run_id": "vr_b855f8217c1a41c29a62dbb802f00a9d",
+  "receipt_url": "https://fetchsandbox.com/runs/ee47e36e23?flow=vr_b855f8217c1a41c29a62dbb802f00a9d",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9_deal_crash",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9_calendar_crash",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9_slack_crash",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C11",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_hold",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_recover",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    }
+  ],
+  "recorded_at": "2026-11-09T18:46:22.794Z"
+}

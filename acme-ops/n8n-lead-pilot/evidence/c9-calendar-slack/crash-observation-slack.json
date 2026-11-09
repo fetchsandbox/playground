@@ -1,0 +1,17 @@
+{
+  "provider_accepted": true,
+  "checkpoint_pending": true,
+  "step": "slack",
+  "lead_id": "fs-c9-slack-vr_b855f8217c1a41c29a62dbb802f00a9d",
+  "owner_before": "510",
+  "version_before": 20,
+  "epoch_before": 1,
+  "provider_matching_records": 1,
+  "effect_id": "17MY1HTCN0.TLE5G9",
+  "pid_before": 71305,
+  "signal": "SIGKILL",
+  "accepted_observed_at": "2026-11-09T18:44:05.615Z",
+  "killed_at": "2026-11-09T18:44:05.862Z",
+  "pid_after": 71470,
+  "restarted_at": "2026-11-09T18:44:05.948Z"
+}

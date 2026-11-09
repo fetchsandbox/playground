@@ -1,8 +1,9 @@
 # C9: abandoned claims and process crashes
 
-**One native Deal-crash boundary measured; full C9 matrix remains open.**
-Native recovery candidate `7e773eaa` is published to the isolated pilot; its cloud
-crash qualification is separate from publication. Backend `f7eeee67` is unchanged.
+**Calendar/Slack recovery candidate published; full C9 matrix remains open.**
+Native candidate `5e260355-bfba-43f9-9a67-fb11509d4de3` adds positive Calendar
+and Slack read-back. The latest measured native result is recorded at the end of
+this document. Backend `f7eeee67` is unchanged.
 The earlier native `bc0acc3f` 15-passed/C9-unmeasured receipt is historical evidence.
 C9 is still typed unmeasured in the unchanged, frozen FetchSandbox contract. Its historical blocker wording remains byte-for-byte preserved; this document records the newer implementation and bounded native results. No new engine receipt
 or native builder acceptance follows from the local tests. Native attempts are recorded separately below.
@@ -207,7 +208,7 @@ zero skips, including a new confirmed-notification regression test. Native
 requalification remains a separate receipt.
 
 
-## Latest bounded native result
+## Earlier bounded native Deal result
 
 [Corrected receipt](https://fetchsandbox.com/runs/fb889cd736?flow=vr_e71e27e84f0d47cebc38851537caee09):
 **16 held, zero violated, original C9 unmeasured**. Overall verdict is
@@ -257,3 +258,101 @@ provider counts or identities remains failure/unmeasured, never a pass.
 The full C9 matrix, native negative control, three clean native repeats, fresh
 builder acceptance and live vendor parity remain open. The one passing Deal
 boundary does not close those milestones.
+
+
+## Calendar and Slack recovery extension, November 9
+
+Native candidate `5e260355-bfba-43f9-9a67-fb11509d4de3` has actual export
+SHA256 `58bc4cbc2cfa1ddedf3c8f628994eda24a8b01f763f232f9c7e1ce8396f32ffd`.
+The source guard accepts its six nodes/wiring and rejects the prior `7e773eaa`
+export. Publication alone does not establish recovery.
+
+Provider qualification through MCP-issued twins found Calendar event listing
+unsupported (HTTP 501). Client-assigned event creation and reading that exact ID
+both returned 200. The workflow now saves a deterministic, provider-valid event
+ID before dispatch. Recovery reads only that ID and requires the exact summary,
+confirmed status, attendee and interval before confirming it. Absent or mismatched
+read-back keeps the action unknown without creating another event. This does not
+claim that Calendar listing is supported.
+
+Slack history returned the posted text/timestamp. Recovery uses the fixed pilot
+channel and bounded history read. It requires a complete page and exactly one
+matching message not already recorded as a prior accepted notification. Missing,
+ambiguous, paginated, wrong-channel or wrong-text results remain unknown without
+a resend. Confirmed responses must contain a timestamp. Already-confirmed status
+updates on a new held attempt retain the original business contract. This is a
+bounded controlled-channel test, not universal exactly-once Slack delivery.
+
+Local evidence: 567 tests passed, zero skipped, with DynamoDB Local enabled;
+TypeScript passed. Seven separate crash/start harness checks passed, including
+actual accepted HTTP ID and timestamp interception before SIGKILL. The two new
+Calendar/Slack process recovery expectations failed on the earlier machine. An
+intermediate Calendar fixture omitted the confirmed status returned by the twin;
+that failure is retained separately and the fixture now reflects the qualified
+response. Sixteen contract gates preserve all original check oracles, keep original
+C9 unmeasured, and bound the three added fault targets/configuration size.
+
+`PILOT_CONTRACT=crash` now adds `C9_calendar_crash` and `C9_slack_crash` alongside
+the original bounded Deal experiment. Each has its own accepted-effect witness,
+owned adapter SIGKILL, replacement PID, lease takeover, exact identity read-back
+and independent five-provider counts, including replay. They share a business
+receipt but retain three distinct OS/witness files. Neither a public receipt nor
+a child IPC message alone establishes the actual process death.
+
+The native outcome below qualifies the three bounded cases. The original C9 matrix, native
+negative controls, three clean repetitions, fresh builder acceptance, native n8n
+worker-host death, real AWS database loss/restore and live vendor parity remain
+unmeasured. DynamoDB Local remains running across the adapter crashes.
+
+
+### Native Calendar/Slack result
+
+[Separate receipt](https://fetchsandbox.com/runs/ee47e36e23?flow=vr_b855f8217c1a41c29a62dbb802f00a9d):
+**18 held, zero violated, original C9 unmeasured**. All 85 recorded independent
+provider-state assertions held. Overall remains **inconclusive**, `app_verified=false`,
+`complete=false`, strict runner exit 1. The three accepted-write crash controllers
+finished independently and `runtime_fault_qualified=true`. Backend `/api/build`
+still reports `f7eeee67`; only the isolated n8n pilot was republished.
+
+| Bounded case | Actual SIGKILL/replacement | Native execution/recovery | Observed result |
+|---|---|---|---|
+| Deal control | 70512 → 71162 | 504 errored → 505 succeeded | Exact accepted Deal `035771482891` recovered; epoch 2 |
+| Calendar | 71162 → 71305 | 507 errored → 508 succeeded | Exact preselected/accepted event ID recovered; positive read-back; epoch 2 |
+| Slack | 71305 → 71470 | 510 errored → 511 succeeded | Accepted timestamp `17MY1HTCN0.TLE5G9` recovered; positive read-back; epoch 2 |
+
+Each case retained exactly one Contact, associated Deal, Gmail message, Calendar
+event and final Slack confirmation after recovery and replay. The native crash
+executions really errored because their I/O connection was lost; the resumed
+executions used the published version above. These are modeled provider effects.
+A fresh consistent reader of DynamoDB Local also found all three rows confirmed
+at epoch 2; that separate store read does not alter the public receipt's limits.
+
+Keep the [business receipt](evidence/c9-calendar-slack/receipt-summary.json),
+[Calendar crash witness](evidence/c9-calendar-slack/crash-observation-calendar.json),
+[Slack crash witness](evidence/c9-calendar-slack/crash-observation-slack.json) and
+[Deal control witness](evidence/c9-calendar-slack/crash-observation-deal.json)
+separate. [Provider observations](evidence/c9-calendar-slack/provider-observations.json)
+retain measured counts/IDs; [direct store read](evidence/c9-calendar-slack/direct-store-readback.json)
+retains checkpoint identities. [Observation and limits](evidence/c9-calendar-slack/observation.json),
+[source hashes](evidence/c9-calendar-slack/source-hashes.json),
+[contract parity](evidence/c9-calendar-slack/contract-parity.json) and
+[receipt screenshot](evidence/c9-calendar-slack/receipt.png) identify this attempt.
+Original business check definitions and the prior bounded Deal oracle are unchanged.
+The two new checks extend coverage; they are not a same-contract before/after
+comparison with the older 17-check receipt.
+
+The [pre-change process failures](evidence/c9-calendar-slack/before-process-tests.log),
+[intermediate fixture failure](evidence/c9-calendar-slack/after-recovery-process.log),
+[final 567-test run](evidence/c9-calendar-slack/full-suite-dynamo.log),
+[seven harness checks](evidence/c9-calendar-slack/runtime-harness.log),
+[contract gates](evidence/c9-calendar-slack/contract-gates.log) and
+[rejected stale export](evidence/c9-calendar-slack/prior-export-rejected.log)
+remain distinct. Calendar [listing failure/Slack history qualification](evidence/c9-calendar-slack/readback-qualification.json)
+and [exact Calendar ID qualification](evidence/c9-calendar-slack/calendar-id-qualification.json)
+are component observations, not substitute application proof.
+
+Full C9 acceptance remains open for native negative controls, repeated full runs,
+fresh builder acceptance and the other failure/interleaving boundaries. Temporary
+transports and the disposable database are stopped after evidence capture; the
+protected native workflow retains this published source, but its temporary I/O
+transport must be re-established for another run.

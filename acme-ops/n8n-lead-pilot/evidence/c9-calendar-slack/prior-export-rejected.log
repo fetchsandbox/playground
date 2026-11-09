@@ -1,0 +1,11 @@
+file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/verify/contracts/n8n-lead-recovery.mjs:46
+ if(nodes.length!==1 || nodes[0].type!==expectedNode.type || nodes[0].typeVersion!==expectedNode.typeVersion || !isDeepStrictEqual(normalize(nodes[0].parameters),normalize(expectedNode.parameters)))throw Error('Saved workflow differs from the app-owned contract source: '+expectedNode.name);
+                                                                                                                                                                                                            ^
+
+Error: Saved workflow differs from the app-owned contract source: Durable decision machine
+    at file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/verify/contracts/n8n-lead-recovery.mjs:46:205
+    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async file:///Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops/[eval1]:1:1
+
+Node.js v23.11.0

@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-09",
+  "scope": "Native protected n8n pilot against isolated FetchSandbox twins; three accepted-write adapter crashes",
+  "native_workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version": "5e260355-bfba-43f9-9a67-fb11509d4de3",
+  "native_export_sha256": "58bc4cbc2cfa1ddedf3c8f628994eda24a8b01f763f232f9c7e1ce8396f32ffd",
+  "backend": {
+    "commit": "f7eeee67",
+    "built_at": "2026-11-08T17:12:46.575660+00:00",
+    "env": "unknown"
+  },
+  "mcp": "npm 0.7.30",
+  "run_id": "vr_b855f8217c1a41c29a62dbb802f00a9d",
+  "result": {
+    "held": 18,
+    "violated": 0,
+    "unmeasured": [
+      "C9"
+    ],
+    "runtime_fault_qualified": true,
+    "verdict": "inconclusive",
+    "app_verified": false,
+    "complete": false,
+    "strict_runner_exit": 1
+  },
+  "native_execution_pairs": {
+    "deal": [
+      504,
+      505
+    ],
+    "calendar": [
+      507,
+      508
+    ],
+    "slack": [
+      510,
+      511
+    ]
+  },
+  "local_tests": {
+    "vitest_passed": 567,
+    "vitest_skipped": 0,
+    "typecheck": "passed",
+    "runtime_harness_passed": 7,
+    "contract_gates_passed": 16
+  },
+  "limits": [
+    "Original full C9 matrix remains unmeasured",
+    "One full native run; three repetitions pending",
+    "Native negative controls and fresh builder-agent acceptance pending",
+    "SIGKILL targets owned adapter, not native n8n Cloud worker host",
+    "DynamoDB Local remains running, not AWS database crash/restore",
+    "No live provider parity",
+    "Calendar listing is unsupported (501); exact ID GET is supported",
+    "Slack read-back holds paginated/ambiguous/missing results"
+  ],
+  "cleanup": {
+    "captured_at": "2026-11-09T18:49:55.874434+00:00",
+    "runner": "Exited 1 for unmeasured C9; closed managed relay and stopped owned adapter",
+    "reverse_tunnel": "Owned ngrok stopped",
+    "disposable_database": "Owned DynamoDB Local container removed after consistent-read evidence saved",
+    "local_adapter_port_8097": "No listener observed",
+    "native_source": "Remains published; temporary test transport is offline"
+  }
+}

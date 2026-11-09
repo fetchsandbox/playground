@@ -24,9 +24,9 @@ async function exercise(disableDedupe:boolean){
     }
    }else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state);
    else if(q.path.endsWith('/search'))result={status:200,body:{results:[]}};
-   else if(q.provider==='slack')result={status:200,body:{ok:true}};
+   else if(q.provider==='slack')result={status:200,body:{ok:true,ts:'fixture-ts'}};
    else if(q.provider==='hubspot' && q.method==='GET')result={status:200,body:deals[c.state.operations.deal.id]};
-   else {const step=c.step as keyof typeof effects;effects[step]++;const id=step+'-'+effects[step];result={status:200,body:{id}};
+   else {const step=c.step as keyof typeof effects;effects[step]++;const id=step+'-'+effects[step];result={status:200,body:{id:step==='calendar'?q.body.id:id}};
     if(step==='deal')deals[id]={id,properties:q.body.properties,associations:{contacts:{results:[{id:q.body.associations[0].to.id,type:'deal_to_contact'}]}}};
    }
    next={context:c,result};

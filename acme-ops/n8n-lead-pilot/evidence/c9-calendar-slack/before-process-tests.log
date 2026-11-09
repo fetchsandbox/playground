@@ -1,0 +1,55 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+ ❯ test/n8n-c9-process.test.ts (9 tests | 2 failed) 14891ms
+   ❯ C9 actual SIGKILL / independent workers / DynamoDB Local (9)
+     × kills after committed calendar HTTP write, then restarts without a duplicate 1600ms
+     × kills after committed slack HTTP write, then restarts without a duplicate 1581ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/n8n-c9-process.test.ts > C9 actual SIGKILL / independent workers / DynamoDB Local > kills after committed calendar HTTP write, then restarts without a duplicate
+AssertionError: expected 'unknown' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "unknown"
+
+ ❯ test/n8n-c9-process.test.ts:106:90
+    104|   expect(Object.values(counts()).every(n=>n<=1)).toBe(true);
+    105|   expect(effects[step]).toHaveLength(1);
+    106|   if(['contact','deal','gmail','calendar','slack'].includes(step)){exp…
+       |                                                                                          ^
+    107|   if(step==='calendar')expect((row?.operations as any).calendar).toMat…
+    108|   if(step==='slack')expect(row?.notification).toMatchObject({status:'c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/n8n-c9-process.test.ts > C9 actual SIGKILL / independent workers / DynamoDB Local > kills after committed slack HTTP write, then restarts without a duplicate
+AssertionError: expected { outcome: 'confirmed', …(2) } to match object { status: 'confirmed', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "confirmation": "positive_readback",
+-   "status": "confirmed",
+-   "ts": "slack-1",
++   "status": "unknown",
+  }
+
+ ❯ test/n8n-c9-process.test.ts:108:47
+    106|   if(['contact','deal','gmail','calendar','slack'].includes(step)){exp…
+    107|   if(step==='calendar')expect((row?.operations as any).calendar).toMat…
+    108|   if(step==='slack')expect(row?.notification).toMatchObject({status:'c…
+       |                                               ^
+    109|  },20000);
+    110| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  10:29:15
+   Duration  15.09s (tests 99%, import 1%)

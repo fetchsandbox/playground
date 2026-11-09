@@ -115,13 +115,13 @@ it('C6 candidate preserves every other check and requires the new protected requ
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });
 
-it('adds only a bounded Deal-crash check while retaining the original C9 blocker and every prior oracle',()=>{
+it('adds only three bounded accepted-write crash checks while retaining the original C9 blocker and every prior oracle',()=>{
  const f=fixture();try{
-  const result=load(f,'console.log(JSON.stringify({checks:c.checks,config:c.applicationConfig,crash:typeof c.crashSimulation}));','normal',{PILOT_CONTRACT:'crash'});
+  const result=load(f,'console.log(JSON.stringify({checks:c.checks,config:c.applicationConfig,crash:typeof c.crashSimulation,crashCount:c.crashSimulationCount,plans:[0,1,2,3].map(faultIndex=>c.crashSimulation({faultIndex,flowRunId:"test-run",legs:Object.fromEntries(["hubspot","google-calendar","slack"].map(p=>[p,{base_url:"https://fetchsandbox.com/sandbox/"+p}]))}))}));','normal',{PILOT_CONTRACT:'crash'});
   expect(result.status).toBe(0);const out=JSON.parse(result.stdout);
   const original=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
   const identity=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.identity.json',import.meta.url),'utf8'));
-  expect(out.checks).toHaveLength(original.checks.length+1);
+  expect(out.checks).toHaveLength(original.checks.length+3);
   for(const c of original.checks)expect(out.checks.find((x:any)=>x.id===c.id)).toEqual(c.id==='C6'?identity.checks[0]:c);
   expect(out.checks.find((x:any)=>x.id==='C9').blocker).toBeDefined();
   expect(out.checks.find((x:any)=>x.id==='C9_deal_crash').assertion.where).toContainEqual({select:'epoch',equals:2,required:true});
@@ -134,6 +134,11 @@ it('adds only a bounded Deal-crash check while retaining the original C9 blocker
   expect(JSON.stringify(crash.provider_assertions)).toContain('step3.state.operations.deal.id');
   const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify({app_version:'n8n-export-'+'a'.repeat(64)+'-bridge-'+'b'.repeat(12),disposable_test_app:true,require_verifier_token:true,...out.config,checks:out.checks}),encoding:'utf8'});
   expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBeLessThanOrEqual(131072);
-  expect(out.crash).toBe('function');
+  expect(out.crash).toBe('function');expect(out.crashCount).toBe(3);
+  expect(out.plans.map((p:any)=>p?.id??null)).toEqual(['deal','calendar','slack',null]);
+  expect(out.plans.slice(0,3).map((p:any)=>p.response_identity)).toEqual(['id','id','ts']);
+  for(const id of ['C9_deal_crash','C9_calendar_crash','C9_slack_crash']){
+   const check=out.checks.find((c:any)=>c.id===id);expect(check.provider_assertions).toHaveLength(5);expect(check.actions[0].expect_status).toBe(502);expect(check.assertion.where).toContainEqual({select:'epoch',equals:2,required:true});
+  }
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });

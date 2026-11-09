@@ -7,18 +7,18 @@ import {mkdtempSync,existsSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {watchAcceptedWriteCrash} from './runtime-crash.mjs';
-async function fixture(){
+async function fixture(identity="id"){
  const dir=mkdtempSync(join(tmpdir(),'crash-control-'));let accepted=0;
- const server=createServer((req,res)=>{if(req.method==='POST'){accepted++;res.writeHead(201,{'content-type':'application/json'});res.end(JSON.stringify({id:'effect-'+accepted}));}else{res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({accepted}));}});
+ const server=createServer((req,res)=>{if(req.method==='POST'){accepted++;res.writeHead(201,{'content-type':'application/json'});res.end(JSON.stringify(identity==='ts'?{ok:true,ts:'effect-'+accepted}:{id:'effect-'+accepted}));}else{res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({accepted}));}});
  server.listen(0,'127.0.0.1');await once(server,'listening');
- const plan={url:'https://fetchsandbox.com/sandbox/test-fixture/crm/v3/objects/deals',method:'POST',body_path:['properties','dealname'],body_equals:'Pilot example',nonce:'fixture-only'};
+ const plan={url:'https://fetchsandbox.com/sandbox/test-fixture/crm/v3/objects/deals',method:'POST',body_path:['properties','dealname'],body_equals:'Pilot example',nonce:'fixture-only',response_identity:identity};
  const origin='http://127.0.0.1:'+server.address().port,checkpoint=join(dir,'checkpoint.json');
  const child=fork(new URL('../test/fixtures/c9-preload-process.mjs',import.meta.url),[],{env:{...process.env,FS_PROOF_CRASH_TARGET:JSON.stringify(plan),FIXTURE_PLAN:JSON.stringify(plan),FIXTURE_ORIGIN:origin,FIXTURE_CHECKPOINT:checkpoint},stdio:['ignore','ignore','pipe','ipc']});
  const cleanup=async()=>{if(child.exitCode===null&&child.signalCode===null){const exit=once(child,'exit');child.kill('SIGKILL');await exit;}await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true});};
  return {child,plan,origin,checkpoint,cleanup};
 }
-test('real accepted HTTP effect is witnessed before SIGKILL and no checkpoint is saved',async()=>{
- const f=await fixture();let replacement,records=[];
+for(const identity of ['id','ts'])test('real accepted HTTP '+identity+' is witnessed before SIGKILL and no checkpoint is saved',async()=>{
+ const f=await fixture(identity);let replacement,records=[];
  try{
   const watch=watchAcceptedWriteCrash({child:f.child,plan:f.plan,witness:async id=>{
    const state=await(await fetch(f.origin+'/state')).json();

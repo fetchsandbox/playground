@@ -1,0 +1,126 @@
+{
+  "scope": "Fresh consistent DynamoDB Local reader after native proof; database remained running",
+  "at": "2026-11-09T18:48:13.337Z",
+  "records": [
+    {
+      "lead_id": "fs-c9-calendar-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "status": "confirmed",
+      "epoch": 2,
+      "owner": "508",
+      "version": 24,
+      "operations": {
+        "gmail": {
+          "client_status": 200,
+          "status": "confirmed",
+          "id": "7498438526271138"
+        },
+        "calendar": {
+          "id": "f66732d63392d63616c656e6461722d76725f6238353566383231376331613431633239613632646262383032663030613964",
+          "confirmation": "positive_readback",
+          "status": "confirmed",
+          "requested_id": "f66732d63392d63616c656e6461722d76725f6238353566383231376331613431633239613632646262383032663030613964"
+        },
+        "deal": {
+          "status": "confirmed",
+          "id": "719264417171",
+          "confirmation": "positive_readback"
+        },
+        "contact": {
+          "client_status": 201,
+          "status": "confirmed",
+          "id": "189726423230"
+        }
+      },
+      "notification": {
+        "blocked_step": null,
+        "client_status": 200,
+        "accepted_ids": [
+          "17Q2AUNO4P.VK1UIU"
+        ],
+        "outcome": "confirmed",
+        "status": "confirmed",
+        "ts": "17Q2AUNO4P.VK1UIU"
+      }
+    },
+    {
+      "lead_id": "fs-c9-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "status": "confirmed",
+      "epoch": 2,
+      "owner": "505",
+      "version": 23,
+      "operations": {
+        "gmail": {
+          "client_status": 200,
+          "status": "confirmed",
+          "id": "7412978790422591"
+        },
+        "calendar": {
+          "id": "f66732d63392d76725f6238353566383231376331613431633239613632646262383032663030613964",
+          "client_status": 200,
+          "status": "confirmed",
+          "requested_id": "f66732d63392d76725f6238353566383231376331613431633239613632646262383032663030613964"
+        },
+        "deal": {
+          "status": "confirmed",
+          "id": "035771482891",
+          "confirmation": "positive_readback"
+        },
+        "contact": {
+          "client_status": 201,
+          "status": "confirmed",
+          "id": "145002497893"
+        }
+      },
+      "notification": {
+        "blocked_step": null,
+        "client_status": 200,
+        "accepted_ids": [
+          "17JI3DWWX0.87ASNQ"
+        ],
+        "outcome": "confirmed",
+        "status": "confirmed",
+        "ts": "17JI3DWWX0.87ASNQ"
+      }
+    },
+    {
+      "lead_id": "fs-c9-slack-vr_b855f8217c1a41c29a62dbb802f00a9d",
+      "status": "confirmed",
+      "epoch": 2,
+      "owner": "511",
+      "version": 25,
+      "operations": {
+        "gmail": {
+          "client_status": 200,
+          "status": "confirmed",
+          "id": "9130332254604019"
+        },
+        "calendar": {
+          "id": "f66732d63392d736c61636b2d76725f6238353566383231376331613431633239613632646262383032663030613964",
+          "client_status": 200,
+          "status": "confirmed",
+          "requested_id": "f66732d63392d736c61636b2d76725f6238353566383231376331613431633239613632646262383032663030613964"
+        },
+        "deal": {
+          "status": "confirmed",
+          "id": "575360956749",
+          "confirmation": "positive_readback"
+        },
+        "contact": {
+          "client_status": 201,
+          "status": "confirmed",
+          "id": "564490642490"
+        }
+      },
+      "notification": {
+        "blocked_step": null,
+        "confirmation": "positive_readback",
+        "accepted_ids": [
+          "17MY1HTCN0.TLE5G9"
+        ],
+        "outcome": "confirmed",
+        "status": "confirmed",
+        "ts": "17MY1HTCN0.TLE5G9"
+      }
+    }
+  ]
+}

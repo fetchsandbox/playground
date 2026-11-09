@@ -127,8 +127,8 @@ async function settle(mcp, res, label) {
 // The runtime under test
 // ---------------------------------------------------------------------------
 let app;
-let crashController;
-let crashInjected=false;
+const crashControllers=new Map();
+let crashInjected=0;
 const {watchAcceptedWriteCrash}=await import('./runtime-crash.mjs');
 process.once("exit",()=>{app?.kill("SIGKILL");});
 const stateFile = join(OUT_DIR, "state.json");
@@ -192,20 +192,21 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     ...(await contract.runtimeEnv?.({ legs, outDir: OUT_DIR, credentialFile }) ?? {}),
     ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
   };
-  const crashPlan=!crashInjected && contract.crashSimulation && legs && flowRunId
-    ? contract.crashSimulation({legs,flowRunId}) : null;
+  const crashPlan=contract.crashSimulation && legs && flowRunId
+    ? contract.crashSimulation({legs,flowRunId,faultIndex:crashInjected}) : null;
   if(crashPlan)env.FS_PROOF_CRASH_TARGET=JSON.stringify(crashPlan);
   const args = [...(crashPlan?[`--import=${new URL('./runtime-crash-preload.mjs',import.meta.url).pathname}`]:[]),...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
   await requireFreePort(PORT);
   app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit", ...(crashPlan?["ipc"]:[])] });
   if(crashPlan){
     const owned=app;
-    crashController=watchAcceptedWriteCrash({child:owned,plan:crashPlan,
-      witness:effectId=>contract.witnessCrash({legs,flowRunId,effectId,port:PORT,env}),
-      record:observation=>save("crash-observation",observation),
-      restart:async()=>{crashInjected=true;await startApp({legs,credentialFile,flowRunId});return {pid:app.pid};},
+    const crashController=watchAcceptedWriteCrash({child:owned,plan:crashPlan,
+      witness:effectId=>contract.witnessCrash({legs,flowRunId,effectId,port:PORT,env,plan:crashPlan}),
+      record:observation=>save("crash-observation-"+(crashPlan.id??"deal"),observation),
+      restart:async()=>{crashInjected++;await startApp({legs,credentialFile,flowRunId});return {pid:app.pid};},
     });
-    crashController.done.catch(error=>{save("crash-error",{message:error.message});});
+    crashControllers.set(crashPlan.id??"deal",crashController);
+    crashController.done.catch(error=>{save("crash-error-"+(crashPlan.id??"deal"),{message:error.message});});
   }
   const listening=waitForOwnListener(app,PORT,workflow);
   app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
@@ -342,7 +343,7 @@ save("execute", exe);
 log("execute", exe.status ?? exe.step ?? "", exe.message_for_user ?? "");
 
 let final = exe;
-if(contract.crashSimulation && !crashController)throw Error("Crash simulation controller was not started");
+if(contract.crashSimulation && !crashControllers.size)throw Error("Crash simulation controller was not started");
 let settledPolls = 0;
 const TERMINAL = ["passed", "failed", "failing", "completed", "error", "done", "inconclusive", "verified", "partially_verified"];
 for (let i = 0; i < 120; i++) {
@@ -373,8 +374,9 @@ for (let i = 0; i < 120; i++) {
 save("final", final);
 let crashQualified=!contract.crashSimulation;
 if(contract.crashSimulation){
- if(!crashController?.triggered)save("crash-error",{message:"Target write was never observed; crash remains unmeasured"});
- else try{await Promise.race([crashController.done,sleep(15000).then(()=>{throw Error("Crash evidence incomplete");})]);crashQualified=crashInjected;}catch(error){save("crash-error",{message:error.message});}
+ const expected=contract.crashSimulationCount??1;
+ if(crashControllers.size!==expected || [...crashControllers.values()].some(c=>!c.triggered))save("crash-error",{message:"Not every target write was observed; incomplete crashes remain unmeasured",expected,observed:crashControllers.size});
+ else try{await Promise.race([Promise.all([...crashControllers.values()].map(c=>c.done)),sleep(15000).then(()=>{throw Error("Crash evidence incomplete");})]);crashQualified=crashInjected===expected;}catch(error){save("crash-error",{message:error.message});}
 }
 
 const shareRaw = final.share_url ?? final.receipt_url ?? final.verdict?.share_url ?? final.attempt?.share_url ?? "";

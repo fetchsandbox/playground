@@ -1,0 +1,46 @@
+[
+  {
+    "provider": "google-calendar",
+    "method": "POST",
+    "path": "/calendars/primary/events",
+    "status": 200,
+    "data": {
+      "id": "f63726173687175616c696679",
+      "summary": "Pilot c9qualification",
+      "start": {
+        "dateTime": "2026-12-01T16:00:00Z"
+      },
+      "end": {
+        "dateTime": "2026-12-01T16:15:00Z"
+      },
+      "attendees": [
+        {
+          "email": "c9qualification@example.com"
+        }
+      ],
+      "status": "confirmed"
+    }
+  },
+  {
+    "provider": "google-calendar",
+    "method": "GET",
+    "path": "/calendars/primary/events/f63726173687175616c696679",
+    "status": 200,
+    "data": {
+      "id": "f63726173687175616c696679",
+      "summary": "Pilot c9qualification",
+      "start": {
+        "dateTime": "2026-12-01T16:00:00Z"
+      },
+      "end": {
+        "dateTime": "2026-12-01T16:15:00Z"
+      },
+      "attendees": [
+        {
+          "email": "c9qualification@example.com"
+        }
+      ],
+      "status": "confirmed"
+    }
+  }
+]

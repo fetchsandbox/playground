@@ -1,0 +1,30 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+ ❯ test/n8n-c9-process.test.ts (9 tests | 1 failed) 14273ms
+   ❯ C9 actual SIGKILL / independent workers / DynamoDB Local (9)
+     × kills after committed calendar HTTP write, then restarts without a duplicate 1598ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/n8n-c9-process.test.ts > C9 actual SIGKILL / independent workers / DynamoDB Local > kills after committed calendar HTTP write, then restarts without a duplicate
+AssertionError: expected 'unknown' to be 'confirmed' // Object.is equality
+
+Expected: "confirmed"
+Received: "unknown"
+
+ ❯ test/n8n-c9-process.test.ts:106:90
+    104|   expect(Object.values(counts()).every(n=>n<=1)).toBe(true);
+    105|   expect(effects[step]).toHaveLength(1);
+    106|   if(['contact','deal','gmail','calendar','slack'].includes(step)){exp…
+       |                                                                                          ^
+    107|   if(step==='calendar')expect((row?.operations as any).calendar).toMat…
+    108|   if(step==='slack')expect(row?.notification).toMatchObject({status:'c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 14 passed (15)
+   Start at  10:32:50
+   Duration  14.43s (tests 99%, import 1%)
