@@ -1,0 +1,322 @@
+{
+  "scope": "Stored verifier evidence and separate application-owned transport log; not a new verifier",
+  "receipt_url": "https://fetchsandbox.com/runs/92816b67ab?flow=vr_fa0e8e1ae1374caf93aad40821c19098",
+  "run_id": "vr_fa0e8e1ae1374caf93aad40821c19098",
+  "archive_sha256": "ffabcba5af6bda328d049db593a7c93be0be942def56d58a7197e67af74b4018",
+  "provider_assertions": {
+    "total": 85,
+    "held": 85,
+    "not_held": 0
+  },
+  "slack_check": {
+    "id": "C9_slack_crash",
+    "status": "held",
+    "explanation": "expected exactly 1, found 1"
+  },
+  "slack_case_provider_observations": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "821469298245"
+      ],
+      "at": "2026-11-09T21:00:17.592220+00:00"
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "449239385018"
+      ],
+      "at": "2026-11-09T21:00:17.594105+00:00"
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "9244361224982262"
+      ],
+      "at": "2026-11-09T21:00:17.601885+00:00"
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938"
+      ],
+      "at": "2026-11-09T21:00:17.603290+00:00"
+    },
+    {
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "17UFBXQM0U.I0D2JT"
+      ],
+      "matching_messages": [
+        {
+          "ts": "17UFBXQM0U.I0D2JT",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098\",\"status\":\"confirmed\",\"blocked_step\":null}"
+        }
+      ],
+      "at": "2026-11-09T21:00:17.607166+00:00"
+    }
+  ],
+  "slack_app_requests": [
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+      "status": 200,
+      "started_at": "2026-11-09T20:59:23.319296+00:00",
+      "finished_at": "2026-11-09T20:59:23.503446+00:00",
+      "response": {
+        "records": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 502,
+      "started_at": "2026-11-09T20:59:23.505358+00:00",
+      "finished_at": "2026-11-09T20:59:35.074425+00:00",
+      "response": {
+        "_non_json_response": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+      "status": 200,
+      "started_at": "2026-11-09T20:59:35.076492+00:00",
+      "finished_at": "2026-11-09T20:59:35.325019+00:00",
+      "response": {
+        "records": [
+          {
+            "owner": "678",
+            "requester": "pilot-team:pilot-owner",
+            "notification": {
+              "blocked_step": null,
+              "accepted_ids": [],
+              "outcome": "confirmed",
+              "status": "in_flight"
+            },
+            "lease_expires_at": 1794258004374,
+            "operations": {
+              "gmail": {
+                "client_status": 200,
+                "status": "confirmed",
+                "id": "9244361224982262"
+              },
+              "calendar": {
+                "id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938",
+                "client_status": 200,
+                "status": "confirmed",
+                "requested_id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938"
+              },
+              "deal": {
+                "status": "confirmed",
+                "id": "449239385018",
+                "confirmation": "positive_readback"
+              },
+              "contact": {
+                "client_status": 201,
+                "status": "confirmed",
+                "id": "821469298245"
+              }
+            },
+            "epoch": 1,
+            "pk": "lead-pilot#ccbf4688e4547902207edc898d91c4127240876bcd6c6851dbd42654c1ecc095#fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+            "version": 20,
+            "status": "confirmed"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 200,
+      "started_at": "2026-11-09T21:00:10.365033+00:00",
+      "finished_at": "2026-11-09T21:00:15.979188+00:00",
+      "response": {
+        "done": true,
+        "lead_id": "fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+        "status": "confirmed",
+        "reason": "Status notification accepted by twin",
+        "state": {
+          "owner": "679",
+          "requester": "pilot-team:pilot-owner",
+          "notification": {
+            "blocked_step": null,
+            "confirmation": "positive_readback",
+            "accepted_ids": [
+              "17UFBXQM0U.I0D2JT"
+            ],
+            "outcome": "confirmed",
+            "status": "confirmed",
+            "ts": "17UFBXQM0U.I0D2JT"
+          },
+          "lease_expires_at": 1794258045465,
+          "operations": {
+            "gmail": {
+              "client_status": 200,
+              "status": "confirmed",
+              "id": "9244361224982262"
+            },
+            "calendar": {
+              "id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938",
+              "client_status": 200,
+              "status": "confirmed",
+              "requested_id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938"
+            },
+            "deal": {
+              "status": "confirmed",
+              "id": "449239385018",
+              "confirmation": "positive_readback"
+            },
+            "contact": {
+              "client_status": 201,
+              "status": "confirmed",
+              "id": "821469298245"
+            }
+          },
+          "epoch": 2,
+          "pk": "lead-pilot#ccbf4688e4547902207edc898d91c4127240876bcd6c6851dbd42654c1ecc095#fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+          "version": 25,
+          "status": "confirmed"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/invoke",
+      "status": 200,
+      "started_at": "2026-11-09T21:00:15.989119+00:00",
+      "finished_at": "2026-11-09T21:00:17.280539+00:00",
+      "response": {
+        "done": true,
+        "lead_id": "fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+        "status": "confirmed",
+        "reason": "Existing execution owns this lead, or lead is already complete",
+        "state": {
+          "owner": "679",
+          "requester": "pilot-team:pilot-owner",
+          "notification": {
+            "blocked_step": null,
+            "confirmation": "positive_readback",
+            "accepted_ids": [
+              "17UFBXQM0U.I0D2JT"
+            ],
+            "outcome": "confirmed",
+            "status": "confirmed",
+            "ts": "17UFBXQM0U.I0D2JT"
+          },
+          "lease_expires_at": 1794258045465,
+          "operations": {
+            "gmail": {
+              "client_status": 200,
+              "status": "confirmed",
+              "id": "9244361224982262"
+            },
+            "calendar": {
+              "id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938",
+              "client_status": 200,
+              "status": "confirmed",
+              "requested_id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938"
+            },
+            "deal": {
+              "status": "confirmed",
+              "id": "449239385018",
+              "confirmation": "positive_readback"
+            },
+            "contact": {
+              "client_status": 201,
+              "status": "confirmed",
+              "id": "821469298245"
+            }
+          },
+          "epoch": 2,
+          "pk": "lead-pilot#ccbf4688e4547902207edc898d91c4127240876bcd6c6851dbd42654c1ecc095#fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+          "version": 25,
+          "status": "confirmed"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/proof/fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+      "status": 200,
+      "started_at": "2026-11-09T21:00:17.382329+00:00",
+      "finished_at": "2026-11-09T21:00:17.589628+00:00",
+      "response": {
+        "records": [
+          {
+            "owner": "679",
+            "requester": "pilot-team:pilot-owner",
+            "notification": {
+              "blocked_step": null,
+              "confirmation": "positive_readback",
+              "accepted_ids": [
+                "17UFBXQM0U.I0D2JT"
+              ],
+              "outcome": "confirmed",
+              "status": "confirmed",
+              "ts": "17UFBXQM0U.I0D2JT"
+            },
+            "lease_expires_at": 1794258045465,
+            "operations": {
+              "gmail": {
+                "client_status": 200,
+                "status": "confirmed",
+                "id": "9244361224982262"
+              },
+              "calendar": {
+                "id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938",
+                "client_status": 200,
+                "status": "confirmed",
+                "requested_id": "f66732d63392d736c61636b2d76725f6661306538653161653133373463616639336161643430383231633139303938"
+              },
+              "deal": {
+                "status": "confirmed",
+                "id": "449239385018",
+                "confirmation": "positive_readback"
+              },
+              "contact": {
+                "client_status": 201,
+                "status": "confirmed",
+                "id": "821469298245"
+              }
+            },
+            "epoch": 2,
+            "pk": "lead-pilot#ccbf4688e4547902207edc898d91c4127240876bcd6c6851dbd42654c1ecc095#fs-c9-slack-vr_fa0e8e1ae1374caf93aad40821c19098",
+            "version": 25,
+            "status": "confirmed"
+          }
+        ]
+      }
+    }
+  ],
+  "application_trace_slack_history_reads": [
+    {
+      "provider": "slack",
+      "method": "GET",
+      "path": "/conversations.history?channel=C_PILOT&limit=100",
+      "status": 200
+    }
+  ],
+  "backend": {
+    "commit": "f7eeee67",
+    "built_at": "2026-11-08T17:12:46.575660+00:00",
+    "env": "unknown"
+  }
+}

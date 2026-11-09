@@ -7,7 +7,7 @@ import {LeadState} from '../../n8n-lead-pilot/state';
 // @ts-ignore Native shared decision machine.
 import {advance} from '../../n8n-lead-pilot/machine.mjs';
 // @ts-ignore Existing native negative-control source variant.
-import {blindDealRetry,skipCalendarReadback} from '../../n8n-lead-pilot/build-workflow.mjs';
+import {blindDealRetry,skipCalendarReadback,blindSlackResend} from '../../n8n-lead-pilot/build-workflow.mjs';
 const cfg=JSON.parse(process.env.C9_FIXTURE!);
 const store=new DynamoStore(cfg.table,new DynamoDBClient({endpoint:cfg.endpoint,region:'us-west-2',credentials:{accessKeyId:'local',secretAccessKey:'local'}}));
 const state=new LeadState(store,cfg.scope,{leaseMs:1000});
@@ -18,7 +18,7 @@ async function barrier(phase:string,context:any,request:any,result?:any){
 let next:any={lead_id:cfg.lead,attempt:cfg.owner};
 for(let i=0;i<120;i++){
  const raw=advance(next);
- const out=cfg.variant==='blind-deal-retry'?blindDealRetry(raw):cfg.variant==='skip-calendar-readback'?skipCalendarReadback(raw):raw;
+ const out=cfg.variant==='blind-deal-retry'?blindDealRetry(raw):cfg.variant==='skip-calendar-readback'?skipCalendarReadback(raw):cfg.variant==='blind-slack-resend'?blindSlackResend(raw):raw;
  if(out.done){process.send?.({done:out});process.disconnect?.();break;}
  const c=out.context,q=out.request;
  await barrier('before',c,q);

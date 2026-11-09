@@ -1,0 +1,12 @@
+{
+  "compared_fields": [
+    "checks",
+    "scope_review",
+    "coverage_review",
+    "requester_profiles"
+  ],
+  "identical": true,
+  "check_count": 19,
+  "canonical_frozen_fields_sha256": "ded8c11320364dfb313aca51570a989e4026d27dfc35da953534eeb31d9a519e",
+  "scope": "Same declared check, scope, coverage and requester-profile definitions; app versions and disposable bindings differ"
+}

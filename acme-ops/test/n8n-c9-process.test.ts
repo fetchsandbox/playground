@@ -74,6 +74,18 @@ describe.skipIf(!endpoint)('C9 actual SIGKILL / independent workers / DynamoDB L
   const confirmedFlowOracle=()=>result.status==='confirmed' && Object.values(counts()).every(n=>n===1);
   expect(confirmedFlowOracle()).toBe(false);
  },20000);
+ it('the same one-effect oracle rejects blind Slack resend after an accepted-write crash',async()=>{
+  effects={contact:[],deal:[],gmail:[],calendar:[],slack:[]};const scope='s'+randomUUID();
+  await worker(scope,'old',m=>write(m,'slack'));
+  await new Promise(resolve=>setTimeout(resolve,1100));
+  const result=await worker(scope,'broken',undefined,'blind-slack-resend');
+  expect(result.status).toBe('confirmed');
+  expect(counts()).toEqual({contact:1,deal:1,gmail:1,calendar:1,slack:2});
+  expect(effects.slack![0].ts).not.toBe(effects.slack![1].ts);
+  expect(effects.slack![0].text).toBe(effects.slack![1].text);
+  const oneEffectOracle=()=>Object.values(counts()).every(n=>n===1);
+  expect(oneEffectOracle()).toBe(false);
+ },20000);
  it('two independent replacement processes cannot both acquire the abandoned lead',async()=>{
   effects={contact:[],deal:[],gmail:[],calendar:[],slack:[]};const scope='s'+randomUUID();
   await worker(scope,'old',m=>write(m,'gmail'));

@@ -1,9 +1,9 @@
 # C9: abandoned claims and process crashes
 
-**Calendar/Slack recovery candidate published; full C9 matrix remains open.**
+**Calendar and Slack negative controls measured; full C9 matrix remains open.**
 The protected pilot now publishes restored native version
-`d0f034f4-61b7-46cd-8568-3580aab5fb36`. Its Calendar negative control and
-same-contract restoration results are recorded at the end of this document.
+`4e993aff-e091-4ecb-b572-ff5289a295db`. Calendar and Slack negative controls
+and their separate same-contract restoration results are recorded below.
 Backend `f7eeee67` is unchanged.
 The earlier native `bc0acc3f` 15-passed/C9-unmeasured receipt is historical evidence.
 C9 is still typed unmeasured in the unchanged, frozen FetchSandbox contract. Its historical blocker wording remains byte-for-byte preserved; this document records the newer implementation and bounded native results. No new engine receipt
@@ -103,18 +103,24 @@ Logs and sanitized hashes are in [local evidence](evidence/c9-local/observation.
 The controlled broken workflow is rejected by the business oracle; the test that
 expects that rejection passes. This is not a new failing FetchSandbox receipt.
 
-## Remaining milestones
+## Current remaining milestones
 
-1. Qualify Calendar and Slack positive reconciliation, or explicitly agree that
-   unknown/manual reconciliation is the required business outcome. Do not silently
-   change the original full-flow success requirements to count a hold as completion.
-2. Publish a separately identified native candidate and capture its actual export.
-   The previous export must fail the new source guard; do not relabel it.
-3. Add reviewed C9 actions through the existing contract/lifecycle owner, retaining
-   every other requirement. Witness actual accepted effects and crash boundaries,
-   restart with the same shared store, and measure stale-owner and independent counts.
-4. Run native negative controls, three clean full-contract repetitions and fresh
-   independent builder-agent acceptance. Keep all failures and unmeasured cases visible.
+Calendar and Slack positive read-back, actual native accepted-write adapter
+crashes, the Calendar incomplete-recovery negative control and Slack duplicate-send
+negative control now have separate bounded evidence. Actual published exports and
+unchanged-oracle comparisons are retained below. They do not close full C9.
+
+1. Extend native C9 coverage to competing takeover workers, stale owners resuming
+   and late accepted requests. The local process fixtures cover selected examples;
+   those fixtures do not establish the native full matrix.
+2. Complete the repeatability gate on a pinned correct native version, retaining
+   separate fresh-session full-contract receipts and every failed attempt.
+3. Run fresh independent builder-agent acceptance through the actual builder/MCP
+   journey. The current scripted MCP/native-runtime tests and manual export capture
+   do not satisfy that gate.
+
+Native-worker-host termination, actual AWS database failure/restore and live-provider
+parity remain outside the currently measured evidence and need separate qualification.
 
 The local milestone performed no customer contact or backend deployment. The later
 November 9 native publication and qualification are recorded separately below.
@@ -467,3 +473,111 @@ not closed. This is one restored full-contract run, not the three-repeat gate.
 The correct native source stays published. Temporary adapters/transports and
 the disposable DynamoDB Local container are stopped after evidence retention;
 another run requires re-establishing the isolated test transport.
+
+
+## Slack duplicate-send negative control, November 9
+
+The explicitly registered `blind-slack-resend` source variant replaces uncertain
+Slack history reconciliation with another real `chat.postMessage` to the fixed
+pilot channel. It uses the same lead/outcome text, accepts the second timestamp
+and reports confirmed. No response is fabricated, and no incoming lead/check ID
+selects the variant. Normal machine source, adapter binary and all three contract
+files are unchanged. The existing public MCP runner remains the verification owner.
+
+The frozen `C9_slack_crash` provider oracle counts all messages matching the lead,
+not only the app's newly saved timestamp. It must reject the duplicate even if the
+app says confirmed. This is a duplicate-effect control, distinct from the Calendar
+control that safely held an incomplete recovery. The original full C9 matrix
+remains separately unmeasured.
+
+Local suite: 571 passed, zero skipped with DynamoDB Local enabled; TypeScript and
+the adapter build passed. The added process test kills the worker after the first
+Slack acceptance, then runs the broken variant. It observes two distinct Slack
+timestamps with identical text, one of each other business effect, and rejects
+the same one-effect oracle although the app reports confirmed. The source guard
+requires the explicit matching variant and rejects it as normal source. These
+fixture/process results are separate from hosted twin verification.
+
+Native negative version `db02ccfd-a599-4322-8171-4732facff969` has actual export
+SHA256 `2274d9a8afcc99c427851fa906b5ccb03ad8d1b4e3f663005bcafcb19dc9e23c`.
+Only decision-node parameters differ from the prior correct native export;
+connections are unchanged. Native results follow below. The workflow remains
+Header Auth protected and all provider calls remain bound to isolated twins.
+
+
+### Native Slack negative result
+
+[Failing receipt](https://fetchsandbox.com/runs/ccb1e325b8?flow=vr_b6fce22029014027872007a34aa03a8a):
+**17 held, one violated (`C9_slack_crash`), original C9 unmeasured**. Overall is
+`failing`, `app_verified=false`, `complete=false`, strict exit 1. All three
+accepted-write adapter crashes qualified independently. The archive records 85
+provider-state assertions: 84 held and one failed, the Slack message count.
+
+The first accepted timestamp was `17H0VIADV6.7ZRWA3`. The parent witnessed it before
+checkpointing, killed adapter PID 85424 by SIGKILL and started replacement PID
+85540. Native crash execution 636 lost its I/O connection. Recovery execution 637
+used published negative `db02ccfd`; n8n marked it Succeeded. The app stored
+confirmed, epoch 2, with second timestamp `17LLQ6PKKW.ZA38B4`. Independent Slack
+state retained both timestamps with the same lead/outcome text in `C_PILOT`.
+No Slack history GET occurred in the application-owned trace. The unchanged
+provider oracle rejected expected one/found two despite the app's success claim.
+Contact, associated Deal, Gmail and Calendar observations each held with one effect.
+
+Normal source is restored as `4e993aff-e091-4ecb-b572-ff5289a295db`; actual export
+SHA256 `88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917`.
+All node parameters and wiring match the prior correct normal export. Its
+same-contract remeasurement is recorded below. Original C9 and the broader repeatability,
+fresh-builder, native-worker-host, database-loss and live-provider gates remain open.
+
+
+### Restored Slack result and exact comparison
+
+[Restored receipt](https://fetchsandbox.com/runs/92816b67ab?flow=vr_fa0e8e1ae1374caf93aad40821c19098):
+**18 held, zero violated, original C9 unmeasured**. All 85 recorded independent
+provider-state assertions held. Overall remains `inconclusive`, `app_verified=false`,
+`complete=false`; strict exit remains 1. All three accepted-write adapter crashes
+qualified independently. Backend remained `f7eeee67` for both attempts; no backend
+rollout or verification-rule change was needed for this control.
+
+Native recovery execution 679 used restored version `4e993aff`. The app performed
+one history read, recovered original accepted timestamp `17UFBXQM0U.I0D2JT`, saved
+`positive_readback` at epoch 2 and left one Slack message after replay. A fresh
+consistent DynamoDB Local reader and independent provider observations support
+that exact identity. One Contact, associated Deal, Gmail message and Calendar
+event were also retained. These are isolated twin effects, not live vendor parity.
+
+Both stored manifests have identical 19 check definitions, scope review, coverage
+review and requester-profile definitions. App versions and disposable run bindings
+differ. The app reported confirmed in both attempts, but the independent provider
+count distinguished the duplicate from successful reconciliation.
+
+| Observation | Negative `db02ccfd` | Restored `4e993aff` |
+|---|---|---|
+| App final status | Confirmed | Confirmed |
+| Independent matching Slack messages | Two distinct timestamps, identical text | One original accepted timestamp |
+| History reads in application-owned trace | Zero | One |
+| C9 Slack crash verdict | Violated: expected one, found two | Held |
+| Full declared checks | 17 held / 1 violated / 1 unmeasured | 18 held / 0 violated / 1 unmeasured |
+| Recorded provider-state assertions | 84 held / 1 failed | 85 held / 0 failed |
+
+Retain the [negative receipt](evidence/c9-slack-negative/negative/receipt-summary.json)
+and [restored receipt](evidence/c9-slack-negative/restored/receipt-summary.json)
+separately from their [negative OS witness](evidence/c9-slack-negative/negative/crash-observation-slack.json)
+and [restored OS witness](evidence/c9-slack-negative/restored/crash-observation-slack.json).
+The [negative recorded observations](evidence/c9-slack-negative/negative/slack-evidence.json)
+include both duplicate IDs and matching text; [restored observations](evidence/c9-slack-negative/restored/slack-evidence.json)
+retain the original ID. [Negative store read](evidence/c9-slack-negative/negative/direct-store-readback.json)
+and [restored store read](evidence/c9-slack-negative/restored/direct-store-readback.json)
+are separate fresh database consumers. [Manifest parity](evidence/c9-slack-negative/actual-manifest-parity.json),
+[source hashes](evidence/c9-slack-negative/source-hashes.json),
+[native source comparison](evidence/c9-slack-negative/source-variant-parity.json),
+[571-test log](evidence/c9-slack-negative/full-suite.log),
+[negative screenshot](evidence/c9-slack-negative/negative/receipt.png),
+[restored screenshot](evidence/c9-slack-negative/restored/receipt.png) and
+[observation/limits](evidence/c9-slack-negative/observation.json) identify this scope.
+
+The correct source remains published. Temporary adapters/transports and the
+disposable DynamoDB Local container are stopped after evidence capture; another
+run requires re-establishing the isolated transport. Full original C9, repeatability
+and fresh builder acceptance remain open. The restored measurement is one run,
+not the full repetition gate.

@@ -1,0 +1,10 @@
+{
+  "previous_native_version": "d0f034f4-61b7-46cd-8568-3580aab5fb36",
+  "negative_native_version": "db02ccfd-a599-4322-8171-4732facff969",
+  "changed_node_parameters": [
+    "Durable decision machine"
+  ],
+  "wiring_unchanged": true,
+  "restored_native_version": "4e993aff-e091-4ecb-b572-ff5289a295db",
+  "restored_all_node_parameters_and_wiring_match_previous_normal": true
+}

@@ -31,10 +31,20 @@ export function skipCalendarReadback(next){
  }
  return next;
 }
+// Explicit negative control: resend an uncertain Slack notification instead of reading history.
+// Selected only as a versioned source variant, never from the incoming business input.
+export function blindSlackResend(next){
+ if(next.request?.kind==='provider' && next.request.provider==='slack' && next.request.method==='GET' && next.request.path==='/conversations.history?channel=C_PILOT&limit=100'){
+  const c=next.context,notice=c.state.notification;
+  c.stage='notified';
+  next.request={kind:'provider',provider:'slack',method:'POST',path:'/chat.postMessage',body:{channel:'C_PILOT',text:JSON.stringify({lead_id:c.lead_id,status:notice.outcome,blocked_step:notice.blocked_step})}};
+ }
+ return next;
+}
 export function decisionSource(variant='normal'){
  const source=advance.toString();
  if(variant==='normal')return source;
- const mutation=variant==='blind-deal-retry'?blindDealRetry:variant==='blind-gmail-resend'?blindGmailResend:variant==='skip-calendar-readback'?skipCalendarReadback:null;
+ const mutation=variant==='blind-deal-retry'?blindDealRetry:variant==='blind-gmail-resend'?blindGmailResend:variant==='skip-calendar-readback'?skipCalendarReadback:variant==='blind-slack-resend'?blindSlackResend:null;
  if(!mutation)throw Error('Unknown versioned decision variant');
  return source+'\nconst normalAdvance=advance;\n'+mutation.toString()+'\nadvance = input => '+mutation.name+'(normalAdvance(input));';
 }

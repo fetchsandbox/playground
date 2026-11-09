@@ -38,7 +38,7 @@ describe('existing MCP runner n8n contract boundary (fixture exports only)',()=>
  });
 });
 
-it.each(['blind-deal-retry','blind-gmail-resend','skip-calendar-readback'])('requires explicit matching source attestation for %s',variant=>{
+it.each(['blind-deal-retry','blind-gmail-resend','skip-calendar-readback','blind-slack-resend'])('requires explicit matching source attestation for %s',variant=>{
  const f=fixture(()=>{},variant);try{
   expect(load(f).status).not.toBe(0);
   const accepted=load(f,'console.log(c.sourceVariant);',variant);

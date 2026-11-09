@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-09",
+  "base_commit": "629773c",
+  "scope": "One native Slack duplicate-send negative control and restored full 19-check remeasurement through the existing public MCP runner; isolated twins only",
+  "local_tests": {
+    "passed": 571,
+    "skipped": 0,
+    "typecheck": "passed"
+  },
+  "normal_machine_adapter_and_contract_files_unchanged": true,
+  "phase_results": {
+    "negative": {
+      "native_version": "db02ccfd-a599-4322-8171-4732facff969",
+      "native_export_sha256": "2274d9a8afcc99c427851fa906b5ccb03ad8d1b4e3f663005bcafcb19dc9e23c",
+      "run_id": "vr_b6fce22029014027872007a34aa03a8a",
+      "receipt_url": "https://fetchsandbox.com/runs/ccb1e325b8?flow=vr_b6fce22029014027872007a34aa03a8a",
+      "verdict": "failing",
+      "checks": {
+        "held": 17,
+        "violated": 1,
+        "unmeasured": 1
+      },
+      "runtime_fault_qualified": true,
+      "provider_assertions": {
+        "total": 85,
+        "held": 84,
+        "not_held": 1
+      },
+      "app_final_status": "confirmed",
+      "slack_message_count": 2,
+      "slack_message_ids": [
+        "17H0VIADV6.7ZRWA3",
+        "17LLQ6PKKW.ZA38B4"
+      ],
+      "slack_history_read_count": 0,
+      "backend": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_recovery_execution": "637"
+    },
+    "restored": {
+      "native_version": "4e993aff-e091-4ecb-b572-ff5289a295db",
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "run_id": "vr_fa0e8e1ae1374caf93aad40821c19098",
+      "receipt_url": "https://fetchsandbox.com/runs/92816b67ab?flow=vr_fa0e8e1ae1374caf93aad40821c19098",
+      "verdict": "inconclusive",
+      "checks": {
+        "held": 18,
+        "unmeasured": 1
+      },
+      "runtime_fault_qualified": true,
+      "provider_assertions": {
+        "total": 85,
+        "held": 85,
+        "not_held": 0
+      },
+      "app_final_status": "confirmed",
+      "slack_message_count": 1,
+      "slack_message_ids": [
+        "17UFBXQM0U.I0D2JT"
+      ],
+      "slack_history_read_count": 1,
+      "backend": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_recovery_execution": "679"
+    }
+  },
+  "strict_runner_exit": {
+    "negative": 1,
+    "restored": 1
+  },
+  "remaining": [
+    "Original full C9 matrix unmeasured",
+    "Repeatability gate pending",
+    "Fresh independent builder-agent acceptance pending",
+    "Native n8n worker-host termination not tested",
+    "AWS database loss/restore not tested",
+    "Live-provider parity not tested"
+  ],
+  "limits": [
+    "OS witnesses attest owned adapter SIGKILL; public receipt alone does not",
+    "Application-owned transport log is supplemental evidence",
+    "DynamoDB Local remains running across adapter crashes",
+    "Only this declared workflow and bounded failure controls are measured"
+  ],
+  "credential_scan": "No configured Cursor, pilot or issued-binding credential values found in public text artifacts",
+  "cleanup": {
+    "at": "2026-11-09T21:04:28.922777+00:00",
+    "managed_tunnels": "Closed by each runner",
+    "owned_adapter": "Stopped by runner; no listener observed on 8097",
+    "owned_ngrok": "Stopped",
+    "owned_disposable_database": "Removed after both consistent store reads were retained",
+    "native_source": "Normal 4e993aff remains published; temporary I/O transport offline"
+  }
+}
