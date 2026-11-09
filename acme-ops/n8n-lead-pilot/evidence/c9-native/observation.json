@@ -1,0 +1,39 @@
+{
+  "scope": "One isolated native n8n Deal-accepted/adapter-process-crash boundary through the existing published MCP runner",
+  "native_version": "7e773eaa-45bf-4dad-a4e2-7fab28d62251",
+  "native_export_sha256": "a717d8b8ac60967634d0868a6ea32f76556973f427a6da042da432023866f7d5",
+  "backend_revision_observed": "f7eeee67",
+  "mcp_version": "0.7.30",
+  "receipt_url": "https://fetchsandbox.com/runs/fb889cd736?flow=vr_e71e27e84f0d47cebc38851537caee09",
+  "run_id": "vr_e71e27e84f0d47cebc38851537caee09",
+  "runtime_fault_qualified": true,
+  "held": 16,
+  "violated": 0,
+  "unmeasured": [
+    "C9"
+  ],
+  "app_verified": false,
+  "complete": false,
+  "runner_exit": 1,
+  "runner_exit_reason": "Strict gate requires every declared check held; full original C9 matrix remains unmeasured",
+  "crash_record": "corrected-crash-observation.json",
+  "recovered_state": {
+    "owner": "469",
+    "epoch": 2,
+    "status": "confirmed",
+    "accepted_deal_identity_preserved": true,
+    "deal_confirmation": "positive_readback"
+  },
+  "unchanged_existing_oracles": "contract-parity.json",
+  "failed_attempt": "failed-receipt.json",
+  "limitations": [
+    "One bounded native run; not three clean repeats",
+    "Native deliberately broken control not measured",
+    "Fresh independent builder-agent acceptance not measured",
+    "Calendar and Slack automatic crash reconciliation remains missing",
+    "Killed owned adapter process, not n8n Cloud worker host",
+    "DynamoDB Local persisted across adapter restart; database/AWS/regional outage not tested",
+    "Native SaaS OAuth/provider parity not established"
+  ],
+  "private_evidence_directory": "/Users/raj/promo/content/reviews/2026-11-09-friendly-c9/native-20261109T152030Z"
+}

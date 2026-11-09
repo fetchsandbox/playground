@@ -1,0 +1,12 @@
+{
+  "owned_reverse_transport_pids_stopped": [
+    17527
+  ],
+  "ports_closed": {
+    "8097": true,
+    "4040": true,
+    "8019": true
+  },
+  "disposable_dynamodb_container_removed": true,
+  "observed_at": "2026-11-09T15:31:01.749730+00:00"
+}

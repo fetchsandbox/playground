@@ -1,0 +1,31 @@
+{
+  "scope": "Local application and harness checks only; native outcomes are separate receipts",
+  "application_tests": {
+    "passed": 545,
+    "skipped": 0,
+    "dynamodb_local_endpoint": "loopback disposable service"
+  },
+  "harness_and_startup_tests": {
+    "passed": 6
+  },
+  "typescript": "passed",
+  "adapter_bundle": "passed",
+  "logs": [
+    {
+      "path": "/Users/raj/promo/content/reviews/2026-11-09-friendly-c9/full-tests-final.log",
+      "sha256": "371164440d0a52c15b43a28fe9fb4a8cd16449e0cb01b3df3b41e22429696601"
+    },
+    {
+      "path": "/Users/raj/promo/content/reviews/2026-11-09-friendly-c9/typecheck-corrected.log",
+      "sha256": "fa558e1627aebd15dd4529ec5858672c9464547d70748fd7b1a435cc4276b11c"
+    },
+    {
+      "path": "/Users/raj/promo/content/reviews/2026-11-09-friendly-c9/crash-controller-tests-final.log",
+      "sha256": "7418acad114899ca96eb555ea9063939f92bde0ab3dd4b1da98c98a17b1a9999"
+    },
+    {
+      "path": "/Users/raj/promo/content/reviews/2026-11-09-friendly-c9/contract-tests.log",
+      "sha256": "798eb6cda5739b7ed0f84ec1625944ac29671a039b9d124220e7fc92f767dfc1"
+    }
+  ]
+}

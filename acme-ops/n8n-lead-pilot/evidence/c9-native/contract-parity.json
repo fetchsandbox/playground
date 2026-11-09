@@ -1,0 +1,25 @@
+{
+  "prior_run": "vr_525f4dff43c8483d9109292cf04523ae",
+  "corrected_run": "vr_e71e27e84f0d47cebc38851537caee09",
+  "unchanged_check_ids": [
+    "baseline",
+    "C1",
+    "C2",
+    "C3",
+    "C3_recovery",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "C12_hold",
+    "C12_recover"
+  ],
+  "all_16_existing_checks_exactly_unchanged": true,
+  "separately_corrected_check": "C9_deal_crash",
+  "correction": "No pre-crash Slack outcome can be emitted after process death; require zero unknown Deal notices and one final confirmed notice."
+}

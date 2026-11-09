@@ -1,0 +1,106 @@
+{
+  "workflow": "n8n-lead-recovery",
+  "runtime_fault_qualified": true,
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "n8n-export-92efc7cf8703825689986b5ea10aebd7e10297b45115071a19b9ed3aff123e5e-bridge-fe12a6afd0d9",
+  "bundle_sha256": "fe12a6afd0d9b90120335ad4206f9b1bbc693aa2de8efd42596f1994f905d0da",
+  "session_id": "vs_a01b3bf2785e",
+  "run_id": "vr_525f4dff43c8483d9109292cf04523ae",
+  "receipt_url": "https://fetchsandbox.com/runs/e02020e438?flow=vr_525f4dff43c8483d9109292cf04523ae",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C1",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C2",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C3",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: records[*]: expected exactly 2, found 1; records[*]: expected exactly 2, found 1"
+    },
+    {
+      "id": "C3_recovery",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: records[*]: expected exactly 2, found 1; records[*]: expected exactly 1, found 1; records[*]: expected exactly 3, found 2"
+    },
+    {
+      "id": "C4",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C5",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: records[*]: expected exactly 3, found 1; records[*]: expected exactly 3, found 1"
+    },
+    {
+      "id": "C6",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C7",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C8",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C9_deal_crash",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: records[*]: expected exactly 1, found 1; records[*]: expected exactly 1, found 1; records[*]: expected exactly 1, found 0; records[*]: expected exactly 2, found 1"
+    },
+    {
+      "id": "C9",
+      "status": "unmeasured",
+      "explanation": "FileStore reconstruction was checked locally. Safe recovery after a live crash with an abandoned in_progress claim and multiple workers remains unimplemented/unmeasured."
+    },
+    {
+      "id": "C10",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0"
+    },
+    {
+      "id": "C11",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_hold",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "C12_recover",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    }
+  ],
+  "recorded_at": "2026-11-09T15:17:35.939Z"
+}

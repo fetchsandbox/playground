@@ -114,3 +114,26 @@ it('C6 candidate preserves every other check and requires the new protected requ
   const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify({app_version:'n8n-export-'+'a'.repeat(64)+'-bridge-'+'b'.repeat(12),disposable_test_app:true,require_verifier_token:true,...identity}),encoding:'utf8'});expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBe(71268);expect(Number(bytes.stdout)).toBeLessThanOrEqual(131072);
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });
+
+it('adds only a bounded Deal-crash check while retaining the original C9 blocker and every prior oracle',()=>{
+ const f=fixture();try{
+  const result=load(f,'console.log(JSON.stringify({checks:c.checks,config:c.applicationConfig,crash:typeof c.crashSimulation}));','normal',{PILOT_CONTRACT:'crash'});
+  expect(result.status).toBe(0);const out=JSON.parse(result.stdout);
+  const original=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+  const identity=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.identity.json',import.meta.url),'utf8'));
+  expect(out.checks).toHaveLength(original.checks.length+1);
+  for(const c of original.checks)expect(out.checks.find((x:any)=>x.id===c.id)).toEqual(c.id==='C6'?identity.checks[0]:c);
+  expect(out.checks.find((x:any)=>x.id==='C9').blocker).toBeDefined();
+  expect(out.checks.find((x:any)=>x.id==='C9_deal_crash').assertion.where).toContainEqual({select:'epoch',equals:2,required:true});
+  const crash=out.checks.find((x:any)=>x.id==='C9_deal_crash');
+  expect(crash.actions[1]).toMatchObject({method:'GET',path:'/proof/fs-c9-{{run_id}}'});
+  const delays=crash.actions.filter((x:any)=>x.delay_seconds).map((x:any)=>x.delay_seconds);
+  expect(delays.every((x:number)=>x>0&&x<=5)).toBe(true);expect(delays.reduce((a:number,b:number)=>a+b,0)).toBe(35);
+  expect(JSON.stringify(crash.provider_assertions)).not.toContain('step1.state.');
+  expect(JSON.stringify(crash.provider_assertions)).toContain('step2.records.0.operations.contact.id');
+  expect(JSON.stringify(crash.provider_assertions)).toContain('step3.state.operations.deal.id');
+  const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify({app_version:'n8n-export-'+'a'.repeat(64)+'-bridge-'+'b'.repeat(12),disposable_test_app:true,require_verifier_token:true,...out.config,checks:out.checks}),encoding:'utf8'});
+  expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBeLessThanOrEqual(131072);
+  expect(out.crash).toBe('function');
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});

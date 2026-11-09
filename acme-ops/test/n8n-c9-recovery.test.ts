@@ -38,6 +38,12 @@ describe('C9 lease and unknown-outcome recovery',()=>{
   const out=advance({context:c,result:{saved:true,state:c.state}});
   expect(out.done).toBe(true);expect(out.request).toBeUndefined();
  });
+ it('a new held attempt reports again after a confirmed notification, while checkpointing before dispatch',()=>{
+  const c={lead_id:'mail',attempt:'new',stage:'notify',blocked:'gmail',state:{status:'failed',notification:{status:'confirmed',outcome:'failed',blocked_step:'gmail'},operations:{}}};
+  const out=advance({context:c,result:{saved:true,state:c.state}});
+  expect(out.request.kind).toBe('save');expect(out.context.stage).toBe('dispatch_notification');
+  expect(out.request.state.notification).toMatchObject({status:'in_flight',outcome:'failed',blocked_step:'gmail'});
+ });
  it('positive contact readback can recover a committed contact, but an empty result cannot authorize resend',()=>{
   const c={lead_id:'contact',attempt:'new',stage:'choose',index:0,state:{status:'in_progress',operations:{contact:{status:'unknown'},deal:{status:'pending'},gmail:{status:'pending'},calendar:{status:'pending'}}}};
   const lookup=advance(c);expect(lookup.request.path).toBe('/crm/v3/objects/contacts/search');

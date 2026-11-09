@@ -118,7 +118,10 @@ export function advance(input) {
     if (!r?.saved) return stop('Final state save failed');
     const notice=c.state.notification;
     const same=notice?.outcome===c.state.status && notice?.blocked_step===(c.blocked??null);
-    if(same && ['confirmed','unknown','in_flight'].includes(notice.status))return stop('Notification already accepted or outcome unknown; no duplicate send');
+    // A new attempt may report the same held outcome again after a confirmed
+    // notification (the existing business contract requires those updates).
+    // An uncertain prior dispatch cannot safely be repeated.
+    if(same && ['unknown','in_flight'].includes(notice.status))return stop('Notification outcome unknown; no duplicate send');
     c.state.notification={status:'in_flight',outcome:c.state.status,blocked_step:c.blocked??null};
     return save('dispatch_notification');
   }
