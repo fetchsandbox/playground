@@ -3,7 +3,8 @@ import {readFileSync, appendFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 // @ts-ignore Shared Node-readable session binding function.
 import {sessionScope} from './session-scope.mjs';
-import {FileStore} from '../src/kit/store';
+import {FileStore,DynamoStore} from '../src/kit/store';
+import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {LeadState} from './state';
 import {InvocationAuthority,equalSecret,requesterFor,requesterKey} from './identity';
 // @ts-ignore Shared native input parser.
@@ -14,7 +15,12 @@ import {allowedProviderOperation,callTwin} from './provider-transport';
 // Private test adapter only: conditional state writes and bounded twin transport.
 // n8n owns the transition/recovery logic. This server does not choose next steps.
 const cfg = JSON.parse(readFileSync(process.env.PILOT_BINDINGS!, 'utf8'));
-const store = new FileStore(process.env.STATE_FILE!);
+const endpoint=process.env.DYNAMODB_ENDPOINT;
+if(endpoint && !/^http:\/\/127\.0\.0\.1:\d+$/.test(endpoint))throw Error('Local DynamoDB endpoint must be loopback');
+if(process.env.STATE_TABLE && !/^[a-zA-Z0-9_.-]{3,255}$/.test(process.env.STATE_TABLE))throw Error('Invalid state table');
+const store=process.env.STATE_TABLE
+ ? new DynamoStore(process.env.STATE_TABLE,new DynamoDBClient(endpoint?{endpoint,region:'us-west-2',credentials:{accessKeyId:'local',secretAccessKey:'local'}}:{}))
+ : new FileStore(process.env.STATE_FILE!);
 const scope=sessionScope(cfg.legs);
 if(cfg.session_scope!==scope)throw Error('Session binding scope mismatch');
 const state=scope?new LeadState(store,scope):null;
@@ -58,7 +64,11 @@ const server=createServer(async(req,res)=>{
   const actor=requesterKey(principal);
   const owned=await state.recordsFor(c.lead_id,actor);
   if('denied' in owned)return send(200,{context:c,result:{denied:true}});
-  if(q.kind==='provider' && (!owned.records[0] || owned.records[0].owner!==c.attempt || owned.records[0].version!==c.state?.version))return send(200,{context:c,result:{denied:true}});
+  if(q.kind==='provider'){
+   const permit=await state.authorizeProvider(c.lead_id,c.attempt,c.state?.version,actor);
+   if(!permit.allowed)return send(200,{context:c,result:{denied:true}});
+   c.state={...c.state,version:permit.state!.version,epoch:permit.state!.epoch,lease_expires_at:permit.state!.lease_expires_at};
+  }
   let result;
   if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt,c.retry_failed===true,actor);
   else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state,actor);

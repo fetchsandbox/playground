@@ -44,7 +44,7 @@ export default {
  workflow:'n8n-lead-recovery', providers:['hubspot','gmail','google-calendar','slack'],
  appVersion:'n8n-export-'+sha,
  sourceVariant:variant,
- context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:'Single-process FileStore conditional claims/CAS, read through GET /proof/{lead}; abandoned claims and multi-worker crash recovery remain unqualified.'},
+ context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:process.env.PILOT_STATE_TABLE?'Shared DynamoDB conditional claims/CAS and leases; native crash recovery remains unqualified.':'Single-process FileStore conditional claims/CAS; not independent-worker storage. Native crash recovery remains unqualified.'},
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review,...(config.requester_profiles?{requester_profiles:config.requester_profiles}:{})},
  startupPingHeaders(){const source=JSON.parse(readFileSync(sourcePath,'utf8'));return {authorization:'Bearer '+source.token};},
@@ -55,6 +55,6 @@ export default {
   const scope=sessionScope(legs);
   if(credentialFile && process.env.PILOT_REPLAY_HANDOFF){copyFileSync(credentialFile,process.env.PILOT_REPLAY_HANDOFF,constants.COPYFILE_EXCL);chmodSync(process.env.PILOT_REPLAY_HANDOFF,0o600);}
   writeFileSync(file,JSON.stringify({...identity,session_scope:scope,token:source.token,n8n_token:source.n8n_token,n8n_webhook:source.n8n_webhook,legs:legs??{}}),{mode:0o600});
-  return {PILOT_BINDINGS:file,TRACE_FILE:join(outDir,'n8n-twin-trace-private.jsonl'),...(process.env.PILOT_STATE_FILE?{STATE_FILE:process.env.PILOT_STATE_FILE}:{})};
+  return {PILOT_BINDINGS:file,TRACE_FILE:join(outDir,'n8n-twin-trace-private.jsonl'),...(process.env.PILOT_STATE_FILE?{STATE_FILE:process.env.PILOT_STATE_FILE}:{}),...(process.env.PILOT_STATE_TABLE?{STATE_TABLE:process.env.PILOT_STATE_TABLE}:{}),...(process.env.PILOT_DYNAMODB_ENDPOINT?{DYNAMODB_ENDPOINT:process.env.PILOT_DYNAMODB_ENDPOINT}:{})};
  },
 };

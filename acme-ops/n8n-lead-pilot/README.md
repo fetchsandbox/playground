@@ -1,3 +1,5 @@
+**C9 candidate update:** local lease/CAS/shared-store implementation and process-kill tests are recorded in [C9 recovery](C9-CRASH-RECOVERY.md). This candidate is not deployed; the published receipt still has C9 unmeasured.
+
 # n8n lead recovery pilot — implementation in progress
 
 **C6 implementation and partial proof:** requester-bound state and signed native

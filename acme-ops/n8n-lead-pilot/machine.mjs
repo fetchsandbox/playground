@@ -35,6 +35,7 @@ export function advance(input) {
     const op = c.state.operations[c.step];
     if (op.status === 'unknown') {
       // Reliable positive read-back can confirm; absence does not authorize resend.
+      if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'reconciled_contact');
       if (c.step === 'gmail') return provider('gmail', 'GET', '/gmail/v1/users/me/messages?q=' + encodeURIComponent('rfc822msgid:' + c.lead_id + '@example.com'), null, 'reconciled');
       if (c.step === 'deal') return provider('hubspot', 'POST', '/crm/v3/objects/deals/search', {filterGroups:[{filters:[{propertyName:'dealname',operator:'EQ',value:'Pilot '+c.lead_id}]}],properties:['dealname','pipeline','dealstage']}, 'reconciled');
       c.state.status = 'unknown'; c.blocked = c.step; return save('notify');
@@ -74,6 +75,14 @@ export function advance(input) {
     c.index++;
     return save('choose');
   }
+  if (c.stage === 'reconciled_contact') {
+    const records=r?.body?.results;
+    if(!failed() && records?.length===1 && records[0].id && records[0].properties?.email===c.lead_id+'@example.com'){
+      c.state.operations.contact={status:'confirmed',id:records[0].id,confirmation:'positive_readback'};
+      c.index++;return save('choose');
+    }
+    c.state.status='unknown';c.blocked='contact';return save('notify');
+  }
   if (c.stage === 'reconciled') {
     const records = c.step === 'gmail' ? r?.body?.messages : r?.body?.results;
     if (!failed() && records?.length === 1 && records[0].id) {
@@ -107,13 +116,21 @@ export function advance(input) {
   }
   if (c.stage === 'notify') {
     if (!r?.saved) return stop('Final state save failed');
+    const notice=c.state.notification;
+    const same=notice?.outcome===c.state.status && notice?.blocked_step===(c.blocked??null);
+    if(same && ['confirmed','unknown','in_flight'].includes(notice.status))return stop('Notification already accepted or outcome unknown; no duplicate send');
+    c.state.notification={status:'in_flight',outcome:c.state.status,blocked_step:c.blocked??null};
+    return save('dispatch_notification');
+  }
+  if(c.stage === 'dispatch_notification'){
+    if(!r?.saved)return stop('Notification checkpoint failed; send withheld');
     return provider('slack','POST','/chat.postMessage',{channel:'C_PILOT',text:JSON.stringify({lead_id:c.lead_id,status:c.state.status,blocked_step:c.blocked})},'notified');
   }
   if (c.stage === 'notified') {
-    c.state.notification = {status:r?.status === 200 && r.body?.ok === true ? 'confirmed' : 'unknown',client_status:r?.status ?? null};
+    c.state.notification = {...c.state.notification,status:r?.status === 200 && r.body?.ok === true ? 'confirmed' : 'unknown',client_status:r?.status ?? null};
     if (r?.status===429 && Number.isSafeInteger(r.retry_after_seconds) && r.retry_after_seconds>=0
       && r.retry_after_seconds<=86400 && Number.isFinite(Date.parse(r.retry_not_before))) {
-      c.state.notification={status:'rate_limited',client_status:429,retry_after_seconds:r.retry_after_seconds,retry_not_before:r.retry_not_before};
+      c.state.notification={...c.state.notification,status:'rate_limited',client_status:429,retry_after_seconds:r.retry_after_seconds,retry_not_before:r.retry_not_before};
     }
     return save('notification_saved');
   }

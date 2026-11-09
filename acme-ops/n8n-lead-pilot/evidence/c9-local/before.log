@@ -1,0 +1,109 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+ ❯ test/n8n-c9-recovery.test.ts (5 tests | 5 failed) 7ms
+   ❯ C9 lease and unknown-outcome recovery (5)
+     × reclaims an expired abandoned claim, preserving effects and fencing the old worker 3ms
+     × allows only one contender to reclaim an expired owner and refuses a foreign requester 2ms
+     × refuses expired-owner writes even before someone takes over; ignores client lease extensions 1ms
+     × does not repeat an uncertain notification after a crash 1ms
+     × positive contact readback can recover a committed contact, but an empty result cannot authorize resend 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/n8n-c9-recovery.test.ts > C9 lease and unknown-outcome recovery > reclaims an expired abandoned claim, preserving effects and fencing the old worker
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/n8n-c9-recovery.test.ts:15:29
+     13|   time=1101;
+     14|   const recovered=await state.claim('lead','worker-b');
+     15|   expect(recovered.claimed).toBe(true);
+       |                             ^
+     16|   expect(recovered.state?.operations).toMatchObject({contact:{status:'…
+     17|   expect((await state.save('lead','worker-a',checkpoint.state!)).saved…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  test/n8n-c9-recovery.test.ts > C9 lease and unknown-outcome recovery > allows only one contender to reclaim an expired owner and refuses a foreign requester
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ test/n8n-c9-recovery.test.ts:28:39
+     26|   expect(await state.claim('lead','foreign',false,'another:person')).t…
+     27|   const claims=await Promise.all(Array.from({length:10},(_,i)=>state.c…
+     28|   expect(claims.filter(x=>x.claimed)).toHaveLength(1);
+       |                                       ^
+     29|  });
+     30|  it('refuses expired-owner writes even before someone takes over; igno…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  test/n8n-c9-recovery.test.ts > C9 lease and unknown-outcome recovery > refuses expired-owner writes even before someone takes over; ignores client lease extensions
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/n8n-c9-recovery.test.ts:33:90
+     31|   let time=0;const state=new LeadState(new MemoryStore(),'expiry',{now…
+     32|   const first=await state.claim('lead','a');time=101;
+     33|   expect((await state.save('lead','a',{...first.state!,lease_expires_a…
+       |                                                                                          ^
+     34|   expect((await state.authorizeProvider('lead','a',first.state!.versio…
+     35|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  test/n8n-c9-recovery.test.ts > C9 lease and unknown-outcome recovery > does not repeat an uncertain notification after a crash
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ test/n8n-c9-recovery.test.ts:39:20
+     37|   const c={lead_id:'mail',attempt:'new',stage:'notify',blocked:null,st…
+     38|   const out=advance({context:c,result:{saved:true,state:c.state}});
+     39|   expect(out.done).toBe(true);expect(out.request).toBeUndefined();
+       |                    ^
+     40|  });
+     41|  it('positive contact readback can recover a committed contact, but an…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  test/n8n-c9-recovery.test.ts > C9 lease and unknown-outcome recovery > positive contact readback can recover a committed contact, but an empty result cannot authorize resend
+AssertionError: expected undefined to be '/crm/v3/objects/contacts/search' // Object.is equality
+
+- Expected:
+"/crm/v3/objects/contacts/search"
+
++ Received:
+undefined
+
+ ❯ test/n8n-c9-recovery.test.ts:43:55
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  22:29:08
+   Duration  164ms (import 58%, transform 32%, tests 8%, worker 2%)
+

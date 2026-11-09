@@ -1,0 +1,76 @@
+{
+  "scope": "Local component/process evidence; not FetchSandbox or native n8n acceptance",
+  "status": "candidate_not_deployed",
+  "branch": "codex/friendly-c9-crash-recovery-20261108",
+  "base_commit": "84d3efe08805bdfd550089a1e81b3961fd1552ad",
+  "observed_at": "2026-11-09T06:40:03.512281+00:00",
+  "client_date": "2026-11-08",
+  "baseline_tests": 528,
+  "before_new_tests": {
+    "failed": 5,
+    "passed": 0
+  },
+  "first_process_attempt": {
+    "passed": 4,
+    "failed": 1,
+    "failure": "Replacing working state at permit renewal discarded the temporary Deal readback ID",
+    "retained_log": "first-process-failure.log"
+  },
+  "final": {
+    "tests_passed": 543,
+    "tests_failed": 0,
+    "tests_skipped": 0,
+    "files_passed": 76,
+    "typescript_exit": 0,
+    "bundle_exit": 0,
+    "process_integration_tests": 9,
+    "actual_adapter_dynamodb_restart_tests": 1,
+    "new_local_recovery_tests": 5,
+    "doc_links_checked": 648,
+    "guides_checked": 53
+  },
+  "fixture": {
+    "provider": "Recording HTTP fixture, not real SaaS or FetchSandbox twin",
+    "storage": "Real DynamoDB Local in Docker; same database survives application worker crashes",
+    "dynamodb_image": "amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86",
+    "worker_lease_ms": 1000,
+    "adapter_default_lease_ms": 30000,
+    "kill_signal": "SIGKILL",
+    "aws_resources_created": 0,
+    "live_provider_actions": 0
+  },
+  "negative_control": {
+    "source_variant": "existing registered blind-deal-retry",
+    "observed_deals": 2,
+    "distinct_deal_ids": true,
+    "one_deal_oracle": false,
+    "interpretation": "Broken workflow rejected; test expecting rejection passed; not an engine receipt"
+  },
+  "remaining": [
+    "Calendar positive reconciliation not implemented; interrupted Calendar write stays unknown without resend",
+    "Slack positive reconciliation not implemented; uncertain notification stays unknown without resend",
+    "Native n8n C9 crash-boundary actions/export not qualified",
+    "No new FetchSandbox receipt",
+    "No native three-clean-repeat acceptance or fresh builder-agent acceptance",
+    "AWS DynamoDB production operation/clock skew/database restore unmeasured"
+  ],
+  "file_sha256": {
+    "acme-ops/n8n-lead-pilot/state.ts": "9e375c904b0809389b87ba2576d8a34f0352515e10f60db7d5b7d29b5a719cf9",
+    "acme-ops/n8n-lead-pilot/machine.mjs": "182114c10ef10b1e46d3e9d6f29c6411afc13d097552f0f9bedf77438255962f",
+    "acme-ops/n8n-lead-pilot/adapter.ts": "ed8620ba089ffc930d69c07cd1d22d2c03aff730df06a59105a0f7b14c2f6e26",
+    "acme-ops/verify/contracts/n8n-lead-recovery.mjs": "2a437c1e6f982337f7695db2761d4133e47fcb0a80c9839e7038472b547ed5ea",
+    "acme-ops/test/n8n-c9-recovery.test.ts": "7df186b3041240eec2e58d3f2b90c122340b8821ab285bc55ccda225ba5b81b0",
+    "acme-ops/test/n8n-c9-process.test.ts": "adfd5afb5406dd21665720f7b2139a768527340e71017cdaa6340a8190f242fb",
+    "acme-ops/test/n8n-c9-adapter-dynamo.test.ts": "cdb3c39c2ecdd3eed25786a1fdec2a5847be9179acbffbf5320e6ee3998adda3",
+    "acme-ops/test/fixtures/n8n-c9-worker.ts": "6e55b52c4d29776bc1c1fafd88c1bb80f02489ad3537a60697bef8f6ddff9863"
+  },
+  "historical_receipt_unchanged": "https://fetchsandbox.com/runs/195b1f5273?flow=vr_65ed9d3fd6b844cca0dc7089200d6eaf",
+  "frozen_contract_sha256": "b3a458e169aa2322f8302142dc1d89822000bc412cdfd38ef79d02a7f6989544",
+  "frozen_contract_identical_to_base": true,
+  "retained_contract_metadata_failure": {
+    "failed": 2,
+    "passed": 13,
+    "resolution": "Restored frozen contract bytes; did not repin hashes or byte-count expectations",
+    "log": "contract-metadata-failure.log"
+  }
+}

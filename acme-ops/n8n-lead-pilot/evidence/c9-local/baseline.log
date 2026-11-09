@@ -1,0 +1,16 @@
+
+> acme-ops@1.0.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-native-input-hardening/playground/acme-ops
+
+
+ Test Files  73 passed (73)
+      Tests  528 passed (528)
+   Start at  22:27:18
+   Duration  6.08s (tests 51%, import 45%, transform 3%, worker 1%)
+
+    Isolate  73 workers spawned · ~103ms startup each (spawn + environment, per file)
+             at least ~967ms faster with isolate: false — reuses workers across files instead of one per file
+

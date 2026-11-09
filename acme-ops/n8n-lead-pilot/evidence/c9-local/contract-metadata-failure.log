@@ -1,0 +1,40 @@
+
+ RUN  v5.0.5 /Users/raj/.codex/worktrees/n8n-c9-crash-recovery/playground/acme-ops
+
+ ❯ test/n8n-lead-runner-contract.test.ts (15 tests | 2 failed) 803ms
+   × freezes all 13 earlier check oracles and stays inside the engine configuration byte cap 4ms
+   × C6 candidate preserves every other check and requires the new protected requester profiles 91ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/n8n-lead-runner-contract.test.ts > freezes all 13 earlier check oracles and stays inside the engine configuration byte cap
+AssertionError: expected 'b67b5167c4793260cc732c92efc46d4d71cac…' to be '12b75e6ce89bc6ffab265c306c8127d4b2498…' // Object.is equality
+
+Expected: "12b75e6ce89bc6ffab265c306c8127d4b2498155fc6416b514ec706e4a10299c"
+Received: "b67b5167c4793260cc732c92efc46d4d71cac99e36163501bac7114dd62c50e8"
+
+ ❯ test/n8n-lead-runner-contract.test.ts:97:77
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/n8n-lead-runner-contract.test.ts > C6 candidate preserves every other check and requires the new protected requester profiles
+AssertionError: expected 71260 to be 71268 // Object.is equality
+
+- Expected
++ Received
+
+- 71268
++ 71260
+
+ ❯ test/n8n-lead-runner-contract.test.ts:114:347
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+   Start at  22:40:04
+   Duration  887ms (tests 99%, import 1%)
+
