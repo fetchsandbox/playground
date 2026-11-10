@@ -17,7 +17,11 @@ The measured normal bundle is `abb53505484a`; backend `f7eeee67` was observed be
 and after every final phase. No backend deployment or native workflow edit was
 performed in this task. The source guard used the retained actual native export
 `4e993aff-e091-4ecb-b572-ff5289a295db` (SHA256 beginning `88740c8f25c5`);
-a fresh native export remains blocked by the Mac lock. This is scripted MCP/native
+a fresh native export was captured after the behavior runs on November 9 at
+20:45 Pacific. Its bytes match the measured export exactly; the six-node source
+and wiring guard passed and an altered-code private control was rejected.
+[Source-capture follow-up](evidence/c9-native-matrix/fresh-native-source-capture.json).
+This is scripted MCP/native
 runtime qualification against isolated twins, not independent builder acceptance,
 live-vendor parity or production certification. Actual n8n SaaS host termination,
 AWS database failure/restore and clock skew remain unmeasured.
@@ -43,9 +47,9 @@ The expanded candidate explicitly replaces the original C9 blocker and adds
 Contact/Gmail crash cases; the original base/identity/three-crash contracts and
 prior receipts remain unchanged. It is not a same-contract comparison with that
 older blocker. Final negative/restored phases do share the same frozen business
-checks. Remaining acceptance work: fresh native source capture and the maintained
-unprimed builder-agent journey. Passing this declared runtime gate does not close
-those gates.
+checks. Fresh native source capture is now recorded separately above. The
+maintained unprimed builder-agent journey remains open. This source comparison
+is not a new behavior run or digital attestation of past n8n execution.
 
 ## Recorded November 9 extension history
 
@@ -105,7 +109,8 @@ Local candidate checks: 577 application tests passed with zero skips using
 DynamoDB Local; TypeScript passed. Nineteen separate Node controller/startup/source
 control tests passed. Those are local evidence, not a native builder journey.
 There is no backend rollout or native workflow edit in this work. The retained
-actual export is `4e993aff`; a fresh native Save is pending Mac unlock. Actual AWS
+actual export is `4e993aff`; the later source-capture follow-up above closes the
+previous native Save blocker. Actual AWS
 database crash/restore, clock skew and live-provider parity remain unmeasured.
 
 ## User journey and acceptance owner

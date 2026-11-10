@@ -1,0 +1,22 @@
+{
+  "observed_at": "2026-11-10T04:45:59.182453+00:00",
+  "scope": "Fresh native export and source guard; not a new behavior run or digital attestation of past execution",
+  "workflow_id": "PJlTC5gnf6wb0r8e",
+  "native_version": "4e993aff-e091-4ecb-b572-ff5289a295db",
+  "published_export_active": true,
+  "node_count": 6,
+  "export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+  "byte_identical_to_export_used_in_c9_final_receipts": true,
+  "source_guard_positive_exit": 0,
+  "altered_code_negative_control_exit": 1,
+  "altered_code_rejected": true,
+  "current_backend_commit_observed": "f7eeee67",
+  "backend_deployed_by_this_task": false,
+  "native_workflow_edited_by_this_task": false,
+  "new_behavior_run": false,
+  "still_unmeasured": [
+    "Independent unprimed builder-agent acceptance",
+    "n8n SaaS worker-host termination",
+    "AWS database loss/restore, clock skew and live-provider parity"
+  ]
+}

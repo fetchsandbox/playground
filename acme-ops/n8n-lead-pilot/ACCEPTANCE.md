@@ -15,7 +15,11 @@ The measured normal bundle is `abb53505484a`; backend `f7eeee67` was observed be
 and after every final phase. No backend deployment or native workflow edit was
 performed in this task. The source guard used the retained actual native export
 `4e993aff-e091-4ecb-b572-ff5289a295db` (SHA256 beginning `88740c8f25c5`);
-a fresh native export remains blocked by the Mac lock. This is scripted MCP/native
+a fresh native export was captured after the behavior runs on November 9 at
+20:45 Pacific. Its bytes match the measured export exactly; the six-node source
+and wiring guard passed and an altered-code private control was rejected.
+[Source-capture follow-up](evidence/c9-native-matrix/fresh-native-source-capture.json).
+This is scripted MCP/native
 runtime qualification against isolated twins, not independent builder acceptance,
 live-vendor parity or production certification. Actual n8n SaaS host termination,
 AWS database failure/restore and clock skew remain unmeasured.
