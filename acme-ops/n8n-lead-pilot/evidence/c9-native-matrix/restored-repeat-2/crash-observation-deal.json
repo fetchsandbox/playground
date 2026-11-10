@@ -1,0 +1,17 @@
+{
+  "provider_accepted": true,
+  "checkpoint_pending": true,
+  "step": "deal",
+  "lead_id": "fs-c9-vr_00939ebd0e1247888d5a6940a42482b7",
+  "owner_before": "1097",
+  "version_before": 8,
+  "epoch_before": 1,
+  "provider_matching_records": 1,
+  "effect_id": "889538360026",
+  "pid_before": 11382,
+  "signal": "SIGKILL",
+  "accepted_observed_at": "2026-11-10T01:10:14.322Z",
+  "killed_at": "2026-11-10T01:10:14.609Z",
+  "pid_after": 11693,
+  "restarted_at": "2026-11-10T01:10:14.699Z"
+}

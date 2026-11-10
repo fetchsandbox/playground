@@ -1,0 +1,17 @@
+{
+  "provider_accepted": true,
+  "checkpoint_pending": true,
+  "step": "gmail",
+  "lead_id": "fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+  "owner_before": "1178",
+  "version_before": 13,
+  "epoch_before": 1,
+  "provider_matching_records": 1,
+  "effect_id": "3753723877750473",
+  "pid_before": 36383,
+  "signal": "SIGKILL",
+  "accepted_observed_at": "2026-11-10T01:31:45.377Z",
+  "killed_at": "2026-11-10T01:31:45.598Z",
+  "pid_after": 36443,
+  "restarted_at": "2026-11-10T01:31:45.698Z"
+}

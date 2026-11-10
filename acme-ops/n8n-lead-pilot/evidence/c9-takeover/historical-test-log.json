@@ -1,0 +1,6 @@
+{
+  "scope": "Historical takeover local test log, separate from final 577-test gate",
+  "raw_log_sha256": "fa8460a00b70abe67ab88a174162e017e31573ab164bfe8d3bd61fc930baff5f",
+  "raw_log_retained_privately": true,
+  "reason": "Exact unmodified log retained privately; public record stores hash"
+}

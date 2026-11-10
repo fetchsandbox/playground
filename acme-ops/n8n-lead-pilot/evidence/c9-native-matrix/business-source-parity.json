@@ -1,0 +1,36 @@
+{
+  "base": "cbac6ec9432be1baf5cb4e3f78e863627df5c25d",
+  "inspected_paths": [
+    {
+      "path": "acme-ops/n8n-lead-pilot/machine.mjs",
+      "unchanged_from_base": true,
+      "sha256": "7d1a2a4bc4c46be34c8f6a5b1cdff16a5cea172e15aee3113283874f5b7157b0"
+    },
+    {
+      "path": "acme-ops/n8n-lead-pilot/adapter.ts",
+      "unchanged_from_base": true,
+      "sha256": "ed8620ba089ffc930d69c07cd1d22d2c03aff730df06a59105a0f7b14c2f6e26"
+    },
+    {
+      "path": "acme-ops/n8n-lead-pilot/state.ts",
+      "unchanged_from_base": true,
+      "sha256": "9e375c904b0809389b87ba2576d8a34f0352515e10f60db7d5b7d29b5a719cf9"
+    },
+    {
+      "path": "acme-ops/n8n-lead-pilot/contract.json",
+      "unchanged_from_base": true,
+      "sha256": "b3a458e169aa2322f8302142dc1d89822000bc412cdfd38ef79d02a7f6989544"
+    },
+    {
+      "path": "acme-ops/n8n-lead-pilot/contract.identity.json",
+      "unchanged_from_base": true,
+      "sha256": "0309fb018398a2641cfa9ed4ed00f8cfb464c0b338bfe8ea34abcef3c43eeb54"
+    },
+    {
+      "path": "acme-ops/n8n-lead-pilot/contract.crash.json",
+      "unchanged_from_base": true,
+      "sha256": "85c6b94da871d199634b94f3474bbf83857576fef476a6ca4df0b4d8e088bd7f"
+    }
+  ],
+  "scope": "Exact bytes only, not every-line semantic review"
+}

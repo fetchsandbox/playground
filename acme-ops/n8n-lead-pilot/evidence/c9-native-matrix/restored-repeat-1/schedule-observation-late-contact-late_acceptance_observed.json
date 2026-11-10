@@ -1,0 +1,21 @@
+{
+  "checkpoint_pending": true,
+  "provider_matching_records": 0,
+  "owner_before": "1051",
+  "epoch_before": 1,
+  "replacement_held_unknown": true,
+  "owner_after": "1052",
+  "epoch_after": 2,
+  "provider_matching_records_before_release": 0,
+  "provider_accepted": true,
+  "replacement_preserved": true,
+  "late_contact_count": 1,
+  "effect_id": "890164389675",
+  "accepted_at": "2026-11-10T00:59:38.781Z",
+  "phase": "late_acceptance_observed",
+  "pid_before": 87122,
+  "pid_after": 87224,
+  "signal": "SIGKILL",
+  "worker_killed": true,
+  "fault": "proof_provider_queue"
+}

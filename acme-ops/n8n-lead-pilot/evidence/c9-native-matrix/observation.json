@@ -1,0 +1,241 @@
+{
+  "client_date": "2026-11-09",
+  "scope": "Declared native n8n lead recovery contract against isolated FetchSandbox twins; owned adapter process crashes with DynamoDB Local retained",
+  "base_commit": "cbac6ec",
+  "native_retained_export_version": "4e993aff-e091-4ecb-b572-ff5289a295db",
+  "fresh_native_export": "Unmeasured: Save dialog requires Mac unlock",
+  "backend_changed_by_this_work": false,
+  "native_workflow_edited_by_this_work": false,
+  "phases": {
+    "normal-initial": {
+      "receipt_url": "https://fetchsandbox.com/runs/a869dc208d?flow=vr_7eb61c40606c432f8b5efba2fb9c3427",
+      "run_id": "vr_7eb61c40606c432f8b5efba2fb9c3427",
+      "session_id": "vs_17f33c10cf84",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-abb53505484a",
+      "verdict": "verified",
+      "transport_revision": "pre-transparent-io",
+      "checks": {
+        "held": 23
+      },
+      "provider_assertions": {
+        "total": 110,
+        "held": 110,
+        "not_held": 0
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": true,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94"
+    },
+    "negative-stale-dispatch": {
+      "receipt_url": "https://fetchsandbox.com/runs/e4f39648b8?flow=vr_a32abbde2cdb42d59245e7919ba74f37",
+      "run_id": "vr_a32abbde2cdb42d59245e7919ba74f37",
+      "session_id": "vs_2c96c9ec084e",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-92d928f7d7df",
+      "verdict": "failing",
+      "transport_revision": "pre-transparent-io",
+      "checks": {
+        "held": 22,
+        "violated": 1
+      },
+      "provider_assertions": {
+        "total": 106,
+        "held": 105,
+        "not_held": 1
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": false,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94",
+      "backend_before": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "runner_exit": 1
+    },
+    "negative-stale-dispatch-transparent": {
+      "receipt_url": "https://fetchsandbox.com/runs/722b4e3e24?flow=vr_665be49d3b3e4b82a5ddac44e6e6e67e",
+      "run_id": "vr_665be49d3b3e4b82a5ddac44e6e6e67e",
+      "session_id": "vs_0da1ea5c20e6",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-92d928f7d7df",
+      "verdict": "failing",
+      "transport_revision": "transparent-io",
+      "checks": {
+        "held": 22,
+        "violated": 1
+      },
+      "provider_assertions": {
+        "total": 106,
+        "held": 105,
+        "not_held": 1
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": false,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94",
+      "backend_before": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "runner_exit": 1
+    },
+    "restored-repeat-1": {
+      "receipt_url": "https://fetchsandbox.com/runs/e03cef0da9?flow=vr_87cd1cc672dc4b8eb4520d88f360334a",
+      "run_id": "vr_87cd1cc672dc4b8eb4520d88f360334a",
+      "session_id": "vs_8fee101cf271",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-abb53505484a",
+      "verdict": "verified",
+      "transport_revision": "transparent-io",
+      "checks": {
+        "held": 23
+      },
+      "provider_assertions": {
+        "total": 110,
+        "held": 110,
+        "not_held": 0
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": true,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94",
+      "backend_before": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "runner_exit": 0
+    },
+    "restored-repeat-2": {
+      "receipt_url": "https://fetchsandbox.com/runs/0f2f57c224?flow=vr_00939ebd0e1247888d5a6940a42482b7",
+      "run_id": "vr_00939ebd0e1247888d5a6940a42482b7",
+      "session_id": "vs_b06608e8616a",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-abb53505484a",
+      "verdict": "verified",
+      "transport_revision": "transparent-io",
+      "checks": {
+        "held": 23
+      },
+      "provider_assertions": {
+        "total": 110,
+        "held": 110,
+        "not_held": 0
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": true,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94",
+      "backend_before": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "runner_exit": 0
+    },
+    "restored-repeat-3": {
+      "receipt_url": "https://fetchsandbox.com/runs/ce0c82d778?flow=vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "run_id": "vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "session_id": "vs_d2749f6f7301",
+      "mcp_observed": {
+        "name": "fetchsandbox",
+        "version": "0.7.30"
+      },
+      "app_version": "n8n-export-88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917-bridge-abb53505484a",
+      "verdict": "verified",
+      "transport_revision": "transparent-io",
+      "checks": {
+        "held": 23
+      },
+      "provider_assertions": {
+        "total": 110,
+        "held": 110,
+        "not_held": 0
+      },
+      "runtime_fault_qualified": true,
+      "runtime_schedule_qualified": true,
+      "runtime_stale_io_qualified": true,
+      "backend_after": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+      "manifest_sha256": "27cc29c509346e868e955a2312ae6ca486ec1e9efa14caebf234555587194c94",
+      "backend_before": {
+        "commit": "f7eeee67",
+        "built_at": "2026-11-08T17:12:46.575660+00:00",
+        "env": "unknown"
+      },
+      "runner_exit": 0
+    }
+  },
+  "same_business_contract_all_observed_phases": true,
+  "repeatability_three_fresh_sessions_measured": true,
+  "all_planned_phase_results_observed": true,
+  "initial_first_pass_not_final_regression_gate": true,
+  "initial_gate_limitation": "Old I/O scheduling proxy handled unknown routes and filtered headers; its C9-specific witnesses are retained, but final gates require transparent I/O passthrough.",
+  "limits": [
+    "Actual n8n SaaS worker-host suspension/termination not measured",
+    "AWS database failure/restore and clock skew not measured",
+    "Live-provider OAuth/quota/delivery parity not measured",
+    "Fresh independent builder-agent journey remains unmeasured; scripted MCP/native runtime only",
+    "Source guard checks the retained actual export; it is not digital attestation of n8n execution"
+  ],
+  "local_checks": {
+    "application_tests_passed": 577,
+    "skipped": 0,
+    "typescript": "passed",
+    "separate_node_controller_and_source_control_tests_passed": 19
+  }
+}

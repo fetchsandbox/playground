@@ -1,0 +1,123 @@
+{
+  "observed_at": "2026-11-09T23:40:19.259Z",
+  "scope": "Overlapping native n8n recovery invocations after accepted Deal, owned adapter SIGKILL and lease expiry; one adapter instance, shared DynamoDB Local",
+  "base_commit": "cbac6ec",
+  "native_export_version": "4e993aff-e091-4ecb-b572-ff5289a295db",
+  "native_export_sha256": "88740c8f25c51c93b3820ec985812e37bf06f0ad235e507ee9569af2a0cb4917",
+  "native_capture": "Retained actual export; fresh native Save dialog blocked by locked Mac; no workflow edits/publication in this task",
+  "backend_observed": {
+    "commit": "f7eeee67",
+    "built_at": "2026-11-08T17:12:46.575660+00:00",
+    "env": "unknown"
+  },
+  "receipt_url": "https://fetchsandbox.com/runs/c1fe8af8e4?flow=vr_d8ffa5d0ffa14260959063d9eef579cc",
+  "checks": {
+    "held": 19,
+    "violated": 0,
+    "unmeasured": 1
+  },
+  "provider_assertions": {
+    "total": 90,
+    "held": 90,
+    "not_held": 0
+  },
+  "recovery_request_overlap_seconds": 3.150064,
+  "recovery_requests": [
+    {
+      "start": "2026-11-09T23:38:38.575139+00:00",
+      "finish": "2026-11-09T23:38:49.168192+00:00",
+      "status": 200,
+      "reason": "Status notification accepted by twin"
+    },
+    {
+      "start": "2026-11-09T23:38:38.586109+00:00",
+      "finish": "2026-11-09T23:38:41.736173+00:00",
+      "status": 200,
+      "reason": "Existing execution owns this lead, or lead is already complete"
+    },
+    {
+      "start": "2026-11-09T23:38:49.169782+00:00",
+      "finish": "2026-11-09T23:38:50.327836+00:00",
+      "status": 200,
+      "reason": "Existing execution owns this lead, or lead is already complete"
+    }
+  ],
+  "saved_state": {
+    "epoch": 2,
+    "owner": "725",
+    "status": "confirmed",
+    "deal_id": "996560665562",
+    "original_deal_retained": true
+  },
+  "case_provider_observations": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "489980256366"
+      ],
+      "at": "2026-11-09T23:38:50.627234+00:00"
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "996560665562"
+      ],
+      "at": "2026-11-09T23:38:50.629083+00:00"
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "7367615804208184"
+      ],
+      "at": "2026-11-09T23:38:50.638376+00:00"
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "f66732d63392d74616b656f7665722d76725f6438666661356430666661313432363039353930363364396565663537396363"
+      ],
+      "at": "2026-11-09T23:38:50.639943+00:00"
+    },
+    {
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "17AEE9Z5ZN.MFKTOV"
+      ],
+      "matching_messages": [
+        {
+          "ts": "17AEE9Z5ZN.MFKTOV",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-takeover-vr_d8ffa5d0ffa14260959063d9eef579cc\",\"status\":\"confirmed\",\"blocked_step\":null}"
+        }
+      ],
+      "at": "2026-11-09T23:38:50.643773+00:00"
+    }
+  ],
+  "local_validation": {
+    "tests_passed": 572,
+    "skipped": 0,
+    "typescript": "passed"
+  },
+  "limits": [
+    "Original C9 remains unmeasured",
+    "Two native invocation requests, not two independently terminated SaaS worker hosts",
+    "Stale native I/O and late deferred write require separate measurements",
+    "Repeatability gate and fresh builder acceptance remain pending",
+    "No AWS database failure/restore or live-provider parity measured"
+  ]
+}

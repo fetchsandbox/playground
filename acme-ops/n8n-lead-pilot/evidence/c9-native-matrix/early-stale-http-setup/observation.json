@@ -1,0 +1,80 @@
+{
+  "classification": "retained nonpassing attempt",
+  "reason": "New stale-command action expected 502, observed native 500; recovery did not run. Corrected only that transport expectation, preserving ownership and zero-effect assertions.",
+  "receipt_url": "https://fetchsandbox.com/runs/916db3ceb3?flow=vr_c788b21aef1e4b4d8086152876adce2f",
+  "checks": {
+    "held": 20,
+    "unmeasured": 2
+  },
+  "provider_assertions": {
+    "total": 95,
+    "held": 95,
+    "not_held": 0
+  },
+  "late_case_provider_observations": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "130373483675"
+      ],
+      "at": "2026-11-10T00:02:25.854905+00:00"
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "757236736523"
+      ],
+      "at": "2026-11-10T00:02:25.856957+00:00"
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "9323981257024398"
+      ],
+      "at": "2026-11-10T00:02:25.865902+00:00"
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "f66732d63392d6c6174652d76725f6337383862323161656631653462346438303836313532383736616463653266"
+      ],
+      "at": "2026-11-10T00:02:25.867612+00:00"
+    },
+    {
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 2,
+      "identities": [
+        "17VOBIFQJ5.G3GD5E",
+        "17UMY35A2U.T3PEV7"
+      ],
+      "matching_messages": [
+        {
+          "ts": "17VOBIFQJ5.G3GD5E",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-late-vr_c788b21aef1e4b4d8086152876adce2f\",\"status\":\"unknown\",\"blocked_step\":\"contact\"}"
+        },
+        {
+          "ts": "17UMY35A2U.T3PEV7",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-late-vr_c788b21aef1e4b4d8086152876adce2f\",\"status\":\"confirmed\",\"blocked_step\":null}"
+        }
+      ],
+      "at": "2026-11-10T00:02:25.880340+00:00"
+    }
+  ],
+  "counted_as_pass": false
+}

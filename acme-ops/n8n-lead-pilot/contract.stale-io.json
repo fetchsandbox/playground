@@ -1,0 +1,224 @@
+{
+  "checks": [
+    {
+      "id": "C9_stale_native_io",
+      "name": "Native old-owner Contact command arrives after takeover; real adapter denies it with zero provider effects",
+      "before": {
+        "path": "/proof/fs-c9-stale-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true,
+          "where": []
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-stale-{{run_id}}"
+          },
+          "expect_status": 500
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-stale-{{run_id}}"
+          },
+          "expect_status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "delay_seconds": 5
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-c9-stale-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "unknown",
+            "required": true
+          },
+          {
+            "select": "epoch",
+            "equals": 2,
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "unknown",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "notification.outcome",
+            "equals": "unknown",
+            "required": true
+          },
+          {
+            "select": "notification.blocked_step",
+            "equals": "contact",
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.email",
+                "equals": "fs-c9-stale-{{run_id}}@example.com",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "properties.dealname",
+                "equals": "Pilot fs-c9-stale-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "payload.headers[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "name",
+                    "equals": "To",
+                    "required": true
+                  },
+                  {
+                    "select": "value",
+                    "equals": "fs-c9-stale-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "select": "records[*]",
+            "count": 0,
+            "required": true,
+            "where": [
+              {
+                "select": "summary",
+                "equals": "Pilot fs-c9-stale-{{run_id}}",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-stale-{{run_id}}\",\"status\":\"unknown\",\"blocked_step\":\"contact\"}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "contains": "fs-c9-stale-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

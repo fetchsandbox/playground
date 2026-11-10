@@ -1,0 +1,46 @@
+{
+  "scope": "Fresh consistent reader of still-running DynamoDB Local after native run",
+  "at": "2026-11-09T23:41:48.504Z",
+  "records": [
+    {
+      "lead_id": "fs-c9-takeover-vr_d8ffa5d0ffa14260959063d9eef579cc",
+      "status": "confirmed",
+      "epoch": 2,
+      "owner": "725",
+      "version": 23,
+      "operations": {
+        "gmail": {
+          "client_status": 200,
+          "status": "confirmed",
+          "id": "7367615804208184"
+        },
+        "calendar": {
+          "id": "f66732d63392d74616b656f7665722d76725f6438666661356430666661313432363039353930363364396565663537396363",
+          "client_status": 200,
+          "status": "confirmed",
+          "requested_id": "f66732d63392d74616b656f7665722d76725f6438666661356430666661313432363039353930363364396565663537396363"
+        },
+        "deal": {
+          "status": "confirmed",
+          "id": "996560665562",
+          "confirmation": "positive_readback"
+        },
+        "contact": {
+          "client_status": 201,
+          "status": "confirmed",
+          "id": "489980256366"
+        }
+      },
+      "notification": {
+        "blocked_step": null,
+        "client_status": 200,
+        "accepted_ids": [
+          "17AEE9Z5ZN.MFKTOV"
+        ],
+        "outcome": "confirmed",
+        "status": "confirmed",
+        "ts": "17AEE9Z5ZN.MFKTOV"
+      }
+    }
+  ]
+}

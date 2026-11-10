@@ -1,0 +1,7 @@
+{
+  "phase": "adapter_restarted",
+  "pid_before": 87700,
+  "pid_after": 87933,
+  "signal": "SIGKILL",
+  "at": "2026-11-10T00:01:25.821Z"
+}

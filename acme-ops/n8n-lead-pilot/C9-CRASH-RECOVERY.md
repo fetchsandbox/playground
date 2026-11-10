@@ -1,15 +1,148 @@
 # C9: abandoned claims and process crashes
 
-**Calendar and Slack negative controls measured; full C9 matrix remains open.**
-The protected pilot now publishes restored native version
-`4e993aff-e091-4ecb-b572-ff5289a295db`. Calendar and Slack negative controls
-and their separate same-contract restoration results are recorded below.
-Backend `f7eeee67` is unchanged.
-The earlier native `bc0acc3f` 15-passed/C9-unmeasured receipt is historical evidence.
-C9 is still typed unmeasured in the unchanged, frozen FetchSandbox contract. Its historical blocker wording remains byte-for-byte preserved; this document records the newer implementation and bounded native results. No new engine receipt
-or native builder acceptance follows from the local tests. Native attempts are recorded separately below.
+**November 9 declared C9 runtime gate measured.** Three separate fresh-session
+restored receipts each record **23 held, zero violated, zero unmeasured**, all
+**110 independent provider-state assertions held**, and qualified crash, queued
+request and stale native-command witnesses:
+[repetition 1](https://fetchsandbox.com/runs/e03cef0da9?flow=vr_87cd1cc672dc4b8eb4520d88f360334a),
+[repetition 2](https://fetchsandbox.com/runs/0f2f57c224?flow=vr_00939ebd0e1247888d5a6940a42482b7),
+[repetition 3](https://fetchsandbox.com/runs/ce0c82d778?flow=vr_76bc92d5c30c49a7ab1164ac1b04ad38).
+The same frozen 23-check business contract rejected the separately hashed adapter
+that ignored stale-owner dispatch denial: [negative control](https://fetchsandbox.com/runs/722b4e3e24?flow=vr_665be49d3b3e4b82a5ddac44e6e6e67e)
+records **22 held and exactly one violated**, `C9_stale_native_io`, with an actual
+forbidden Contact effect. The negative application's exit 1 is preserved; it is
+not counted as a passing application run.
+
+The measured normal bundle is `abb53505484a`; backend `f7eeee67` was observed before
+and after every final phase. No backend deployment or native workflow edit was
+performed in this task. The source guard used the retained actual native export
+`4e993aff-e091-4ecb-b572-ff5289a295db` (SHA256 beginning `88740c8f25c5`);
+a fresh native export remains blocked by the Mac lock. This is scripted MCP/native
+runtime qualification against isolated twins, not independent builder acceptance,
+live-vendor parity or production certification. Actual n8n SaaS host termination,
+AWS database failure/restore and clock skew remain unmeasured.
+
+[Phase observations and provenance](evidence/c9-native-matrix/observation.json)
+retain each run separately. Six accepted-write crash controls kill the owned
+adapter only after an independent provider/state witness; the late-provider queue
+adds another actual adapter crash. A stale native command is released after
+takeover while its original signature remains valid, and must create no effect.
+Fresh consistent DynamoDB Local reads retain original identities and claim epochs.
+The database stays running across these worker crashes.
+
+The first 23/23 receipt and first negative trial used an older scheduling proxy
+that handled unknown routes and filtered headers. They remain bounded historical
+C9 observations and are excluded from the final regression gate. A real HTTP test
+failed before the proxy correction and passed afterward. Every final phase uses
+literal path/method/body and end-to-end header forwarding to a fixed loopback
+socket, returning the actual application response. The final gate also includes
+577 application tests with zero skips, 19 separate Node controller tests with
+zero skips, and TypeScript. [Local gate provenance](evidence/c9-native-matrix/local-quality-gates.json).
+
+The expanded candidate explicitly replaces the original C9 blocker and adds
+Contact/Gmail crash cases; the original base/identity/three-crash contracts and
+prior receipts remain unchanged. It is not a same-contract comparison with that
+older blocker. Final negative/restored phases do share the same frozen business
+checks. Remaining acceptance work: fresh native source capture and the maintained
+unprimed builder-agent journey. Passing this declared runtime gate does not close
+those gates.
+
+## Recorded November 9 extension history
+
+The separate [concurrent-takeover receipt](https://fetchsandbox.com/runs/c1fe8af8e4?flow=vr_d8ffa5d0ffa14260959063d9eef579cc)
+records 19 held, zero violated and the original C9 unmeasured. The two native
+recovery requests overlapped by 3.15 seconds: one recovered the original Deal,
+one stopped because the lead was owned. A fresh consistent DynamoDB Local read
+retained the accepted Deal ID at epoch 2. All 90 independent provider assertions
+held. This used one adapter and overlapping native invocations, not two terminated
+n8n SaaS worker hosts. [Sanitized evidence](evidence/c9-takeover/observation.json).
+
+Two new fault controls extend the same MCP runner; neither is business logic:
+
+- A loopback proof queue reads a real Contact HTTP request before the owned adapter
+  is killed. It intentionally finishes that queued request after the disconnected
+  client, only after independent reads find a replacement holding unknown with no
+  Contact. The actual first-party twin API creates the late Contact. The original
+  caller's AbortSignal is preserved. This models deferred provider processing;
+  it does not establish a real vendor's queue implementation.
+- A loopback scheduling proxy delays one real native `/io` command before the
+  adapter's ownership fence. After takeover it forwards that unchanged command.
+  The existing signing authority must still accept the original invocation; an
+  expired or altered ticket cannot qualify ownership-fence rejection. The actual
+  adapter must deny dispatch and provider state must remain empty. This is a
+  late native command, not suspension of an n8n SaaS host.
+
+The first late-write trial is retained as [failing](https://fetchsandbox.com/runs/11bf764b91?flow=vr_243d7de5076c42de9826813e43712fee):
+19 held, one violated, original C9 unmeasured. The new late-case oracle incorrectly
+expected one Slack message total. The app correctly issued an unknown/contact
+notice followed by a confirmed notice. The corrected new-case contract requires
+exactly one of each and two total. This is an explicit oracle correction, not a
+same-contract fix to app code; prior check definitions remain unchanged.
+
+The next 22-check trial held the corrected late-write check. Its stale-command
+check remained unmeasured because the interrupted native request returned HTTP
+500 rather than the newly authored 502 expectation. The follow-up changes only
+that transport expectation to the observed 500, retaining the zero-effect and
+ownership assertions. That setup failure is not a passing stale-command result.
+
+`PILOT_CONTRACT=c9-candidate` additionally declares actual Contact and Gmail
+accepted-write adapter crashes. It adds `C9_contact_crash` and explicitly replaces
+only the historical C9 blocker with an executable Gmail-crash/two-recovery check.
+The original base contract and its old receipts remain unchanged. Shared DynamoDB
+storage is mandatory for this candidate. The first native 23-check measurement
+held every declared check; later final negative-control and repetition evidence
+is recorded above. The fresh-builder gate remains separate. The candidate is not promoted by declaration alone.
+
+`PILOT_ADAPTER_VARIANT=allow-stale-dispatch` builds a separately hashed, registered
+negative adapter by removing enforcement of the provider-dispatch ownership fence.
+Native authentication, source workflow and the behavioral oracles stay in place.
+It is an ephemeral source control, not a runtime branch selected by a check ID.
+The normal build remains byte-identical to the previously measured bundle. Native
+rejection and three restored repetitions are now recorded above; fresh builder
+acceptance remains pending.
+
+Local candidate checks: 577 application tests passed with zero skips using
+DynamoDB Local; TypeScript passed. Nineteen separate Node controller/startup/source
+control tests passed. Those are local evidence, not a native builder journey.
+There is no backend rollout or native workflow edit in this work. The retained
+actual export is `4e993aff`; a fresh native Save is pending Mac unlock. Actual AWS
+database crash/restore, clock skew and live-provider parity remain unmeasured.
 
 ## User journey and acceptance owner
+
+### Reproduce the expanded declared contract
+
+Use the existing private binding handoff and an actual saved native export that
+passes the source guard. Prepare a fresh disposable DynamoDB Local table for each
+run; keep the database alive while adapter workers are killed. The existing
+protected n8n-to-adapter reverse connection must point to `PROOF_PORT`. The
+scheduling proxy uses that port and starts the owned adapter on the next port,
+so both ports must be free. Do not run these phases concurrently against one
+native workflow/reverse connection.
+
+```sh
+node n8n-lead-pilot/build-adapter.mjs dist/lead-pilot-c9.mjs
+PILOT_ADAPTER_VARIANT=allow-stale-dispatch \
+  node n8n-lead-pilot/build-adapter.mjs dist/lead-pilot-stale-negative.mjs
+
+PILOT_CONTRACT=c9-candidate PILOT_ADAPTER_VARIANT=normal \
+N8N_WORKFLOW_EXPORT=/private/actual-native-export.json \
+PILOT_BINDINGS_SOURCE=/private/existing-pilot-bindings.json \
+PILOT_STATE_TABLE=your-fresh-disposable-local-table \
+PILOT_DYNAMODB_ENDPOINT=http://127.0.0.1:YOUR_PORT \
+PROOF_BUNDLE=dist/lead-pilot-c9.mjs PROOF_PORT=8097 \
+PROOF_OUT_DIR=/private/new-proof-directory \
+node verify/relay-proof.mjs n8n-lead-recovery
+```
+
+The account API key must already be supplied privately through the supported
+environment. Never put it in command history. For the deliberate negative phase,
+use another fresh table/output directory, set `PILOT_ADAPTER_VARIANT` to
+`allow-stale-dispatch` and select `dist/lead-pilot-stale-negative.mjs`. Expected
+application result: exit 1, exactly `C9_stale_native_io` violated and the other 22
+checks held. A setup error, missing fault witness or another failure does not
+qualify the control. Restore the normal bundle and variant before repetitions;
+each must have its own fresh session, table, output directory and receipt.
 
 The app builder inspects this workflow and proposes the expected recovery contract.
 The existing FetchSandbox MCP runner freezes it, issues protected twin bindings,
@@ -103,7 +236,7 @@ Logs and sanitized hashes are in [local evidence](evidence/c9-local/observation.
 The controlled broken workflow is rejected by the business oracle; the test that
 expects that rejection passes. This is not a new failing FetchSandbox receipt.
 
-## Current remaining milestones
+## Remaining milestones at the earlier Calendar/Slack cutoff
 
 Calendar and Slack positive read-back, actual native accepted-write adapter
 crashes, the Calendar incomplete-recovery negative control and Slack duplicate-send

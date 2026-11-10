@@ -1,0 +1,1234 @@
+{
+  "scope": "Stored public-verifier observations and a fresh consistent DynamoDB Local reader; not a new verifier or source-attestation service",
+  "phase": "restored-repeat-3",
+  "receipt_url": "https://fetchsandbox.com/runs/ce0c82d778?flow=vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+  "run_id": "vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+  "archive_sha256": "5b3c78cc19ebcf17049bd882f8757fdb860f2a4cfde3f85e1d1d621d9afa2240",
+  "provider_assertions": {
+    "total": 110,
+    "held": 110,
+    "not_held": 0
+  },
+  "cases": {
+    "C9_deal_crash": {
+      "lead_id": "fs-c9-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1157",
+        "epoch": 2,
+        "version": 23,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "3311317245286111"
+          },
+          "calendar": {
+            "id": "f66732d63392d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "476583619457",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "client_status": 201,
+            "status": "confirmed",
+            "id": "642542548259"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17M4SKFMN9.VRQKNT"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17M4SKFMN9.VRQKNT"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "642542548259"
+          ],
+          "at": "2026-11-10T01:25:50.765810+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "476583619457"
+          ],
+          "at": "2026-11-10T01:25:50.767250+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "3311317245286111"
+          ],
+          "at": "2026-11-10T01:25:50.773147+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:25:50.775260+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17M4SKFMN9.VRQKNT"
+          ],
+          "at": "2026-11-10T01:25:50.778464+00:00",
+          "messages": [
+            {
+              "ts": "17M4SKFMN9.VRQKNT",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:24:57.861736+00:00",
+          "finished_at": "2026-11-10T01:24:58.058920+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:24:58.061009+00:00",
+          "finished_at": "2026-11-10T01:25:03.358141+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:25:03.373623+00:00",
+          "finished_at": "2026-11-10T01:25:03.740667+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:25:38.778564+00:00",
+          "finished_at": "2026-11-10T01:25:49.378865+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:25:49.381151+00:00",
+          "finished_at": "2026-11-10T01:25:50.446107+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:25:50.547835+00:00",
+          "finished_at": "2026-11-10T01:25:50.763829+00:00"
+        }
+      ]
+    },
+    "C9_calendar_crash": {
+      "lead_id": "fs-c9-calendar-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1160",
+        "epoch": 2,
+        "version": 24,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "5337978249851188"
+          },
+          "calendar": {
+            "id": "f66732d63392d63616c656e6461722d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "confirmation": "positive_readback",
+            "status": "confirmed",
+            "requested_id": "f66732d63392d63616c656e6461722d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "651106095350",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "client_status": 201,
+            "status": "confirmed",
+            "id": "499490747489"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17TMF4R6JV.8A96D0"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17TMF4R6JV.8A96D0"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "499490747489"
+          ],
+          "at": "2026-11-10T01:26:43.883932+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "651106095350"
+          ],
+          "at": "2026-11-10T01:26:43.885533+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "5337978249851188"
+          ],
+          "at": "2026-11-10T01:26:43.892385+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d63616c656e6461722d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:26:43.893716+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17TMF4R6JV.8A96D0"
+          ],
+          "at": "2026-11-10T01:26:43.897051+00:00",
+          "messages": [
+            {
+              "ts": "17TMF4R6JV.8A96D0",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-calendar-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-calendar-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:25:50.780014+00:00",
+          "finished_at": "2026-11-10T01:25:50.987423+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:25:50.989959+00:00",
+          "finished_at": "2026-11-10T01:26:00.455859+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-calendar-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:00.458753+00:00",
+          "finished_at": "2026-11-10T01:26:00.693410+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:35.728207+00:00",
+          "finished_at": "2026-11-10T01:26:42.477348+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:42.479005+00:00",
+          "finished_at": "2026-11-10T01:26:43.557005+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-calendar-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:43.658864+00:00",
+          "finished_at": "2026-11-10T01:26:43.881751+00:00"
+        }
+      ]
+    },
+    "C9_slack_crash": {
+      "lead_id": "fs-c9-slack-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1163",
+        "epoch": 2,
+        "version": 25,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "5530016072486893"
+          },
+          "calendar": {
+            "id": "f66732d63392d736c61636b2d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d736c61636b2d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "829351209522",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "client_status": 201,
+            "status": "confirmed",
+            "id": "608287001082"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "confirmation": "positive_readback",
+          "accepted_ids": [
+            "17XW4WLDXT.9XFDAF"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17XW4WLDXT.9XFDAF"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "608287001082"
+          ],
+          "at": "2026-11-10T01:27:37.427599+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "829351209522"
+          ],
+          "at": "2026-11-10T01:27:37.429319+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "5530016072486893"
+          ],
+          "at": "2026-11-10T01:27:37.436902+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d736c61636b2d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:27:37.438329+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17XW4WLDXT.9XFDAF"
+          ],
+          "at": "2026-11-10T01:27:37.443149+00:00",
+          "messages": [
+            {
+              "ts": "17XW4WLDXT.9XFDAF",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-slack-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-slack-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:43.898821+00:00",
+          "finished_at": "2026-11-10T01:26:44.099067+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:26:44.101742+00:00",
+          "finished_at": "2026-11-10T01:26:55.536684+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-slack-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:26:55.538199+00:00",
+          "finished_at": "2026-11-10T01:26:55.769491+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:27:30.805694+00:00",
+          "finished_at": "2026-11-10T01:27:36.008090+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:27:36.010841+00:00",
+          "finished_at": "2026-11-10T01:27:37.096861+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-slack-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:27:37.198524+00:00",
+          "finished_at": "2026-11-10T01:27:37.425257+00:00"
+        }
+      ]
+    },
+    "C9_competing_takeover": {
+      "lead_id": "fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1167",
+        "epoch": 2,
+        "version": 23,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "0551945727254416"
+          },
+          "calendar": {
+            "id": "f66732d63392d74616b656f7665722d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d74616b656f7665722d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "753803954836",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "client_status": 201,
+            "status": "confirmed",
+            "id": "807188533121"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17FDS6D08H.183054"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17FDS6D08H.183054"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "807188533121"
+          ],
+          "at": "2026-11-10T01:28:30.425561+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "753803954836"
+          ],
+          "at": "2026-11-10T01:28:30.427506+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "0551945727254416"
+          ],
+          "at": "2026-11-10T01:28:30.436415+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d74616b656f7665722d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:28:30.437979+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17FDS6D08H.183054"
+          ],
+          "at": "2026-11-10T01:28:30.441807+00:00",
+          "messages": [
+            {
+              "ts": "17FDS6D08H.183054",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:27:37.444617+00:00",
+          "finished_at": "2026-11-10T01:27:37.677457+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:27:37.679436+00:00",
+          "finished_at": "2026-11-10T01:27:42.898520+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:27:42.900575+00:00",
+          "finished_at": "2026-11-10T01:27:43.113988+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:18.165127+00:00",
+          "finished_at": "2026-11-10T01:28:21.211900+00:00",
+          "response_status": "in_progress",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:18.175372+00:00",
+          "finished_at": "2026-11-10T01:28:28.969594+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:28.972001+00:00",
+          "finished_at": "2026-11-10T01:28:30.120357+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:30.222142+00:00",
+          "finished_at": "2026-11-10T01:28:30.423101+00:00"
+        }
+      ]
+    },
+    "C9_late_dispatch": {
+      "lead_id": "fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1171",
+        "epoch": 3,
+        "version": 31,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "9886645892551059"
+          },
+          "calendar": {
+            "id": "f66732d63392d6c6174652d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d6c6174652d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "580840316676",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "status": "confirmed",
+            "id": "407644536341",
+            "confirmation": "positive_readback"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17THETHINH.DDQPJX",
+            "17MNEWY8UT.H5SKA3"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17MNEWY8UT.H5SKA3"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "407644536341"
+          ],
+          "at": "2026-11-10T01:29:33.720601+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "580840316676"
+          ],
+          "at": "2026-11-10T01:29:33.722687+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "9886645892551059"
+          ],
+          "at": "2026-11-10T01:29:33.732585+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d6c6174652d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:29:33.734391+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 2,
+          "identities": [
+            "17THETHINH.DDQPJX",
+            "17MNEWY8UT.H5SKA3"
+          ],
+          "at": "2026-11-10T01:29:33.739287+00:00",
+          "messages": [
+            {
+              "ts": "17THETHINH.DDQPJX",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"unknown\",\"blocked_step\":\"contact\"}"
+            },
+            {
+              "ts": "17MNEWY8UT.H5SKA3",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:30.444131+00:00",
+          "finished_at": "2026-11-10T01:28:30.641535+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:28:30.643168+00:00",
+          "finished_at": "2026-11-10T01:28:33.862426+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:28:33.864681+00:00",
+          "finished_at": "2026-11-10T01:28:34.051616+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:09.089196+00:00",
+          "finished_at": "2026-11-10T01:29:15.457179+00:00",
+          "response_status": "unknown",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:15.458849+00:00",
+          "finished_at": "2026-11-10T01:29:15.677103+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:20.683765+00:00",
+          "finished_at": "2026-11-10T01:29:32.297608+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:32.299084+00:00",
+          "finished_at": "2026-11-10T01:29:33.392385+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-late-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:33.494078+00:00",
+          "finished_at": "2026-11-10T01:29:33.718532+00:00"
+        }
+      ]
+    },
+    "C9_stale_native_io": {
+      "lead_id": "fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1174",
+        "epoch": 2,
+        "version": 11,
+        "status": "unknown",
+        "operations": {
+          "gmail": {
+            "status": "pending"
+          },
+          "calendar": {
+            "status": "pending"
+          },
+          "deal": {
+            "status": "pending"
+          },
+          "contact": {
+            "status": "unknown"
+          }
+        },
+        "notification": {
+          "blocked_step": "contact",
+          "client_status": 200,
+          "accepted_ids": [
+            "17PQIZQTHZ.ZIDI6B"
+          ],
+          "outcome": "unknown",
+          "status": "confirmed",
+          "ts": "17PQIZQTHZ.ZIDI6B"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 0,
+          "identities": [],
+          "at": "2026-11-10T01:30:41.944253+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 0,
+          "identities": [],
+          "at": "2026-11-10T01:30:41.945504+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 0,
+          "identities": [],
+          "at": "2026-11-10T01:30:41.949494+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 0,
+          "identities": [],
+          "at": "2026-11-10T01:30:41.950533+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17PQIZQTHZ.ZIDI6B"
+          ],
+          "at": "2026-11-10T01:30:41.953783+00:00",
+          "messages": [
+            {
+              "ts": "17PQIZQTHZ.ZIDI6B",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"unknown\",\"blocked_step\":\"contact\"}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:33.741350+00:00",
+          "finished_at": "2026-11-10T01:29:33.960232+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 500,
+          "started_at": "2026-11-10T01:29:33.962545+00:00",
+          "finished_at": "2026-11-10T01:29:51.838169+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:29:51.840373+00:00",
+          "finished_at": "2026-11-10T01:29:52.038920+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:30:27.072048+00:00",
+          "finished_at": "2026-11-10T01:30:36.161009+00:00",
+          "response_status": "unknown",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:30:36.163217+00:00",
+          "finished_at": "2026-11-10T01:30:36.471606+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-stale-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:30:41.577352+00:00",
+          "finished_at": "2026-11-10T01:30:41.942791+00:00"
+        }
+      ]
+    },
+    "C9_contact_crash": {
+      "lead_id": "fs-c9-contact-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1176",
+        "epoch": 2,
+        "version": 24,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "client_status": 200,
+            "status": "confirmed",
+            "id": "3344479603735578"
+          },
+          "calendar": {
+            "id": "f66732d63392d636f6e746163742d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d636f6e746163742d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "180774530716",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "status": "confirmed",
+            "id": "547101017721",
+            "confirmation": "positive_readback"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17L3RCZXPX.P11SDK"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17L3RCZXPX.P11SDK"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "547101017721"
+          ],
+          "at": "2026-11-10T01:31:37.241839+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "180774530716"
+          ],
+          "at": "2026-11-10T01:31:37.244067+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "3344479603735578"
+          ],
+          "at": "2026-11-10T01:31:37.253356+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d636f6e746163742d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:31:37.255138+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17L3RCZXPX.P11SDK"
+          ],
+          "at": "2026-11-10T01:31:37.260634+00:00",
+          "messages": [
+            {
+              "ts": "17L3RCZXPX.P11SDK",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-contact-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-contact-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:30:41.956313+00:00",
+          "finished_at": "2026-11-10T01:30:42.219174+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:30:42.221023+00:00",
+          "finished_at": "2026-11-10T01:30:46.696722+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-contact-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:30:46.699213+00:00",
+          "finished_at": "2026-11-10T01:30:47.124465+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:31:22.163456+00:00",
+          "finished_at": "2026-11-10T01:31:35.778441+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:31:35.780225+00:00",
+          "finished_at": "2026-11-10T01:31:36.900600+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-contact-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:31:37.002437+00:00",
+          "finished_at": "2026-11-10T01:31:37.239602+00:00"
+        }
+      ]
+    },
+    "C9": {
+      "lead_id": "fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+      "saved": {
+        "owner": "1180",
+        "epoch": 2,
+        "version": 25,
+        "status": "confirmed",
+        "operations": {
+          "gmail": {
+            "status": "confirmed",
+            "id": "3753723877750473",
+            "confirmation": "positive_readback"
+          },
+          "calendar": {
+            "id": "f66732d63392d676d61696c2d76725f3736626339326435633330633439613761623131363461633162303461643338",
+            "client_status": 200,
+            "status": "confirmed",
+            "requested_id": "f66732d63392d676d61696c2d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          },
+          "deal": {
+            "status": "confirmed",
+            "id": "985551292010",
+            "confirmation": "positive_readback"
+          },
+          "contact": {
+            "client_status": 201,
+            "status": "confirmed",
+            "id": "288746918280"
+          }
+        },
+        "notification": {
+          "blocked_step": null,
+          "client_status": 200,
+          "accepted_ids": [
+            "17LDM3MG7L.UTAELG"
+          ],
+          "outcome": "confirmed",
+          "status": "confirmed",
+          "ts": "17LDM3MG7L.UTAELG"
+        }
+      },
+      "providers": [
+        {
+          "role": "hubspot",
+          "collection": "contacts",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "288746918280"
+          ],
+          "at": "2026-11-10T01:32:32.742581+00:00"
+        },
+        {
+          "role": "hubspot",
+          "collection": "deals",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "985551292010"
+          ],
+          "at": "2026-11-10T01:32:32.745698+00:00"
+        },
+        {
+          "role": "gmail",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "3753723877750473"
+          ],
+          "at": "2026-11-10T01:32:32.755361+00:00"
+        },
+        {
+          "role": "google-calendar",
+          "collection": "events",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "f66732d63392d676d61696c2d76725f3736626339326435633330633439613761623131363461633162303461643338"
+          ],
+          "at": "2026-11-10T01:32:32.757853+00:00"
+        },
+        {
+          "role": "slack",
+          "collection": "messages",
+          "assertion_held": true,
+          "matching_records": 1,
+          "identities": [
+            "17LDM3MG7L.UTAELG"
+          ],
+          "at": "2026-11-10T01:32:32.762979+00:00",
+          "messages": [
+            {
+              "ts": "17LDM3MG7L.UTAELG",
+              "channel": "C_PILOT",
+              "text": "{\"lead_id\":\"fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38\",\"status\":\"confirmed\",\"blocked_step\":null}"
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:31:37.262215+00:00",
+          "finished_at": "2026-11-10T01:31:37.514529+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 502,
+          "started_at": "2026-11-10T01:31:37.517279+00:00",
+          "finished_at": "2026-11-10T01:31:45.820066+00:00"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:31:45.821780+00:00",
+          "finished_at": "2026-11-10T01:31:46.081633+00:00"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:32:21.113101+00:00",
+          "finished_at": "2026-11-10T01:32:24.529034+00:00",
+          "response_status": "in_progress",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:32:21.123079+00:00",
+          "finished_at": "2026-11-10T01:32:30.632588+00:00",
+          "response_status": "confirmed",
+          "reason": "Status notification accepted by twin"
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "status": 200,
+          "started_at": "2026-11-10T01:32:30.634622+00:00",
+          "finished_at": "2026-11-10T01:32:32.155879+00:00",
+          "response_status": "confirmed",
+          "reason": "Existing execution owns this lead, or lead is already complete"
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-gmail-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+          "status": 200,
+          "started_at": "2026-11-10T01:32:32.257625+00:00",
+          "finished_at": "2026-11-10T01:32:32.739845+00:00"
+        }
+      ]
+    }
+  },
+  "backend": {
+    "commit": "f7eeee67",
+    "built_at": "2026-11-08T17:12:46.575660+00:00",
+    "env": "unknown"
+  },
+  "recorded_at": "2026-11-10T01:34:03.078Z"
+}

@@ -1,0 +1,17 @@
+{
+  "provider_accepted": true,
+  "checkpoint_pending": true,
+  "step": "calendar",
+  "lead_id": "fs-c9-calendar-vr_a32abbde2cdb42d59245e7919ba74f37",
+  "owner_before": "923",
+  "version_before": 16,
+  "epoch_before": 1,
+  "provider_matching_records": 1,
+  "effect_id": "f66732d63392d63616c656e6461722d76725f6133326162626465326364623432643539323435653739313962613734663337",
+  "pid_before": 37231,
+  "signal": "SIGKILL",
+  "accepted_observed_at": "2026-11-10T00:26:37.740Z",
+  "killed_at": "2026-11-10T00:26:38.350Z",
+  "pid_after": 37293,
+  "restarted_at": "2026-11-10T00:26:38.444Z"
+}

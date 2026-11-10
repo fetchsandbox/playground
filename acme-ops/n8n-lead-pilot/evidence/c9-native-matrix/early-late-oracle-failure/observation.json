@@ -1,0 +1,81 @@
+{
+  "classification": "retained nonpassing attempt",
+  "reason": "New late-dispatch oracle incorrectly counted the required unknown and confirmed Slack messages as one total. Corrected contract explicitly requires one of each; not an application fix.",
+  "receipt_url": "https://fetchsandbox.com/runs/11bf764b91?flow=vr_243d7de5076c42de9826813e43712fee",
+  "checks": {
+    "held": 19,
+    "violated": 1,
+    "unmeasured": 1
+  },
+  "provider_assertions": {
+    "total": 95,
+    "held": 94,
+    "not_held": 1
+  },
+  "late_case_provider_observations": [
+    {
+      "role": "hubspot",
+      "collection": "contacts",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "598407361256"
+      ],
+      "at": "2026-11-09T23:51:36.631362+00:00"
+    },
+    {
+      "role": "hubspot",
+      "collection": "deals",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "094434641627"
+      ],
+      "at": "2026-11-09T23:51:36.633425+00:00"
+    },
+    {
+      "role": "gmail",
+      "collection": "messages",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "7761006966939848"
+      ],
+      "at": "2026-11-09T23:51:36.642461+00:00"
+    },
+    {
+      "role": "google-calendar",
+      "collection": "events",
+      "assertion_held": true,
+      "matching_records": 1,
+      "identities": [
+        "f66732d63392d6c6174652d76725f3234336437646535303736633432646539383236383133653433373132666565"
+      ],
+      "at": "2026-11-09T23:51:36.644098+00:00"
+    },
+    {
+      "role": "slack",
+      "collection": "messages",
+      "assertion_held": false,
+      "matching_records": 2,
+      "identities": [
+        "17PDQ5C6S1.SZ2BKI",
+        "17COA3DUOP.9XOHJG"
+      ],
+      "matching_messages": [
+        {
+          "ts": "17PDQ5C6S1.SZ2BKI",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-late-vr_243d7de5076c42de9826813e43712fee\",\"status\":\"unknown\",\"blocked_step\":\"contact\"}"
+        },
+        {
+          "ts": "17COA3DUOP.9XOHJG",
+          "channel": "C_PILOT",
+          "text": "{\"lead_id\":\"fs-c9-late-vr_243d7de5076c42de9826813e43712fee\",\"status\":\"confirmed\",\"blocked_step\":null}"
+        }
+      ],
+      "at": "2026-11-09T23:51:36.648514+00:00"
+    }
+  ],
+  "counted_as_pass": false
+}

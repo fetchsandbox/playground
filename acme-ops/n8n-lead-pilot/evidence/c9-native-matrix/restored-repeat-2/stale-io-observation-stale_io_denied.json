@@ -1,0 +1,15 @@
+{
+  "checkpoint_pending": true,
+  "provider_matching_records": 0,
+  "owner_before": "1114",
+  "epoch_before": 1,
+  "replacement_held_unknown": true,
+  "owner_after": "1115",
+  "epoch_after": 2,
+  "replacement_preserved": true,
+  "phase": "stale_io_denied",
+  "at": "2026-11-10T01:15:47.370Z",
+  "invocation_valid_at_release": true,
+  "adapter_denied": true,
+  "native_worker_host_suspended": false
+}

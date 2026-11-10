@@ -1,0 +1,875 @@
+{
+  "checks": [
+    {
+      "id": "C9_contact_crash",
+      "name": "Accepted Contact, actual adapter SIGKILL, exact read-back and no duplicate",
+      "before": {
+        "path": "/proof/fs-c9-contact-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-contact-{{run_id}}"
+          },
+          "expect_status": 502
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-contact-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-contact-{{run_id}}"
+          },
+          "expect_status": 200
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-contact-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-c9-contact-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.calendar.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.confirmation",
+            "equals": "positive_readback",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "epoch",
+            "equals": 2,
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c9-contact-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c9-contact-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step3.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c9-contact-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c9-contact-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step3.state.operations.deal.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "associations.contacts.results[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "id",
+                        "equals": "{{step3.state.operations.contact.id}}",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c9-contact-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c9-contact-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step3.state.operations.gmail.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c9-contact-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c9-contact-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "labelIds[*]",
+                    "equals": "SENT",
+                    "count": 1,
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c9-contact-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c9-contact-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step3.state.operations.calendar.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "attendees[*]",
+                    "count": 1,
+                    "required": false,
+                    "where": [
+                      {
+                        "select": "email",
+                        "equals": "fs-c9-contact-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-contact-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-contact-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 0,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-contact-{{run_id}}\",\"status\":\"unknown\",\"blocked_step\":\"deal\"}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "contains": "fs-c9-contact-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "C9",
+      "name": "Restart and abandoned in-progress claim: accepted Gmail, SIGKILL, two native recovery executions and exact one-effect state",
+      "before": {
+        "path": "/proof/fs-c9-gmail-{{run_id}}",
+        "assertion": {
+          "select": "records[*]",
+          "count": 0,
+          "required": true
+        }
+      },
+      "actions": [
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-gmail-{{run_id}}"
+          },
+          "expect_status": 502
+        },
+        {
+          "method": "GET",
+          "path": "/proof/fs-c9-gmail-{{run_id}}",
+          "expect_status": 200
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "delay_seconds": 5
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-gmail-{{run_id}}"
+          },
+          "expect_status": 200,
+          "concurrency": 2
+        },
+        {
+          "method": "POST",
+          "path": "/invoke",
+          "body": {
+            "lead_id": "fs-c9-gmail-{{run_id}}"
+          },
+          "expect_status": 200
+        }
+      ],
+      "observe": {
+        "path": "/proof/fs-c9-gmail-{{run_id}}"
+      },
+      "assertion": {
+        "select": "records[*]",
+        "count": 1,
+        "required": true,
+        "where": [
+          {
+            "select": "status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.contact.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.deal.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.calendar.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "operations.gmail.confirmation",
+            "equals": "positive_readback",
+            "required": true
+          },
+          {
+            "select": "notification.status",
+            "equals": "confirmed",
+            "required": true
+          },
+          {
+            "select": "epoch",
+            "equals": 2,
+            "required": true
+          }
+        ]
+      },
+      "provider_assertions": [
+        {
+          "provider": "hubspot",
+          "collection": "contacts",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step4.state.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.email",
+                    "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.records.0.operations.contact.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "hubspot",
+          "collection": "deals",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step4.state.operations.deal.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "associations.contacts.results[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "id",
+                        "equals": "{{step4.state.operations.contact.id}}",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "properties.dealname",
+                    "equals": "Pilot fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step2.records.0.operations.deal.id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "gmail",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c9-gmail-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "id",
+                    "equals": "{{step4.state.operations.gmail.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "To",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "payload.headers[*]",
+                    "count": 1,
+                    "required": true,
+                    "where": [
+                      {
+                        "select": "name",
+                        "equals": "Message-ID",
+                        "required": true
+                      },
+                      {
+                        "select": "value",
+                        "equals": "<fs-c9-gmail-{{run_id}}@example.com>",
+                        "required": true
+                      }
+                    ]
+                  },
+                  {
+                    "select": "labelIds[*]",
+                    "equals": "SENT",
+                    "count": 1,
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "google-calendar",
+          "collection": "events",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "summary",
+                    "equals": "Pilot fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "id",
+                    "equals": "{{step4.state.operations.calendar.id}}",
+                    "required": true
+                  },
+                  {
+                    "select": "attendees[*]",
+                    "count": 1,
+                    "required": false,
+                    "where": [
+                      {
+                        "select": "email",
+                        "equals": "fs-c9-gmail-{{run_id}}@example.com",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "provider": "slack",
+          "collection": "messages",
+          "assertion": {
+            "all_of": [
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-gmail-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-gmail-{{run_id}}\",\"status\":\"confirmed\",\"blocked_step\":null}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 0,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "equals": "{\"lead_id\":\"fs-c9-gmail-{{run_id}}\",\"status\":\"unknown\",\"blocked_step\":\"deal\"}",
+                    "required": true
+                  },
+                  {
+                    "select": "channel",
+                    "equals": "C_PILOT",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "select": "records[*]",
+                "count": 1,
+                "required": true,
+                "where": [
+                  {
+                    "select": "text",
+                    "contains": "fs-c9-gmail-{{run_id}}",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

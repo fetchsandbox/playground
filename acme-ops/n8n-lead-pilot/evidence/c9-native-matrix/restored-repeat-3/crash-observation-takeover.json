@@ -1,0 +1,17 @@
+{
+  "provider_accepted": true,
+  "checkpoint_pending": true,
+  "step": "takeover",
+  "lead_id": "fs-c9-takeover-vr_76bc92d5c30c49a7ab1164ac1b04ad38",
+  "owner_before": "1165",
+  "version_before": 8,
+  "epoch_before": 1,
+  "provider_matching_records": 1,
+  "effect_id": "753803954836",
+  "pid_before": 36043,
+  "signal": "SIGKILL",
+  "accepted_observed_at": "2026-11-10T01:27:42.398Z",
+  "killed_at": "2026-11-10T01:27:42.661Z",
+  "pid_after": 36137,
+  "restarted_at": "2026-11-10T01:27:42.763Z"
+}

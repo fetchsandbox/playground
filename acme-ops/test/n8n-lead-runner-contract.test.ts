@@ -142,3 +142,61 @@ it('adds only three bounded accepted-write crash checks while retaining the orig
   }
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });
+
+it('late-dispatch overlay preserves prior oracles and reconciles the one late Contact',()=>{
+ const f=fixture();try{
+  const out=load(f,'console.log(JSON.stringify({checks:c.checks,count:c.scheduleSimulationCount,none:c.scheduleSimulation({crashCount:3}),plan:c.scheduleSimulation({crashCount:4,flowRunId:"fixture",legs:{hubspot:{base_url:"https://fetchsandbox.com/sandbox/h"}}})}));','normal',{PILOT_CONTRACT:'late-dispatch'});
+  expect(out.status).toBe(0);const x=JSON.parse(out.stdout);const previous=JSON.parse(load(f,'console.log(JSON.stringify(c.checks));','normal',{PILOT_CONTRACT:'takeover'}).stdout);
+  for(const c of previous)expect(x.checks.find((p:any)=>p.id===c.id)).toEqual(c);
+  expect(x.checks).toHaveLength(previous.length+1);expect(x.count).toBe(1);expect(x.none).toBeNull();expect(x.plan.body_equals).toBe('fs-c9-late-fixture@example.com');
+  const c=x.checks.find((c:any)=>c.id==='C9_late_dispatch');expect(c.assertion.where).toContainEqual({select:'epoch',equals:3,required:true});expect(c.assertion.where).toContainEqual({select:'operations.contact.confirmation',equals:'positive_readback',required:true});expect(c.provider_assertions).toHaveLength(5);
+  expect(JSON.stringify(c.provider_assertions)).not.toContain('step2.records.0.operations.contact.id');expect(JSON.stringify(c.provider_assertions)).toContain('step6.state.operations.contact.id');
+  const bytes=spawnSync('python3',['-c','import json,sys;print(len(json.dumps(json.load(sys.stdin)).encode()))'],{input:JSON.stringify({checks:x.checks}),encoding:'utf8'});expect(bytes.status).toBe(0);expect(Number(bytes.stdout)).toBeLessThan(120000);
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+ it('takeover overlay preserves all previous checks and requires concurrent recovery plus exact independent effect identities',()=>{
+ const f=fixture();try{
+ const out=load(f,'console.log(JSON.stringify({checks:c.checks,count:c.crashSimulationCount,plan:c.crashSimulation({faultIndex:3,flowRunId:"test",legs:{hubspot:{base_url:"https://fetchsandbox.com/sandbox/h"}}})}));','normal',{PILOT_CONTRACT:'takeover'});
+ expect(out.status).toBe(0);const x=JSON.parse(out.stdout);const prior=JSON.parse(load(f,'console.log(JSON.stringify(c.checks));','normal',{PILOT_CONTRACT:'crash'}).stdout);
+ for(const c of prior)expect(x.checks.find((p:any)=>p.id===c.id)).toEqual(c);
+ expect(x.checks).toHaveLength(prior.length+1);expect(x.count).toBe(4);expect(x.plan.id).toBe('takeover');expect(x.plan.body_equals).toBe('Pilot fs-c9-takeover-test');
+ const check=x.checks.find((c:any)=>c.id==='C9_competing_takeover');expect(check.actions.filter((a:any)=>a.concurrency===2)).toHaveLength(1);expect(check.provider_assertions).toHaveLength(5);expect(JSON.stringify(check)).not.toContain('step3.state.');expect(JSON.stringify(check)).toContain('step4.state.operations.deal.id');
+ expect(check.assertion.where).toContainEqual({select:'epoch',equals:2,required:true});
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+ });
+
+it('late acceptance requires one held/unknown Slack report and one later confirmed report, not two confirmations',()=>{
+ const overlay=JSON.parse(readFileSync(new URL('../n8n-lead-pilot/contract.late-dispatch.json',import.meta.url),'utf8'));
+ const assertions=overlay.checks[0].provider_assertions.find((p:any)=>p.provider==='slack').assertion.all_of;
+ expect(assertions.some((a:any)=>a.count===1&&a.where?.some((w:any)=>w.select==='text'&&w.equals===JSON.stringify({lead_id:'fs-c9-late-{{run_id}}',status:'unknown',blocked_step:'contact'})))).toBe(true);
+ expect(assertions.find((a:any)=>a.where?.some((w:any)=>w.select==='text'&&w.contains)).count).toBe(2);
+});
+
+it('stale native I/O overlay retains every prior check and requires withheld effects plus an unknown Contact',()=>{
+ const f=fixture();try{
+  const out=load(f,'console.log(JSON.stringify({checks:c.checks,stale:c.staleIo}));','normal',{PILOT_CONTRACT:'stale-io'});expect(out.status).toBe(0);const x=JSON.parse(out.stdout);const prior=JSON.parse(load(f,'console.log(JSON.stringify(c.checks));','normal',{PILOT_CONTRACT:'late-dispatch'}).stdout);
+  for(const c of prior)expect(x.checks.find((p:any)=>p.id===c.id)).toEqual(c);expect(x.checks).toHaveLength(prior.length+1);expect(x.stale).toBe(true);
+  const c=x.checks.find((c:any)=>c.id==='C9_stale_native_io');expect(c.assertion.where).toContainEqual({select:'epoch',equals:2,required:true});expect(c.assertion.where).toContainEqual({select:'status',equals:'unknown',required:true});expect(c.assertion.where).toContainEqual({select:'notification.blocked_step',equals:'contact',required:true});expect(c.provider_assertions).toHaveLength(5);expect(c.provider_assertions.slice(0,4).every((p:any)=>p.assertion.count===0)).toBe(true);
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+it('stale I/O qualification checks the actual signing authority rather than treating an expired or altered ticket as ownership proof',()=>{
+ const f=fixture();try{
+  const code=`const legs=Object.fromEntries(['hubspot','gmail','google-calendar','slack'].map(role=>[role,{sandbox_id:role+'-fixture',base_url:'https://fetchsandbox.com/sandbox/'+role+'-fixture',api_key:'fixture-only'}]));const env=await c.runtimeEnv({legs,outDir:${JSON.stringify(f.dir)}});const w=await c.staleIoWitnesses({legs,flowRunId:'fixture',port:8098,env});const b=JSON.parse((await import('node:fs')).readFileSync(env.PILOT_BINDINGS));const {tsImport}=await import('tsx/esm/api');const {InvocationAuthority}=await tsImport('../../n8n-lead-pilot/identity.ts',${JSON.stringify(moduleUrl)});const a=new InvocationAuthority(b.invocation_secret,b.session_scope),input={lead_id:'fs-c9-stale-fixture',retry_failed:false},p={subject:'pilot-owner',tenant:'pilot-team'},ticket=a.mint(p,input);console.log(JSON.stringify({valid:w.verifyInvocation(ticket),expired:w.verifyInvocation(a.mint(p,input,Date.now()-100000)),altered:w.verifyInvocation(ticket.slice(0,-3)+'xxx'),foreign:w.verifyInvocation(a.mint({subject:'pilot-other',tenant:'pilot-team'},input))}));`;
+  const out=load(f,code,'normal',{PILOT_CONTRACT:'stale-io'});expect(out.status,out.stderr).toBe(0);expect(JSON.parse(out.stdout)).toEqual({valid:true,expired:false,altered:false,foreign:false});
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+it('the executable C9 candidate keeps prior checks and covers actual Contact and Gmail crashes with shared conditional storage',()=>{
+ const f=fixture();try{
+  expect(load(f,'','normal',{PILOT_CONTRACT:'c9-candidate'}).status).not.toBe(0);
+  const code='console.log(JSON.stringify({checks:c.checks,count:c.crashSimulationCount,plans:[0,1,2,3,4,5,6].map(faultIndex=>c.crashSimulation({faultIndex,flowRunId:"fixture",legs:Object.fromEntries(["hubspot","gmail","google-calendar","slack"].map(p=>[p,{base_url:"https://fetchsandbox.com/sandbox/"+p}]))}))}));';
+  const out=load(f,code,'normal',{PILOT_CONTRACT:'c9-candidate',PILOT_STATE_TABLE:'fixture-conditional-table'});expect(out.status,out.stderr).toBe(0);const x=JSON.parse(out.stdout);const prior=JSON.parse(load(f,'console.log(JSON.stringify(c.checks));','normal',{PILOT_CONTRACT:'stale-io'}).stdout);
+  for(const c of prior.filter((c:any)=>c.id!=='C9'))expect(x.checks.find((p:any)=>p.id===c.id)).toEqual(c);
+  expect(x.checks).toHaveLength(prior.length+1);expect(x.count).toBe(6);expect(x.plans.map((p:any)=>p?.id??null)).toEqual(['deal','calendar','slack','takeover','contact','gmail',null]);
+  const c=x.checks.find((c:any)=>c.id==='C9');expect(c.blocker).toBeUndefined();expect(c.actions.some((a:any)=>a.concurrency===2)).toBe(true);expect(c.assertion.where).toContainEqual({select:'operations.gmail.confirmation',equals:'positive_readback',required:true});expect(JSON.stringify(c)).toContain('step2.records.0.operations.deal.id');expect(JSON.stringify(c)).toContain('step4.state.operations.gmail.id');
+  expect(Buffer.from(x.plans[5].body_equals,'base64url').toString()).toContain('Message-ID: <fs-c9-gmail-fixture@example.com>');
+  const contact=x.checks.find((c:any)=>c.id==='C9_contact_crash');expect(contact.assertion.where).toContainEqual({select:'operations.contact.confirmation',equals:'positive_readback',required:true});expect(JSON.stringify(contact)).not.toContain('step2.records.0.operations.contact.id');
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});

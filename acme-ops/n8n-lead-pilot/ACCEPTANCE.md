@@ -1,3 +1,28 @@
+**November 9 declared C9 runtime gate measured.** Three separate fresh-session
+restored receipts each record **23 held, zero violated, zero unmeasured**, all
+**110 independent provider-state assertions held**, and qualified crash, queued
+request and stale native-command witnesses:
+[repetition 1](https://fetchsandbox.com/runs/e03cef0da9?flow=vr_87cd1cc672dc4b8eb4520d88f360334a),
+[repetition 2](https://fetchsandbox.com/runs/0f2f57c224?flow=vr_00939ebd0e1247888d5a6940a42482b7),
+[repetition 3](https://fetchsandbox.com/runs/ce0c82d778?flow=vr_76bc92d5c30c49a7ab1164ac1b04ad38).
+The same frozen 23-check business contract rejected the separately hashed adapter
+that ignored stale-owner dispatch denial: [negative control](https://fetchsandbox.com/runs/722b4e3e24?flow=vr_665be49d3b3e4b82a5ddac44e6e6e67e)
+records **22 held and exactly one violated**, `C9_stale_native_io`, with an actual
+forbidden Contact effect. The negative application's exit 1 is preserved; it is
+not counted as a passing application run.
+
+The measured normal bundle is `abb53505484a`; backend `f7eeee67` was observed before
+and after every final phase. No backend deployment or native workflow edit was
+performed in this task. The source guard used the retained actual native export
+`4e993aff-e091-4ecb-b572-ff5289a295db` (SHA256 beginning `88740c8f25c5`);
+a fresh native export remains blocked by the Mac lock. This is scripted MCP/native
+runtime qualification against isolated twins, not independent builder acceptance,
+live-vendor parity or production certification. Actual n8n SaaS host termination,
+AWS database failure/restore and clock skew remain unmeasured.
+
+See [C9 evidence, reproduction and limits](C9-CRASH-RECOVERY.md).
+Earlier dated cutoffs below are historical, not current check totals.
+
 # Friendly pilot: acceptance and gap register
 
 **C6 implementation and partial proof:** requester-bound state and signed native
@@ -101,7 +126,7 @@ or branches keyed on a check ID to application code. Run IDs may isolate fixture
 and correlate evidence; they must not change business decisions. Do not weaken
 count, identity, association or fault-witness assertions to obtain a pass.
 
-## Remaining checks and actual work
+## Historical check-level register (earlier cutoffs)
 
 | Check | Required behavior | Current gap and owner | Next acceptance evidence |
 |---|---|---|---|

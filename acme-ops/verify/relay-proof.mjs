@@ -36,6 +36,9 @@ if (!workflow) {
 process.env.PROOF_NOW ??= new Date().toISOString();
 const contract = (await import(`./contracts/${workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
+const APP_PORT=contract.staleIo?PORT+1:PORT;
+let staleIoProxy,staleIoController;
+const {createStaleIoProxy,watchStaleIo}=await import('./runtime-stale-io.mjs');
 // PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.
 const BUNDLE = process.env.PROOF_BUNDLE ? join(ROOT, process.env.PROOF_BUNDLE) : join(ROOT, "dist", "main.mjs");
 const gitSha = (() => {
@@ -46,6 +49,10 @@ const gitSha = (() => {
   }
 })();
 const BUNDLE_SHA256 = createHash("sha256").update(readFileSync(BUNDLE)).digest("hex");
+if(contract.adapterVariant){
+ const manifest=JSON.parse(readFileSync(BUNDLE+'.build.json','utf8'));
+ if(manifest.bundle_sha256!==BUNDLE_SHA256||(manifest.adapter_variant??'normal')!==contract.adapterVariant)throw Error('Adapter source control does not match measured bundle manifest');
+}
 const APP_VERSION = contract.appVersion ? `${contract.appVersion}-bridge-${BUNDLE_SHA256.slice(0,12)}` : `acme-ops-${workflow}-${JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version}-${gitSha}${process.env.PROOF_BUNDLE ? "-bundle-"+BUNDLE_SHA256.slice(0,12) : ""}`;
 const OUT_DIR = process.env.PROOF_OUT_DIR ?? join(tmpdir(), `acme-proof-${workflow}`);
 mkdirSync(OUT_DIR, { recursive: true, mode: 0o700 });
@@ -128,6 +135,9 @@ async function settle(mcp, res, label) {
 // ---------------------------------------------------------------------------
 let app;
 const crashControllers=new Map();
+const scheduleControllers=new Map();
+const {watchDelayedDispatch,createDeferredQueue}=await import('./runtime-schedule.mjs');
+const deferredQueues=new Set();
 let crashInjected=0;
 const {watchAcceptedWriteCrash}=await import('./runtime-crash.mjs');
 process.once("exit",()=>{app?.kill("SIGKILL");});
@@ -182,7 +192,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   const env = {
     ...inherited,
     WORKFLOW: workflow,
-    PORT: String(PORT),
+    PORT: String(APP_PORT),
     HOST: "127.0.0.1",
     STATE_FILE: stateFile,
     PROVIDER_RETRIES: "2",
@@ -195,25 +205,39 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   const crashPlan=contract.crashSimulation && legs && flowRunId
     ? contract.crashSimulation({legs,flowRunId,faultIndex:crashInjected}) : null;
   if(crashPlan)env.FS_PROOF_CRASH_TARGET=JSON.stringify(crashPlan);
-  const args = [...(crashPlan?[`--import=${new URL('./runtime-crash-preload.mjs',import.meta.url).pathname}`]:[]),...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
-  await requireFreePort(PORT);
-  app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit", ...(crashPlan?["ipc"]:[])] });
+  const schedulePlan=contract.scheduleSimulation && legs && flowRunId ? contract.scheduleSimulation({legs,flowRunId,crashCount:crashInjected}):null;
+  const pendingSchedule=schedulePlan && !scheduleControllers.has(schedulePlan.id);
+  const deferredQueue=pendingSchedule?await createDeferredQueue(schedulePlan):null;
+  if(deferredQueue){deferredQueues.add(deferredQueue);env.FS_PROOF_SCHEDULE_TARGET=JSON.stringify({...schedulePlan,proxy_url:deferredQueue.proxy_url});}
+  const args = [...(crashPlan?[`--import=${new URL('./runtime-crash-preload.mjs',import.meta.url).pathname}`]:[]),...(deferredQueue?[`--import=${new URL('./runtime-schedule-preload.mjs',import.meta.url).pathname}`]:[]),...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
+  await requireFreePort(APP_PORT);
+  app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit", ...((crashPlan||schedulePlan)?["ipc"]:[])] });
+  const listening=waitForOwnListener(app,APP_PORT,workflow);
   if(crashPlan){
     const owned=app;
     const crashController=watchAcceptedWriteCrash({child:owned,plan:crashPlan,
-      witness:effectId=>contract.witnessCrash({legs,flowRunId,effectId,port:PORT,env,plan:crashPlan}),
+      witness:effectId=>contract.witnessCrash({legs,flowRunId,effectId,port:APP_PORT,env,plan:crashPlan}),
       record:observation=>save("crash-observation-"+(crashPlan.id??"deal"),observation),
       restart:async()=>{crashInjected++;await startApp({legs,credentialFile,flowRunId});return {pid:app.pid};},
     });
     crashControllers.set(crashPlan.id??"deal",crashController);
     crashController.done.catch(error=>{save("crash-error-"+(crashPlan.id??"deal"),{message:error.message});});
   }
-  const listening=waitForOwnListener(app,PORT,workflow);
+  if(deferredQueue){
+    const controller=watchDelayedDispatch({child:app,queue:deferredQueue,restart:async()=>{await startApp({legs,credentialFile,flowRunId});return {pid:app.pid};},...contract.scheduleWitnesses({legs,flowRunId,port:APP_PORT,env,plan:schedulePlan}),record:observation=>save('schedule-observation-'+schedulePlan.id+'-'+observation.phase,observation)});
+    scheduleControllers.set(schedulePlan.id,controller);
+    controller.done.catch(error=>save('schedule-error-'+schedulePlan.id,{message:error.message}));
+  }
+  if(staleIoProxy&&legs&&flowRunId&&!staleIoController){
+   staleIoProxy.bind({lead:'fs-c9-stale-'+flowRunId});
+   staleIoController=watchStaleIo({proxy:staleIoProxy,...await contract.staleIoWitnesses({legs,flowRunId,port:APP_PORT,env}),record:observation=>save('stale-io-observation-'+observation.phase,observation)});
+   staleIoController.done.catch(error=>save('stale-io-error',{message:error.message}));
+  }
   app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
   await listening;
   for (let i = 0; i < 100; i++) {
     try {
-      if ((await fetch(`http://127.0.0.1:${PORT}/ping`, {headers:await contract.startupPingHeaders?.() ?? {}})).ok) return;
+      if ((await fetch(`http://127.0.0.1:${APP_PORT}/ping`, {headers:await contract.startupPingHeaders?.() ?? {}})).ok) return;
     } catch {}
     await sleep(100);
   }
@@ -225,6 +249,7 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
 // ---------------------------------------------------------------------------
 if (!existsSync(BUNDLE)) throw new Error(`no bundle at ${BUNDLE}: run \`npm run bundle\` first`);
 rmSync(stateFile, { force: true });
+if(contract.staleIo){await requireFreePort(PORT);staleIoProxy=await createStaleIoProxy({listenPort:PORT,appPort:APP_PORT});}
 await startApp();
 
 const mcp = mcpClient();
@@ -244,6 +269,8 @@ const finish = async (code) => {
   } catch {}
   if (credentialFile) rmSync(dirname(credentialFile), { recursive: true, force: true });
   app?.kill("SIGKILL");
+  for(const queue of deferredQueues)await queue.close();
+  if(staleIoProxy)await staleIoProxy.close();
   mcp.child.kill();
   process.exit(code);
 };
@@ -379,10 +406,25 @@ if(contract.crashSimulation){
  else try{await Promise.race([Promise.all([...crashControllers.values()].map(c=>c.done)),sleep(15000).then(()=>{throw Error("Crash evidence incomplete");})]);crashQualified=crashInjected===expected;}catch(error){save("crash-error",{message:error.message});}
 }
 
+let scheduleQualified=!contract.scheduleSimulation;
+if(contract.scheduleSimulation){
+ const expected=contract.scheduleSimulationCount??1;
+ if(scheduleControllers.size!==expected || [...scheduleControllers.values()].some(c=>!c.triggered))save('schedule-error',{message:'Expected scheduling points not observed',expected,observed:scheduleControllers.size});
+ else try{await Promise.race([Promise.all([...scheduleControllers.values()].map(c=>c.done)),sleep(15000).then(()=>{throw Error('Schedule witness incomplete');})]);scheduleQualified=true;}catch(error){save('schedule-error',{message:error.message});}
+}
+
+let staleIoQualified=!contract.staleIo;
+if(contract.staleIo){
+ if(!staleIoController?.triggered)save('stale-io-error',{message:'Native stale command was not observed'});
+ else try{await Promise.race([staleIoController.done,sleep(15000).then(()=>{throw Error('Stale native I/O witness incomplete');})]);staleIoQualified=true;}catch(error){save('stale-io-error',{message:error.message});}
+}
+
 const shareRaw = final.share_url ?? final.receipt_url ?? final.verdict?.share_url ?? final.attempt?.share_url ?? "";
 const share = shareRaw ? (shareRaw.startsWith("http") ? shareRaw : `https://fetchsandbox.com${shareRaw.startsWith("/") ? "" : "/"}${shareRaw}`) : "";
 const receipt = {
   workflow,
+  runtime_stale_io_qualified:contract.staleIo?staleIoQualified:null,
+  runtime_schedule_qualified:contract.scheduleSimulation?scheduleQualified:null,
   runtime_fault_qualified:contract.crashSimulation ? crashQualified : null,
   mcp_observed: mcpInfo,
   mcp_source: process.env.FETCHSANDBOX_MCP_BIN ? "local_build" : "npm_package",
@@ -402,4 +444,4 @@ mkdirSync(join(HERE, "receipts"), { recursive: true });
 writeFileSync(join(HERE, "receipts", `${workflow}.json`), JSON.stringify(receipt, null, 2) + "\n");
 log("RECEIPT", share || "(none)");
 for (const c of receipt.checks) log("check", c.id, c.status, String(c.explanation ?? "").slice(0, 160));
-await finish(crashQualified && receipt.app_verified === true && receipt.checks.length === contract.checks.length && receipt.checks.every(c=>c.status==="held") ? 0 : 1);
+await finish(crashQualified && scheduleQualified && staleIoQualified && receipt.app_verified === true && receipt.checks.length === contract.checks.length && receipt.checks.every(c=>c.status==="held") ? 0 : 1);

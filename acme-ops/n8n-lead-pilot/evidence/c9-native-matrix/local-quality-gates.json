@@ -1,0 +1,23 @@
+{
+  "scope": "Local tests only; separate from native receipts",
+  "application_tests": {
+    "passed": 577,
+    "skipped": 0,
+    "files_passed": 77
+  },
+  "node_controller_tests": {
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0
+  },
+  "typescript": "passed",
+  "before_correction_http_test": "Failed: proxy handled unknown route itself instead of passing app response",
+  "after_correction_http_test": "Passed: exact body bytes, identity header and unknown path forwarded; actual 418 app response returned",
+  "private_log_sha256": {
+    "full-suite-transparent.log": "13f7412e1156715258512e4748cdc2e5753fa9c0e14640ef4c03dbb8634b3b1a",
+    "controller-tests-transparent.log": "3a36155c8d8998f9603a7fc43aacafc0f17efb77b01dec8d4aa82a9257d360d5",
+    "typescript-transparent.log": "fa558e1627aebd15dd4529ec5858672c9464547d70748fd7b1a435cc4276b11c",
+    "non-target-passthrough-before.log": "586e460168ad2b177b649960d7bb4fd862e466cba1c63546f9edda6137387e58",
+    "non-target-passthrough-after.log": "0f37ff1d3b48760f06c1679b0273880dca5fbfbfd8f45ea503e89fabec007641"
+  }
+}

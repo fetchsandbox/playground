@@ -1,0 +1,21 @@
+{
+  "observed_at": "2026-11-10T01:35:43.165251+00:00",
+  "owned_loopback_ports_closed": {
+    "8019": true,
+    "8097": true,
+    "8098": true
+  },
+  "owned_ngrok_session": "stopped with exit 0",
+  "owned_database_container": "removed after consistent reads captured",
+  "backend_commit_after_cleanup": "f7eeee67",
+  "initial_post_cleanup_build_read": {
+    "status": 403,
+    "request": "Python default User-Agent; no build identity observed"
+  },
+  "repeat_build_read": {
+    "status": 200,
+    "request": "same evidence User-Agent as phase captures"
+  },
+  "no_native_workflow_edits": true,
+  "persistent_user_credentials": "not removed"
+}
