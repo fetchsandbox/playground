@@ -2,6 +2,23 @@
  * Cloud qualification uses an accelerated 30-second window, NOT proof that
  * the production 30-minute deployment/scheduler has run successfully. */
 export const feedbackProofPolicy={maxLookups:3,windowMs:30000,quietNotifications:true};
+export const uniqueFeedbackProofPolicy={...feedbackProofPolicy,uniqueDealIdentity:true};
+// Separate qualification contract: old timed receipts keep their exact policy.
+// This observes accepted-response loss and unique-key recovery. Search-index
+// lag itself is covered by the separate process fixture, not injected here.
+export function applyUniqueFeedbackPolicy(config){
+ const updated=applyFeedbackPolicy(config);
+ const unique=JSON.parse(JSON.stringify(updated.checks.find(x=>x.id==='C2')).replaceAll('fs-c2-','fs-feedback-unique-'));
+ unique.id='F_deal_unique';
+ unique.name='Accepted Deal response lost: recover by unique lead key, retaining one associated Deal';
+ updated.checks=updated.checks.map(x=>x.id==='F_deal_unique'?unique:x);
+ for(const c of updated.checks){
+  for(const a of c.assertion?.where??[])if(a.select==='operations.deal.confirmation'&&a.equals==='positive_readback')a.equals='positive_unique_key_readback';
+ }
+ const deals=unique.provider_assertions.find(x=>x.provider==='hubspot'&&x.collection==='deals');
+ deals.assertion.all_of.push({select:'records[*]',count:1,required:true,where:[{select:'properties.fetchsandbox_pilot_lead_id',equals:'fs-feedback-unique-{{run_id}}',required:true}]});
+ return updated;
+}
 export function applyFeedbackPolicy(config){
  const updated=structuredClone(config);
  // Provider scenarios are session-wide. The real background timer remains

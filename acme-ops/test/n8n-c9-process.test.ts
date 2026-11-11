@@ -55,8 +55,8 @@ describe.skipIf(!endpoint)('C9 actual SIGKILL / independent workers / DynamoDB L
   effects={contact:[],deal:[],gmail:[],calendar:[],slack:[]};const scope='s'+randomUUID();
   await worker(scope,'old',m=>write(m,'hubspot')&&m.request.path.endsWith('/deals'));
   await new Promise(resolve=>setTimeout(resolve,1100));
-  await worker(scope,'broken',undefined,'blind-deal-retry');
-  expect(effects.deal).toHaveLength(2);
+  const broken=await worker(scope,'broken',undefined,'blind-deal-retry');
+  expect(effects.deal,JSON.stringify({result:broken,stored:await new DynamoStore(table,client).get('lead-pilot#'+scope+'#crash')})).toHaveLength(2);
   expect(effects.deal![0].id).not.toBe(effects.deal![1].id);
   const oneDealOracle=()=>effects.deal!.length===1;
   expect(oneDealOracle()).toBe(false);
