@@ -21,6 +21,8 @@ export function applyUniqueFeedbackPolicy(config){
 }
 export function applyFeedbackPolicy(config){
  const updated=structuredClone(config);
+ const crash=updated.checks.find(x=>x.id==='C9');
+ if(crash?.blocker)crash.blocker.reason='Crash/restart matrix is not executed under this timed feedback policy. Historical crash receipts use a different policy and remain separate.';
  // Provider scenarios are session-wide. The real background timer remains
  // enabled: let accepted-write recovery finish under ITS fault before the
  // harness arms the next case's fault. Delays consume no response aliases.

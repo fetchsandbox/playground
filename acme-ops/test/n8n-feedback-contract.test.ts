@@ -15,6 +15,10 @@ it('keeps the historical contract untouched and changes only declared Slack poli
    expect(after.actions.filter((a:any)=>!a.delay_seconds)).toEqual(check.actions);
    expect(after.provider_assertions.filter((p:any)=>p.provider!=='slack')).toEqual(check.provider_assertions.filter((p:any)=>p.provider!=='slack'));
   }
+  else if(check.id==='C9'){
+   expect(after.blocker.reason).toContain('not executed under this timed feedback policy');
+   expect({...after,blocker:check.blocker}).toEqual(check);
+  }
   else if(!['C3','C3_recovery'].includes(check.id))expect(after).toEqual(check);
   else{
    const withoutSlack=(x:any)=>({...x,provider_assertions:x.provider_assertions.filter((p:any)=>p.provider!=='slack')});
