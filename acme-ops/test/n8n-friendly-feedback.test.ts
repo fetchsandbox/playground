@@ -113,3 +113,26 @@ describe('Friendly feedback policy, isolated component scope',()=>{
   for(const p of [null,0,{...policy,maxLookups:0},{...policy,windowMs:0},{...policy,quietNotifications:'yes'}])expect(()=>new LeadState(new MemoryStore(),'policy',{recoveryPolicy:p as any})).toThrow();
  });
 });
+
+describe('qualified unique Deal identity opt-in',()=>{
+ const context=()=>({lead_id:'saved',attempt:'owner',stage:'choose',index:1,state:{recovery_policy:{...policy,uniqueDealIdentity:true},operations:{contact:{status:'confirmed',id:'contact-original'},deal:{status:'unknown'},gmail:{status:'pending'},calendar:{status:'pending'}}}});
+ const lookup=(c:any)=>{const checkpoint=advance(c);expect(checkpoint.request.kind).toBe('save');return advance({context:checkpoint.context,result:{saved:true,state:checkpoint.request.state}});};
+ const original={id:'deal-original',properties:{dealname:'Pilot saved',fetchsandbox_pilot_lead_id:'saved'},associations:{contacts:{results:[{id:'contact-original'}]}}};
+ it('looks up the stable unique property even when the lost response left no Deal ID',()=>{
+  const q=lookup(context());expect(q.request).toMatchObject({method:'GET',path:'/crm/v3/objects/deals/saved?idProperty=fetchsandbox_pilot_lead_id&properties=dealname%2Cfetchsandbox_pilot_lead_id&associations=contacts'});
+  const out=advance({context:q.context,result:{status:200,body:original}});
+  expect(out.request.state.operations.deal).toMatchObject({id:'deal-original',status:'confirmed',confirmation:'positive_unique_key_readback'});
+ });
+ it.each([
+  null,{...original,properties:{...original.properties,fetchsandbox_pilot_lead_id:'foreign'}},
+  {...original,associations:{contacts:{results:[{id:'foreign'}]}}},
+  {...original,properties:{...original.properties,dealname:'foreign'}}
+ ])('missing or foreign unique-key evidence never authorizes create or downstream effects',body=>{
+  const q=lookup(context());const out=advance({context:q.context,result:{status:body?200:404,body}});
+  expect(out.request.kind).toBe('save');expect(out.request.state.status).toBe('unknown');expect(out.request.state.operations.deal.status).toBe('unknown');
+ });
+ it('rejects a different returned Deal ID if an earlier acknowledgement supplied one',()=>{
+  const c=context();(c.state.operations.deal as any).id='acknowledged';const q=lookup(c);
+  const out=advance({context:q.context,result:{status:200,body:original}});expect(out.request.state.status).toBe('unknown');
+ });
+});

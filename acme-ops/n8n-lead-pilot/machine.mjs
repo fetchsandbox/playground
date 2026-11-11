@@ -17,6 +17,9 @@ export function advance(input) {
   const provider = (step, method, path, body, next) => request('provider', { provider: step, method, path, body }, next);
   const failed = () => !r || r.status < 200 || r.status >= 300;
   const policy=c.state?.recovery_policy;
+  // Fixed property is provisioned/qualified by the operator before opt-in.
+  // A direct unique-key read avoids HubSpot's eventually consistent search.
+  const dealKeyPath=()=>'/crm/v3/objects/deals/'+encodeURIComponent(c.lead_id)+'?idProperty=fetchsandbox_pilot_lead_id&properties=dealname%2Cfetchsandbox_pilot_lead_id&associations=contacts';
   const holdUnknown = () => {
     c.state.status='unknown';c.blocked=c.step;
     if(policy){
@@ -32,6 +35,7 @@ export function advance(input) {
     return save('notify');
   };
   const readUnknown = () => {
+    if(c.step==='deal' && policy?.uniqueDealIdentity)return provider('hubspot','GET',dealKeyPath(),null,'reconciled_deal_key');
     if(c.step==='deal' && c.state.operations.deal.id)return provider('hubspot','GET','/crm/v3/objects/deals/'+encodeURIComponent(c.state.operations.deal.id)+'?associations=contacts',null,'reconciled_deal');
     if(c.step==='contact')return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'reconciled_contact');
     if(c.step==='gmail')return provider('gmail','GET','/gmail/v1/users/me/messages?q='+encodeURIComponent('rfc822msgid:'+c.lead_id+'@example.com'),null,'reconciled');
@@ -81,7 +85,7 @@ export function advance(input) {
   if (c.stage === 'dispatch') {
     if (!r?.saved) return stop('State save failed; provider write withheld');
     if (c.step === 'contact') return provider('hubspot','POST','/crm/v3/objects/contacts/search',{after:'0',limit:100,properties:['email','firstname'],sorts:[],filterGroups:[{filters:[{propertyName:'email',operator:'EQ',value:c.lead_id+'@example.com'}]}]},'contact_found');
-    if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled'},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
+    if (c.step === 'deal') return provider('hubspot','POST','/crm/v3/objects/deals',{properties:{dealname:'Pilot '+c.lead_id,pipeline:'default',dealstage:'appointmentscheduled',...(policy?.uniqueDealIdentity?{fetchsandbox_pilot_lead_id:c.lead_id}:{})},associations:[{to:{id:c.state.operations.contact.id},types:[{associationCategory:'HUBSPOT_DEFINED',associationTypeId:3}]}]},'effect');
     if (c.step === 'gmail') return provider('gmail','POST','/gmail/v1/users/me/messages/send',{raw:c.raw},'effect');
     return provider('google-calendar','POST','/calendars/primary/events',{id:c.state.operations.calendar.requested_id,summary:'Pilot '+c.lead_id,start:{dateTime:'2026-12-01T16:00:00Z'},end:{dateTime:'2026-12-01T16:15:00Z'},attendees:[{email:c.lead_id+'@example.com'}]},'effect');
   }
@@ -128,7 +132,18 @@ export function advance(input) {
   }
   if (c.stage === 'read_deal') {
     if (!r?.saved) return stop('Deal checkpoint failed; downstream writes withheld');
+    if(policy?.uniqueDealIdentity)return provider('hubspot','GET',dealKeyPath(),null,'reconciled_deal_key');
     return provider('hubspot','GET','/crm/v3/objects/deals/'+encodeURIComponent(c.state.operations.deal.id)+'?associations=contacts',null,'reconciled_deal');
+  }
+  if(c.stage==='reconciled_deal_key'){
+    const deal=r?.body,op=c.state.operations.deal,links=deal?.associations?.contacts?.results;
+    if(!failed() && typeof deal?.id==='string' && deal.id && (!op.id||op.id===deal.id)
+      && deal.properties?.fetchsandbox_pilot_lead_id===c.lead_id && deal.properties?.dealname==='Pilot '+c.lead_id
+      && links?.length===1 && links[0].id===c.state.operations.contact.id){
+      c.state.operations.deal={status:'confirmed',id:deal.id,confirmation:'positive_unique_key_readback'};
+      c.index++;return save('choose');
+    }
+    return holdUnknown();
   }
   if (c.stage === 'reconciled_deal') {
     const links=r?.body?.associations?.contacts?.results;

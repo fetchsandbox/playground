@@ -2,7 +2,7 @@
  * callers choose an allowed operation, never a URL, credential or redirect. */
 export type TwinLeg={base_url:string;api_key:string};
 const routes:Record<string,Record<string,RegExp>>={
- hubspot:{POST:/^\/crm\/v3\/objects\/(contacts|deals)(\/search)?$/,GET:/^\/crm\/v3\/objects\/(contacts|deals)\/[a-zA-Z0-9_-]+(\?associations=contacts)?$/},
+ hubspot:{POST:/^\/crm\/v3\/objects\/(contacts|deals)(\/search)?$/,GET:/^\/crm\/v3\/objects\/(contacts|deals)\/[a-zA-Z0-9_-]+(\?associations=contacts)?$|^\/crm\/v3\/objects\/deals\/[a-zA-Z0-9_-]+\?idProperty=fetchsandbox_pilot_lead_id&properties=dealname%2Cfetchsandbox_pilot_lead_id&associations=contacts$/},
  gmail:{POST:/^\/gmail\/v1\/users\/me\/messages\/send$/,GET:/^\/gmail\/v1\/users\/me\/messages(\/[a-zA-Z0-9_-]+|\?q=[a-zA-Z0-9%_.~-]+)?$/},
  'google-calendar':{POST:/^\/calendars\/primary\/events$/,GET:/^\/calendars\/primary\/events\/[a-z0-9]{5,1024}$/},
  slack:{POST:/^\/chat.postMessage$/,GET:/^\/conversations.history\?channel=C_PILOT&limit=100$/},

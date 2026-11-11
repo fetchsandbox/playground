@@ -1,6 +1,6 @@
 import type {KvStore, Item} from '../src/kit/store';
 
-export type RecoveryPolicy = {maxLookups:number; windowMs:number; quietNotifications:boolean};
+export type RecoveryPolicy = {maxLookups:number; windowMs:number; quietNotifications:boolean; uniqueDealIdentity?:boolean};
 type LeaseOptions = {now?:()=>number; leaseMs?:number; recoveryPolicy?:RecoveryPolicy};
 /** Claims and dispatch fences use the existing store's conditional writes.
  * FileStore is single-process only; independent workers require DynamoStore.
@@ -15,7 +15,7 @@ export class LeadState {
     this.now=options.now??Date.now;this.leaseMs=options.leaseMs??30000;
     if(!Number.isSafeInteger(this.leaseMs)||this.leaseMs<100||this.leaseMs>300000)throw Error('Invalid lease duration');
     const p=options.recoveryPolicy;
-    if(p!==undefined && (!p||typeof p!=='object'||!Number.isSafeInteger(p.maxLookups)||p.maxLookups<2||p.maxLookups>10||!Number.isSafeInteger(p.windowMs)||p.windowMs<1000||p.windowMs>86400000||typeof p.quietNotifications!=='boolean'))throw Error('Invalid recovery policy');
+    if(p!==undefined && (!p||typeof p!=='object'||!Number.isSafeInteger(p.maxLookups)||p.maxLookups<2||p.maxLookups>10||!Number.isSafeInteger(p.windowMs)||p.windowMs<1000||p.windowMs>86400000||typeof p.quietNotifications!=='boolean'||(p.uniqueDealIdentity!==undefined&&typeof p.uniqueDealIdentity!=='boolean')))throw Error('Invalid recovery policy');
     this.recoveryPolicy=p?structuredClone(p):undefined;
   }
   private key(lead:string){return `lead-pilot#${this.scope}#${lead}`;}

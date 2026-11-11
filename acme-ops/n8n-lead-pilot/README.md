@@ -1,28 +1,58 @@
-**November 10 Friendly feedback candidate — local only.** A configurable recovery
-policy now persists an at-most-three-lookup budget across a 30-minute window,
-with nominal due times at 0/15/30 minutes. A known Deal ID uses direct read-back;
-missing/ambiguous search still cannot authorize a second create. Exhaustion or an
-overdue invocation records `needs_human`, the lead ID, blocked step and the saved
-unsent MIME content. That content is **not a created Gmail Draft resource**.
-Repeated notifications for the same confirmed outcome/blocked step are suppressed;
-a changed outcome gets a separate message. Editing Slack in place is not implemented.
+# Friendly feedback follow-up: measured scope and remaining gates
 
-Operator opt-in for the private adapter is
-`PILOT_RECOVERY_POLICY='{"maxLookups":3,"windowMs":1800000,"quietNotifications":true}'`.
-The policy is stored when a new lead is created; existing leads are not silently
-migrated. The adapter wakes persisted due work through the existing authenticated
-native trigger with a fresh 90-second invocation ticket; it does not wait 30 minutes
-on an old ticket. `/reconcile-due` is verifier-only. Unconfirmed native dispatch
-gets persisted transport backoff and does not count as a business recovery.
-FileStore remains single-process. A service outage can delay execution/handoff;
-no availability or operator-delivery guarantee is established.
+The [November 10 timed-policy receipt](https://fetchsandbox.com/runs/14bb49dee2?flow=vr_315ae3fe8cc044e1a8ce6b204f67ca87)
+records **16 passed, zero failed, two unmeasured**. All 75 independent
+provider-state observations passed. The actual protected n8n workflow was
+published as `6d590278-b119-4e9c-83d2-79c660b628b5`; its retained native export
+passed the existing six-node source/wiring guard. Backend remains `f7eeee67`.
+This is scripted MCP/native runtime testing against isolated test services,
+not independent builder-agent acceptance or live SaaS delivery.
 
-This changes the business contract. Legacy MCP contracts explicitly refuse this
-opt-in until a reviewed feedback overlay and independent provider observations
-exist. No new native workflow export, FetchSandbox receipt, live-provider parity,
-unique HubSpot property/upsert or cloud deployment is claimed. The old receipts
-below remain historical. Candidate evidence and remaining gates:
-[evidence/friendly-feedback/plan.json](evidence/friendly-feedback/plan.json).
+The timed Gmail cases each retained one Contact, one Deal and the original
+accepted email, created zero Calendar events, and recorded exactly two Slack
+messages: uncertainty, then `needs_human`. The app retained the lead ID, blocked
+step and unsent MIME for handoff. This is **not a created Gmail Draft resource**;
+Slack edit-in-place is not implemented. The configured budget was at most three
+lookups over an **accelerated 30-second** window. Each native case actually made
+two lookups before its deadline; no three-lookup or 30-minute wall-clock result
+is claimed. Local fake-clock tests exercise the exact 0/15/30 schedule.
+
+The first timed attempt is retained separately: [12 passed, two failed, four
+unmeasured](https://fetchsandbox.com/runs/08b12675c3?flow=vr_2d15cf4ce36a42e4b3ac8f514afd8697).
+The real background timer could continue after a case and consume the next case's
+session-wide fault. The revised contract waits for accepted-write recovery under
+its own fault and for unresolved Gmail to reach handoff before arming another
+fault. This changes the test schedule/business-policy contract; it is not a
+same-contract application-fix proof. The historical contract JSON is unchanged.
+
+**Two gates remain unmeasured in this timed receipt.** Unique Deal identity is
+implemented locally and qualified separately on native HubSpot, but the serving
+twin refuses the custom property with HTTP 501. The engine candidate is built on
+`f7eeee67` as `25822007`: 111 affected tests and nine isolated packaged-image
+assertions passed. Its code-only image is prepared; rollout approval is pending.
+The new registry is sourced/configurable; the reference field is not assumed to
+exist in other customer accounts. The timed-policy crash matrix is also unrun.
+The legacy C9 blocker text in this receipt must not be read as a claim that the
+separate historical C9 implementation below is absent.
+
+Local workflow suite: **588 passed, 12 skipped**, TypeScript passed. Four local
+process tests use real SIGKILL and independent HTTP fixture state with sequential
+FileStore restarts. They do not prove native n8n host termination, distributed
+storage or the skipped DynamoDB Local checks. A broader engine run on the earlier
+candidate base had 204 passes and four failures; all four reproduced with original
+source (Twilio execution and Stripe integrity), and remain explicit failures.
+
+Opt-in remains `PILOT_RECOVERY_POLICY` with configurable `maxLookups`, `windowMs`,
+`quietNotifications`, and optional `uniqueDealIdentity`. Policy persists on new
+leads; existing leads are not silently migrated. The proof contract requires the
+exact accelerated policy and keeps the unique-key path disabled until qualified.
+The adapter wakes due work through the existing native trigger using fresh
+90-second tickets. Service outages can delay handoff; no operator-delivery
+availability guarantee is established. Test environments/transports are cleaned
+up after measurement; retained snapshots remain readable.
+
+[Sanitized timed observations and pending gates](evidence/friendly-feedback/timed-observation.json).
+The original local candidate plan and historical cutoffs below are retained.
 
 **November 9 declared C9 runtime gate measured.** Three separate fresh-session
 restored receipts each record **23 held, zero violated, zero unmeasured**, all

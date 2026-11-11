@@ -22,3 +22,11 @@ describe('pilot provider egress boundary',()=>{
   expect(await callTwin(binding,{method:'GET',path:'/x'},undefined,redirected)).toMatchObject({status:0,transport:'unknown'});expect(redirected).toHaveBeenCalledTimes(1);
  });
 });
+
+it('allows only the fixed unique Deal read query, not arbitrary properties or other objects',()=>{
+ const q={provider:'hubspot',method:'GET',path:'/crm/v3/objects/deals/lead?idProperty=fetchsandbox_pilot_lead_id&properties=dealname%2Cfetchsandbox_pilot_lead_id&associations=contacts'};
+ expect(allowedProviderOperation(q)).toBe(true);
+ expect(allowedProviderOperation({...q,path:q.path.replace('fetchsandbox_pilot_lead_id','email')})).toBe(false);
+ expect(allowedProviderOperation({...q,path:q.path.replace('/deals/','/contacts/')})).toBe(false);
+ expect(allowedProviderOperation({...q,path:q.path+'&extra=1'})).toBe(false);
+});

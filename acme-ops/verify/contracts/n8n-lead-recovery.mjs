@@ -4,17 +4,18 @@ import {sessionScope} from '../../n8n-lead-pilot/session-scope.mjs';
 import {createHash,randomBytes} from 'node:crypto';
 import {join} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
+import {applyFeedbackPolicy,feedbackProofPolicy} from './n8n-feedback-policy.mjs';
 import {buildWorkflow} from '../../n8n-lead-pilot/build-workflow.mjs';
 const contractName=process.env.PILOT_CONTRACT??'default';
 // Feedback changes the timed recovery and Slack-count business rules. Old
 // receipts/contracts must not silently stand in for that still-unqualified
 // policy. Its native overlay and independent effect observations are pending.
-if(process.env.PILOT_RECOVERY_POLICY)throw Error('Feedback recovery policy requires its own reviewed native contract; legacy pilot proof refused');
+if(process.env.PILOT_RECOVERY_POLICY && contractName!=='feedback-candidate')throw Error('Feedback recovery policy requires its own reviewed native contract; legacy pilot proof refused');
 const adapterVariant=process.env.PILOT_ADAPTER_VARIANT??'normal';
 if(!['normal','allow-stale-dispatch'].includes(adapterVariant))throw Error('Unregistered adapter source control');
-if(!['default','identity','crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName))throw Error('Unreviewed pilot contract refused');
-const config=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
-if(['identity','crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName)){
+if(!['default','identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate'].includes(contractName))throw Error('Unreviewed pilot contract refused');
+let config=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
+if(['identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate'].includes(contractName)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.identity.json',import.meta.url),'utf8'));
  if(Object.keys(overlay).some(key=>!['requester_profiles','checks'].includes(key)) || overlay.checks?.length!==1 || overlay.checks[0].id!=='C6')throw Error('Identity overlay may replace only C6');
  config.requester_profiles=overlay.requester_profiles;
@@ -57,6 +58,10 @@ if(contractName==='c9-candidate'){
  config.scope_review.push({check_id:'C9_contact_crash',classification:'in_scope',reason:'Actual Contact acceptance then owned-adapter SIGKILL before checkpoint; positive exact read-back. Separate from provider-timeout proof.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
  config.coverage_review.find(x=>x.dimension==='restart_and_durability').rule_ids.push('C9_contact_crash');
 }
+if(contractName==='feedback-candidate'){
+ if(!isDeepStrictEqual(JSON.parse(process.env.PILOT_RECOVERY_POLICY??'null'),feedbackProofPolicy))throw Error('Feedback proof requires its exact accelerated 30-second policy');
+ config=applyFeedbackPolicy(config);
+}
 const exportPath=process.env.N8N_WORKFLOW_EXPORT;
 const sourcePath=process.env.PILOT_BINDINGS_SOURCE;
 if(!exportPath || !sourcePath)throw Error('N8N_WORKFLOW_EXPORT and PILOT_BINDINGS_SOURCE must name private files');
@@ -88,6 +93,7 @@ export default {
  appVersion:'n8n-export-'+sha,
  sourceVariant:variant,adapterVariant,
  context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:(adapterVariant==='normal'?'':'Ephemeral negative adapter source control '+adapterVariant+'. ')+'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:process.env.PILOT_STATE_TABLE?'Shared DynamoDB conditional claims/CAS and leases; native crash recovery remains unqualified.':'Single-process FileStore conditional claims/CAS; not independent-worker storage. Native crash recovery remains unqualified.'},
+ appEnv:contractName==='feedback-candidate'?{PILOT_RECOVERY_POLICY:JSON.stringify(feedbackProofPolicy)}:{},
  checks:config.checks,
  applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review,...(config.requester_profiles?{requester_profiles:config.requester_profiles}:{})},
  crashSimulationCount:contractName==='c9-candidate'?6:['takeover','late-dispatch','stale-io'].includes(contractName)?4:contractName==='crash'?3:0,

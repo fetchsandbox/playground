@@ -1,0 +1,83 @@
+{
+  "receipt_url": "https://fetchsandbox.com/runs/14bb49dee2?flow=vr_315ae3fe8cc044e1a8ce6b204f67ca87",
+  "run_id": "vr_315ae3fe8cc044e1a8ce6b204f67ca87",
+  "statuses": {
+    "held": 16,
+    "unmeasured": 2
+  },
+  "independent_provider_state_observations": 75,
+  "independent_observations_held": 75,
+  "timed_scenarios": [
+    {
+      "scenario": "C5",
+      "independent_counts": {
+        "hubspot/contacts": 1,
+        "hubspot/deals": 1,
+        "gmail/messages": 1,
+        "google-calendar/events": 0,
+        "slack/messages": 2
+      }
+    },
+    {
+      "scenario": "F_email_deadline",
+      "independent_counts": {
+        "hubspot/contacts": 1,
+        "hubspot/deals": 1,
+        "gmail/messages": 1,
+        "google-calendar/events": 0,
+        "slack/messages": 2
+      }
+    }
+  ],
+  "policy": {
+    "maxLookups": 3,
+    "windowMs": 30000,
+    "quietNotifications": true
+  },
+  "observed_lookup_attempts_per_timed_scenario": 2,
+  "scope": "Accelerated 30-second policy; not a measured 30-minute deployment. Unsent MIME retained, no native Gmail Draft API resource. Separate from historical crash receipts.",
+  "native_export_version": "6d590278-b119-4e9c-83d2-79c660b628b5",
+  "app_version": "n8n-export-74f53408d9f76f9ccb3787bb33996c1d962321d06c3f62a0117810bc0cbd5590-bridge-e83376cbf0d9",
+  "backend_version": "f7eeee67",
+  "pending": [
+    "Unique-property engine candidate rollout and native proof",
+    "Crash matrix under timed feedback policy",
+    "30-minute wall-clock qualification",
+    "12 DynamoDB Local tests skipped while Docker unavailable",
+    "Native Gmail Draft API resource and Slack edit-in-place not implemented"
+  ],
+  "first_timed_receipt": {
+    "url": "https://fetchsandbox.com/runs/08b12675c3?flow=vr_2d15cf4ce36a42e4b3ac8f514afd8697",
+    "held": 12,
+    "violated": 2,
+    "unmeasured": 4,
+    "reason": "Autonomous recovery from an earlier case consumed a later case fault; retained failing result. The subsequent contract adds declared waits under the same fault and expects timed C5 handoff before moving on. Not a same-contract application fix."
+  },
+  "local_workflow": {
+    "passed": 588,
+    "skipped": 12,
+    "typescript": "passed",
+    "skip_reason": "DynamoDB Local unavailable; Mac locked when starting Docker",
+    "process_scope": "Four real worker SIGKILL/replacement + FileStore/HTTP fixture tests; not native SaaS host crash proof"
+  },
+  "engine_candidate": {
+    "commit": "2582200735a42f3342273284a5fbe8d6927b0136",
+    "based_on": "f7eeee67",
+    "affected_tests_passed": 111,
+    "isolated_image_strict_assertions_passed": 9,
+    "deployed": false,
+    "image_tag": "fetchsandbox-backend:unique-deal-25822007",
+    "broader_other_base_test_result": {
+      "passed": 204,
+      "failed": 4,
+      "all_four_reproduced_with_original_source": true
+    },
+    "approval": "Gated canary/rollout requested; no answer observed"
+  },
+  "source_hashes": {
+    "acme-ops/n8n-lead-pilot/machine.mjs": "a014c7c4ade804b6227fc6a6ef204adb217aa12664ff57993e097dad7fc95406",
+    "acme-ops/n8n-lead-pilot/state.ts": "b3b8744608613c9aa5764bf05aa2b7b29193edf5dedcb46adc2acc2b670a85ac",
+    "acme-ops/n8n-lead-pilot/provider-transport.ts": "22b9c9656a9e7254e564dee476d971f331b682119db3b19212a5d9b05a40aae9",
+    "acme-ops/verify/contracts/n8n-feedback-policy.mjs": "3197be0ff9486ff4e6096da89aefadcc1f128e2e662cd0c3505d359138e7102e"
+  }
+}

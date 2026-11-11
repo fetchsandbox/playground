@@ -2,20 +2,20 @@
  * IPC barriers belong to the test harness, never the application or provider.
  */
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoStore} from '../../src/kit/store';
+import {DynamoStore,FileStore} from '../../src/kit/store';
 import {LeadState} from '../../n8n-lead-pilot/state';
 // @ts-ignore Native shared decision machine.
 import {advance} from '../../n8n-lead-pilot/machine.mjs';
 // @ts-ignore Existing native negative-control source variant.
 import {blindDealRetry,skipCalendarReadback,blindSlackResend} from '../../n8n-lead-pilot/build-workflow.mjs';
 const cfg=JSON.parse(process.env.C9_FIXTURE!);
-const store=new DynamoStore(cfg.table,new DynamoDBClient({endpoint:cfg.endpoint,region:'us-west-2',credentials:{accessKeyId:'local',secretAccessKey:'local'}}));
-const state=new LeadState(store,cfg.scope,{leaseMs:1000});
+const store=cfg.file?new FileStore(cfg.file):new DynamoStore(cfg.table,new DynamoDBClient({endpoint:cfg.endpoint,region:'us-west-2',credentials:{accessKeyId:'local',secretAccessKey:'local'}}));
+const state=new LeadState(store,cfg.scope,{leaseMs:1000,...(cfg.recoveryPolicy?{recoveryPolicy:cfg.recoveryPolicy}:{})});
 async function barrier(phase:string,context:any,request:any,result?:any){
  process.send?.({phase,context,request,result});
  await new Promise<void>(resolve=>process.once('message',()=>resolve()));
 }
-let next:any={lead_id:cfg.lead,attempt:cfg.owner};
+let next:any={lead_id:cfg.lead,attempt:cfg.owner,...(cfg.raw?{raw:cfg.raw}:{})};
 for(let i=0;i<120;i++){
  const raw=advance(next);
  const out=cfg.variant==='blind-deal-retry'?blindDealRetry(raw):cfg.variant==='skip-calendar-readback'?skipCalendarReadback(raw):cfg.variant==='blind-slack-resend'?blindSlackResend(raw):raw;
