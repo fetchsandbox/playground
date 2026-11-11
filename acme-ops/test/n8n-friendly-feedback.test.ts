@@ -2,6 +2,7 @@ import {describe,it,expect,vi,afterEach} from 'vitest';
 import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
 import {MemoryStore,FileStore,type KvStore} from '../src/kit/store';
 import {LeadState} from '../n8n-lead-pilot/state';
 // @ts-ignore Same source embedded in the native Code node.
@@ -12,6 +13,7 @@ const advance=process.env.FEEDBACK_MACHINE_SOURCE
  ? new Function(readFileSync(process.env.FEEDBACK_MACHINE_SOURCE,'utf8').replace('export function advance','function advance')+';return advance;')()
  : currentAdvance;
 const policy={maxLookups:3,windowMs:30*60*1000,quietNotifications:true};
+const fingerprint=(owner:string)=>createHash('sha256').update(owner).digest('hex');
 const raw=Buffer.from('To: feedback@example.com\r\nMessage-ID: <feedback@example.com>\r\n\r\nUnsent follow-up').toString('base64url');
 afterEach(()=>vi.useRealTimers());
 
@@ -21,16 +23,17 @@ async function fixture(store:KvStore){
  const effects={lookups:0,emails:0,calendar:0,slack:[] as string[]};
  let visible=false;
  const createState=()=>new LeadState(store,'feedback',{recoveryPolicy:policy});
- const seed=await createState().claim('feedback','seed');
+ const seed=await createState().claim('feedback','seed',false,'pilot-team:pilot-owner',fingerprint('seed'));
  await createState().save('feedback','seed',{...seed.state!,status:'unknown',next_reconcile_at:Date.now(),operations:{contact:{status:'confirmed',id:'contact-original'},deal:{status:'confirmed',id:'deal-original'},gmail:{status:'unknown'},calendar:{status:'pending'}}});
+ await createState().finishInvocation('feedback','pilot-team:pilot-owner',fingerprint('seed'));
  const run=async(attempt:string)=>{
   // Reconstruct the application store owner on each invocation, as a timer or
   // redelivery does. The machine, not the test, chooses reads and writes.
   const state=createState();let next:any={lead_id:'feedback',attempt,raw};
   for(let i=0;i<100;i++){
-   const out=advance(next);if(out.done)return out;
+   const out=advance(next);if(out.done){await state.finishInvocation('feedback','pilot-team:pilot-owner',fingerprint(attempt));return out;}
    const c=out.context,q=out.request;let result:any;
-   if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt);
+   if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt,false,'pilot-team:pilot-owner',fingerprint(attempt));
    else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state);
    else {
     const permit=await state.authorizeProvider(c.lead_id,c.attempt,c.state.version,'pilot-team:pilot-owner');

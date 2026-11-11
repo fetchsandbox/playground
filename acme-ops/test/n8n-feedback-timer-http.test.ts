@@ -4,7 +4,8 @@ import {spawn} from 'node:child_process';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {InvocationAuthority} from '../n8n-lead-pilot/identity';
+import {FileStore} from '../src/kit/store';
+import {LeadState} from '../n8n-lead-pilot/state';
 // @ts-ignore Existing session namespace implementation.
 import {sessionScope} from '../n8n-lead-pilot/session-scope.mjs';
 
@@ -16,17 +17,19 @@ it('protects the real timer route and durably backs off an unavailable native tr
  // it cannot create an n8n execution or make a live provider request.
  const cfg={legs,session_scope:sessionScope(legs),token:'fixture-runtime',n8n_token:'fixture-runtime',invocation_secret:'test-only-signing-key-32-bytes-long',requesters:[{subject:'owner',tenant:'team',token:'fixture-owner'}]};
  const binding=join(dir,'binding.json');writeFileSync(binding,JSON.stringify(cfg),{mode:0o600});
+ const policy={maxLookups:3,windowMs:1800000,quietNotifications:true};
+ // Seed a completed native invocation before starting the second consumer.
+ // A still-running invocation is deliberately not eligible for the timer.
+ const seed=new LeadState(new FileStore(join(dir,'state.json')),cfg.session_scope,{recoveryPolicy:policy});
+ const claim=await seed.claim('timer','native-one',false,'team:owner','a'.repeat(64));
+ await seed.save('timer','native-one',{...claim.state!,status:'unknown',next_reconcile_at:0,operations:{gmail:{status:'unknown',reconciliation:{started_at:Date.now(),attempts:1}}}},'team:owner');
+ expect(await seed.finishInvocation('timer','team:owner','a'.repeat(64))).toBe(true);
  const child=spawn(process.execPath,[bundle],{env:{PATH:process.env.PATH,PILOT_BINDINGS:binding,STATE_FILE:join(dir,'state.json'),TRACE_FILE:join(dir,'trace.jsonl'),PORT:'0',FETCHSANDBOX_VERIFIER_TOKEN:'fixture-verifier',PILOT_RECOVERY_POLICY:JSON.stringify({maxLookups:3,windowMs:1800000,quietNotifications:true})}});
  try{
   const port=await new Promise<number>((resolve,reject)=>{let text='';child.once('error',reject);child.stdout.on('data',chunk=>{text+=chunk;if(text.includes('\n'))resolve(JSON.parse(text.split('\n')[0]!).port);});});
   const request=async(path:string,token:string,body?:unknown)=>{const r=await fetch('http://127.0.0.1:'+port+path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,body:await r.json() as any};};
   expect((await request('/reconcile-due','fixture-owner',{})).status).toBe(403);
   expect((await request('/reconcile-due','wrong',{})).status).toBe(401);
-  const context={lead_id:'timer',attempt:'native-one',retry_failed:false};
-  const invocation=new InvocationAuthority(cfg.invocation_secret,cfg.session_scope).mint({subject:'owner',tenant:'team'},context);
-  const claim=await request('/io','fixture-runtime',{context:{...context,invocation},request:{kind:'claim'}});
-  const row={...claim.body.result.state,status:'unknown',next_reconcile_at:0,operations:{gmail:{status:'unknown',reconciliation:{started_at:Date.now(),attempts:1}}}};
-  expect((await request('/io','fixture-runtime',{context:{...context,invocation},request:{kind:'save',state:row}})).body.result.saved).toBe(true);
   expect(await request('/reconcile-due','fixture-verifier',{})).toEqual({status:200,body:{invoked:1,unconfirmed:1}});
   const saved=(await request('/proof/timer','fixture-owner')).body.records[0];
   expect(saved).toMatchObject({status:'unknown',reconciliation_transport_error:{status:'unconfirmed'},operations:{gmail:{reconciliation:{attempts:1}}}});

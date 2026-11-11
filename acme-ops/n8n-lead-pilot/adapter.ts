@@ -1,6 +1,6 @@
 import {createServer} from 'node:http';
 import {readFileSync, appendFileSync} from 'node:fs';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 // @ts-ignore Shared Node-readable session binding function.
 import {sessionScope} from './session-scope.mjs';
 import {FileStore,DynamoStore} from '../src/kit/store';
@@ -32,6 +32,11 @@ const authority=scope?new InvocationAuthority(cfg.invocation_secret,scope):null;
 const verifierPrincipal={subject:'pilot-owner',tenant:'pilot-team'};
 const configuredCallers=[...(cfg.requesters??[]),...[['A','pilot-owner'],['B','pilot-other']].flatMap(([role,subject])=>{const token=process.env['FETCHSANDBOX_REQUESTER_'+role+'_TOKEN'];return token?[{token,subject,tenant:'pilot-team'}]:[];})];
 let ticking=false;
+const invocationFingerprint=(ticket:string)=>createHash('sha256').update(ticket).digest('hex');
+async function finishNative(out:{status:number;body:any},input:{lead_id:string}|null,actor:string,ticket:string|undefined){
+ if(recoveryPolicy&&state&&ticket&&input&&out.status===200&&out.body?.done===true&&out.body.lead_id===input.lead_id)
+  await state.finishInvocation(input.lead_id,actor,invocationFingerprint(ticket));
+}
 async function reconcileDue(){
  if(!recoveryPolicy||!state||!authority||ticking)return {invoked:0};
  ticking=true;let invoked=0,unconfirmed=0;
@@ -42,7 +47,9 @@ async function reconcileDue(){
    const input={lead_id:due.lead_id,retry_failed:false};
    // Transport only: the normal native trigger/claim decides whether work is
    // due, then n8n chooses the next read. Never reuse an expired invocation.
-   const result=await invokeN8n(cfg,JSON.stringify(input),fetch,authority.mint(principal,input));invoked++;
+   const ticket=authority.mint(principal,input);
+   const result=await invokeN8n(cfg,JSON.stringify(input),fetch,ticket);invoked++;
+   await finishNative(result,input,due.requester,ticket);
    if(result.status!==200){unconfirmed++;await state.deferDue(due.lead_id,due.requester);}
   }
   return {invoked,unconfirmed};
@@ -73,6 +80,7 @@ const server=createServer(async(req,res)=>{
    if(input){const found=await state.recordsFor(input.lead_id,requesterKey(requester!));if('denied' in found)return send(403,{error:'forbidden'});}
    const ticket=input?authority!.mint(requester!,input):undefined;
    const out=await (req.url==='/native-invoke'?invokeNativeN8n:invokeN8n)(cfg,raw,fetch,ticket);
+   await finishNative(out,input,requesterKey(requester!),ticket);
    return send(out.status,out.body);
   }
   const {context:c,request:q}=JSON.parse(raw);
@@ -91,7 +99,7 @@ const server=createServer(async(req,res)=>{
    c.state={...c.state,version:permit.state!.version,epoch:permit.state!.epoch,lease_expires_at:permit.state!.lease_expires_at};
   }
   let result;
-  if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt,c.retry_failed===true,actor);
+  if(q.kind==='claim')result=await state.claim(c.lead_id,c.attempt,c.retry_failed===true,actor,recoveryPolicy?invocationFingerprint(c.invocation):undefined);
   else if(q.kind==='save')result=await state.save(c.lead_id,c.attempt,q.state,actor);
   else if(q.kind==='provider'){
    if(!allowedProviderOperation(q))return send(400,{error:'operation_not_allowed'});

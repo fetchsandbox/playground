@@ -24,10 +24,12 @@ export class LeadState {
   async recordsFor(lead:string,requester:string){
     const records=await this.records(lead);return records.length && records[0]!.requester!==requester ? {denied:true} : {records};
   }
-  async claim(lead: string, owner: string, retryFailed = false, requester = 'pilot-team:pilot-owner') {
+  async claim(lead: string, owner: string, retryFailed = false, requester = 'pilot-team:pilot-owner', invocationFingerprint?:string) {
+    if(invocationFingerprint!==undefined&&!/^[a-f0-9]{64}$/.test(invocationFingerprint))throw Error('Invalid invocation fingerprint');
     const pk=this.key(lead);
     const initial={pk,owner,requester,status:'in_progress',epoch:1,lease_expires_at:this.now()+this.leaseMs,
       ...(this.recoveryPolicy?{recovery_policy:this.recoveryPolicy}:{}),
+      ...(invocationFingerprint?{invocation_fingerprint:invocationFingerprint}:{}),
       operations:Object.fromEntries(['contact','deal','gmail','calendar'].map(s=>[s,{status:'pending'}]))};
     if(await this.store.create(initial))return {claimed:true,state:await this.store.get(pk)};
     const state=await this.store.get(pk);
@@ -36,6 +38,9 @@ export class LeadState {
     // The business policy persists with the lead. Redelivery cannot reset its
     // lookup budget or bypass a future reconciliation time / human handoff.
     if(state.status==='needs_human')return {claimed:false,state};
+    // Unknown is a business outcome, not evidence that the native invocation
+    // finished. Its original owner may still be posting the status notice.
+    if(state.recovery_policy&&this.live(state)&&['unknown','failed'].includes(String(state.status)))return {claimed:false,state};
     if(state.recovery_policy && state.status==='unknown' && typeof state.next_reconcile_at==='number' && state.next_reconcile_at>this.now())return {claimed:false,state};
     const notification=state.notification as {status?:string;retry_not_before?:string}|undefined;
     const deadline=Date.parse(notification?.retry_not_before??'');
@@ -53,6 +58,9 @@ export class LeadState {
       if(notice?.status==='in_flight')notice.status='unknown';
     }
     Object.assign(next,{owner,status:'in_progress',epoch:Number(state.epoch??0)+1,lease_expires_at:this.now()+this.leaseMs});
+    delete next.invocation_fingerprint;
+    delete next.transport_completed_at;
+    if(invocationFingerprint)next.invocation_fingerprint=invocationFingerprint;
     if(!await this.store.replace(next))return {claimed:false};
     const saved=await this.store.get(pk);
     return {claimed:saved?.owner===owner && saved?.epoch===next.epoch,state:saved};
@@ -61,21 +69,33 @@ export class LeadState {
    * every business decision under a fresh short-lived invocation ticket. */
   async due(limit=25){
     const rows=await this.store.list(`lead-pilot#${this.scope}#`);
-    return rows.filter(row=>row.recovery_policy && !(typeof row.transport_retry_not_before==='number' && row.transport_retry_not_before>this.now()) && ((row.status==='unknown' && typeof row.next_reconcile_at==='number' && row.next_reconcile_at<=this.now()) || (row.status==='in_progress' && typeof row.lease_expires_at==='number' && !this.live(row))))
+    return rows.filter(row=>row.recovery_policy && !this.live(row) && !(typeof row.transport_retry_not_before==='number' && row.transport_retry_not_before>this.now()) && ((row.status==='unknown' && typeof row.next_reconcile_at==='number' && row.next_reconcile_at<=this.now()) || (row.status==='in_progress' && typeof row.lease_expires_at==='number')))
       .slice(0,limit).map(row=>({lead_id:row.pk.slice(`lead-pilot#${this.scope}#`.length),requester:String(row.requester)}));
   }
   async deferDue(lead:string,requester:string){
     const row=await this.store.get(this.key(lead));
     // A transport failure is not a business failure. Do not overwrite a native
     // execution that already took ownership or completed during the timeout.
-    if(!row||row.requester!==requester||!(row.status==='unknown'||(row.status==='in_progress'&&!this.live(row))))return false;
+    if(!row||row.requester!==requester||this.live(row)||!['unknown','in_progress'].includes(String(row.status)))return false;
     return this.store.replace({...row,transport_retry_not_before:this.now()+60000,reconciliation_transport_error:{status:'unconfirmed',observed_at:this.now()}});
   }
   async save(lead:string, owner:string, supplied:Item, requester = 'pilot-team:pilot-owner') {
     const current=await this.store.get(this.key(lead));
     if(!current||!this.live(current)||current.requester!==requester||supplied.requester!==current.requester||current.owner!==owner||supplied.pk!==current.pk||current.version!==supplied.version||supplied.epoch!==current.epoch)return {saved:false};
-    const saved=await this.store.replace({...supplied,owner,epoch:current.epoch,lease_expires_at:this.now()+this.leaseMs});
+    const next:Item={...supplied,owner,epoch:current.epoch,lease_expires_at:this.now()+this.leaseMs};
+    delete next.invocation_fingerprint;
+    if(current.invocation_fingerprint)next.invocation_fingerprint=current.invocation_fingerprint;
+    const saved=await this.store.replace(next);
     return {saved,state:saved?await this.store.get(current.pk):current};
+  }
+  /** Only the transport that claimed this row can release its completed
+   * native invocation. A busy reply or late old reply cannot unlock another
+   * invocation. No token is stored, only its one-way fingerprint. */
+  async finishInvocation(lead:string,requester:string,fingerprint:string){
+    if(!/^[a-f0-9]{64}$/.test(fingerprint))return false;
+    const current=await this.store.get(this.key(lead));
+    if(!current?.recovery_policy||current.requester!==requester||current.invocation_fingerprint!==fingerprint)return false;
+    return this.store.replace({...current,lease_expires_at:this.now(),transport_completed_at:this.now()});
   }
   /** CAS at dispatch, not a stale read followed by an unguarded provider call.
    * Cannot recall an already issued HTTP request; recovered in-flight writes
