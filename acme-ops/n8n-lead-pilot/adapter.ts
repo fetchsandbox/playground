@@ -23,11 +23,31 @@ const store=process.env.STATE_TABLE
  : new FileStore(process.env.STATE_FILE!);
 const scope=sessionScope(cfg.legs);
 if(cfg.session_scope!==scope)throw Error('Session binding scope mismatch');
-const state=scope?new LeadState(store,scope):null;
+// Explicit business-policy revision. Existing receipts keep their old policy;
+// enabling this requires a fresh workflow contract and native acceptance run.
+const recoveryPolicy=process.env.PILOT_RECOVERY_POLICY?JSON.parse(process.env.PILOT_RECOVERY_POLICY):undefined;
+const state=scope?new LeadState(store,scope,{recoveryPolicy}):null;
 const runtimeId=randomUUID();
 const authority=scope?new InvocationAuthority(cfg.invocation_secret,scope):null;
 const verifierPrincipal={subject:'pilot-owner',tenant:'pilot-team'};
 const configuredCallers=[...(cfg.requesters??[]),...[['A','pilot-owner'],['B','pilot-other']].flatMap(([role,subject])=>{const token=process.env['FETCHSANDBOX_REQUESTER_'+role+'_TOKEN'];return token?[{token,subject,tenant:'pilot-team'}]:[];})];
+let ticking=false;
+async function reconcileDue(){
+ if(!recoveryPolicy||!state||!authority||ticking)return {invoked:0};
+ ticking=true;let invoked=0,unconfirmed=0;
+ try{
+  for(const due of await state.due()){
+   const principal=[verifierPrincipal,...configuredCallers].find(p=>requesterKey(p)===due.requester);
+   if(!principal)continue;
+   const input={lead_id:due.lead_id,retry_failed:false};
+   // Transport only: the normal native trigger/claim decides whether work is
+   // due, then n8n chooses the next read. Never reuse an expired invocation.
+   const result=await invokeN8n(cfg,JSON.stringify(input),fetch,authority.mint(principal,input));invoked++;
+   if(result.status!==200){unconfirmed++;await state.deferDue(due.lead_id,due.requester);}
+  }
+  return {invoked,unconfirmed};
+ }finally{ticking=false;}
+}
 const server=createServer(async(req,res)=>{
  const send=(status:number,body:unknown)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(body));};
  const authorization=req.headers.authorization??'';
@@ -40,6 +60,7 @@ const server=createServer(async(req,res)=>{
  try {
   if(req.method==='GET' && req.url==='/ping') return send(200,{ok:true,scope:'disposable-n8n-pilot'});
   if(!state)return send(503,{error:'session_not_bound'});
+  if(req.method==='POST' && req.url==='/reconcile-due')return verifier?send(200,await reconcileDue()):send(403,{error:'forbidden'});
   if(req.method==='GET' && req.url==='/session')return send(200,{session_scope:scope,runtime_id:runtimeId});
   if(req.method==='GET' && (req.url?.startsWith('/state/') || req.url?.startsWith('/proof/'))){
    const lead=decodeURIComponent(req.url.slice(7));const found=verifier?{records:await state.records(lead)}:await state.recordsFor(lead,requesterKey(requester!));
@@ -82,3 +103,6 @@ const server=createServer(async(req,res)=>{
  }catch{return send(500,{error:'adapter_failure'});}
 });
 server.listen(Number(process.env.PORT??8097),'127.0.0.1',()=>{const address=server.address();console.log(JSON.stringify({msg:'listening',port:typeof address==='object' && address?address.port:0,workflow:process.env.WORKFLOW??'n8n-lead-recovery'}));});
+// Restart-safe work lives in the conditional store, not this interval. External
+// scheduler may also call the verifier-only route; the same claim fences apply.
+if(recoveryPolicy)setInterval(()=>{void reconcileDue().catch(()=>console.error(JSON.stringify({event:'reconciliation_tick_failed'})));},5000).unref();

@@ -6,6 +6,10 @@ import {join} from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {buildWorkflow} from '../../n8n-lead-pilot/build-workflow.mjs';
 const contractName=process.env.PILOT_CONTRACT??'default';
+// Feedback changes the timed recovery and Slack-count business rules. Old
+// receipts/contracts must not silently stand in for that still-unqualified
+// policy. Its native overlay and independent effect observations are pending.
+if(process.env.PILOT_RECOVERY_POLICY)throw Error('Feedback recovery policy requires its own reviewed native contract; legacy pilot proof refused');
 const adapterVariant=process.env.PILOT_ADAPTER_VARIANT??'normal';
 if(!['normal','allow-stale-dispatch'].includes(adapterVariant))throw Error('Unregistered adapter source control');
 if(!['default','identity','crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName))throw Error('Unreviewed pilot contract refused');

@@ -1,3 +1,29 @@
+**November 10 Friendly feedback candidate — local only.** A configurable recovery
+policy now persists an at-most-three-lookup budget across a 30-minute window,
+with nominal due times at 0/15/30 minutes. A known Deal ID uses direct read-back;
+missing/ambiguous search still cannot authorize a second create. Exhaustion or an
+overdue invocation records `needs_human`, the lead ID, blocked step and the saved
+unsent MIME content. That content is **not a created Gmail Draft resource**.
+Repeated notifications for the same confirmed outcome/blocked step are suppressed;
+a changed outcome gets a separate message. Editing Slack in place is not implemented.
+
+Operator opt-in for the private adapter is
+`PILOT_RECOVERY_POLICY='{"maxLookups":3,"windowMs":1800000,"quietNotifications":true}'`.
+The policy is stored when a new lead is created; existing leads are not silently
+migrated. The adapter wakes persisted due work through the existing authenticated
+native trigger with a fresh 90-second invocation ticket; it does not wait 30 minutes
+on an old ticket. `/reconcile-due` is verifier-only. Unconfirmed native dispatch
+gets persisted transport backoff and does not count as a business recovery.
+FileStore remains single-process. A service outage can delay execution/handoff;
+no availability or operator-delivery guarantee is established.
+
+This changes the business contract. Legacy MCP contracts explicitly refuse this
+opt-in until a reviewed feedback overlay and independent provider observations
+exist. No new native workflow export, FetchSandbox receipt, live-provider parity,
+unique HubSpot property/upsert or cloud deployment is claimed. The old receipts
+below remain historical. Candidate evidence and remaining gates:
+[evidence/friendly-feedback/plan.json](evidence/friendly-feedback/plan.json).
+
 **November 9 declared C9 runtime gate measured.** Three separate fresh-session
 restored receipts each record **23 held, zero violated, zero unmeasured**, all
 **110 independent provider-state assertions held**, and qualified crash, queued

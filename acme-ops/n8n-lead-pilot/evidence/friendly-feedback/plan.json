@@ -1,0 +1,50 @@
+{
+  "status": "implementation_started_not_deployed",
+  "base_commit": "dfd11bc29c27cb9b34dca2482feed32f9f03a04f",
+  "baseline": {
+    "tests_passed": 565,
+    "tests_skipped": 12,
+    "reason": "DynamoDB Local not running in baseline",
+    "log": "/Users/raj/promo/content/reviews/2026-11-10-friendly-provider-drift/workflow-baseline.log"
+  },
+  "builder_journey": "One builder request -> existing FetchSandbox MCP contract -> protected isolated bindings -> repeatable published n8n webhook -> independent effects -> separate retained receipt for the feedback policy",
+  "contract_owner": "App-owning coding agent proposes/freezes the new feedback policy contract using existing verify/contracts/n8n-lead-recovery.mjs; FetchSandbox starts/polls and records effects",
+  "milestones": [
+    {
+      "id": "lookup",
+      "acceptance": [
+        "Saved Deal ID uses direct GET",
+        "Missing/lagged/ambiguous search never authorizes create",
+        "Original identity and Contact association required"
+      ]
+    },
+    {
+      "id": "bounded_reconciliation",
+      "acceptance": [
+        "Persist configurable three attempts over30min",
+        "Fresh authenticated invocation for due work, no extending90second tickets",
+        "Restart retains deadline/attempts",
+        "Exhausted or overdue unknown becomes needs_human with lead_id/blocked step/unsent email content",
+        "No resend or Calendar while unresolved"
+      ]
+    },
+    {
+      "id": "quiet_notifications",
+      "acceptance": [
+        "One notice per unchanged outcome/blocked step",
+        "Resolution notice separate",
+        "Uncertain notification reconciled before new write"
+      ]
+    },
+    {
+      "id": "runtime_acceptance",
+      "acceptance": [
+        "Existing affected/full regression suite",
+        "Explicit new business policy and retained old contract",
+        "Fresh MCP-driven native n8n receipt and negative controls",
+        "Native provider parity separate"
+      ],
+      "status": "pending"
+    }
+  ]
+}
