@@ -1,5 +1,5 @@
 {
-  "status": "implementation_started_not_deployed",
+  "status": "local_candidate_component_tests_passed_native_acceptance_pending",
   "base_commit": "dfd11bc29c27cb9b34dca2482feed32f9f03a04f",
   "baseline": {
     "tests_passed": 565,
@@ -46,5 +46,41 @@
       ],
       "status": "pending"
     }
-  ]
+  ],
+  "candidate_commit": "fe263e5",
+  "local_verification": {
+    "full_suite": {
+      "passed": 576,
+      "skipped": 12,
+      "failed": 0,
+      "skip_reason": "Existing DynamoDB Local tests; Docker daemon unavailable"
+    },
+    "typescript": "passed",
+    "business_guides": "53 guides checked; no workflow executed",
+    "before_after_component": {
+      "instrument": "Same9 feedback decision tests; retained old decision source vs candidate; new policy-capable store in both",
+      "before": {
+        "failed": 4,
+        "passed": 5,
+        "exit": 1
+      },
+      "after": {
+        "passed": 9,
+        "failed": 0
+      },
+      "not_native_or_provider_receipt": true
+    },
+    "timer_http": "Verifier-only route; unavailable native binding retained as unconfirmed with persisted60s transport backoff",
+    "old_native_export": "Rejected before runtime with Durable decision machine source mismatch; no FetchSandbox execution attempted"
+  },
+  "remaining": [
+    "Reviewed feedback MCP contract overlay and independent test-service assertions; legacy proof intentionally refuses opt-in",
+    "Native n8n source update/export and fresh end-to-end receipts",
+    "Real HubSpot unique-property/upsert and search-lag qualification; direct-ID improvement does not close all requested lookup work",
+    "Real-provider four-surface parity/drift qualification remains separate",
+    "Slack edit-in-place not implemented; opt-in suppresses repeated unchanged notices and posts separate resolution",
+    "Saved unsent MIME is not a Gmail Draft API resource",
+    "Human handoff delivery during Slack/n8n outage, live n8n host failure and database loss/restore remain unmeasured"
+  ],
+  "deployment": "None; local only; production backend unchanged f7eeee67"
 }
