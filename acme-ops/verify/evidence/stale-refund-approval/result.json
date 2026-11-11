@@ -1,0 +1,37 @@
+{
+  "workflow": "product-cancellation",
+  "source_commit": "80255b7ca18fdb9f1f08a21868a9349e3e6ffc2a",
+  "working_tree_dirty": true,
+  "deployment": "not_deployed",
+  "evidence_scope": "Local real provider-client tests against fake-world HTTP fixture; separate engine tests; hosted stale contract unexecuted",
+  "before": {
+    "test": "rejects stale refund approval, requires a fresh amount review, and replays safely after restart",
+    "result": "failed: old amount refund applied",
+    "filtered_tests_skipped": 22,
+    "log": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/application-before.log"
+  },
+  "after": {
+    "application_tests_passed": 603,
+    "application_tests_skipped": 13,
+    "typecheck": "passed",
+    "bundle": "passed",
+    "log": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/application-regression.log"
+  },
+  "native_contract": {
+    "path": "verify/contracts/product-cancellation-stale-approval.mjs",
+    "existing_checks": 27,
+    "new_checks": 3,
+    "status": "unexecuted",
+    "receipt_url": null,
+    "blocked_by": "Hosted verifier lacks qualified operator subscription metadata edit; local engine candidate is not deployed"
+  },
+  "limits": [
+    "No atomic external provider lock between last read and refund write",
+    "Fresh approval requires a new refund_choice run; the old run retains a failed action and skipped confirmation",
+    "No live Stripe, AWS runtime deployment, browser approval or native unprimed builder acceptance measured"
+  ],
+  "artifacts": {
+    "bundles": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/frozen-bundles.json",
+    "hosted_gap": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/hosted-control-gap.json"
+  }
+}

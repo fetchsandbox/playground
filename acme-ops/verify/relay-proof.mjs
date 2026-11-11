@@ -34,7 +34,7 @@ if (!workflow) {
 }
 // Contracts date their inputs from PROOF_NOW: the real time in a proof, a fixed date in generated docs.
 process.env.PROOF_NOW ??= new Date().toISOString();
-const contract = (await import(`./contracts/${workflow}.mjs`)).default;
+const contract = (await import(`./contracts/${process.env.PROOF_CONTRACT ?? workflow}.mjs`)).default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
 const APP_PORT=contract.staleIo?PORT+1:PORT;
 let staleIoProxy,staleIoController;

@@ -294,6 +294,63 @@ describe("product-cancellation runs", () => {
     expect(w.state.stripe.refunds.filter((x) => x.payment_intent === "pi_alice")).toEqual([expect.objectContaining({ amount: 120_000 })]);
   });
 
+  it("rejects stale refund approval, requires a fresh amount review, and replays safely after restart", async () => {
+    const { sub } = seed({ interval: "year", amount: 120_000, paidDaysAgo: 10 });
+    const store = new MemoryStore();
+    const make = () => w.engine(productCancellation, { store, now: () => NOW });
+    const e = make();
+    await e.handle({ action: "start", runId: "stale-req", input: request(), requestedBy: user });
+    const a = await e.handle({ action: "start", runId: "review-a", input: choice({ choice: "original_payment" }), requestedBy: user });
+    expect(a.body).toMatchObject({ phase: "AWAITING_APPROVAL", output: { refundMinor: 120_000 } });
+    sub.metadata.acme_cxl_amount = "110000"; // Independent billing edit while review A is pending.
+    const old = await e.handle({ action: "decide", runId: "review-a", decision: "approve", userId: "U_FINANCE" });
+    expect(action(old.body, "stripe.refund_original_payment")).toMatchObject({ status: "failed", error: expect.stringContaining("fresh approval") });
+    expect(action(old.body, "zendesk.refund_confirmation").status).toBe("skipped");
+    expect(w.state.stripe.refunds.filter(x => x.payment_intent === "pi_alice")).toHaveLength(0);
+    expect(sub.metadata.acme_cxl_refund).toBeUndefined();
+    const restarted = make();
+    const b = await restarted.handle({ action: "start", runId: "review-b", input: choice({ choice: "original_payment" }), requestedBy: user });
+    expect(b.body).toMatchObject({ phase: "AWAITING_APPROVAL", output: { refundMinor: 110_000 } });
+    await restarted.handle({ action: "decide", runId: "review-a", decision: "approve", userId: "U_FINANCE" });
+    await restarted.handle({ action: "resume", runId: "review-a" });
+    expect(w.state.stripe.refunds.filter(x => x.payment_intent === "pi_alice")).toHaveLength(0);
+    await restarted.handle({ action: "decide", runId: "review-b", decision: "approve", userId: "U_FINANCE" });
+    await restarted.handle({ action: "decide", runId: "review-b", decision: "approve", userId: "U_FINANCE" });
+    await restarted.handle({ action: "resume", runId: "review-b" });
+    expect(w.state.stripe.refunds.filter(x => x.payment_intent === "pi_alice")).toEqual([expect.objectContaining({ amount: 110_000 })]);
+  });
+
+  it.each(["original_payment", "store_credit", "gift_card"])("withholds %s and customer confirmation when the offer changes", async method => {
+    const { sub } = seed({ interval: "year", amount: 120_000, paidDaysAgo: 10 });
+    const e = w.engine(productCancellation, { now: () => NOW });
+    await e.handle({ action: "start", runId: "req", input: request(), requestedBy: user });
+    await e.handle({ action: "start", runId: "choice", input: choice({ choice: method }), requestedBy: user });
+    sub.metadata.acme_cxl_amount = "110000";
+    const before = { refunds: w.state.stripe.refunds.length, credits: w.state.stripe.balanceTxns.length, cards: w.state.square.giftCards.length, publicComments: comments(true).length };
+    const result = await e.handle({ action: "decide", runId: "choice", decision: "approve", userId: "U_FINANCE" });
+    expect(result.body.outcome).toBe("partial");
+    expect(action(result.body, "zendesk.refund_confirmation").status).toBe("skipped");
+    expect({ refunds: w.state.stripe.refunds.length, credits: w.state.stripe.balanceTxns.length, cards: w.state.square.giftCards.length, publicComments: comments(true).length }).toEqual(before);
+    if (method === "gift_card") expect(action(result.body, "zendesk.gift_card_number").status).toBe("skipped");
+  });
+
+  it.each([
+    ["acme_cxl_currency", "eur"], ["acme_cxl_payment", "pi_other"],
+    ["acme_cxl_offer", "store_credit"], ["acme_cxl_policy", "new-policy"],
+    ["acme_cxl_at", "2026-10-13T00:00:00Z"], ["acme_cxl_requester", "888"],
+  ])("withholds the old approval after %s changes", async (key, value) => {
+    const { sub } = seed({ interval: "year", amount: 120_000, paidDaysAgo: 10 });
+    const e = w.engine(productCancellation, { now: () => NOW });
+    await e.handle({ action: "start", runId: "req", input: request(), requestedBy: user });
+    await e.handle({ action: "start", runId: "choice", input: choice({ choice: "original_payment" }), requestedBy: user });
+    sub.metadata[key] = value;
+    const result = await e.handle({ action: "decide", runId: "choice", decision: "approve", userId: "U_FINANCE" });
+    expect(action(result.body, "stripe.refund_original_payment").status).toBe("failed");
+    expect(action(result.body, "zendesk.refund_confirmation").status).toBe("skipped");
+    expect(w.state.stripe.refunds.filter(x => x.payment_intent === "pi_alice")).toHaveLength(0);
+    expect(sub.metadata.acme_cxl_refund).toBeUndefined();
+  });
+
   it("a phone request without a ticket opens one, once, and works on it", async () => {
     seed();
     const e = w.engine(productCancellation, { now: () => NOW });

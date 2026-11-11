@@ -222,6 +222,7 @@ interface Offer {
   /** Remaining refundable on the original payment now (it may have changed since the offer). */
   refundableNowMinor: number;
   alreadyRefunded: string | null;
+  policyVersion: string;
 }
 interface GiftDesk {
   available: boolean;
@@ -472,6 +473,7 @@ async function readOffer(input: Choice, stripe: StripeClient): Promise<Offer> {
     paymentIntent: pi,
     refundableNowMinor,
     alreadyRefunded: m[META.refund] || null,
+    policyVersion: m[META.policy] ?? "",
   };
 }
 
@@ -844,7 +846,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
         provider: "stripe",
         async execute({ providers, runId }) {
           const stripe = providers.stripe!;
-          return guardedRefund(stripe, o, runId, method, async () => {
+          return guardedRefund(stripe, input, o, runId, method, async () => {
             const prior = (await stripe.listRefundsForPaymentIntent(o.paymentIntent!)).find((x) => x.metadata?.acme_cxl_ref === d.caseRef && x.status !== "failed" && x.status !== "canceled");
             const rf = prior ?? (await stripe.refundPaymentIntent(o.paymentIntent!, d.amountMinor, meta, `${d.caseRef}-refund`));
             return { ref: rf.id, detail: { amountMinor: rf.amount, status: rf.status, paymentIntent: o.paymentIntent } };
@@ -861,7 +863,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
         provider: "stripe",
         async execute({ providers, runId }) {
           const stripe = providers.stripe!;
-          return guardedRefund(stripe, o, runId, method, async () => {
+          return guardedRefund(stripe, input, o, runId, method, async () => {
             const tx = await stripe.creditBalance(o.customerId, d.amountMinor, d.currency, `${d.caseRef} cancellation refund (store credit)`, `${d.caseRef}-credit`, meta);
             return { ref: tx.id, detail: { amountMinor: d.amountMinor, customer: o.customerId } };
           });
@@ -877,7 +879,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
         async execute({ providers, runId }) {
           const sq = providers.square!;
           const location = desk!.locationId!;
-          return guardedRefund(providers.stripe!, o, runId, method, async () => {
+          return guardedRefund(providers.stripe!, input, o, runId, method, async () => {
             const card = await sq.createGiftCard(location, `${d.caseRef}-gc`);
             await sq.activateGiftCard(card.id, location, { amount: d.amountMinor, currency: d.currency.toUpperCase() }, d.caseRef, `${d.caseRef}-gc-activate`);
             // The full number goes to the customer only; run state keeps the last four digits.
@@ -894,7 +896,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
     };
     const a = refundAction[method];
     actions.push({ ...a, kind: a.id, agent: "case-decision", gate, summary: { caseRef: d.caseRef, method, amount, subscription: o.subscriptionId, needsApproval: d.needsApproval } });
-    actions.push(zendeskComment("zendesk.refund_confirmation", input, d.customerReply!, { isPublic: true, gate, status: method === "gift_card" ? undefined : "solved", tags: ["cxl_refunded", `cxl_refund_${method}`] }));
+    actions.push({ ...zendeskComment("zendesk.refund_confirmation", input, d.customerReply!, { isPublic: true, gate, status: method === "gift_card" ? undefined : "solved", tags: ["cxl_refunded", `cxl_refund_${method}`] }), requires: [a.id] });
     if (method === "gift_card") {
       actions.push({
         id: "zendesk.gift_card_number",
@@ -902,6 +904,7 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
         provider: "zendesk",
         agent: "case-decision",
         gate,
+        requires: [a.id],
         summary: { to: input.customer.email, caseRef: d.caseRef },
         async execute({ providers, applied }) {
           const cardId = applied["square.issue_gift_card"]?.ref;
@@ -930,8 +933,14 @@ function planChoice(input: Choice, d: ChoiceDecision, results: AgentResults): Pl
  * (a second reply, a re-fired trigger) refuses rather than paying twice, and a
  * retry of this run carries on.
  */
-async function guardedRefund(stripe: StripeClient, o: Offer, runId: string, method: Method, issue: () => Promise<{ ref: string; detail: Record<string, unknown> }>) {
-  const state = (await stripe.getSubscription(o.subscriptionId)).metadata?.[META.refund];
+async function guardedRefund(stripe: StripeClient, input: Choice, o: Offer, runId: string, method: Method, issue: () => Promise<{ ref: string; detail: Record<string, unknown> }>) {
+  // Approval covers the researched offer, not whichever values happen to exist
+  // when the worker wakes. Re-read the source before claiming or moving money.
+  // This is not an atomic lock against another writer changing Stripe afterwards.
+  const current = await readOffer(input, stripe);
+  const reviewed = (offer: Offer) => JSON.stringify([offer.customerId, offer.subscriptionId, offer.caseRef, offer.requesterId, offer.offeredAt, offer.methods, offer.amountMinor, offer.currency, offer.paymentIntent, offer.policyVersion]);
+  if (reviewed(current) !== reviewed(o)) throw new FatalError("Refund offer changed; start a new refund choice and obtain fresh approval before issuing it");
+  const state = current.alreadyRefunded;
   if (state && state !== `pending:${runId}`) throw new FatalError(`cancellation ${o.caseRef} already has a refund (${state})`);
   if (!state) await stripe.updateSubscriptionMetadata(o.subscriptionId, { [META.refund]: `pending:${runId}` });
   const receipt = await issue();

@@ -70,6 +70,18 @@ not a pass. Do not run parallel proofs sharing a state file, port or credentials
 The repository's private verifier endpoints must remain authenticated and must
 not be exposed by a production AgentCore routing adapter.
 
+For the stale-refund approval extension, keep the runtime workflow unchanged and
+select its additional contract with
+`PROOF_CONTRACT=product-cancellation-stale-approval node verify/relay-proof.mjs product-cancellation`.
+It retains the 27 existing executable cancellation checks and adds three cases:
+an independently edited refund offer, stale approval after restart/replay, and
+fresh approval of the changed amount. The operator edit must be discovered as a
+qualified subscription metadata input before execution. The local candidate and
+its test results are recorded in
+`acme-ops/verify/evidence/stale-refund-approval/result.json`; they are not a hosted
+receipt. Preserve separate before/after results and do not overwrite the historical
+catalog receipt with an unexecuted contract.
+
 For another package, follow its documented runner. If it has none, inspect the
 app and returned MCP schemas and build a scoped contract/adapter; do not silently
 reuse the Acme contract for a different API. Record the missing runner explicitly.

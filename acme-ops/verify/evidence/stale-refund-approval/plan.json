@@ -1,0 +1,35 @@
+{
+  "case_source": "https://www.reddit.com/r/automation/comments/1xr16se/comment/19sho2muxq2ea/",
+  "workflow": "product-cancellation",
+  "source_commit": "80255b7ca18fdb9f1f08a21868a9349e3e6ffc2a",
+  "journey": {
+    "contract_owner": "app-owning Codex agent, inspected existing cancellation app",
+    "execution_owner": "existing relay-proof.mjs via FetchSandbox MCP validate_integration and get_job",
+    "trigger": "protected POST /invocations; request, refund_choice, decide, resume; no manually armed webhook",
+    "observation": "independent Stripe refund records and Zendesk comments plus durable application records",
+    "native_builder_acceptance": "not yet measured; scripted runner alone is insufficient"
+  },
+  "milestones": [
+    {
+      "id": "baseline",
+      "acceptance": "reproduce stale offer executing old amount with same test before fix"
+    },
+    {
+      "id": "application",
+      "acceptance": "reject changed offer before refund and confirmation; fresh run requires fresh approval; replay/restart adds no second refund"
+    },
+    {
+      "id": "fetchsandbox",
+      "acceptance": "qualify external operator offer edit, freeze contract and run actual application through MCP with independent effect assertions"
+    },
+    {
+      "id": "regression",
+      "acceptance": "existing cancellation and shared approval tests, type check, bundle; retain all failed or unmeasured checks"
+    }
+  ],
+  "limits": [
+    "No live Stripe writes or AWS deployment authorized by this plan",
+    "A read immediately before writing cannot atomically lock an external provider; remaining check/write race must be disclosed",
+    "No existing public receipt proves stale refund-amount approval binding"
+  ]
+}
