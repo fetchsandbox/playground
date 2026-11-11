@@ -13,7 +13,7 @@ export function applyUniqueFeedbackPolicy(config){
  unique.name='Accepted Deal response lost: recover by unique lead key, retaining one associated Deal';
  updated.checks=updated.checks.map(x=>x.id==='F_deal_unique'?unique:x);
  for(const c of updated.checks){
-  for(const a of c.assertion?.where??[])if(a.select==='operations.deal.confirmation'&&a.equals==='positive_readback')a.equals='positive_unique_key_readback';
+  for(const assertion of [c.assertion,c.before?.assertion])for(const a of assertion?.where??[])if(a.select==='operations.deal.confirmation'&&a.equals==='positive_readback')a.equals='positive_unique_key_readback';
  }
  const deals=unique.provider_assertions.find(x=>x.provider==='hubspot'&&x.collection==='deals');
  deals.assertion.all_of.push({select:'records[*]',count:1,required:true,where:[{select:'properties.fetchsandbox_pilot_lead_id',equals:'fs-feedback-unique-{{run_id}}',required:true}]});

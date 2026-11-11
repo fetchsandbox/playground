@@ -37,6 +37,7 @@ it('qualifies unique-key recovery separately without relabelling the old timed r
  expect(unique.blocker).toBeUndefined();
  expect(unique.fault).toEqual({provider:'hubspot',scenario:'deal_accepted_response_loss',evidence:'accepted_response_readback'});
  expect(unique.assertion.where).toContainEqual({select:'operations.deal.confirmation',equals:'positive_unique_key_readback',required:true});
+ expect(revised.checks.find((x:any)=>x.id==='C3_recovery').before.assertion.where).toContainEqual({select:'operations.deal.confirmation',equals:'positive_unique_key_readback',required:true});
  expect(JSON.stringify(unique)).not.toContain('fs-c2-');
  expect(unique.provider_assertions.find((x:any)=>x.provider==='hubspot'&&x.collection==='deals').assertion.all_of).toContainEqual({select:'records[*]',count:1,required:true,where:[{select:'properties.fetchsandbox_pilot_lead_id',equals:'fs-feedback-unique-{{run_id}}',required:true}]});
  expect(uniqueFeedbackProofPolicy).toEqual({...feedbackProofPolicy,uniqueDealIdentity:true});
