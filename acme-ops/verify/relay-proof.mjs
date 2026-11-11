@@ -283,6 +283,10 @@ for (let attempt = 0; attempt < 6; attempt++) {
   await sleep(30_000);
 }
 save("tunnel", tunnel);
+if(contract.tunnelTtlSeconds && tunnel?.expires_in_seconds!==contract.tunnelTtlSeconds){
+  save("tunnel-lease-error",{requested:contract.tunnelTtlSeconds,observed:tunnel?.expires_in_seconds??null});
+  console.error("TUNNEL_LEASE_MISMATCH: no application suite executed");await finish(2);
+}
 if (!tunnel?.app_base_url) {
   console.error("NO_TUNNEL", tunnel);
   await finish(2);
