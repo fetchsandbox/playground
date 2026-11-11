@@ -206,3 +206,31 @@ it('the executable C9 candidate keeps prior checks and covers actual Contact and
   const contact=x.checks.find((c:any)=>c.id==='C9_contact_crash');expect(contact.assertion.where).toContainEqual({select:'operations.contact.confirmation',equals:'positive_readback',required:true});expect(JSON.stringify(contact)).not.toContain('step2.records.0.operations.contact.id');
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });
+
+it('qualifies the two-minute feedback policy with every existing crash control, without reusing historical policy receipts',()=>{
+ const f=fixture();try{
+  const policy={maxLookups:3,windowMs:120000,quietNotifications:true,uniqueDealIdentity:true};
+  const code=`console.log(JSON.stringify({checks:c.checks,crashes:c.crashSimulationCount,schedule:c.scheduleSimulationCount,stale:c.staleIo,env:c.appEnv}));`;
+  const result=load(f,code,'normal',{PILOT_CONTRACT:'feedback-crash',PILOT_STATE_TABLE:'fixture',PILOT_RECOVERY_POLICY:JSON.stringify(policy)});
+  expect(result.status,result.stderr).toBe(0);const out=JSON.parse(result.stdout);
+  expect(out.crashes).toBe(6);expect(out.schedule).toBe(1);expect(out.stale).toBe(true);
+  expect(JSON.parse(out.env.PILOT_RECOVERY_POLICY)).toEqual(policy);
+  expect(out.checks).toHaveLength(25);expect(out.checks.some((c:any)=>c.blocker)).toBe(false);
+  expect(out.checks.find((c:any)=>c.id==='F_email_deadline').observation_deadline_seconds).toBe(150);
+  expect(out.checks.find((c:any)=>c.id==='F_email_deadline').assertion.where).toContainEqual({select:'recovery_policy.windowMs',equals:120000,required:true});
+  expect(out.checks.find((c:any)=>c.id==='C9').actions.some((a:any)=>a.concurrency===2)).toBe(true);
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});
+
+it('retains unmeasured scenarios in the separate real30-minute focused receipt and requests an explicit bounded tunnel',()=>{
+ const f=fixture();try{
+  const policy={maxLookups:3,windowMs:1800000,quietNotifications:true,uniqueDealIdentity:true};
+  const result=load(f,`console.log(JSON.stringify({checks:c.checks,config:c.applicationConfig,lease:c.tunnelTtlSeconds,env:c.appEnv}));`,'normal',{PILOT_CONTRACT:'feedback-wallclock',PILOT_RECOVERY_POLICY:JSON.stringify(policy)});
+  expect(result.status,result.stderr).toBe(0);const out=JSON.parse(result.stdout);
+  expect(out.checks.filter((c:any)=>c.actions).map((c:any)=>c.id)).toEqual(['baseline','F_email_deadline']);
+  expect(out.checks.filter((c:any)=>c.blocker)).toHaveLength(16);
+  expect(out.config.execution_budget_seconds).toBe(2400);expect(out.lease).toBe(3600);
+  expect(out.checks.find((c:any)=>c.id==='F_email_deadline').observation_deadline_seconds).toBe(1830);
+  expect(JSON.parse(out.env.PILOT_RECOVERY_POLICY)).toEqual(policy);
+ }finally{rmSync(f.dir,{recursive:true,force:true});}
+});

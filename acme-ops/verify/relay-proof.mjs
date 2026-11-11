@@ -277,7 +277,7 @@ const finish = async (code) => {
 
 let tunnel;
 for (let attempt = 0; attempt < 6; attempt++) {
-  tunnel = await mcp.call("manage_tunnel", { action: "open", port: PORT });
+  tunnel = await mcp.call("manage_tunnel", { action: "open", port: PORT, ...(contract.tunnelTtlSeconds?{ttl_seconds:contract.tunnelTtlSeconds}:{}) });
   if (tunnel?.app_base_url) break;
   log("tunnel open retry", attempt, JSON.stringify(tunnel).slice(0, 200));
   await sleep(30_000);

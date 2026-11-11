@@ -7,21 +7,24 @@ import {isDeepStrictEqual} from 'node:util';
 import {applyFeedbackPolicy,feedbackProofPolicy,applyUniqueFeedbackPolicy,uniqueFeedbackProofPolicy} from './n8n-feedback-policy.mjs';
 import {buildWorkflow} from '../../n8n-lead-pilot/build-workflow.mjs';
 const contractName=process.env.PILOT_CONTRACT??'default';
+const longObservation=contractName==='feedback-wallclock';
+const timedCrash=contractName==='feedback-crash';
+const crashContract=timedCrash?'c9-candidate':contractName;
 // Feedback changes the timed recovery and Slack-count business rules. Old
 // receipts/contracts must not silently stand in for that still-unqualified
 // policy. Its native overlay and independent effect observations are pending.
-if(process.env.PILOT_RECOVERY_POLICY && !['feedback-candidate','feedback-unique'].includes(contractName))throw Error('Feedback recovery policy requires its own reviewed native contract; legacy pilot proof refused');
+if(process.env.PILOT_RECOVERY_POLICY && !['feedback-candidate','feedback-unique','feedback-crash','feedback-wallclock'].includes(contractName))throw Error('Feedback recovery policy requires its own reviewed native contract; legacy pilot proof refused');
 const adapterVariant=process.env.PILOT_ADAPTER_VARIANT??'normal';
 if(!['normal','allow-stale-dispatch'].includes(adapterVariant))throw Error('Unregistered adapter source control');
-if(!['default','identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate','feedback-unique'].includes(contractName))throw Error('Unreviewed pilot contract refused');
+if(!['default','identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate','feedback-unique','feedback-crash','feedback-wallclock'].includes(contractName))throw Error('Unreviewed pilot contract refused');
 let config=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.json',import.meta.url),'utf8'));
-if(['identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate','feedback-unique'].includes(contractName)){
+if(['identity','crash','takeover','late-dispatch','stale-io','c9-candidate','feedback-candidate','feedback-unique','feedback-crash','feedback-wallclock'].includes(contractName)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.identity.json',import.meta.url),'utf8'));
  if(Object.keys(overlay).some(key=>!['requester_profiles','checks'].includes(key)) || overlay.checks?.length!==1 || overlay.checks[0].id!=='C6')throw Error('Identity overlay may replace only C6');
  config.requester_profiles=overlay.requester_profiles;
  config.checks=config.checks.map(check=>check.id==='C6'?overlay.checks[0]:check);
 }
-if(['crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName)){
+if(['crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(crashContract)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.crash.json',import.meta.url),'utf8'));
  if(overlay.checks?.length!==3 || overlay.checks.map(c=>c.id).join(',')!=='C9_deal_crash,C9_calendar_crash,C9_slack_crash')throw Error('Crash overlay must add only the three bounded accepted-write crashes');
  config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,...overlay.checks);
@@ -29,28 +32,28 @@ if(['crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contr
  const restart=config.coverage_review.find(x=>x.dimension==='restart_and_durability');
  restart.rule_ids.push(...overlay.checks.map(c=>c.id));
 }
-if(['takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName)){
+if(['takeover','late-dispatch','stale-io','c9-candidate'].includes(crashContract)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.takeover.json',import.meta.url),'utf8'));
  if(overlay.checks?.length!==1 || overlay.checks[0].id!=='C9_competing_takeover')throw Error('Takeover overlay must add only its bounded native concurrency check');
  config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,...overlay.checks);
  config.scope_review.push({check_id:'C9_competing_takeover',classification:'in_scope',reason:'Two concurrent native recovery executions following witnessed accepted Deal and adapter SIGKILL; does not establish stale-owner or late-request schedules.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
  config.coverage_review.find(x=>x.dimension==='restart_and_durability').rule_ids.push('C9_competing_takeover');
 }
-if(['late-dispatch','stale-io','c9-candidate'].includes(contractName)){
+if(['late-dispatch','stale-io','c9-candidate'].includes(crashContract)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.late-dispatch.json',import.meta.url),'utf8'));
  if(overlay.checks?.length!==1 || overlay.checks[0].id!=='C9_late_dispatch')throw Error('Late-dispatch overlay may add only its bounded schedule');
  config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,...overlay.checks);
  config.scope_review.push({check_id:'C9_late_dispatch',classification:'in_scope',reason:'A real HTTP request enters a separate proof provider queue before adapter SIGKILL; queue forwards to the real twin only after replacement holds unknown. Does not prove vendor queue implementation or native-worker-host suspension.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
  config.coverage_review.find(x=>x.dimension==='restart_and_durability').rule_ids.push('C9_late_dispatch');
 }
-if(['stale-io','c9-candidate'].includes(contractName)){
+if(['stale-io','c9-candidate'].includes(crashContract)){
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.stale-io.json',import.meta.url),'utf8'));
  if(overlay.checks?.length!==1||overlay.checks[0].id!=='C9_stale_native_io')throw Error('Stale I/O overlay may add only its native command schedule');
  config.checks.splice(config.checks.findIndex(c=>c.id==='C9'),0,...overlay.checks);
  config.scope_review.push({check_id:'C9_stale_native_io',classification:'in_scope',reason:'A real native provider I/O command is delayed before the ownership fence; after takeover, the unchanged adapter must deny it despite an unexpired valid invocation. Not native SaaS host suspension.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
  config.coverage_review.find(x=>x.dimension==='restart_and_durability').rule_ids.push('C9_stale_native_io');
 }
-if(contractName==='c9-candidate'){
+if(crashContract==='c9-candidate'){
  if(!process.env.PILOT_STATE_TABLE)throw Error('C9 candidate requires shared conditional DynamoDB storage');
  const overlay=JSON.parse(readFileSync(new URL('../../n8n-lead-pilot/contract.c9-candidate.json',import.meta.url),'utf8'));
  if(overlay.checks?.length!==2||overlay.checks.map(c=>c.id).join(',')!=='C9_contact_crash,C9')throw Error('C9 candidate must add Contact and replace only the original C9 blocker with its executable Gmail/concurrent-recovery contract');
@@ -58,10 +61,46 @@ if(contractName==='c9-candidate'){
  config.scope_review.push({check_id:'C9_contact_crash',classification:'in_scope',reason:'Actual Contact acceptance then owned-adapter SIGKILL before checkpoint; positive exact read-back. Separate from provider-timeout proof.',evidence:['n8n-lead-pilot/C9-CRASH-RECOVERY.md']});
  config.coverage_review.find(x=>x.dimension==='restart_and_durability').rule_ids.push('C9_contact_crash');
 }
-const feedbackPolicy=contractName==='feedback-unique'?uniqueFeedbackProofPolicy:feedbackProofPolicy;
-if(['feedback-candidate','feedback-unique'].includes(contractName)){
- if(!isDeepStrictEqual(JSON.parse(process.env.PILOT_RECOVERY_POLICY??'null'),feedbackPolicy))throw Error('Feedback proof requires its exact accelerated 30-second policy');
- config=contractName==='feedback-unique'?applyUniqueFeedbackPolicy(config):applyFeedbackPolicy(config);
+const feedbackPolicy=longObservation?{...uniqueFeedbackProofPolicy,windowMs:1800000}:timedCrash?{...uniqueFeedbackProofPolicy,windowMs:120000}:contractName==='feedback-unique'?uniqueFeedbackProofPolicy:feedbackProofPolicy;
+if(['feedback-candidate','feedback-unique','feedback-crash','feedback-wallclock'].includes(contractName)){
+ if(!isDeepStrictEqual(JSON.parse(process.env.PILOT_RECOVERY_POLICY??'null'),feedbackPolicy))throw Error('Feedback proof requires the exact reviewed policy for the selected contract');
+ config=(timedCrash||longObservation||contractName==='feedback-unique')?applyUniqueFeedbackPolicy(config):applyFeedbackPolicy(config);
+ if(timedCrash){
+  config.observation_seconds=5;
+  config.execution_budget_seconds=1800;
+  for(const c of config.checks){
+   if(c.actions){
+    c.actions=c.actions.filter(a=>!a.delay_seconds||!['C2','C4','C5','F_email_deadline','F_deal_unique'].includes(c.id));
+    if(['C2','C4','C5','F_email_deadline','F_deal_unique'].includes(c.id))c.observation_deadline_seconds=150;
+    if(c.id==='F_email_deadline')for(const a of c.assertion.where)if(a.select==='recovery_policy.windowMs')a.equals=120000;
+    if(['C5','F_email_deadline'].includes(c.id)||c.id==='C9'||(c.id.startsWith('C9_')&&c.id!=='C9_stale_native_io')){
+     c.observation_deadline_seconds=150;
+     c.assertion.where.push({select:'notification.status',equals:'confirmed',required:true},{select:'notification.outcome',equals:['C5','F_email_deadline'].includes(c.id)?'needs_human':'confirmed',required:true});
+    }
+    // Recovery may return a busy/interim state while the background native
+    // invocation still owns the lease. Keep every provider identity assertion,
+    // binding terminal identities to the verifier's final HTTP observation.
+    if(c.id==='C9'||c.id.startsWith('C9_'))c.provider_assertions=JSON.parse(JSON.stringify(c.provider_assertions).replace(/\{\{step[3-9]\.state\./g,'{{observed.records.0.'));
+
+    for(const assertion of [c.assertion,c.before?.assertion])for(const a of assertion?.where??[])if(a.select==='operations.deal.confirmation'&&a.equals==='positive_readback')a.equals='positive_unique_key_readback';
+   }
+  }
+ }
+}
+if(longObservation){
+ config.observation_seconds=5;
+ config.execution_budget_seconds=2400;
+ config.checks=config.checks.map(c=>{
+  if(c.id==='baseline')return c;
+  if(c.id==='F_email_deadline'){
+   c.actions=c.actions.filter(a=>!a.delay_seconds);
+   c.observation_deadline_seconds=1830;
+   c.assertion.where.push({select:'notification.status',equals:'confirmed',required:true},{select:'notification.outcome',equals:'needs_human',required:true});
+   for(const a of c.assertion.where)if(a.select==='recovery_policy.windowMs')a.equals=1800000;
+   return c;
+  }
+  return {id:c.id,name:c.name,blocker:{category:'observation_missing',reason:'Not executed in this focused 30-minute wall-clock receipt; separate crash and short-policy receipts are not combined.',evidence:['n8n-lead-pilot/README.md']}};
+ });
 }
 const exportPath=process.env.N8N_WORKFLOW_EXPORT;
 const sourcePath=process.env.PILOT_BINDINGS_SOURCE;
@@ -90,20 +129,21 @@ if(workflow.nodes.length!==expected.nodes.length || !isDeepStrictEqual(workflow.
 const sha=createHash('sha256').update(bytes).digest('hex');
 const identity={invocation_secret:randomBytes(32).toString('hex'),requesters:['pilot-owner','pilot-other'].map(subject=>({subject,tenant:'pilot-team',token:randomBytes(32).toString('hex')}))};
 export default {
+ tunnelTtlSeconds:longObservation?3600:undefined,
  workflow:'n8n-lead-recovery', providers:['hubspot','gmail','google-calendar','slack'],
  appVersion:'n8n-export-'+sha,
  sourceVariant:variant,adapterVariant,
  context:{goal:'Verify the actual n8n lead workflow: exact Contact and associated Deal, confirmed email before Calendar, accurate Slack outcome, no duplicate effects on replay; review applicable default production risks and keep unqualified risks visible.',workflow:(adapterVariant==='normal'?'':'Ephemeral negative adapter source control '+adapterVariant+'. ')+'Persistent native Header Auth webhook; Code decision machine and HTTP Request I/O; versioned source '+variant+'; exported workflow SHA256 '+sha,entry_points:['POST /invoke','POST /native-invoke (fixed protected transport to the same native webhook; no local business validation)'],state_store:process.env.PILOT_STATE_TABLE?'Shared DynamoDB conditional claims/CAS and leases; native crash recovery remains unqualified.':'Single-process FileStore conditional claims/CAS; not independent-worker storage. Native crash recovery remains unqualified.'},
- appEnv:['feedback-candidate','feedback-unique'].includes(contractName)?{PILOT_RECOVERY_POLICY:JSON.stringify(feedbackPolicy)}:{},
+ appEnv:['feedback-candidate','feedback-unique','feedback-crash','feedback-wallclock'].includes(contractName)?{PILOT_RECOVERY_POLICY:JSON.stringify(feedbackPolicy)}:{},
  checks:config.checks,
- applicationConfig:{coverage_review:config.coverage_review,scope_review:config.scope_review,...(config.requester_profiles?{requester_profiles:config.requester_profiles}:{})},
- crashSimulationCount:contractName==='c9-candidate'?6:['takeover','late-dispatch','stale-io'].includes(contractName)?4:contractName==='crash'?3:0,
- crashSimulation:['crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName)?({legs,flowRunId,faultIndex=0})=>{
+ applicationConfig:{...(config.execution_budget_seconds?{execution_budget_seconds:config.execution_budget_seconds}:{}),...(config.observation_seconds?{observation_seconds:config.observation_seconds}:{}),coverage_review:config.coverage_review,scope_review:config.scope_review,...(config.requester_profiles?{requester_profiles:config.requester_profiles}:{})},
+ crashSimulationCount:crashContract==='c9-candidate'?6:['takeover','late-dispatch','stale-io'].includes(crashContract)?4:contractName==='crash'?3:0,
+ crashSimulation:['crash','takeover','late-dispatch','stale-io','c9-candidate'].includes(crashContract)?({legs,flowRunId,faultIndex=0})=>{
    const targets=[{id:'deal',provider:'hubspot',path:'/crm/v3/objects/deals',body_path:['properties','dealname'],body_equals:'Pilot fs-c9-'+flowRunId,response_identity:'id'},
     {id:'calendar',provider:'google-calendar',path:'/calendars/primary/events',body_path:['summary'],body_equals:'Pilot fs-c9-calendar-'+flowRunId,response_identity:'id'},
     {id:'slack',provider:'slack',path:'/chat.postMessage',body_path:['text'],body_equals:JSON.stringify({lead_id:'fs-c9-slack-'+flowRunId,status:'confirmed',blocked_step:null}),response_identity:'ts'}];
-   if(['takeover','late-dispatch','stale-io','c9-candidate'].includes(contractName))targets.push({id:'takeover',provider:'hubspot',path:'/crm/v3/objects/deals',body_path:['properties','dealname'],body_equals:'Pilot fs-c9-takeover-'+flowRunId,response_identity:'id'});
-   if(contractName==='c9-candidate'){const lead='fs-c9-gmail-'+flowRunId;targets.push({id:'contact',provider:'hubspot',path:'/crm/v3/objects/contacts',body_path:['properties','email'],body_equals:'fs-c9-contact-'+flowRunId+'@example.com',response_identity:'id'},{id:'gmail',provider:'gmail',path:'/gmail/v1/users/me/messages/send',body_path:['raw'],body_equals:Buffer.from('From: FetchSandbox Pilot <pilot@example.com>\r\nTo: '+lead+'@example.com\r\nSubject: Pilot '+lead+'\r\nMessage-ID: <'+lead+'@example.com>\r\n\r\nDummy-data lead follow-up').toString('base64url'),response_identity:'id'});}
+   if(['takeover','late-dispatch','stale-io','c9-candidate'].includes(crashContract))targets.push({id:'takeover',provider:'hubspot',path:'/crm/v3/objects/deals',body_path:['properties','dealname'],body_equals:'Pilot fs-c9-takeover-'+flowRunId,response_identity:'id'});
+   if(crashContract==='c9-candidate'){const lead='fs-c9-gmail-'+flowRunId;targets.push({id:'contact',provider:'hubspot',path:'/crm/v3/objects/contacts',body_path:['properties','email'],body_equals:'fs-c9-contact-'+flowRunId+'@example.com',response_identity:'id'},{id:'gmail',provider:'gmail',path:'/gmail/v1/users/me/messages/send',body_path:['raw'],body_equals:Buffer.from('From: FetchSandbox Pilot <pilot@example.com>\r\nTo: '+lead+'@example.com\r\nSubject: Pilot '+lead+'\r\nMessage-ID: <'+lead+'@example.com>\r\n\r\nDummy-data lead follow-up').toString('base64url'),response_identity:'id'});}
    const t=targets[faultIndex];return t?{...t,nonce:randomBytes(24).toString('hex'),url:legs[t.provider].base_url.replace(/\/$/,'')+t.path,method:'POST'}:null;
  }:undefined,
  async witnessCrash({legs,flowRunId,effectId,port,env,plan}){
@@ -124,7 +164,7 @@ export default {
    const pending=op?.status==='in_flight' && !(kind==='slack'?op.ts:op.id) && (kind!=='calendar'||op.requested_id===effectId);
    return {provider_accepted:matches.length===1,checkpoint_pending:!!pending,step:kind,lead_id:lead,owner_before:state?.owner,version_before:state?.version,epoch_before:state?.epoch,provider_matching_records:matches.length};
  },
- staleIo:['stale-io','c9-candidate'].includes(contractName),
+ staleIo:['stale-io','c9-candidate'].includes(crashContract),
  async staleIoWitnesses({legs,flowRunId,port,env}){
   const lead='fs-c9-stale-'+flowRunId,binding=JSON.parse(readFileSync(env.PILOT_BINDINGS,'utf8'));
   const {tsImport}=await import('tsx/esm/api');
@@ -142,8 +182,8 @@ export default {
    witnessDenied:async after=>{const {state,contacts}=await inspect();return {replacement_preserved:state?.owner===after.owner_after&&state?.epoch===after.epoch_after&&state?.status==='unknown'&&state?.operations?.contact?.status==='unknown',provider_matching_records:contacts.length};},
   };
  },
- scheduleSimulationCount:['late-dispatch','stale-io','c9-candidate'].includes(contractName)?1:0,
- scheduleSimulation:['late-dispatch','stale-io','c9-candidate'].includes(contractName)?({legs,flowRunId,crashCount})=>crashCount===4?{id:'late-contact',url:legs.hubspot.base_url.replace(/\/$/,'')+'/crm/v3/objects/contacts',method:'POST',body_path:['properties','email'],body_equals:'fs-c9-late-'+flowRunId+'@example.com',nonce:randomBytes(24).toString('hex')}:null:undefined,
+ scheduleSimulationCount:['late-dispatch','stale-io','c9-candidate'].includes(crashContract)?1:0,
+ scheduleSimulation:['late-dispatch','stale-io','c9-candidate'].includes(crashContract)?({legs,flowRunId,crashCount})=>crashCount===4?{id:'late-contact',url:legs.hubspot.base_url.replace(/\/$/,'')+'/crm/v3/objects/contacts',method:'POST',body_path:['properties','email'],body_equals:'fs-c9-late-'+flowRunId+'@example.com',nonce:randomBytes(24).toString('hex')}:null:undefined,
  scheduleWitnesses({legs,flowRunId,port,env}){
   const lead='fs-c9-late-'+flowRunId;
   const binding=JSON.parse(readFileSync(env.PILOT_BINDINGS,'utf8'));
