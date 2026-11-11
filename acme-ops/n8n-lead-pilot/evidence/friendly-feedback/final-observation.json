@@ -1,0 +1,149 @@
+{
+  "status": "partial_qualification",
+  "receipt_url": "https://fetchsandbox.com/runs/850921c434?flow=vr_05432a92355149b581c0c0ae5da1273d",
+  "run_id": "vr_05432a92355149b581c0c0ae5da1273d",
+  "statuses": {
+    "held": 17,
+    "unmeasured": 1
+  },
+  "independent_provider_state_observations": 80,
+  "independent_observations_held": 80,
+  "cases": {
+    "F_deal_unique": {
+      "status": "confirmed",
+      "counts": {
+        "hubspot/contacts": 1,
+        "hubspot/deals": 1,
+        "gmail/messages": 1,
+        "google-calendar/events": 1,
+        "slack/messages": 2
+      },
+      "deal_confirmation": "positive_unique_key_readback"
+    },
+    "F_email_deadline": {
+      "status": "needs_human",
+      "counts": {
+        "hubspot/contacts": 1,
+        "hubspot/deals": 1,
+        "gmail/messages": 1,
+        "google-calendar/events": 0,
+        "slack/messages": 2
+      },
+      "deal_confirmation": "positive_unique_key_readback",
+      "blocked_step": "gmail",
+      "lookup_attempts": 2,
+      "email_content_retained": true,
+      "send_outcome": "unknown",
+      "separate_source_diagnostic_mime_matches": true
+    }
+  },
+  "policy": {
+    "maxLookups": 3,
+    "windowMs": 30000,
+    "quietNotifications": true,
+    "uniqueDealIdentity": true
+  },
+  "scope": "Scripted native n8n runtime against isolated API twins; accelerated 30-second window, not a measured 30-minute deployment or live Gmail/Slack delivery",
+  "backend_version": "7f983d9f",
+  "native_export_version": "6d590278-b119-4e9c-83d2-79c660b628b5",
+  "bridge_source_commit": "c201b4e",
+  "bridge_bundle_sha256": "0b39db8027ef2ad3431862bae2a6f227179f6637f55143665ffabf555a782bfd",
+  "same_contract_comparison": {
+    "scope": "Same submitted application contract; different bridge build, fresh session/run",
+    "before_receipt": "https://fetchsandbox.com/runs/de33901290?flow=vr_d61c06bfe63f4e4b805f9e517bc46705",
+    "before_counts": {
+      "held": 16,
+      "unmeasured": 2
+    },
+    "changed_configuration_fields": [
+      "app_version"
+    ],
+    "same_contract_sha256": "f5f5c7174b696fe32fd74074cacaa96da91a04443417082ae1d8de42d70a05a2",
+    "before_app_version": "n8n-export-74f53408d9f76f9ccb3787bb33996c1d962321d06c3f62a0117810bc0cbd5590-bridge-e83376cbf0d9",
+    "after_app_version": "n8n-export-74f53408d9f76f9ccb3787bb33996c1d962321d06c3f62a0117810bc0cbd5590-bridge-0b39db8027ef",
+    "backend_version": "7f983d9f",
+    "native_version": "6d590278-b119-4e9c-83d2-79c660b628b5",
+    "bridge_source_commit": "c201b4e",
+    "new_verdict": "inconclusive",
+    "new_receipt": "https://fetchsandbox.com/runs/850921c434?flow=vr_05432a92355149b581c0c0ae5da1273d",
+    "new_counts": {
+      "held": 17,
+      "unmeasured": 1
+    }
+  },
+  "workflow_tests": {
+    "passed": 604,
+    "failed": 0,
+    "skipped": 0,
+    "typescript": "passed",
+    "scope": "Includes DynamoDB Local integration, not managed AWS database faults"
+  },
+  "backend_tests": {
+    "passed": 162,
+    "skipped": 1,
+    "skip_reason": "Gmail-only refusal parameter intentionally does not apply to HubSpot"
+  },
+  "pending": [
+    "Crash/restart matrix under this timed policy (C9)",
+    "30-minute wall-clock qualification",
+    "Native Gmail Draft resource and Slack edit in place not implemented",
+    "Generic receipt prose omits some probe narration although actions/evidence are stored"
+  ],
+  "persona_regression": {
+    "persona": "p5_crossservice",
+    "backend": "25822007",
+    "judge": "FAIL 7/9",
+    "matrix": "UNMEASURED; budget exhausted; dirty source snapshot is not a baseline",
+    "failed_checks": [
+      "Unlabelled stub-backed result",
+      "Missing final seat/provisioning/idempotency explanation"
+    ],
+    "disposable_key_revocation_confirmed": true
+  },
+  "other_retained_failures": {
+    "original_source_backend_tests": 4,
+    "scope": "Twilio execution and Stripe brain integrity",
+    "remote_emulator_negative_control_first_attempt": {
+      "passed": 599,
+      "failed": 1,
+      "later_full_repeat_passed": 600,
+      "cause": "not established"
+    }
+  },
+  "source_hashes": {
+    "acme-ops/n8n-lead-pilot/adapter.ts": "2bd4a981a6d56ba3219c90b57fd888f5980a98a5379298a00ec115a230a14d9b",
+    "acme-ops/n8n-lead-pilot/state.ts": "d2ecd34d911eb26eae92d50688995a14c4bce474fd54f2ca8b9707826d894edb",
+    "acme-ops/verify/contracts/n8n-feedback-policy.mjs": "1af253dc967d1f43f9a53b0a0a24d9bc539208990b3d4994a9e12935392c4c2f"
+  },
+  "cleanup": {
+    "created_legs": [
+      {
+        "role": "hubspot",
+        "delete": 200,
+        "read_back": 404
+      },
+      {
+        "role": "gmail",
+        "delete": 200,
+        "read_back": 404
+      },
+      {
+        "role": "google-calendar",
+        "delete": 200,
+        "read_back": 404
+      },
+      {
+        "role": "slack",
+        "delete": 200,
+        "read_back": 404
+      }
+    ],
+    "public_receipt_after_cleanup_http": 200,
+    "callback_processes_stopped": [
+      62946
+    ],
+    "dynamodb_test_container_removed": true,
+    "managed_tunnel_status_after_runner": 404,
+    "private_canary_removed": true
+  }
+}

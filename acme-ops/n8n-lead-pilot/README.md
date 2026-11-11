@@ -1,4 +1,76 @@
-# Friendly feedback follow-up: measured scope and remaining gates
+# Friendly feedback: latest measured result
+
+The [fresh receipt](https://fetchsandbox.com/runs/850921c434?flow=vr_05432a92355149b581c0c0ae5da1273d)
+records **17 passed, zero failed, one unmeasured**. All **80 independent
+provider-state observations** passed. Overall remains inconclusive: the crash
+matrix has not run under this timed policy. Historical crash receipts below use
+a different policy and are not combined with this result.
+
+Measured in this receipt:
+
+- Lost Deal response: direct lookup by the unique lead key recovers one Deal
+  with its original Contact association. No second Deal is created.
+- Unresolved email: the accelerated deadline reaches `needs_human`, retaining
+  the lead ID, blocked Gmail step and original email content. Independent state
+  has one accepted email, zero Calendar events and two Slack notices.
+- Quiet notices: uncertainty, then resolution or human handoff, without repeated
+  unchanged notices in the measured cases.
+
+**Scope:** actual protected n8n runtime against isolated API twins, not live
+Gmail/Slack delivery or production certification. The policy is at most three
+lookups within an accelerated **30-second** window. The deadline case actually
+made **two lookups** before handoff; a 30-minute wall-clock run remains unmeasured.
+Retained MIME is not a created Gmail Draft resource. Slack edit-in-place is not
+implemented. Rich probe narration is not populated for every scenario in the
+current generic receipt summary; saved actions and evidence remain available.
+
+Backend `7f983d9f` is deployed. Published n8n source remains
+`6d590278-b119-4e9c-83d2-79c660b628b5`; a fresh native export matched the measured
+SHA256 `74f53408d9f76f9ccb3787bb33996c1d962321d06c3f62a0117810bc0cbd5590`.
+The changed bridge source is `c201b4e`, measured bundle `0b39db8027ef`. This source
+comparison is not signed native-source attestation. The reference unique Deal
+property must be provisioned in the target account before opting in; automatic
+customer-property discovery and full provider parity are not established.
+
+The [same-contract pre-fix receipt](https://fetchsandbox.com/runs/de33901290?flow=vr_d61c06bfe63f4e4b805f9e517bc46705)
+records 16 passed and two unmeasured. A recovery timer could take ownership after
+unknown was saved while the original invocation was still notifying, causing its
+403. Two deterministic ownership tests failed before the fix. The app now retains
+the live lease until a completed native response is bound to that invocation;
+a late response cannot release a replacement owner's claim. The submitted
+contract is identical except `app_version` (contract SHA256
+`f5f5c7174b696fe32fd74074cacaa96da91a04443417082ae1d8de42d70a05a2`).
+No scenario assertions were relaxed for the ownership fix.
+
+The earlier [14-pass, four-unmeasured witness attempt](https://fetchsandbox.com/runs/1ce76f9681?flow=vr_92df0794083249d091e88e4aa58689ec)
+is retained separately. The verifier recognized only provider-ID reads; its
+alternate-key extension now binds the submitted key, accepted response, observed
+read and same effect ID after the archived disconnect, without a repeat write.
+A stale retry precondition label was also corrected. Offline replay of both
+archived cases recognized their recovery and rejected substituted effect IDs;
+it did not regrade the original receipt.
+
+Regression evidence: **604 workflow tests passed, zero skipped**, including
+DynamoDB Local ownership integration; TypeScript passed. **162 backend tests
+passed**, with one intentionally inapplicable Gmail-refusal parameter skipped.
+Canary and post-rollout HTTP checks each passed 11 assertions, plus seven packaged
+witness assertions. These emulator/fixture checks do not prove managed AWS
+DynamoDB failure/restore or actual n8n SaaS host termination.
+
+Broader acceptance is still open. The unchanged `p5_crossservice` Paddle/Resend
+persona on backend `25822007` exhausted its agent budget; its judge returned
+7/9 (missing a stub-backed caveat and final explanation), and the matrix is
+UNMEASURED. Its dirty snapshot is not a baseline. Exact disposable-key revocation
+was confirmed. Four older backend failures reproduced with original source
+(Twilio execution and Stripe integrity) remain recorded. A first remote-emulator
+negative-control attempt failed; standalone and full remote/local repeats passed,
+but its cause was not established.
+
+[Sanitized latest observation and remaining gates](evidence/friendly-feedback/final-observation.json).
+Temporary test services and callback transports are removed after measurement;
+the published pilot needs its maintained runner to start a fresh rehearsal.
+
+## Earlier same-day timed-policy cutoff (historical)
 
 The [November 10 timed-policy receipt](https://fetchsandbox.com/runs/14bb49dee2?flow=vr_315ae3fe8cc044e1a8ce6b204f67ca87)
 records **16 passed, zero failed, two unmeasured**. All 75 independent
