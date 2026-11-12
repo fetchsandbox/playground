@@ -76,11 +76,15 @@ select its additional contract with
 It retains the 27 existing executable cancellation checks and adds three cases:
 an independently edited refund offer, stale approval after restart/replay, and
 fresh approval of the changed amount. The operator edit must be discovered as a
-qualified subscription metadata input before execution. The local candidate and
-its test results are recorded in
-`acme-ops/verify/evidence/stale-refund-approval/result.json`; they are not a hosted
-receipt. Preserve separate before/after results and do not overwrite the historical
-catalog receipt with an unexecuted contract.
+qualified subscription metadata input before execution. The measured local tests, release gates and separate hosted before/after receipts
+are recorded in `acme-ops/verify/evidence/stale-refund-approval/result.json`.
+With the same frozen contract, the original app passed 27 scenarios and failed
+three; the corrected app passed 30, with none failed or unmeasured. These runs
+used a local reference app through the managed tunnel and isolated provider
+twins. Live provider parity, browser approver identity and AWS app deployment
+were not measured. A fresh amount requires a new request and approval; the
+last re-read is not an atomic external-provider lock. Preserve the two receipts
+separately and retain the historical catalog receipt.
 
 For another package, follow its documented runner. If it has none, inspect the
 app and returned MCP schemas and build a scoped contract/adapter; do not silently

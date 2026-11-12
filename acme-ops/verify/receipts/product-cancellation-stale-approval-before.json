@@ -1,0 +1,173 @@
+{
+  "workflow": "product-cancellation",
+  "runtime_stale_io_qualified": null,
+  "runtime_schedule_qualified": null,
+  "runtime_fault_qualified": null,
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.31"
+  },
+  "mcp_source": "local_build",
+  "app_version": "acme-ops-product-cancellation-1.0.0-dd062c0-bundle-97e15e89535c",
+  "bundle_sha256": "97e15e89535cce49f5cc5fac16265a5b05b76fa1a7eabf33863fe9b5a3b99a62",
+  "session_id": "vs_272e8530fcc4",
+  "run_id": "vr_208ee0242d02482494d5b54fabaf8120",
+  "receipt_url": "https://fetchsandbox.com/runs/1214bbc72d?flow=vr_208ee0242d02482494d5b54fabaf8120",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": true,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "store_credit_end_to_end",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "original_payment_end_to_end",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gift_card_end_to_end",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "second_refund_refused",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0; runs[*]: expected exactly 3, found 3"
+    },
+    {
+      "id": "method_not_offered_clarified",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0"
+    },
+    {
+      "id": "contract_exception_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "exception_approved",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "exception_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "approve_by_stranger_refused",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "no_refund_due",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "large_refund_needs_approval",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "unknown_customer_not_cancelled",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "stripe_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "zendesk_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "square_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "restart_while_parked",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "phone_request_opens_ticket",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "choice_read_from_customer_reply",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "prorated_credit_tier",
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+    },
+    {
+      "id": "store_credit_readback",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gift_card_balance_readback",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "customer_email_delivery",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "stale_refund_amount",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 0, found 1"
+    },
+    {
+      "id": "stale_refund_after_restart",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 0, found 1"
+    },
+    {
+      "id": "fresh_refund_reapproval",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    }
+  ],
+  "recorded_at": "2026-11-12T02:59:50.841Z"
+}

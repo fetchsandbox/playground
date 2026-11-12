@@ -1,37 +1,513 @@
 {
-  "workflow": "product-cancellation",
-  "source_commit": "80255b7ca18fdb9f1f08a21868a9349e3e6ffc2a",
-  "working_tree_dirty": true,
-  "deployment": "not_deployed",
-  "evidence_scope": "Local real provider-client tests against fake-world HTTP fixture; separate engine tests; hosted stale contract unexecuted",
-  "before": {
-    "test": "rejects stale refund approval, requires a fresh amount review, and replays safely after restart",
-    "result": "failed: old amount refund applied",
-    "filtered_tests_skipped": 22,
-    "log": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/application-before.log"
+  "schema_version": 1,
+  "workflow": "Product cancellation: stale refund approval",
+  "measured_date_pacific": "2026-11-11",
+  "source_request": "https://www.reddit.com/r/automation/comments/1xr16se/comment/19sho2muxq2ea/",
+  "scope": "Actual local reference app via FetchSandbox MCP and managed tunnel against isolated Stripe, Zendesk, Square and Slack twins; separate independent final-state audit",
+  "backend_deployed": "f1ee9cf8",
+  "mcp": {
+    "observed": {
+      "name": "fetchsandbox",
+      "version": "0.7.31"
+    },
+    "source": "local_build"
   },
-  "after": {
-    "application_tests_passed": 603,
-    "application_tests_skipped": 13,
+  "contract": {
+    "commit": "dd062c0deca10fd3578034c7b3263b2467ac0fa8",
+    "same_hashes_for_both_attempts": true,
+    "hashes": {
+      "acme-ops/verify/contracts/product-cancellation-stale-approval.mjs": "6edcb4bdf33fd6c08e98319817251c466310d464859a7ec4c8a5a3d1b48ad6b5",
+      "acme-ops/verify/contracts/product-cancellation.mjs": "48f979b08ff13b08996b0a72e90d9ccc85c98a61192bf07c6e9c58d8efe99439",
+      "acme-ops/verify/contracts/lib.mjs": "9aa39cb8389f241f4f6b1274f5a17c8871e18d5325cb0d1ab3d8f500a76693cd"
+    }
+  },
+  "app_variants": {
+    "before": {
+      "source_commit_base": "80255b7ca18fdb9f1f08a21868a9349e3e6ffc2a",
+      "workflow_source_sha256": "a9081fad745f46ffc99c2cf426b5ee09e1fc0e1ec8e866600a364ef38b9dfc1b",
+      "bundle_sha256": "97e15e89535cce49f5cc5fac16265a5b05b76fa1a7eabf33863fe9b5a3b99a62",
+      "declared_app_version": "acme-ops-product-cancellation-1.0.0-dd062c0-bundle-97e15e89535c"
+    },
+    "after": {
+      "workflow_source_commit": "35a6168e9e21d14df58eeff0c86eb5ae34ca48b4",
+      "workflow_source_sha256": "8ed26975f0b6b906813b0b0e41e167649c52bfd1f31f9828fa4e52a1d7f6f4dd",
+      "bundle_sha256": "5b2466bf0d26e63d5060e900bc59954639ef64e0c3d92e6d32f7c853bdb56ba7",
+      "declared_app_version": "acme-ops-product-cancellation-1.0.0-dd062c0-bundle-5b2466bf0d26"
+    }
+  },
+  "receipts": {
+    "before": {
+      "url": "https://fetchsandbox.com/runs/1214bbc72d?flow=vr_208ee0242d02482494d5b54fabaf8120",
+      "passed": 27,
+      "failed": 3,
+      "unmeasured": 0,
+      "checks": [
+        {
+          "id": "baseline",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "store_credit_end_to_end",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "original_payment_end_to_end",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "gift_card_end_to_end",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "second_refund_refused",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0; runs[*]: expected exactly 3, found 3"
+        },
+        {
+          "id": "method_not_offered_clarified",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0"
+        },
+        {
+          "id": "contract_exception_parked",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "exception_approved",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "exception_rejected",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "approve_by_stranger_refused",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "no_refund_due",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "large_refund_needs_approval",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "unknown_customer_not_cancelled",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "duplicate_start",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "concurrent_start",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "invalid_input_rejected",
+          "status": "held",
+          "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+        },
+        {
+          "id": "stripe_auth_failure",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "zendesk_rate_limited",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "square_auth_failure",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "slack_rate_limited",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "restart_while_parked",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "phone_request_opens_ticket",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "choice_read_from_customer_reply",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "prorated_credit_tier",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "store_credit_readback",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "gift_card_balance_readback",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "customer_email_delivery",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "stale_refund_amount",
+          "status": "violated",
+          "explanation": "Provider-state assertion failed: expected exactly 0, found 1"
+        },
+        {
+          "id": "stale_refund_after_restart",
+          "status": "violated",
+          "explanation": "Provider-state assertion failed: expected exactly 0, found 1"
+        },
+        {
+          "id": "fresh_refund_reapproval",
+          "status": "violated",
+          "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+        }
+      ]
+    },
+    "after": {
+      "url": "https://fetchsandbox.com/runs/57721c1bdf?flow=vr_a7660b417c384c8e807e54da1066e05c",
+      "passed": 30,
+      "failed": 0,
+      "unmeasured": 0,
+      "checks": [
+        {
+          "id": "baseline",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "store_credit_end_to_end",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "original_payment_end_to_end",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "gift_card_end_to_end",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "second_refund_refused",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0; runs[*]: expected exactly 3, found 3"
+        },
+        {
+          "id": "method_not_offered_clarified",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 0, found 0"
+        },
+        {
+          "id": "contract_exception_parked",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "exception_approved",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "exception_rejected",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "approve_by_stranger_refused",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "no_refund_due",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "large_refund_needs_approval",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "unknown_customer_not_cancelled",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "duplicate_start",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "concurrent_start",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "invalid_input_rejected",
+          "status": "held",
+          "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+        },
+        {
+          "id": "stripe_auth_failure",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "zendesk_rate_limited",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "square_auth_failure",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "slack_rate_limited",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "restart_while_parked",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "phone_request_opens_ticket",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "choice_read_from_customer_reply",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "prorated_credit_tier",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+        },
+        {
+          "id": "store_credit_readback",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "gift_card_balance_readback",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "customer_email_delivery",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "stale_refund_amount",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "stale_refund_after_restart",
+          "status": "held",
+          "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+        },
+        {
+          "id": "fresh_refund_reapproval",
+          "status": "held",
+          "explanation": "runs[*]: expected exactly 3, found 3; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
+        }
+      ]
+    }
+  },
+  "additional_independent_audit": {
+    "scope": "Corroborating final provider-state and saved request-sequence audit; not merged into receipt counts",
+    "before_passed": false,
+    "after_passed": true,
+    "after_cases": {
+      "stale_refund_amount": {
+        "assertions": {
+          "stripe_refunds": {
+            "expected": 0,
+            "actual": 0,
+            "passed": true
+          },
+          "zendesk_refund_confirmations": {
+            "expected": 0,
+            "actual": 0,
+            "passed": true
+          }
+        },
+        "all_additional_assertions_passed": true,
+        "refund_ids": [],
+        "source_payment_intent": "pi_5GRXL1NWE1PKQ7WXNJP9ND3V"
+      },
+      "stale_refund_after_restart": {
+        "assertions": {
+          "stripe_refunds": {
+            "expected": 0,
+            "actual": 0,
+            "passed": true
+          },
+          "zendesk_refund_confirmations": {
+            "expected": 0,
+            "actual": 0,
+            "passed": true
+          },
+          "runtime_identity_changed": {
+            "passed": true,
+            "source": "Application-reported identities plus maintained runner SIGKILL/restart controller; local FileStore only",
+            "observations": [
+              {
+                "identity_before": "f5add0f9-3629-4c0c-930b-f2607971fefe",
+                "identity_after": "604bf4fb-67ed-427a-9b3c-3e17411b2c96",
+                "status": 200
+              },
+              {
+                "identity_before": "604bf4fb-67ed-427a-9b3c-3e17411b2c96",
+                "identity_after": "c7e51742-fa9d-47b1-99cf-3a019ec1dc21",
+                "status": 200
+              }
+            ]
+          }
+        },
+        "all_additional_assertions_passed": true,
+        "refund_ids": [],
+        "source_payment_intent": "pi_YMJEZZIBU0XY9KE3CGVSW47X"
+      },
+      "fresh_refund_reapproval": {
+        "assertions": {
+          "stripe_refunds": {
+            "expected": 1,
+            "actual": 1,
+            "passed": true
+          },
+          "zendesk_refund_confirmations": {
+            "expected": 1,
+            "actual": 1,
+            "passed": true
+          },
+          "stripe_refund_amount": {
+            "expected": 110000,
+            "actual": [
+              110000
+            ],
+            "passed": true
+          },
+          "runtime_identity_changed": {
+            "passed": true,
+            "source": "Application-reported identities plus maintained runner SIGKILL/restart controller; local FileStore only",
+            "observations": [
+              {
+                "identity_before": "c7e51742-fa9d-47b1-99cf-3a019ec1dc21",
+                "identity_after": "1dbe12d3-4e89-406b-9cf4-8c0e7038675e",
+                "status": 200
+              }
+            ]
+          },
+          "fresh_review_waits": {
+            "phase": "AWAITING_APPROVAL",
+            "money_status": "pending_approval",
+            "gate": "approval",
+            "passed": true
+          },
+          "refund_after_fresh_approval": {
+            "observed_refund_calls": 1,
+            "approval_calls": 2,
+            "passed": true,
+            "identity_scope": "Configured synthetic U_CX_LEAD through protected verifier route; not real browser/human authentication"
+          }
+        },
+        "all_additional_assertions_passed": true,
+        "refund_ids": [
+          "re_20MSX9S1HGKFCY3Q8VZ0OEC7"
+        ],
+        "source_payment_intent": "pi_OS55YWLTSJ8CSGO1YQ5SRWBW"
+      }
+    },
+    "audit_plan_sha256": "34314d1a9091db04dbce2cea5acad617015c382146e084d2884760d9c0d0198d"
+  },
+  "local_tests": {
+    "app_passed": 603,
+    "app_skipped": 13,
+    "skip_reason": "Optional Friendly DynamoDB/process tests not enabled",
+    "backend_targeted_passed": 12,
+    "backend_regression_passed": 149,
     "typecheck": "passed",
-    "bundle": "passed",
-    "log": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/application-regression.log"
+    "bundle": "passed"
   },
-  "native_contract": {
-    "path": "verify/contracts/product-cancellation-stale-approval.mjs",
-    "existing_checks": 27,
-    "new_checks": 3,
-    "status": "unexecuted",
-    "receipt_url": null,
-    "blocked_by": "Hosted verifier lacks qualified operator subscription metadata edit; local engine candidate is not deployed"
+  "release_gates": {
+    "packaged_assertions": 12,
+    "canary_http_assertions": 9,
+    "maintained_release_checks": 5,
+    "post_rollout_http_assertions": 9,
+    "historical_receipts_preserved": 3,
+    "runtime_source_hashes_matched": 3,
+    "rollback_retained": true
   },
-  "limits": [
-    "No atomic external provider lock between last read and refund write",
-    "Fresh approval requires a new refund_choice run; the old run retains a failed action and skipped confirmation",
-    "No live Stripe, AWS runtime deployment, browser approval or native unprimed builder acceptance measured"
+  "retained_incomplete_attempts": [
+    {
+      "receipt": "https://fetchsandbox.com/runs/82036221af?flow=vr_286e9f5ac19a45178232dfed6391c7b6",
+      "passed": 27,
+      "failed": 1,
+      "unmeasured": 2,
+      "reason": "Required fields absent on other records; corrected targeting, reran both apps."
+    },
+    {
+      "receipt": "https://fetchsandbox.com/runs/b7722a664c?flow=vr_642e64d56047491ea466b2ef7abad0f3",
+      "passed": 27,
+      "failed": 3,
+      "unmeasured": 0,
+      "reason": "Earlier predicate revision; retained separately from final pair."
+    },
+    {
+      "receipt": "https://fetchsandbox.com/runs/6c97f6d979?flow=vr_8f3c1c4df7a94b09887505828f6692cc",
+      "passed": 27,
+      "failed": 0,
+      "unmeasured": 3,
+      "reason": "Subscription metadata predicate required field on unrelated records; not counted as full pass."
+    }
   ],
-  "artifacts": {
-    "bundles": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/frozen-bundles.json",
-    "hosted_gap": "/Users/raj/promo/content/reviews/2026-11-11-stale-approval/hosted-control-gap.json"
-  }
+  "limits": [
+    "No live vendor delivery/parity/drift qualification measured",
+    "App ran locally through managed tunnel; not deployed to AWS AgentCore",
+    "Configured dummy approver identity; real browser/human authentication unmeasured",
+    "New amount requires a new refund-choice request and separate approval; old approved request is not edited in place",
+    "Write-time re-read is not an atomic external-provider lock",
+    "Native unprimed builder-client/persona acceptance not measured; this is scripted MCP application verification",
+    "No crash during external provider acceptance in this case; restarts happen at declared lifecycle boundaries"
+  ]
 }
