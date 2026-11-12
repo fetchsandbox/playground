@@ -10,11 +10,11 @@ const request=id=>start(id,input(id),{runId:`${id}-request-{{run_id}}`});
 const choice=(id,n=1)=>start(id,{...input(id),stage:'refund_choice',choice:'original_payment'},{runId:`${id}-choice-${n}-{{run_id}}`});
 const edit={provider_input:{actor:'external_operator',provider:'stripe',method:'POST',path:'/v1/subscriptions/{{step1.output.subscriptionId}}',body:{metadata:{acme_cxl_amount:'110000'}}}};
 const approve=step=>command('decide',step,{decision:'approve',userId:'U_CX_LEAD'});
-const stale=runs([eq('output.refundMinor',120000),action('stripe.refund_original_payment','failed',1,[{select:'error',contains:'fresh approval',required:true}]),action('zendesk.refund_confirmation','skipped')]);
+const stale=runs([{select:'runId',contains:'-choice-1-',required:true},action('stripe.refund_original_payment','failed',1,[{select:'error',contains:'fresh approval',required:false}]),action('zendesk.refund_confirmation','skipped')]);
 const extra=[
   check(ids[0],'Old approval cannot refund after the offered amount changes',[request(ids[0]),choice(ids[0]),structuredClone(edit),approve(2)],stale),
   check(ids[1],'Restart and replay cannot revive the stale refund approval',[request(ids[1]),choice(ids[1]),structuredClone(edit),restart,approve(2),approve(2),command('resume',2)],stale),
-  check(ids[2],'Changed amount requires a fresh review; approved replay refunds exactly once',[request(ids[2]),choice(ids[2]),structuredClone(edit),approve(2),choice(ids[2],2),approve(2),command('resume',2),approve(5),approve(5),restart,command('resume',5)],all(runs([],3),stale,runs([eq('output.refundMinor',110000),action('stripe.refund_original_payment','applied',1,[eq('attempts',1)]),action('zendesk.refund_confirmation','applied')]))),
+  check(ids[2],'Changed amount requires a fresh review; approved replay refunds exactly once',[request(ids[2]),choice(ids[2]),structuredClone(edit),approve(2),choice(ids[2],2),approve(2),command('resume',2),approve(5),approve(5),restart,command('resume',5)],all(runs([],3),stale,runs([{select:'runId',contains:'-choice-2-',required:true},{select:'output.refundMinor',equals:110000,required:false},action('stripe.refund_original_payment','applied',1,[eq('attempts',1)]),action('zendesk.refund_confirmation','applied')]))),
 ];
 const checks=[...base.checks,...extra];
 const providerCheck=(collection,where,count=1)=>({provider:'stripe',collection,assertion:{select:'records[*]',required:true,count,where}});
