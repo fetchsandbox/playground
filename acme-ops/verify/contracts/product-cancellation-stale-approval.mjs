@@ -34,7 +34,7 @@ async function seed(legs,log,context){
     if(pi.status!=='succeeded'||!pi.latest_charge)throw Error('Stale-approval payment fixture not accepted');
     const {ticket}=await call('zendesk','/api/v2/tickets.json',{ticket:{subject:`Stale approval ${c.id}`,requester:customer(c.id),comment:{body:'Please cancel.',public:false}}});
     for(const a of c.actions)if(a.body?.input)a.body.input.ticketId=ticket.id;
-    c.provider_assertions=[providerCheck('refunds',[eq('payment_intent',pi.id),eq('amount',110000),eq('currency','usd')],c.id===ids[2]?1:0),providerCheck('subscriptions',[eq('id',sub.id),eq('metadata.acme_cxl_amount','110000')])];
+    c.provider_assertions=[providerCheck('refunds',[eq('payment_intent',pi.id),eq('amount',110000),eq('currency','usd')],c.id===ids[2]?1:0),providerCheck('subscriptions',[eq('id',sub.id),{select:'metadata.acme_cxl_amount',equals:'110000',required:false}])];
     // Assert zero refunds of ANY amount in the withheld cases, not only zero
     // matching the new amount (an old-amount refund must fail this contract).
     if(c.id!==ids[2])c.provider_assertions[0].assertion.where=[eq('payment_intent',pi.id)];
