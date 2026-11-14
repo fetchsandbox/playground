@@ -14,6 +14,12 @@ const today = Math.floor(proofNow() / DAY) * DAY;
 /** 18:00 UTC on day `n` from now (n ≥ 3 keeps every case past the 48 h lead time). */
 const slot = (n) => new Date(today + n * DAY + 18 * HOUR).toISOString();
 const ACCEPT = "quote.customer_acceptance";
+/**
+ * A value compared on the element already selected by id/kind. Unlike eq(), it is not
+ * `required` on every element of the collection: fields such as detail.amountDue exist
+ * only on the action they describe (a required leaf inside actions[*] demands it everywhere).
+ */
+const has = (select, equals) => ({ select, equals });
 
 let n = 3;
 const slots = {};
@@ -44,7 +50,7 @@ const booked = (total) => [
   action("stripe.record_quote", "applied"),
   action(ACCEPT, "applied"),
   action("calendar.book_event", "applied"),
-  action("stripe.send_invoice", "applied", 1, [eq("detail.amountDue", total)]),
+  action("stripe.send_invoice", "applied", 1, [has("detail.amountDue", total)]),
   action("gmail.send_confirmation", "applied"),
 ];
 
@@ -66,8 +72,8 @@ export const checks = [
     ]),
     {
       provider_assertions: [
-        { provider: "stripe", collection: "invoices", assertion: { select: "records[*]", count: 1, required: true, where: [eq("metadata.catering_quote", quoteId(baselineCode)), eq("amount_due", 57500), eq("status", "open")] } },
-        { provider: "google-calendar", collection: "events", assertion: { select: "records[*]", count: 1, required: true, where: [eq("extendedProperties.private.cateringQuote", quoteId(baselineCode)), eq("status", "confirmed")] } },
+        { provider: "stripe", collection: "invoices", assertion: { select: "records[*]", count: 1, required: true, where: [has("metadata.catering_quote", quoteId(baselineCode)), eq("amount_due", 57500), eq("status", "open")] } },
+        { provider: "google-calendar", collection: "events", assertion: { select: "records[*]", count: 1, required: true, where: [has("extendedProperties.private.cateringQuote", quoteId(baselineCode)), eq("status", "confirmed")] } },
       ],
     },
   ),
@@ -105,7 +111,7 @@ export const checks = [
   ),
   check("headcount_below_minimum_declined", "A 6-guest request is declined (minimum 10); the decline waits for the owner", [start("headcount_below_minimum_declined", request("small", { event: { headcount: 6 } }))], runs([eq("output.decision", "decline"), action("gmail.send_decline", "pending_approval"), noAction("gmail.send_quote")])),
   check("short_notice_declined", "A request for 20 hours from now is declined (48 h lead time)", [start("short_notice_declined", request("short", { event: { start: new Date(proofNow() + 20 * HOUR).toISOString() } }))], runs([eq("output.decision", "decline"), action("gmail.send_decline", "pending_approval"), noAction("gmail.send_quote")])),
-  check("date_conflict_declined", "A slot the kitchen is already booked for is declined, and the owner-approved decline is sent", [start("date_conflict_declined", request("clash")), approve()], runs([{ select: "agents[*]", count: 1, required: true, where: [eq("name", "availability"), eq("status", "ok"), eq("summary", "kitchen busy (1 booking(s))")] }, eq("output.decision", "decline"), action("gmail.send_decline", "applied"), noAction("gmail.send_quote")])),
+  check("date_conflict_declined", "A slot the kitchen is already booked for is declined, and the owner-approved decline is sent", [start("date_conflict_declined", request("clash")), approve()], runs([{ select: "agents[*]", count: 1, required: true, where: [eq("name", "availability"), eq("status", "ok"), has("summary", "kitchen busy (1 booking(s))")] }, eq("output.decision", "decline"), action("gmail.send_decline", "applied"), noAction("gmail.send_quote")])),
   check("large_party_to_owner", "A 200-guest request goes to the owner; the customer gets nothing automatic", [start("large_party_to_owner", request("large", { event: { headcount: 200 } }))], runs([eq("phase", "DONE"), eq("output.decision", "manual"), action("gmail.notify_owner", "applied"), noAction("gmail.send_quote"), noAction("gmail.send_decline")])),
   check("invalid_input_rejected", "A delivery request without an address is rejected before any agent runs", [start("invalid_input_rejected", request("bad", { event: { address: undefined } }), { expectStatus: 400 })], runs([], 0)),
   check("duplicate_start", "A re-delivered request is one run; its quote is sent once", [start("duplicate_start", request("dup")), startAgain("duplicate_start", request("dup")), approve()], runs([eq("duplicateStarts", 1), action("gmail.send_quote", "applied", 1, [eq("attempts", 1)])])),
@@ -115,27 +121,27 @@ export const checks = [
     "gmail_send_rejected_then_resumed",
     "Gmail refuses the approved quote: nothing downstream happens; after Gmail recovers, resume sends it once and the quote can be accepted",
     [start("gmail_send_rejected_then_resumed", request("gmrej")), approve(), { provider_control: { provider: "gmail", scenario: "default" } }, command("resume", 1)],
-    runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 2), eq("detail.recovered", false)]), action("stripe.record_quote", "applied"), action(ACCEPT, "awaiting_signal")]),
+    runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 2), has("detail.recovered", false)]), action("stripe.record_quote", "applied"), action(ACCEPT, "awaiting_signal")]),
     { fault: { provider: "gmail", scenario: "direct_send_rejected", evidence: "refusal" } },
   ),
   check(
     "gmail_response_lost_recovered",
     "Gmail accepts the quote but the response is lost: the app finds the sent message by Message-ID and records it, without sending a second email",
     [start("gmail_response_lost_recovered", request("gmlost")), approve()],
-    runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 1), eq("detail.recovered", true)]), action("stripe.record_quote", "applied")]),
+    runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 1), has("detail.recovered", true)]), action("stripe.record_quote", "applied")]),
     { fault: { provider: "gmail", scenario: "direct_send_accepted_response_loss", evidence: "accepted_response_readback" } },
   ),
   check(
     "gmail_lookup_unavailable_not_resent",
     "Gmail's response is lost AND the mailbox lookup is down: the send is marked uncertain and not resent",
     [start("gmail_lookup_unavailable_not_resent", request("gmunk")), approve()],
-    runs([action("gmail.send_quote", "failed", 1, [eq("errorCode", "gmail:send_uncertain")]), action("stripe.record_quote", "scheduled")]),
+    runs([action("gmail.send_quote", "failed", 1, [has("errorCode", "gmail:send_uncertain")]), action("stripe.record_quote", "scheduled")]),
     { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } },
   ),
   check("calendar_unavailable_to_owner", "The calendar can't be read: no date is promised; the owner is told", [start("calendar_unavailable_to_owner", request("calout"))], all(runs([agent("availability", "failed")]), runs([eq("output.decision", "manual")]), runs([action("gmail.notify_owner", "applied")]), runs([noAction("gmail.send_quote")])), { fault: { provider: "google-calendar", scenario: "rate_limited", evidence: "refusal" } }),
   check("stripe_unavailable_to_owner", "Billing can't be read: the request goes to the owner instead of a quote that might double-book", [start("stripe_unavailable_to_owner", request("strout"))], all(runs([agent("billing-lookup", "failed")]), runs([eq("output.decision", "manual")]), runs([action("gmail.notify_owner", "applied")]), runs([noAction("gmail.send_quote")])), { fault: { provider: "stripe", scenario: "rate_limited", evidence: "refusal" } }),
   check("hubspot_down_quote_continues", "A HubSpot auth failure skips the CRM update; the quote still waits for the owner", [start("hubspot_down_quote_continues", request("hsout"))], all(runs([agent("crm-lookup", "failed")]), runs([noAction("hubspot.upsert_contact")]), runs([action("gmail.send_quote", "pending_approval")])), { fault: { provider: "hubspot", scenario: "auth_failure", evidence: "refusal" } }),
-  check("restart_awaiting_acceptance", "A sent quote waiting for the customer survives a runtime restart and books once when accepted", [start("restart_awaiting_acceptance", request("restart")), approve(), restart, accept()], runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 1)]), action(ACCEPT, "applied"), action("calendar.book_event", "applied", 1, [eq("attempts", 1)]), action("stripe.send_invoice", "applied", 1, [eq("attempts", 1), eq("detail.amountDue", 57500)]), action("gmail.send_confirmation", "applied")])),
+  check("restart_awaiting_acceptance", "A sent quote waiting for the customer survives a runtime restart and books once when accepted", [start("restart_awaiting_acceptance", request("restart")), approve(), restart, accept()], runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 1)]), action(ACCEPT, "applied"), action("calendar.book_event", "applied", 1, [eq("attempts", 1)]), action("stripe.send_invoice", "applied", 1, [eq("attempts", 1), has("detail.amountDue", 57500)]), action("gmail.send_confirmation", "applied")])),
   check(
     "booking_reconciled_reminder_not_early",
     "After booking, the calendar event and invoice read back as written, and a tick doesn't send the reminder before the day before",
@@ -143,7 +149,7 @@ export const checks = [
     runs([
       action("calendar.book_event", "applied", 1, [eq("reconciled", "match")]),
       action("stripe.send_invoice", "applied", 1, [eq("reconciled", "match")]),
-      action("gmail.send_reminder", "scheduled", 1, [eq("waitUntil", new Date(Date.parse(slotOf("recon")) - DAY).toISOString())]),
+      action("gmail.send_reminder", "scheduled", 1, [has("waitUntil", new Date(Date.parse(slotOf("recon")) - DAY).toISOString())]),
     ]),
   ),
   blocked("reminder_sent_day_before", "The customer reminder is sent 24 h before the event (and skipped if the event or invoice was cancelled)", "setup_missing", "The reminder fires at event − 24 h, at least a day after booking; the runtime's timers use the real clock and the verifier's execution budget is under an hour, so the send can't be observed in a twin run. It is exercised with a controlled clock in acme-ops/test/catering-quote.test.ts; here the check above only proves it is scheduled for the right time and not sent early.", ["acme-ops/src/workflows/catering-quote.ts gmail.send_reminder waitUntil", "validate_integration capabilities: execution_budget_seconds maximum 3300; Stripe twin unsupported /v1/test_helpers (no simulated passage of time)"]),
