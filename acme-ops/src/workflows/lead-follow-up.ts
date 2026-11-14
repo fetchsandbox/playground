@@ -146,7 +146,14 @@ async function attempt<T>(ctx: Ctx, step: string, fn: () => Promise<T>): Promise
  * written. After an ambiguous write the effect is read back once immediately;
  * if that cannot confirm it, the error propagates (and `attempt` re-checks later).
  */
-async function reconcileThenWrite<T>(ctx: Ctx, step: string, find: () => Promise<T | undefined>, write: () => Promise<T>): Promise<{ value: T; created: boolean; via: "lookup" | "write" | "readback" }> {
+async function reconcileThenWrite<T>(
+  ctx: Ctx,
+  step: string,
+  find: () => Promise<T | undefined>,
+  write: () => Promise<T>,
+  /** false when the lookup is eventually consistent (HubSpot CRM search): reconcile on the next attempt, not immediately. */
+  readbackNow = true,
+): Promise<{ value: T; created: boolean; via: "lookup" | "write" | "readback" }> {
   const key = `write:${step}`;
   const pending = (await ctx.checkpoint.load<string>(key)) === "unknown";
   let found: T | undefined;
@@ -166,9 +173,11 @@ async function reconcileThenWrite<T>(ctx: Ctx, step: string, find: () => Promise
       await ctx.checkpoint.save(key, "clean"); // refused: nothing was written
       throw err;
     }
-    const again = await find().catch(() => undefined);
-    if (again !== undefined) return { value: again, created: true, via: "readback" };
-    throw err;
+    if (readbackNow) {
+      const again = await find().catch(() => undefined);
+      if (again !== undefined) return { value: again, created: true, via: "readback" };
+    }
+    throw err; // still unknown: `attempt` schedules the re-check, which looks before any repeat
   }
 }
 
@@ -358,6 +367,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
               "hubspot.contact",
               () => hs.findByEmail(input.email),
               async () => (await hs.createContactOnce(input.email, props)).contact,
+              false, // CRM search lags behind writes: re-check later instead of an immediate search
             );
             // Never trust the write response alone: read the contact back.
             const saved = await hs.get(r.value.id);
@@ -391,7 +401,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
             const r = await reconcileThenWrite(ctx, "hubspot.deal", ours, async () => {
               const created = await hs.createDealOnce(want, contactId);
               return { deal: await hs.getDeal(created.id), others: 0 };
-            });
+            }, false);
             const d = r.value.deal;
             const linked = (d.associations?.contacts?.results ?? []).some((a) => a.id === contactId);
             const drift = (Object.keys(want) as (keyof typeof want)[]).filter((k) => r.created && d.properties[k] !== want[k]);

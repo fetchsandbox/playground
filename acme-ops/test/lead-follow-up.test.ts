@@ -115,13 +115,30 @@ describe("lead-follow-up", () => {
     expect([w.state.hubspot.contacts.length, w.state.hubspot.deals.length, w.state.gmail.sent.length, w.state.calendar.events.length, w.state.slack.messages.length]).toEqual([1, 1, 1, 1, 1]);
   });
 
-  it("deal accepted but response lost: read back by lead token, no second create", async () => {
+  it("deal accepted but response lost: no immediate repeat; the re-check finds it by lead token and id, no second create", async () => {
     w.lostResponses.push({ method: "POST", path: /^\/crm\/v3\/objects\/deals$/, times: 1 });
-    const r = await engine().handle({ action: "start", input: lead(), requestedBy: user });
-    expect(act(r.body, "hubspot.deal")).toMatchObject({ status: "applied", detail: { created: true, via: "readback", associated: true, verified: true } });
+    const e = engine();
+    const r = await e.handle({ action: "start", input: lead(), requestedBy: user });
+    expect(act(r.body, "hubspot.deal")).toMatchObject({ status: "scheduled", errorCode: "hubspot:outcome_unknown", waitUntil: new Date(NOW + 2 * MIN).toISOString() });
+    expect(act(r.body, "gmail.send_followup").status).toBe("scheduled");
+    expect(w.state.gmail.sent).toHaveLength(0);
+    await tickAt(e, NOW + 2 * MIN);
+    const s = await status(e);
+    expect(act(s, "hubspot.deal")).toMatchObject({ status: "applied", detail: { created: true, via: "lookup", associated: true, verified: true } });
     expect(w.state.hubspot.deals).toHaveLength(1);
     expect(posts(w, /^\/crm\/v3\/objects\/deals$/)).toBe(1);
-    expect(r.body.outcome).toBe("ok");
+    expect(s.outcome).toBe("ok");
+  });
+
+  it("deal outcome unknown and still absent on the re-check: created once then (the lookup succeeded, so a repeat is safe)", async () => {
+    w.faults.push({ method: "POST", path: /^\/crm\/v3\/objects\/deals$/, status: 503, body: { category: "SERVICE_UNAVAILABLE" }, times: 1 });
+    const e = engine();
+    await e.handle({ action: "start", input: lead(), requestedBy: user });
+    await tickAt(e, NOW + 2 * MIN);
+    const s = await status(e);
+    expect(act(s, "hubspot.deal")).toMatchObject({ status: "applied", detail: { via: "write" } });
+    expect(w.state.hubspot.deals).toHaveLength(1);
+    expect(posts(w, /^\/crm\/v3\/objects\/deals$/)).toBe(2);
   });
 
   it("email accepted but response lost: no resend; the first confirmation lookup (+10 min) confirms it, then the event is created", async () => {

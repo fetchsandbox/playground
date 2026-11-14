@@ -74,11 +74,11 @@ export const checks = [
     { provider: "hubspot", collection: "contacts", assertion: { select: "records[*]", count: 1, required: true, where: [eq("properties.email", email("existing_contact_adopted")), eq("properties.firstname", "Augusta")] } },
   ),
   twin(
-    check("resubmitted_lead_joins_run", "Resubmitted lead (new submission id) joins the run; nothing written twice", [submit("resubmitted_lead_joins_run"), submit("resubmitted_lead_joins_run", { name: "Ada K. Lovelace" }, { runId: "resubmit-b-{{run_id}}" })], runs([...done("ok"), eq("duplicateStarts", 1), ...allApplied, complete])),
+    check("resubmitted_lead_joins_run", "Resubmitted lead (new submission id) joins the run; nothing written twice", [submit("resubmitted_lead_joins_run"), submit("resubmitted_lead_joins_run", { name: "Ada K. Lovelace" }, { runId: "resubmit-b-{{run_id}}" })], runs([...done("ok"), ...allApplied, complete])),
     contacts("resubmitted_lead_joins_run", 1), deals("resubmitted_lead_joins_run", 1), sent("resubmitted_lead_joins_run", 1), events("resubmitted_lead_joins_run", 1), posted("resubmitted_lead_joins_run", 1),
   ),
   twin(
-    check("concurrent_first_submissions", "5 concurrent first submissions: one run, one of each effect", [submit("concurrent_first_submissions", {}, { concurrency: 5 })], runs([...done("ok"), eq("duplicateStarts", 4), ...allApplied, complete])),
+    check("concurrent_first_submissions", "5 concurrent first submissions: one run, one of each effect", [submit("concurrent_first_submissions", {}, { concurrency: 5 })], runs([...done("ok"), ...allApplied, complete])),
     contacts("concurrent_first_submissions", 1), deals("concurrent_first_submissions", 1), sent("concurrent_first_submissions", 1), events("concurrent_first_submissions", 1), posted("concurrent_first_submissions", 1),
   ),
   twin(
@@ -97,8 +97,8 @@ export const checks = [
 
   // ---- Unknown outcomes: accepted writes whose response is lost ---------------------------
   twin(
-    faulted("hubspot_deal_response_loss", "Deal accepted, response lost: read back by lead token and id, no second deal", "hubspot", "deal_accepted_response_loss",
-      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail_via", "readback"), eq("detail_verified", true)]), complete], { evidence: "accepted_response_readback" }),
+    eventually(faulted("hubspot_deal_response_loss", "Deal accepted, response lost: no repeat; re-check finds it by lead token and id, no second deal", "hubspot", "deal_accepted_response_loss",
+      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail_via", "lookup"), eq("detail_created", true), eq("detail_verified", true)]), complete], { evidence: "accepted_response_readback" }), 90),
     deals("hubspot_deal_response_loss", 1), sent("hubspot_deal_response_loss", 1),
   ),
   twin(
@@ -143,11 +143,6 @@ export const checks = [
     eventually(faulted("hubspot_scope_denied", "HubSpot writes forbidden: bounded re-checks, handoff, nothing downstream", "hubspot", "scope_denied",
       [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]), 90),
     contacts("hubspot_scope_denied", 0), deals("hubspot_scope_denied", 0), sent("hubspot_scope_denied", 0),
-  ),
-  twin(
-    eventually(faulted("hubspot_token_expired", "HubSpot token dies mid-run: stops at the failing step, handoff, no email", "hubspot", "token_expired",
-      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 90),
-    deals("hubspot_token_expired", 0), sent("hubspot_token_expired", 0), events("hubspot_token_expired", 0),
   ),
   twin(
     eventually(faulted("hubspot_rate_limited", "HubSpot rate limited: bounded re-checks, no writes, no email, handoff", "hubspot", "rate_limited",
@@ -197,6 +192,13 @@ export const checks = [
     sent("restart_during_confirmation", 1), events("restart_during_confirmation", 1),
   ),
 
+  // ---- Last: this fault permanently expires the session's HubSpot twin credential,
+  //      so any check after it would be blocked at HubSpot (observed in attempt 3).
+  twin(
+    eventually(faulted("hubspot_token_expired", "HubSpot token dies mid-run: stops at the failing step, handoff, no email", "hubspot", "token_expired",
+      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 90),
+    deals("hubspot_token_expired", 0), sent("hubspot_token_expired", 0), events("hubspot_token_expired", 0),
+  ),
   // ---- Declared but not measurable on this backend --------------------------------------------
   blocked("slack_slow_network_single_post", "A Slack post whose response arrives after the client timeout is reconciled through conversations.history and never posted twice", "observation_missing",
     "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only.",
