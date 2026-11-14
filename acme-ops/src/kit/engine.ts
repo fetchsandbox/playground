@@ -835,6 +835,9 @@ export class Engine<I> {
   /** What `status` returns: everything a control plane needs to render and steer the run. */
   view(r: RunRecord) {
     const count = (s: string) => r.actions.filter((a) => a.status === s).length;
+    // Flattened fields are present on EVERY action (null when not applicable), so a verifier
+    // predicate on one action never finds the field "missing" on its siblings.
+    const detailKeys = [...new Set(r.actions.flatMap((a) => Object.keys(flatDetail(a.detail))))];
     return {
       runId: r.runId,
       workflow: r.workflow,
@@ -849,7 +852,10 @@ export class Engine<I> {
       duplicateStarts: r.duplicateStarts,
       agents: r.agents.map(({ name, status, summary, error, errorCode, durationMs }) => ({ name, status, summary, error, errorCode, durationMs })),
       // `reconciled` (and `detail_<key>` for scalar receipt details) flatten state for consumers that can't reach into objects.
-      actions: r.actions.map((a) => ({ ...a, reconciled: a.reconcile?.status ?? null, ...flatDetail(a.detail) })),
+      actions: r.actions.map((a) => {
+        const flat = flatDetail(a.detail);
+        return { ...a, errorCode: a.errorCode ?? null, reconciled: a.reconcile?.status ?? null, ...Object.fromEntries(detailKeys.map((k) => [k, flat[k] ?? null])) };
+      }),
       counts: {
         applied: count("applied"),
         failed: count("failed"),
