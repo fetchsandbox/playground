@@ -58,6 +58,7 @@ export interface StripeInvoice {
   attempt_count?: number;
   next_payment_attempt?: number | null;
   default_payment_method?: string | null;
+  hosted_invoice_url?: string | null;
 }
 export interface StripeProduct {
   id: string;
@@ -379,6 +380,28 @@ export class StripeClient {
     const form: Record<string, string> = { customer, description, collection_method: "send_invoice", days_until_due: String(daysUntilDue), auto_advance: "false", pending_invoice_items_behavior: "exclude" };
     for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
     return (await this.http.request<StripeInvoice>("POST", "/v1/invoices", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  /** Draft invoice the customer pays from Stripe's hosted page (collection_method send_invoice), due on a fixed date. */
+  async createSendInvoiceDraft(customer: string, description: string, dueDateSec: number, metadata: Record<string, string>, idempotencyKey: string): Promise<StripeInvoice> {
+    const form: Record<string, string> = { customer, description, collection_method: "send_invoice", due_date: String(dueDateSec), pending_invoice_items_behavior: "exclude" };
+    for (const [k, v] of Object.entries(metadata)) form[`metadata[${k}]`] = v;
+    return (await this.http.request<StripeInvoice>("POST", "/v1/invoices", { form, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  /** A customer's invoices, newest first (one page of 100 is plenty for a restaurant's catering customer). */
+  async listCustomerInvoices(customer: string): Promise<StripeInvoice[]> {
+    return (await this.http.request<{ data?: StripeInvoice[] }>("GET", "/v1/invoices", { query: { customer, limit: 100 } })).body?.data ?? [];
+  }
+
+  /** A one-off amount line (no catalog price) on a draft invoice. */
+  async addInvoiceAmountLine(invoice: string, customer: string, amount: number, currency: string, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {
+    return (await this.http.request<any>("POST", "/v1/invoiceitems", { form: { customer, invoice, amount: String(amount), currency, description }, headers: { "Idempotency-Key": idempotencyKey } })).body;
+  }
+
+  /** Finalize with Stripe's defaults (the draft becomes an open invoice with a number and hosted page). */
+  async finalizeInvoiceDefault(id: string): Promise<StripeInvoice> {
+    return (await this.http.request<StripeInvoice>("POST", `/v1/invoices/${encodeURIComponent(id)}/finalize`, { form: {} })).body;
   }
 
   async addInvoiceLine(invoice: string, customer: string, price: string, quantity: number, description: string, idempotencyKey: string): Promise<{ id: string; amount: number }> {

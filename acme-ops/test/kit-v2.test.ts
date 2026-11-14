@@ -174,3 +174,36 @@ describe("Kit v2: audit evidence", () => {
     expect((await e.handle({ action: "evidence", runId: "a" })).body).toMatchObject({ verified: false, brokenAt: item.seq });
   });
 });
+
+describe("Kit v2: dependsOn", () => {
+  // first (may fail once) → second dependsOn first; a confirmation signal → timed follow-up dependsOn it.
+  let failFirst = true;
+  const deps: WorkflowDef<In> = {
+    id: "depends-demo", title: "dependsOn", org: "Test", team: "kit", description: "dependsOn", input: z.object({ items: z.array(z.string()).min(1) }), agents: [],
+    plan({ startedAt }) {
+      return [
+        { id: "first", kind: "x", provider: "stripe", agent: "p", gate: "auto", summary: {}, async execute() { if (failFirst) { failFirst = false; throw new FatalError("down"); } effects.push("first"); return { ref: "1" }; } },
+        { id: "second", kind: "x", provider: "stripe", agent: "p", gate: "auto", summary: {}, dependsOn: ["first"], async execute() { effects.push("second"); return { ref: "2" }; } },
+        { id: "confirm", kind: "x", provider: "stripe", agent: "p", gate: "auto", summary: {}, awaitSignal: { from: ["U_REVIEWER"] }, async execute() { return { ref: "c" }; } },
+        { id: "later", kind: "x", provider: "stripe", agent: "p", gate: "auto", summary: {}, dependsOn: ["confirm"], waitUntil: new Date(startedAt.getTime() + 48 * HOUR).toISOString(), async execute() { effects.push("later"); return { ref: "l" }; } },
+      ];
+    },
+    output: () => ({}),
+    catalog: [],
+  };
+
+  it("waits on a failed prerequisite until resume applies it, and skips at once (before its timer) when one is rejected", async () => {
+    effects.length = 0;
+    const clock = { t: T0 };
+    const e = engine(deps, clock);
+    const r = await e.handle({ action: "start", runId: "d", input: { items: ["a"] }, requestedBy: user });
+    expect(action(r.body, "first").status).toBe("failed");
+    expect(action(r.body, "second").status).toBe("scheduled");
+    const again = await e.handle({ action: "resume", runId: "d" });
+    expect(action(again.body, "second").status).toBe("applied");
+    expect(effects).toEqual(["first", "second"]);
+    const s = await e.handle({ action: "signal", runId: "d", actionId: "confirm", value: "reject", userId: "U_REVIEWER" });
+    expect(action(s.body, "later").status).toBe("skipped");
+    expect(s.body.phase).toBe("DONE");
+  });
+});

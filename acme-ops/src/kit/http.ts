@@ -24,6 +24,8 @@ export interface RequestOptions {
   /** Treat these statuses as data rather than errors (e.g. HubSpot 409). */
   allow?: number[];
   headers?: Record<string, string>;
+  /** Override the client's retry count, e.g. 0 for a non-idempotent write whose caller recovers by lookup. */
+  retries?: number;
 }
 
 export interface HttpResult<T> {
@@ -91,7 +93,7 @@ export class ProviderHttp {
       try {
         return await this.once<T>(method, path, opts);
       } catch (err) {
-        if (!(err instanceof ProviderError) || !err.retryable || attempt >= this.retries) throw err;
+        if (!(err instanceof ProviderError) || !err.retryable || attempt >= (opts.retries ?? this.retries)) throw err;
         const backoff = Math.random() * Math.min(4_000, 250 * 2 ** attempt);
         await sleep(Math.min(4_000, err.retryAfterMs ?? backoff));
       }

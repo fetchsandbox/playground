@@ -45,6 +45,31 @@ export class GmailClient {
     return body?.messages?.length ?? 0;
   }
 
+  /**
+   * Send a message. messages.send has no idempotency key, so the request is
+   * made ONCE: a lost or 5xx answer is ambiguous (Gmail may have accepted it).
+   * The caller recovers with findSentByMessageId before ever sending again.
+   */
+  async sendMessage(mail: DraftEmail): Promise<{ id: string }> {
+    const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
+    const { body } = await this.http.request<{ id: string }>("POST", `/gmail/v1/users/${this.userId}/messages/send`, { json: { raw }, retries: 0 });
+    return { id: body.id };
+  }
+
+  /** The already-sent message carrying this RFC 5322 Message-ID, if any (Gmail search operator rfc822msgid:). */
+  async findSentByMessageId(messageId: string): Promise<{ id: string } | undefined> {
+    const { body } = await this.http.request<{ messages?: { id: string }[] }>("GET", `/gmail/v1/users/${this.userId}/messages`, {
+      query: { q: `rfc822msgid:${messageId.replace(/^<|>$/g, "")}`, maxResults: 5 },
+    });
+    for (const m of body?.messages ?? []) {
+      // Confirm the header rather than trusting the search index alone.
+      const { body: full } = await this.http.request<{ id: string; payload?: { headers?: { name: string; value: string }[] } }>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(m.id)}`, { query: { format: "metadata" } });
+      const hdr = full?.payload?.headers?.find((h) => h.name.toLowerCase() === "message-id")?.value;
+      if (!hdr || hdr.trim() === messageId) return { id: full.id ?? m.id };
+    }
+    return undefined;
+  }
+
   async createDraft(mail: DraftEmail): Promise<{ id: string }> {
     const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
     const { body } = await this.http.request<{ id: string }>("POST", `/gmail/v1/users/${this.userId}/drafts`, { json: { message: { raw } } });
@@ -62,7 +87,10 @@ export interface CalendarEvent {
   summary?: string;
   status?: string;
   start?: { dateTime?: string };
+  end?: { dateTime?: string };
   attendees?: { email: string }[];
+  reminders?: { useDefault?: boolean; overrides?: { method: string; minutes: number }[] };
+  extendedProperties?: { private?: Record<string, string> };
 }
 
 /** Google Calendar API v3. */
@@ -77,7 +105,7 @@ export class CalendarClient {
 
   async insertEvent(
     calendarId: string,
-    event: { summary: string; description: string; start: string; end: string; attendees?: string[]; privateKey: string },
+    event: { summary: string; description: string; start: string; end: string; attendees?: string[]; privateKey: string; reminderMinutes?: number[]; privateProps?: Record<string, string> },
     sendUpdates: "none" | "all",
   ): Promise<CalendarEvent> {
     const { body } = await this.http.request<CalendarEvent>("POST", `/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
@@ -88,8 +116,9 @@ export class CalendarClient {
         start: { dateTime: event.start },
         end: { dateTime: event.end },
         attendees: event.attendees?.map((email) => ({ email })),
+        ...(event.reminderMinutes ? { reminders: { useDefault: false, overrides: event.reminderMinutes.map((minutes) => ({ method: "popup", minutes })) } } : {}),
         // Lets a retry find the event it already created.
-        extendedProperties: { private: { acmeKey: event.privateKey } },
+        extendedProperties: { private: { ...event.privateProps, acmeKey: event.privateKey } },
       },
     });
     return body;

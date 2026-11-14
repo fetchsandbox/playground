@@ -72,6 +72,12 @@ export interface PlannedAction<I> {
   delayAfter?: { action: string; ms: number };
   /** Needs these actions applied: waits for them, and is skipped as soon as one settles any other way. */
   requires?: string[];
+  /**
+   * Like `requires`, but a FAILED prerequisite is still awaited (a `resume` may yet apply it), and a
+   * prerequisite that can never apply (skipped, rejected, compensated) skips this action at once,
+   * even before its own timer is due.
+   */
+  dependsOn?: string[];
   /** "compensate": if this action fails, stop the run and undo every applied action that can be undone. */
   onFailure?: "continue" | "compensate";
 }

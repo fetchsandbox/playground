@@ -326,7 +326,11 @@ export class Engine<I> {
     if (run.phase === "WAITING" || (run.phase === "AWAITING_APPROVAL" && run.actions.some(isWaiting))) {
       const plan = this.workflow.plan(ctx, this.results(run));
       if ((await this.execute(runId, ctx, plan, "auto")) === "compensated") return;
-      if (run.approval?.decision === "approve" && (await this.execute(runId, ctx, plan, "approval")) === "compensated") return;
+      if (run.approval?.decision === "approve") {
+        if ((await this.execute(runId, ctx, plan, "approval")) === "compensated") return;
+        // Steps that depend on an approval-gated effect just applied (e.g. after a resume) get their turn now.
+        if ((await this.execute(runId, ctx, plan, "auto")) === "compensated") return;
+      }
       await this.mutate(runId, (r) => {
         if (r.phase === "WAITING") this.settle(r);
         else if (r.phase === "AWAITING_APPROVAL") setWake(r);
@@ -432,6 +436,11 @@ export class Engine<I> {
    */
   private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string; waitUntil?: string } {
     const now = this.now();
+    // dependsOn: a prerequisite that can never apply skips this action now, whatever its timer says.
+    for (const id of p.dependsOn ?? []) {
+      const dep = all.find((a) => a.id === id);
+      if (dep && NEVER_APPLIES.has(dep.status)) return { status: "skipped", error: `${id} was ${dep.status}` };
+    }
     if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
     if (p.delayAfter) {
       const dep = all.find((a) => a.id === p.delayAfter!.action);
@@ -442,6 +451,8 @@ export class Engine<I> {
       }
     }
     if (p.after?.some((id) => { const dep = all.find((a) => a.id === id); return dep && !SETTLED.has(dep.status); })) return { status: "scheduled" };
+    // ...and one that is pending or failed (resume may still apply it) keeps it waiting.
+    if (p.dependsOn?.some((id) => { const dep = all.find((a) => a.id === id); return dep && dep.status !== "applied"; })) return { status: "scheduled" };
     for (const id of p.requires ?? []) {
       const dep = all.find((a) => a.id === id);
       if (!dep) continue;
@@ -903,6 +914,7 @@ const genesis = (runId: string) => createHash("sha256").update(`audit:${runId}`)
 const chain = (prev: string, e: { seq: number; at: string; msg: string }) => createHash("sha256").update(prev).update(JSON.stringify(e)).digest("hex");
 
 const SETTLED = new Set<ActionStatus>(["applied", "rejected", "skipped", "failed", "compensated"]);
+const NEVER_APPLIES = new Set<ActionStatus>(["rejected", "skipped", "compensated"]);
 
 function isWaiting(a: ActionRecord) {
   return a.status === "scheduled" || a.status === "awaiting_signal";

@@ -63,7 +63,7 @@ export function seedState() {
       loseTransferResponses: 0,
     },
     hubspot: { contacts: [] as any[], subscriptions: new Map<string, string>() },
-    gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
+    gmail: { messages: [] as { from: string }[], drafts: [] as any[], sent: [] as { id: string; messageId: string; to: string; subject: string; body: string }[], loseSendResponses: 0, lookupDown: false },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
@@ -302,7 +302,7 @@ export async function startWorld() {
     if (req.method === "POST" && path === "/v1/invoices") {
       const key = String(req.headers["idempotency-key"] ?? "");
       if (key && S.keys.has(key)) return send(200, S.keys.get(key));
-      const inv = { id: id("in"), customer: body.customer, status: "draft", amount_due: 0, amount_remaining: 0, currency: "usd", description: body.description, collection_method: body.collection_method, metadata: meta(), lines: { data: [] as any[] } };
+      const inv = { id: id("in"), customer: body.customer, status: "draft", amount_due: 0, amount_remaining: 0, currency: "usd", description: body.description, collection_method: body.collection_method, due_date: body.due_date ? Number(body.due_date) : null, metadata: meta(), lines: { data: [] as any[] } };
       S.invoices.push(inv);
       if (key) S.keys.set(key, inv);
       return send(200, inv);
@@ -313,8 +313,10 @@ export async function startWorld() {
       const inv = S.invoices.find((i) => i.id === body.invoice);
       if (!inv || inv.status !== "draft") return send(400, { error: { code: "invoice_not_editable" } });
       const price = S.prices.find((p) => p.id === body.price);
-      if (!price) return send(400, { error: { code: "resource_missing", param: "price" } });
-      const item = { id: id("ii"), invoice: inv.id, customer: body.customer, price: price.id, quantity: Number(body.quantity), amount: price.unit_amount * Number(body.quantity), description: body.description };
+      if (!price && !body.amount) return send(400, { error: { code: "resource_missing", param: "price" } });
+      const item = price
+        ? { id: id("ii"), invoice: inv.id, customer: body.customer, price: price.id, quantity: Number(body.quantity), amount: price.unit_amount * Number(body.quantity), description: body.description }
+        : { id: id("ii"), invoice: inv.id, customer: body.customer, price: null, quantity: 1, amount: Number(body.amount), description: body.description };
       S.invoiceItems.push(item);
       inv.lines.data.push(item);
       inv.amount_due += item.amount;
@@ -383,10 +385,32 @@ export async function startWorld() {
     }
 
     // ---- Gmail
-    if (req.method === "GET" && path === "/gmail/v1/users/me/messages") {
+    if (req.method === "GET" && path === "/gmail/v1/users/me/messages" && !/rfc822msgid:/.test(q.get("q") ?? "")) {
       const from = /from:(\S+)/.exec(q.get("q") ?? "")?.[1];
       const msgs = state.gmail.messages.filter((x) => !from || x.from === from);
       return send(200, { messages: msgs.map((_, i) => ({ id: `m${i}` })), resultSizeEstimate: msgs.length });
+    }
+    if (req.method === "POST" && path === "/gmail/v1/users/me/messages/send") {
+      const mime = Buffer.from(String(body.raw), "base64url").toString("utf8");
+      const [head, ...rest] = mime.split("\r\n\r\n");
+      const h = (n: string) => new RegExp(`^${n}: (.*)$`, "mi").exec(head ?? "")?.[1]?.trim() ?? "";
+      const msg = { id: id("msg"), messageId: h("Message-ID"), to: h("To"), subject: h("Subject"), body: rest.join("\r\n\r\n") };
+      state.gmail.sent.push(msg);
+      if (state.gmail.loseSendResponses > 0) {
+        state.gmail.loseSendResponses--;
+        return void req.socket.destroy();
+      }
+      return send(200, { id: msg.id, labelIds: ["SENT"] });
+    }
+    if (req.method === "GET" && path === "/gmail/v1/users/me/messages" && /rfc822msgid:/.test(q.get("q") ?? "")) {
+      if (state.gmail.lookupDown) return send(503, { error: { code: 503, status: "UNAVAILABLE" } });
+      const want = /rfc822msgid:(\S+)/.exec(q.get("q")!)![1];
+      const hits = state.gmail.sent.filter((m) => m.messageId.replace(/^<|>$/g, "") === want);
+      return send(200, { messages: hits.map((m) => ({ id: m.id })), resultSizeEstimate: hits.length });
+    }
+    if (req.method === "GET" && (r = m(/^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/))) {
+      const msg = state.gmail.sent.find((x) => x.id === r![1]);
+      return msg ? send(200, { id: msg.id, payload: { headers: [{ name: "Message-ID", value: msg.messageId }] } }) : send(404, { error: { code: 404 } });
     }
     if (req.method === "POST" && path === "/gmail/v1/users/me/drafts") {
       const d = { id: id("draft"), message: body.message };
