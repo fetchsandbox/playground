@@ -51,7 +51,7 @@ describe("lead-follow-up", () => {
     // The event is created only after the email send was answered.
     const order = w.requests.filter((q) => q.method === "POST").map((q) => q.path);
     expect(order.indexOf("/calendar/v3/calendars/primary/events")).toBeGreaterThan(order.indexOf("/gmail/v1/users/me/messages/send"));
-    expect(act(r.body, "gmail.send_followup")).toMatchObject({ status: "applied", detail: { state: "confirmed", confirmedBy: "send response" } });
+    expect(act(r.body, "gmail.send_followup")).toMatchObject({ status: "applied", detail: { state: "confirmed", confirmedBy: "send response" }, detail_state: "confirmed", detail_confirmedBy: "send response" });
     const rec = (await e.handle({ action: "reconcile", runId: "lead-L-1001" })).body;
     expect(rec.actions.filter((a: any) => a.reconciled).map((a: any) => [a.id, a.reconciled])).toEqual([
       ["hubspot.contact", "match"],
@@ -60,6 +60,10 @@ describe("lead-follow-up", () => {
       ["calendar.followup_event", "match"],
       ["slack.notify_team", "match"],
     ]);
+  });
+
+  it("declares a tick schedule, so a deployed runtime wakes its re-checks and confirmation lookups", () => {
+    expect(leadFollowUp.tickEvery).toBe("rate(1 minute)");
   });
 
   it("follow-up slot is the next business day (Friday → Monday)", () => {

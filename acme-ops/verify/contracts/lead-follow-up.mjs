@@ -39,8 +39,8 @@ const twin = (c, ...provider_assertions) => ({ ...c, provider_assertions });
 const done = (outcome) => [eq("phase", "DONE"), eq("outcome", outcome)];
 const STEPS = ["hubspot.contact", "hubspot.deal", "gmail.send_followup", "calendar.followup_event"];
 const allApplied = STEPS.map((id) => action(id, "applied"));
-const complete = action("slack.notify_team", "applied", 1, [eq("detail.kind", "complete")]);
-const handoff = (step) => action("slack.notify_team", "applied", 1, [eq("detail.kind", "blocked"), eq("detail.blockedStep", step)]);
+const complete = action("slack.notify_team", "applied", 1, [eq("detail_kind", "complete")]);
+const handoff = (step) => action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked"), eq("detail_blockedStep", step)]);
 const skipped = (...ids) => ids.map((id) => action(id, "skipped"));
 
 /** For runs that finish through durable re-checks: poll the saved state (no repeat) up to `seconds`. */
@@ -60,16 +60,16 @@ export const checks = [
   twin(
     check("baseline", "New lead: one contact, one verified deal, one confirmed email, then one event, then one Slack completion", [submit("baseline")], runs([
       ...done("ok"),
-      action("hubspot.contact", "applied", 1, [eq("detail.verified", true)]),
-      action("hubspot.deal", "applied", 1, [eq("detail.verified", true), eq("detail.associated", true)]),
-      action("gmail.send_followup", "applied", 1, [eq("detail.state", "confirmed")]),
+      action("hubspot.contact", "applied", 1, [eq("detail_verified", true)]),
+      action("hubspot.deal", "applied", 1, [eq("detail_verified", true), eq("detail_associated", true)]),
+      action("gmail.send_followup", "applied", 1, [eq("detail_state", "confirmed")]),
       action("calendar.followup_event", "applied"),
       complete,
     ])),
     contacts("baseline", 1), deals("baseline", 1), sent("baseline", 1), events("baseline", 1), posted("baseline", 1, ":white_check_mark: Lead followed up"),
   ),
   twin(
-    check("existing_contact_adopted", "Existing HubSpot contact is adopted, not duplicated or overwritten", [submit("existing_contact_adopted")], runs([...done("ok"), action("hubspot.contact", "applied", 1, [eq("detail.created", false)])])),
+    check("existing_contact_adopted", "Existing HubSpot contact is adopted, not duplicated or overwritten", [submit("existing_contact_adopted")], runs([...done("ok"), action("hubspot.contact", "applied", 1, [eq("detail_created", false)])])),
     contacts("existing_contact_adopted", 1), deals("existing_contact_adopted", 1),
     { provider: "hubspot", collection: "contacts", assertion: { select: "records[*]", count: 1, required: true, where: [eq("properties.email", email("existing_contact_adopted")), eq("properties.firstname", "Augusta")] } },
   ),
@@ -98,12 +98,12 @@ export const checks = [
   // ---- Unknown outcomes: accepted writes whose response is lost ---------------------------
   twin(
     faulted("hubspot_deal_response_loss", "Deal accepted, response lost: read back by lead token and id, no second deal", "hubspot", "deal_accepted_response_loss",
-      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail.via", "readback"), eq("detail.verified", true)]), complete], { evidence: "accepted_response_readback" }),
+      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail_via", "readback"), eq("detail_verified", true)]), complete], { evidence: "accepted_response_readback" }),
     deals("hubspot_deal_response_loss", 1), sent("hubspot_deal_response_loss", 1),
   ),
   twin(
     eventually(faulted("gmail_send_response_loss", "Email accepted, response lost: no resend; confirmed by lookup 1, then booked", "gmail", "direct_send_accepted_response_loss",
-      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail.confirmedBy", "confirmation lookup 1/3"), eq("detail.sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete], { evidence: "accepted_response_readback" }), 120),
+      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_confirmedBy", "confirmation lookup 1/3"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete], { evidence: "accepted_response_readback" }), 120),
     sent("gmail_send_response_loss", 1), events("gmail_send_response_loss", 1), posted("gmail_send_response_loss", 1),
   ),
   twin(
@@ -121,7 +121,7 @@ export const checks = [
   ),
   twin(
     eventually(faulted("gmail_send_rejected_once", "Send refused once: re-checked, sent once, then booked", "gmail", "direct_send_rejected_once",
-      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail.sendAttempts", 2)]), action("calendar.followup_event", "applied"), complete]), 90),
+      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_sendAttempts", 2)]), action("calendar.followup_event", "applied"), complete]), 90),
     sent("gmail_send_rejected_once", 1), events("gmail_send_rejected_once", 1),
   ),
   twin(
@@ -146,7 +146,7 @@ export const checks = [
   ),
   twin(
     eventually(faulted("hubspot_token_expired", "HubSpot token dies mid-run: stops at the failing step, handoff, no email", "hubspot", "token_expired",
-      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail.kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 90),
+      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 90),
     deals("hubspot_token_expired", 0), sent("hubspot_token_expired", 0), events("hubspot_token_expired", 0),
   ),
   twin(
@@ -193,7 +193,7 @@ export const checks = [
       submit("restart_during_confirmation"),
       restart,
       { provider_control: { provider: "gmail", scenario: "default" } },
-    ], runs([...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail.state", "confirmed"), eq("detail.sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 150),
+    ], runs([...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_state", "confirmed"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 150),
     sent("restart_during_confirmation", 1), events("restart_during_confirmation", 1),
   ),
 

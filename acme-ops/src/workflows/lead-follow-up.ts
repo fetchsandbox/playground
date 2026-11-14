@@ -335,6 +335,8 @@ export const leadFollowUp: WorkflowDef<Input> = {
     "On a lead form submission: find or create the HubSpot contact, create one sales deal, send one follow-up email through Gmail, book a Calendar follow-up only after the email is confirmed, and tell the team in Slack it is done or exactly which step is blocked. Every write reconciles before it repeats; an unconfirmed email gets 3 lookups over 30 minutes, then a person.",
   input: Input,
   runKey: (i) => `lead-${i.leadId}`,
+  // Re-checks and confirmation lookups are durable timers: the deployed stack must wake them.
+  tickEvery: "rate(1 minute)",
   agents: [],
 
   plan({ input, startedAt }) {

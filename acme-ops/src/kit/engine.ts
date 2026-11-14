@@ -848,8 +848,8 @@ export class Engine<I> {
       labels: r.labels,
       duplicateStarts: r.duplicateStarts,
       agents: r.agents.map(({ name, status, summary, error, errorCode, durationMs }) => ({ name, status, summary, error, errorCode, durationMs })),
-      // `reconciled` flattens the last read-back for consumers that can't reach into objects.
-      actions: r.actions.map((a) => ({ ...a, reconciled: a.reconcile?.status ?? null })),
+      // `reconciled` (and `detail_<key>` for scalar receipt details) flatten state for consumers that can't reach into objects.
+      actions: r.actions.map((a) => ({ ...a, reconciled: a.reconcile?.status ?? null, ...flatDetail(a.detail) })),
       counts: {
         applied: count("applied"),
         failed: count("failed"),
@@ -882,6 +882,13 @@ export class Engine<I> {
 }
 
 const pk = (runId: string) => `run#${runId}`;
+
+/** Scalar receipt details as top-level `detail_<key>` fields of the run view (read-only observation aid). */
+function flatDetail(detail: Record<string, unknown> | undefined): Record<string, string | number | boolean | null> {
+  const out: Record<string, string | number | boolean | null> = {};
+  for (const [k, v] of Object.entries(detail ?? {})) if (v === null || ["string", "number", "boolean"].includes(typeof v)) out[`detail_${k}`] = v as string | number | boolean | null;
+  return out;
+}
 
 function notFound(runId: string): Reply {
   return { status: 404, body: { result: "not_found", runId } };
