@@ -139,6 +139,12 @@ export interface WorkflowDef<I> {
    * null to acknowledge and ignore. Equal run ids make redeliveries one run.
    */
   events?: { stripe?(event: ProviderEvent, providers: Providers): Promise<EventStart | null> };
+  /**
+   * Business identity of a run (e.g. `lead-<leadId>`). When set it IS the run id:
+   * every start with the same key (a resubmitted form, concurrent deliveries,
+   * a different caller-supplied runId) joins the one existing run.
+   */
+  runKey?(input: I): string;
   /** Kit v2: how often waiting runs are woken in production (EventBridge Scheduler expression, e.g. "rate(5 minutes)"). */
   tickEvery?: string;
   /** Kit v2: keep a hash-chained audit trail of every event (SOC 2 / SOX evidence); see the `evidence` command. */

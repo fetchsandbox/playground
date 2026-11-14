@@ -19,6 +19,13 @@ export interface Fault {
   times?: number;
 }
 
+/** The provider applies the request, then the connection drops before the reply (an accepted effect with a lost response). */
+export interface LostResponse {
+  method: string;
+  path: RegExp;
+  times: number;
+}
+
 export interface Recorded {
   method: string;
   path: string;
@@ -62,8 +69,8 @@ export function seedState() {
       /** Lose this many transfer responses after the transfer was created (the effect happens, the reply doesn't). */
       loseTransferResponses: 0,
     },
-    hubspot: { contacts: [] as any[], subscriptions: new Map<string, string>() },
-    gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
+    hubspot: { contacts: [] as any[], subscriptions: new Map<string, string>(), deals: [] as any[] },
+    gmail: { messages: [] as { from: string }[], drafts: [] as any[], sent: [] as { id: string; raw: string; messageId: string; labelIds: string[] }[] },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
     slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
@@ -104,6 +111,7 @@ export function addSub(state: WorldState, customer: string, priceId: string, sta
 export async function startWorld() {
   const state = seedState();
   const faults: Fault[] = [];
+  const lostResponses: LostResponse[] = [];
   const requests: Recorded[] = [];
   // Stripe returns `incomplete` until the first invoice is paid (no payment method yet).
   let newSubStatus = "active";
@@ -119,6 +127,12 @@ export async function startWorld() {
     if (raw) body = String(req.headers["content-type"]).includes("json") ? JSON.parse(raw) : Object.fromEntries(new URLSearchParams(raw));
     requests.push({ method: req.method!, path, headers: req.headers, body });
     const send = (status: number, data: unknown) => {
+      const lost = lostResponses.find((l) => l.method === req.method && l.path.test(path) && l.times > 0);
+      if (lost) {
+        lost.times--;
+        req.socket.destroy();
+        return;
+      }
       res.writeHead(status, { "content-type": "application/json" });
       res.end(JSON.stringify(data));
     };
@@ -382,7 +396,40 @@ export async function startWorld() {
       return send(200, c);
     }
 
+    if (req.method === "POST" && path === "/crm/v3/objects/deals") {
+      for (const k of Object.keys(body.properties ?? {})) if (!["dealname", "pipeline", "dealstage"].includes(k)) return send(400, { category: "VALIDATION_ERROR", message: `unknown property ${k}` });
+      const d = { id: String(++seq), properties: { ...body.properties }, archived: false, associations: { contacts: { results: (body.associations ?? []).map((a: any) => ({ id: a.to.id, type: "deal_to_contact" })) } } };
+      H.deals.push(d);
+      return send(201, d);
+    }
+    if (req.method === "POST" && path === "/crm/v3/objects/deals/search") {
+      const f = body.filterGroups?.[0]?.filters?.[0];
+      const results = H.deals.filter((d) => f?.operator === "CONTAINS_TOKEN" ? String(d.properties[f.propertyName] ?? "").split(/\s+/).includes(f.value) : String(d.properties[f?.propertyName] ?? "") === f?.value);
+      return send(200, { total: results.length, results });
+    }
+    if (req.method === "GET" && (r = m(/^\/crm\/v3\/objects\/deals\/(\d+)$/))) {
+      const d = H.deals.find((x) => x.id === r![1]);
+      return d ? send(200, d) : send(404, { category: "OBJECT_NOT_FOUND" });
+    }
+
     // ---- Gmail
+    const G = state.gmail;
+    if (req.method === "POST" && path === "/gmail/v1/users/me/messages/send") {
+      const raw = Buffer.from(String(body.raw), "base64url").toString("utf8");
+      const messageId = /^Message-ID: (.+)$/m.exec(raw)?.[1]?.trim() ?? "";
+      const msg = { id: id("msg"), raw, messageId, labelIds: ["SENT"] };
+      G.sent.push(msg);
+      return send(200, { id: msg.id, threadId: msg.id, labelIds: msg.labelIds });
+    }
+    if (req.method === "GET" && path === "/gmail/v1/users/me/messages" && /rfc822msgid:/.test(q.get("q") ?? "")) {
+      const want = /rfc822msgid:(\S+)/.exec(q.get("q")!)![1];
+      const hits = G.sent.filter((x) => x.messageId === want);
+      return send(200, { messages: hits.map((x) => ({ id: x.id, threadId: x.id })), resultSizeEstimate: hits.length });
+    }
+    if (req.method === "GET" && (r = m(/^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/))) {
+      const x = G.sent.find((y) => y.id === r![1]);
+      return x ? send(200, { id: x.id, labelIds: x.labelIds, payload: { headers: [{ name: "Message-ID", value: x.messageId }] } }) : send(404, { error: { code: 404, message: "Not Found" } });
+    }
     if (req.method === "GET" && path === "/gmail/v1/users/me/messages") {
       const from = /from:(\S+)/.exec(q.get("q") ?? "")?.[1];
       const msgs = state.gmail.messages.filter((x) => !from || x.from === from);
@@ -399,6 +446,7 @@ export async function startWorld() {
       return send(200, { calendars: { [body.items[0].id]: { busy: state.calendar.busy } } });
     }
     if (req.method === "POST" && (r = m(/^\/calendar\/v3\/calendars\/([^/]+)\/events$/))) {
+      if (body.id && state.calendar.events.some((e) => e.id === body.id)) return send(409, { error: { code: 409, message: "The requested identifier already exists.", errors: [{ reason: "duplicate" }] } });
       const ev = { id: id("ev"), status: "confirmed", calendarId: r[1], sendUpdates: q.get("sendUpdates"), ...body };
       state.calendar.events.push(ev);
       return send(200, ev);
@@ -409,6 +457,11 @@ export async function startWorld() {
     }
 
     // ---- Slack
+    if (req.method === "GET" && path === "/api/conversations.history") {
+      const ch = q.get("channel")!;
+      if (!state.slack.channels.has(ch)) return send(200, { ok: false, error: "channel_not_found" });
+      return send(200, { ok: true, messages: state.slack.messages.filter((x) => x.channel === ch).reverse().map((x) => ({ ts: x.ts, text: x.text })) });
+    }
     if (req.method === "POST" && path === "/api/chat.postMessage") {
       // A user id is a direct message (Slack opens the DM).
       if (!state.slack.channels.has(body.channel) && !/^U[A-Z0-9_]+$/.test(body.channel)) return send(200, { ok: false, error: "channel_not_found" });
@@ -1052,6 +1105,7 @@ export async function startWorld() {
   return {
     state,
     faults,
+    lostResponses,
     setNewSubscriptionStatus(status: string) {
       newSubStatus = status;
     },

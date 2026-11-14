@@ -3,7 +3,7 @@ import { z } from "zod";
 import { checkpoint, validateReviewed, sameScope, isSelfReview, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
-import { errorCode, errorMessage, SkipAction } from "./errors";
+import { errorCode, errorMessage, RetryLater, SkipAction } from "./errors";
 import type { Logger } from "./log";
 import type { Item, KvStore } from "./store";
 import {
@@ -196,7 +196,8 @@ export class Engine<I> {
     if (!parsed.success) {
       return { status: 400, body: { error: "invalid input", issues: parsed.error.issues.map((i) => `${i.path.join(".") || "input"}: ${i.message}`) } };
     }
-    const runId = cmd.runId ?? `run_${randomUUID()}`;
+    // A workflow with a business key runs once per key: the key is the run id.
+    const runId = this.workflow.runKey ? this.workflow.runKey(parsed.data) : (cmd.runId ?? `run_${randomUUID()}`);
     const at = new Date(this.now()).toISOString();
     const run: RunRecord = {
       pk: pk(runId),
@@ -207,7 +208,7 @@ export class Engine<I> {
       phase: "RUNNING",
       input: parsed.data,
       requestedBy: cmd.requestedBy,
-      labels: cmd.labels ?? {},
+      labels: { ...(cmd.labels ?? {}), ...(this.workflow.runKey && cmd.runId && cmd.runId !== runId ? { submissionId: cmd.runId } : {}) },
       correlation,
       agents: [],
       actions: [],
@@ -410,6 +411,13 @@ export class Engine<I> {
         await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "applied", ref: receipt.ref, detail: receipt.detail ?? {} });
         await this.updateAction(runId, p.id, { status: "applied", ref: receipt.ref, detail: receipt.detail, appliedAt: new Date(this.now()).toISOString() });
       } catch (err) {
+        if (err instanceof RetryLater) {
+          // Not failed and not to be repeated blindly: wake later, reconcile, then decide.
+          await this.deps.store.delete(claimKey);
+          ctx.log.info("action deferred", { action: p.id, code: err.code, reason: err.message });
+          await this.updateAction(runId, p.id, { status: "scheduled", waitUntil: new Date(this.now() + err.delayMs).toISOString(), error: err.message, errorCode: err.code });
+          continue;
+        }
         if (err instanceof SkipAction) {
           // Decided not to apply: final, not retried.
           await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "skipped" });
@@ -433,6 +441,8 @@ export class Engine<I> {
   private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string; waitUntil?: string } {
     const now = this.now();
     if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
+    // A deferred action (RetryLater) waits for its own recorded time.
+    if (rec.status === "scheduled" && rec.waitUntil && Date.parse(rec.waitUntil) > now) return { status: "scheduled" };
     if (p.delayAfter) {
       const dep = all.find((a) => a.id === p.delayAfter!.action);
       if (dep && dep.status !== "applied" && !SETTLED.has(dep.status)) return { status: "scheduled" };
