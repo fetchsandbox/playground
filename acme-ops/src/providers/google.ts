@@ -63,7 +63,7 @@ export class GmailClient {
     });
     for (const m of body?.messages ?? []) {
       // Confirm the header rather than trusting the search index alone.
-      const { body: full } = await this.http.request<{ id: string; payload?: { headers?: { name: string; value: string }[] } }>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(m.id)}`, { query: { format: "metadata" } });
+      const { body: full } = await this.http.request<{ id: string; payload?: { headers?: { name: string; value: string }[] } }>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(m.id)}`);
       const hdr = full?.payload?.headers?.find((h) => h.name.toLowerCase() === "message-id")?.value;
       if (!hdr || hdr.trim() === messageId) return { id: full.id ?? m.id };
     }
