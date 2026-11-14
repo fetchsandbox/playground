@@ -197,8 +197,12 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     // once: a worker dying while its provider request is in flight. The verifier's restart revives it.
     if (contract.killWhen && !killed && contract.killWhen.every((x) => String(d).includes(x))) {
       killed = true;
-      app.kill("SIGKILL");
-      log("killWhen: SIGKILL runtime mid-call on", JSON.stringify(contract.killWhen));
+      const victim = app;
+      // Optional delay so the in-flight request has reached the provider before the worker dies.
+      setTimeout(() => {
+        victim.kill("SIGKILL");
+        log("killWhen: SIGKILL runtime mid-call on", JSON.stringify(contract.killWhen), `after ${contract.killDelayMs ?? 0} ms`);
+      }, contract.killDelayMs ?? 0);
     }
     if (contract.restartWatch && String(d).includes(contract.restartWatch) && Date.now() > fastPollUntil) {
       fastPollUntil = Date.now() + 90_000;

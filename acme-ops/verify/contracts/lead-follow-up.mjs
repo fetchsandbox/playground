@@ -325,6 +325,9 @@ export default {
   // check's lead (the twin holds the accepted send ~10 s); the verifier's restart then revives it on the same storage.
   // FetchSandbox issues the restart checkpoint ~19 s after the start (rev 2b), too late to land in that window itself.
   killWhen: ["gmail send dispatched", "L-restart-during-confirmation"],
+  // rev2c killed at the log line itself, before the request left the process (nothing reached Gmail, so the
+  // run correctly handed off after 3 lookups). 1.5 s lets the send reach the twin, which holds it ~10 s.
+  killDelayMs: 1500,
   restartWatch: "restart-during-confirmation",
   maxRunMinutes: 40,
   context: {
