@@ -1,0 +1,169 @@
+{
+  "workflow": "lead-follow-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-e09e6da",
+  "session_id": "vs_e9c58347a4ec",
+  "run_id": "vr_2b5550810ed94ba6ae8b98114cc0bb8f",
+  "receipt_url": "https://fetchsandbox.com/runs/3d902dfd1a?flow=vr_2b5550810ed94ba6ae8b98114cc0bb8f",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "existing_contact_adopted",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "resubmitted_lead_joins_run",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_first_submissions",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "reconcile_reads_back",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_deal_response_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_response_loss",
+      "status": "unmeasured",
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+    },
+    {
+      "id": "gmail_unresolved_handoff",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected_once",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_scope_denied",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_not_in_channel",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_missing_scope",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "slack_slow_network_single_post",
+      "status": "unmeasured",
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+    },
+    {
+      "id": "restart_during_confirmation",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "midrun_resubmission_while_waiting",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "two_leads_isolated",
+      "status": "held",
+      "explanation": "expected exactly 2, found 2; stable under 2 repeats (2)"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "Measured attempt (rev 2, vr_7f0015df...): the real-time check reached its +15.0 min lookup, then the managed relay lease expired (manage_tunnel expires_in_seconds 1800; a second open is refused until close, and a new tunnel gets a new URL the configured run cannot follow), so the observation returned HTTP 503 and every later check lost its app. The execution budget allows 3300 s but no relay lease outlives 1800 s, and the 30-minute schedule plus setup needs more. Measured separately through the caller-executed arm/probe path (provider traffic, app_verified false); see the evidence record."
+    },
+    {
+      "id": "midrun_provider_change_by_person",
+      "status": "unmeasured",
+      "explanation": "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only."
+    },
+    {
+      "id": "multi_worker_shared_store",
+      "status": "unmeasured",
+      "explanation": "The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine."
+    }
+  ],
+  "recorded_at": "2026-11-14T16:18:42.678Z"
+}

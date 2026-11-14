@@ -4,7 +4,7 @@
 
 A small sales team needs every web-form lead followed up reliably: one CRM deal, one follow-up email and one booked follow-up call per lead, no duplicates when a form is resubmitted or a provider times out, and a person told exactly what to do whenever a step cannot be confirmed.
 
-On a lead form submission: find or create the HubSpot contact, create one sales deal, send one follow-up email through Gmail, book a Calendar follow-up only after the email is confirmed, and tell the team in Slack it is done or exactly which step is blocked. Every write reconciles before it repeats; an unconfirmed email gets 3 lookups over 30 minutes, then a person.
+On a lead form submission: find or create the HubSpot contact, create one sales deal, send one follow-up email through Gmail, book a Calendar follow-up only after the email is confirmed, and tell the team in Slack it is done or exactly which step is blocked. Every write reconciles before it repeats; an unconfirmed email gets an initial lookup and lookups 15 and 30 minutes after the send, then a person.
 
 Demo organization: **Acme Corporation**. Department: **Sales**. Owning team: **sales-team**. Configure your own named owner and approvers when deploying; repository examples do not grant access to Acme or FetchSandbox accounts.
 
@@ -61,7 +61,7 @@ Every possible action kind is declared below. `auto` means the workflow may perf
 |---|---|---|---|
 | `hubspot.find_or_create_contact` | hubspot | **auto** | Find the contact by email or create it (409 adopts the existing one) |
 | `hubspot.create_deal` | hubspot | **auto** | Create the lead's one sales deal (named 'Lead <leadId> · <name>'), associated to the contact |
-| `gmail.send_followup` | gmail | **auto** | Send the follow-up email once (deterministic Message-ID); unknown outcomes get 3 confirmation lookups, never a resend |
+| `gmail.send_followup` | gmail | **auto** | Send the follow-up email once (deterministic Message-ID); an unknown outcome gets an initial lookup, then lookups 15 and 30 minutes after the send, never a resend |
 | `calendar.create_followup_event` | calendar | **auto** | After the email is confirmed, create the follow-up call event (deterministic event id, no invitation sent) |
 | `slack.notify_team` | slack | **auto** | Tell the team the lead is done, or hand the blocked step to a person with instructions |
 
@@ -119,11 +119,11 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `existing_contact_adopted` | Existing HubSpot contact is adopted, not duplicated or overwritten | Executable declaration; result comes from a receipt |
 | `resubmitted_lead_joins_run` | Resubmitted lead (new submission id) joins the run; nothing written twice | Executable declaration; result comes from a receipt |
 | `concurrent_first_submissions` | 5 concurrent first submissions: one run, one of each effect | Executable declaration; result comes from a receipt |
-| `invalid_input_rejected` | Malformed submissions (bad email, unsafe lead ID, empty or blank name) are rejected before any write | Executable declaration; result comes from a receipt |
+| `invalid_input_rejected` | Malformed submissions are rejected before any write; saved run state is not readable without the verifier token | Executable declaration; result comes from a receipt |
 | `reconcile_reads_back` | Reconcile reads every effect back from its provider: all match | Executable declaration; result comes from a receipt |
 | `hubspot_deal_response_loss` | Deal accepted, response lost: no repeat; re-check finds it by lead token and id, no second deal | Executable declaration; result comes from a receipt |
-| `gmail_send_response_loss` | Email accepted, response lost: no resend; confirmed by lookup 1, then booked | Executable declaration; result comes from a receipt |
-| `gmail_unresolved_handoff` | Email outcome unresolvable: 3 lookups, no resend, no event, Slack handoff to a person | Executable declaration; result comes from a receipt |
+| `gmail_send_response_loss` | Email accepted, response lost: no resend; initial lookup confirms it, then booked | Executable declaration; result comes from a receipt |
+| `gmail_unresolved_handoff` | Email outcome unresolvable: initial + 2 scheduled lookups (across a restart), no resend, no event, Slack handoff | Executable declaration; result comes from a receipt |
 | `gmail_send_rejected` | Send always refused: at most 3 tries, nothing sent or booked, handoff | Executable declaration; result comes from a receipt |
 | `gmail_send_rejected_once` | Send refused once: re-checked, sent once, then booked | Executable declaration; result comes from a receipt |
 | `gmail_auth_failure` | Gmail auth failure: blocked at email, nothing sent or booked, handoff | Executable declaration; result comes from a receipt |
@@ -137,16 +137,20 @@ This makes network calls, creates isolated twin resources and consumes FetchSand
 | `slack_not_in_channel` | Slack not_in_channel: notification recorded failed | Executable declaration; result comes from a receipt |
 | `slack_missing_scope` | Slack missing_scope: notification recorded failed | Executable declaration; result comes from a receipt |
 | `slack_rate_limited` | Slack rate limited: bounded re-checks, recorded failed, effects single | Executable declaration; result comes from a receipt |
-| `restart_during_confirmation` | Restart while an unconfirmed email awaits lookups: no resend; confirmed after recovery, then booked | Executable declaration; result comes from a receipt |
+| `slack_slow_network_single_post` | Slack slower than the client timeout: the post is found in history, never posted twice | Executable declaration; result comes from a receipt |
+| `restart_during_confirmation` | Runtime killed while its send is in flight: stale claim taken over, lookup confirms, never resent | Executable declaration; result comes from a receipt |
+| `midrun_resubmission_while_waiting` | Resubmission with changed details while the run waits: joins it, first data used, nothing to the new address | Executable declaration; result comes from a receipt |
+| `two_leads_isolated` | Two different leads: two runs, each with only its own contact, deal, email, event and post | Executable declaration; result comes from a receipt |
 | `hubspot_token_expired` | HubSpot token dies mid-run: stops at the failing step, handoff, no email | Executable declaration; result comes from a receipt |
-| `slack_slow_network_single_post` | A Slack post whose response arrives after the client timeout is reconciled through conversations.history and never posted twice | slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only. |
-| `email_confirmation_spacing_30_minutes` | The three confirmation lookups are spaced 10 minutes apart (+10/+20/+30 min) before the handoff | This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only. |
+| `email_confirmation_spacing_30_minutes` | The confirmation lookups run right after the unknown send and 15 and 30 minutes after it, then the handoff | Measured attempt (rev 2, vr_7f0015df...): the real-time check reached its +15.0 min lookup, then the managed relay lease expired (manage_tunnel expires_in_seconds 1800; a second open is refused until close, and a new tunnel gets a new URL the configured run cannot follow), so the observation returned HTTP 503 and every later check lost its app. The execution budget allows 3300 s but no relay lease outlives 1800 s, and the 30-minute schedule plus setup needs more. Measured separately through the caller-executed arm/probe path (provider traffic, app_verified false); see the evidence record. |
+| `midrun_provider_change_by_person` | A person creates the lead's deal or sends the follow-up by hand while the run waits; the run adopts it instead of duplicating | Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only. |
+| `multi_worker_shared_store` | Two live workers drive the same stored run at once (multi-container): one claim owner, no duplicate effect, the run still finishes | The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine. |
 
 ### Saved evidence — historical, not a fresh run
 
-The checked-in receipt records app version `acme-ops-lead-follow-up-1.0.0-9a83348`, verdict **inconclusive**, and statuses: **23 held**, **3 unmeasured**.
+The checked-in receipt records app version `acme-ops-lead-follow-up-1.0.0-e09e6da`, verdict **inconclusive**, and statuses: **25 held**, **5 unmeasured**.
 
-[Recorded receipt](https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2) · [Saved result](../../acme-ops/verify/receipts/lead-follow-up.json)
+[Recorded receipt](https://fetchsandbox.com/runs/3d902dfd1a?flow=vr_2b5550810ed94ba6ae8b98114cc0bb8f) · [Saved result](../../acme-ops/verify/receipts/lead-follow-up.json)
 
 Blocked reasons above describe this contract revision. They can become stale when a twin gains a capability; reassess discovery and configure a new measured run before claiming the blocker resolved. Passing leaves do not override an inconclusive receipt. Twin proof does not certify live OAuth consent, SMTP delivery, deployed adapters or every production failure.
 

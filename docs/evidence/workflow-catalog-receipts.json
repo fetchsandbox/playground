@@ -1726,19 +1726,19 @@
     },
     "lead-follow-up": {
       "workflow": "lead-follow-up",
-      "receipt_url": "https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2",
+      "receipt_url": "https://fetchsandbox.com/runs/3d902dfd1a?flow=vr_2b5550810ed94ba6ae8b98114cc0bb8f",
       "source": "acme-ops/verify/receipts/lead-follow-up.json",
-      "checked_at": "2026-11-14T07:03:00.768424+00:00",
+      "checked_at": "2026-11-14T16:20:30.726719+00:00",
       "http": 200,
-      "snapshot_at": "2026-11-14T07:02:15.938000+00:00",
+      "snapshot_at": "2026-11-14T16:18:42.678000+00:00",
       "app_version": {
-        "value": "acme-ops-lead-follow-up-1.0.0-9a83348",
+        "value": "acme-ops-lead-follow-up-1.0.0-e09e6da",
         "source": "declared"
       },
       "verdict": "inconclusive",
       "counts": {
-        "held": 23,
-        "unmeasured": 3
+        "held": 25,
+        "unmeasured": 5
       },
       "check_ids": [
         "baseline",
@@ -1763,10 +1763,14 @@
         "slack_not_in_channel",
         "slack_missing_scope",
         "slack_rate_limited",
-        "restart_during_confirmation",
-        "hubspot_token_expired",
         "slack_slow_network_single_post",
-        "email_confirmation_spacing_30_minutes"
+        "restart_during_confirmation",
+        "midrun_resubmission_while_waiting",
+        "two_leads_isolated",
+        "hubspot_token_expired",
+        "email_confirmation_spacing_30_minutes",
+        "midrun_provider_change_by_person",
+        "multi_worker_shared_store"
       ],
       "scope": "application_workflow_v1"
     }

@@ -100,7 +100,7 @@ adding a result; a local build or a different workflow's receipt is not a substi
 | 49 | Supplier bank-detail change (fraud control) | Finance / `accounts-payable` | 4 | [supplier-bank-change](workflows/supplier-bank-change.md) | [2026-10-22 · 4 passed, 5 failed, 4 not checked](https://fetchsandbox.com/runs/855eccad90?flow=vr_1d352154f9af49b5b8738b1d015ff7e8) |
 | 50 | Vulnerability remediation SLA | IT Security / `appsec` | 1 | [vulnerability-remediation](workflows/vulnerability-remediation.md) | [2026-10-22 · 3 passed, 3 failed, 3 not checked](https://fetchsandbox.com/runs/5825e3a8cf?flow=vr_14858015802a4bd8bc7aff4532274dff) |
 | 51 | Support escalation | Support / `support-ops` | 5 | [support-escalation](workflows/support-escalation.md) | [2026-10-16 · 15 passed, 1 not checked](https://fetchsandbox.com/runs/a3e6951d42?flow=vr_560dd52d3f244aaba40f6d925ae8c5c7) |
-| 52 | Inbound lead follow-up | Sales / `sales-team` | 0 | [lead-follow-up](workflows/lead-follow-up.md) | [2026-11-13 · 23 passed, 3 not checked](https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2) |
+| 52 | Inbound lead follow-up | Sales / `sales-team` | 0 | [lead-follow-up](workflows/lead-follow-up.md) | [2026-11-14 · 25 passed, 5 not checked](https://fetchsandbox.com/runs/3d902dfd1a?flow=vr_2b5550810ed94ba6ae8b98114cc0bb8f) |
 
 [Customer Operations](workflows/customer-operations.md) is also on `main`: six specialist roles plus an approval-controlled dispatch stage. Its own FetchSandbox runner/receipt is not present on `main`.
 

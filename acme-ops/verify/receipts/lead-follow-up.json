@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-lead-follow-up-1.0.0-765d9ae",
-  "session_id": "vs_94e31be01cb7",
-  "run_id": "vr_feb0c48dc4ab4495a117963951f10a17",
-  "receipt_url": "https://fetchsandbox.com/runs/3b898b60bd?flow=vr_feb0c48dc4ab4495a117963951f10a17",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-e09e6da",
+  "session_id": "vs_e9c58347a4ec",
+  "run_id": "vr_2b5550810ed94ba6ae8b98114cc0bb8f",
+  "receipt_url": "https://fetchsandbox.com/runs/3d902dfd1a?flow=vr_2b5550810ed94ba6ae8b98114cc0bb8f",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -131,8 +131,8 @@
     },
     {
       "id": "restart_during_confirmation",
-      "status": "unmeasured",
-      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
     },
     {
       "id": "midrun_resubmission_while_waiting",
@@ -165,5 +165,5 @@
       "explanation": "The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine."
     }
   ],
-  "recorded_at": "2026-11-14T16:06:04.682Z"
+  "recorded_at": "2026-11-14T16:18:42.678Z"
 }
