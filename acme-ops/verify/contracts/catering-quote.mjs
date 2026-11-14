@@ -20,6 +20,12 @@ const ACCEPT = "quote.customer_acceptance";
  * only on the action they describe (a required leaf inside actions[*] demands it everywhere).
  */
 const has = (select, equals) => ({ select, equals });
+/** Independent Gmail twin read-back: exactly `count` messages stored with this To header. */
+const sentTo = (code, count) => ({
+  provider: "gmail",
+  collection: "messages",
+  assertion: { select: "records[*]", count, required: true, where: [{ select: "payload.headers[*]", count: 1, where: [has("name", "To"), has("value", `${code}@party.example.test`)] }] },
+});
 
 let n = 3;
 const slots = {};
@@ -73,6 +79,7 @@ export const checks = [
     {
       provider_assertions: [
         { provider: "stripe", collection: "invoices", assertion: { select: "records[*]", count: 1, required: true, where: [has("metadata.catering_quote", quoteId(baselineCode)), eq("amount_due", 57500), eq("status", "open")] } },
+        sentTo(baselineCode, 2),
         { provider: "google-calendar", collection: "events", assertion: { select: "records[*]", count: 1, required: true, where: [has("extendedProperties.private.cateringQuote", quoteId(baselineCode)), eq("status", "confirmed")] } },
       ],
     },
@@ -122,21 +129,21 @@ export const checks = [
     "Gmail refuses the approved quote: nothing downstream happens; after Gmail recovers, resume sends it once and the quote can be accepted",
     [start("gmail_send_rejected_then_resumed", request("gmrej")), approve(), { provider_control: { provider: "gmail", scenario: "default" } }, command("resume", 1)],
     runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 2), has("detail.recovered", false)]), action("stripe.record_quote", "applied"), action(ACCEPT, "awaiting_signal")]),
-    { fault: { provider: "gmail", scenario: "direct_send_rejected", evidence: "refusal" } },
+    { fault: { provider: "gmail", scenario: "direct_send_rejected", evidence: "refusal" }, provider_assertions: [sentTo("gmrej", 1)] },
   ),
   check(
     "gmail_response_lost_recovered",
     "Gmail accepts the quote but the response is lost: the app finds the sent message by Message-ID and records it, without sending a second email",
     [start("gmail_response_lost_recovered", request("gmlost")), approve()],
     runs([action("gmail.send_quote", "applied", 1, [eq("attempts", 1), has("detail.recovered", true)]), action("stripe.record_quote", "applied")]),
-    { fault: { provider: "gmail", scenario: "direct_send_accepted_response_loss", evidence: "accepted_response_readback" } },
+    { fault: { provider: "gmail", scenario: "direct_send_accepted_response_loss", evidence: "accepted_response_readback" }, provider_assertions: [sentTo("gmlost", 1)] },
   ),
   check(
     "gmail_lookup_unavailable_not_resent",
     "Gmail's response is lost AND the mailbox lookup is down: the send is marked uncertain and not resent",
     [start("gmail_lookup_unavailable_not_resent", request("gmunk")), approve()],
     runs([action("gmail.send_quote", "failed", 1, [has("errorCode", "gmail:send_uncertain")]), action("stripe.record_quote", "scheduled")]),
-    { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } },
+    { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" }, provider_assertions: [sentTo("gmunk", 1)] },
   ),
   check("calendar_unavailable_to_owner", "The calendar can't be read: no date is promised; the owner is told", [start("calendar_unavailable_to_owner", request("calout"))], all(runs([agent("availability", "failed")]), runs([eq("output.decision", "manual")]), runs([action("gmail.notify_owner", "applied")]), runs([noAction("gmail.send_quote")])), { fault: { provider: "google-calendar", scenario: "rate_limited", evidence: "refusal" } }),
   check("stripe_unavailable_to_owner", "Billing can't be read: the request goes to the owner instead of a quote that might double-book", [start("stripe_unavailable_to_owner", request("strout"))], all(runs([agent("billing-lookup", "failed")]), runs([eq("output.decision", "manual")]), runs([action("gmail.notify_owner", "applied")]), runs([noAction("gmail.send_quote")])), { fault: { provider: "stripe", scenario: "rate_limited", evidence: "refusal" } }),
