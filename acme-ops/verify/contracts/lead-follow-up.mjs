@@ -227,7 +227,8 @@ export const checks = [
   ),
 
   // ---- Crash/restart, stale workers, mid-run state changes, isolation, ownership ----------------------
-  // Probe: the runtime is killed (SIGKILL) while the Gmail send it started is held by the twin; restarted on
+  // Probe: the runtime is SIGKILLed (by the runner, on the app's own "gmail send dispatched" log line) while the
+  // Gmail send it started is held by the twin; restarted by the verifier's client_lifecycle restart on
   // the same storage. Expect: the stale claim is taken over after 20 s, the "maybe sent" marker forces a
   // lookup instead of a resend, the email is confirmed, then the event. Evidence: takeover event, sendAttempts 1,
   // twin Gmail count 1, changed runtime instance id.
@@ -320,7 +321,10 @@ export default {
     TICK_INTERVAL_MS: "1000",
   },
   applicationConfig: { execution_budget_seconds: 1500 },
-  // The runner polls fast once this check starts, so the restart lands while the send is in flight.
+  // A real worker death mid-call: the runner SIGKILLs the runtime when it logs the Gmail send dispatch for this
+  // check's lead (the twin holds the accepted send ~10 s); the verifier's restart then revives it on the same storage.
+  // FetchSandbox issues the restart checkpoint ~19 s after the start (rev 2b), too late to land in that window itself.
+  killWhen: ["gmail send dispatched", "L-restart-during-confirmation"],
   restartWatch: "restart-during-confirmation",
   maxRunMinutes: 40,
   context: {

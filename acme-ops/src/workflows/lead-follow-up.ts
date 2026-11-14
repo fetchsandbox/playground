@@ -246,6 +246,7 @@ async function sendFollowUp(ctx: Ctx): Promise<ActionReceipt> {
     st.lookups = 0;
     st.lookupLog = [];
     await checkpoint.save("email", st);
+    ctx.log.info("gmail send dispatched", { leadId: input.leadId, messageId });
     try {
       const sent = await providers.gmail!.sendOnce(followUpEmail(input));
       if (!sent.labelIds.includes("SENT")) throw new ProviderError("gmail", 200, "not_sent_label", true, "send answered without the SENT label");
@@ -284,7 +285,7 @@ async function sendFollowUp(ctx: Ctx): Promise<ActionReceipt> {
   }
   // Anchor the next lookup to the send time, so wake-up latency never shifts the schedule.
   const dueIn = Math.max(0, sentAt + lookupOffsetMs(k + 1) - ctx.now());
-  throw new RetryLater(dueIn, `confirmation lookup ${k}/${EMAIL_CONFIRMATION_LOOKUPS} at ${after}: ${st.lookupLog.at(-1)!.split(" ").slice(2).join(" ")}; next lookup at +${(lookupOffsetMs(k + 1) / 60_000).toFixed(0)} min; not resending`, k === 1 ? "gmail:outcome_unknown" : "gmail:delivery_unknown");
+  throw new RetryLater(dueIn, `confirmation lookup ${k}/${EMAIL_CONFIRMATION_LOOKUPS} at ${after}: ${st.lookupLog.at(-1)!.split(" ").slice(2).join(" ")}; next lookup at +${+(lookupOffsetMs(k + 1) / 60_000).toFixed(1)} min; not resending`, k === 1 ? "gmail:outcome_unknown" : "gmail:delivery_unknown");
 }
 
 // ---------------------------------------------------------------------------

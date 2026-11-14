@@ -126,6 +126,7 @@ async function settle(mcp, res, label) {
 // ---------------------------------------------------------------------------
 let app;
 let fastPollUntil = 0;
+let killed = false;
 process.once("exit",()=>{app?.kill("SIGKILL");});
 const stateFile = join(OUT_DIR, "state.json");
 
@@ -162,7 +163,7 @@ function twinEnv(legs) {
 }
 
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
-  if (app) {
+  if (app && app.exitCode === null && app.signalCode === null) {
     const stopped=new Promise(resolve=>app.once("exit",resolve));
     app.kill("SIGKILL");
     await stopped;
@@ -192,6 +193,13 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     if (process.env.PROOF_VERBOSE) process.stdout.write(d);
     // A contract can ask for fast status polling once a given submission reaches the runtime,
     // so a requested restart lands while that run is still mid-flight.
+    // A contract can name a log line (all substrings) at which the runtime is SIGKILLed mid-call,
+    // once: a worker dying while its provider request is in flight. The verifier's restart revives it.
+    if (contract.killWhen && !killed && contract.killWhen.every((x) => String(d).includes(x))) {
+      killed = true;
+      app.kill("SIGKILL");
+      log("killWhen: SIGKILL runtime mid-call on", JSON.stringify(contract.killWhen));
+    }
     if (contract.restartWatch && String(d).includes(contract.restartWatch) && Date.now() > fastPollUntil) {
       fastPollUntil = Date.now() + 90_000;
       log("restartWatch: fast polling for", contract.restartWatch);

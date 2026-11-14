@@ -1,0 +1,169 @@
+{
+  "workflow": "lead-follow-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-ecd867f",
+  "session_id": "vs_5f734cb8cf0c",
+  "run_id": "vr_7f0015df3bd648dc9b52e798d52ea98c",
+  "receipt_url": "https://fetchsandbox.com/runs/007251338f?flow=vr_7f0015df3bd648dc9b52e798d52ea98c",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "existing_contact_adopted",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "resubmitted_lead_joins_run",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_first_submissions",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "reconcile_reads_back",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_deal_response_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_response_loss",
+      "status": "unmeasured",
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+    },
+    {
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "state observation returned HTTP 503"
+    },
+    {
+      "id": "gmail_send_rejected",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "gmail_send_rejected_once",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "hubspot_scope_denied",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "slack_not_in_channel",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "slack_missing_scope",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "slack_slow_network_single_post",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "restart_during_confirmation",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "midrun_resubmission_while_waiting",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "two_leads_isolated",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "verifier_reads_require_token",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "midrun_provider_change_by_person",
+      "status": "unmeasured",
+      "explanation": "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only."
+    },
+    {
+      "id": "multi_worker_shared_store",
+      "status": "unmeasured",
+      "explanation": "The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine."
+    }
+  ],
+  "recorded_at": "2026-11-14T15:31:43.254Z"
+}
