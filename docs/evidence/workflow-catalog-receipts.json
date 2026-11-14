@@ -1723,6 +1723,52 @@
         "invalid_input_rejected"
       ],
       "scope": "application_workflow_v1"
+    },
+    "lead-follow-up": {
+      "workflow": "lead-follow-up",
+      "receipt_url": "https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2",
+      "source": "acme-ops/verify/receipts/lead-follow-up.json",
+      "checked_at": "2026-11-14T07:03:00.768424+00:00",
+      "http": 200,
+      "snapshot_at": "2026-11-14T07:02:15.938000+00:00",
+      "app_version": {
+        "value": "acme-ops-lead-follow-up-1.0.0-9a83348",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 23,
+        "unmeasured": 3
+      },
+      "check_ids": [
+        "baseline",
+        "existing_contact_adopted",
+        "resubmitted_lead_joins_run",
+        "concurrent_first_submissions",
+        "invalid_input_rejected",
+        "reconcile_reads_back",
+        "hubspot_deal_response_loss",
+        "gmail_send_response_loss",
+        "gmail_unresolved_handoff",
+        "gmail_send_rejected",
+        "gmail_send_rejected_once",
+        "gmail_auth_failure",
+        "gmail_rate_limited",
+        "hubspot_auth_failure",
+        "hubspot_scope_denied",
+        "hubspot_rate_limited",
+        "calendar_auth_failure",
+        "calendar_rate_limited",
+        "slack_channel_not_found",
+        "slack_not_in_channel",
+        "slack_missing_scope",
+        "slack_rate_limited",
+        "restart_during_confirmation",
+        "hubspot_token_expired",
+        "slack_slow_network_single_post",
+        "email_confirmation_spacing_30_minutes"
+      ],
+      "scope": "application_workflow_v1"
     }
   }
 }

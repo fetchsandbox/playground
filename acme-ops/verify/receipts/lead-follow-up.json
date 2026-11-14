@@ -1,0 +1,149 @@
+{
+  "workflow": "lead-follow-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-9a83348",
+  "session_id": "vs_c9c4b4575037",
+  "run_id": "vr_4189ea30a65d443fb39db3370daae9a2",
+  "receipt_url": "https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "existing_contact_adopted",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "resubmitted_lead_joins_run",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "concurrent_first_submissions",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "reconcile_reads_back",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_deal_response_loss",
+      "status": "unmeasured",
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+    },
+    {
+      "id": "gmail_send_response_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_unresolved_handoff",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected_once",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_scope_denied",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_not_in_channel",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_missing_scope",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "restart_during_confirmation",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "slack_slow_network_single_post",
+      "status": "unmeasured",
+      "explanation": "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only."
+    },
+    {
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only."
+    }
+  ],
+  "recorded_at": "2026-11-14T07:02:15.938Z"
+}

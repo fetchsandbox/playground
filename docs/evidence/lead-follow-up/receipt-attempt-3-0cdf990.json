@@ -1,0 +1,149 @@
+{
+  "workflow": "lead-follow-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-0cdf990",
+  "session_id": "vs_3c0a110505a5",
+  "run_id": "vr_e517c9d04e2d4b61b45057cfe7fd3501",
+  "receipt_url": "https://fetchsandbox.com/runs/ce57913e9d?flow=vr_e517c9d04e2d4b61b45057cfe7fd3501",
+  "status": null,
+  "verdict": "failing",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "existing_contact_adopted",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "resubmitted_lead_joins_run",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+    },
+    {
+      "id": "concurrent_first_submissions",
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "reconcile_reads_back",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_deal_response_loss",
+      "status": "unmeasured",
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
+    },
+    {
+      "id": "gmail_send_response_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_unresolved_handoff",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_rejected_once",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+    },
+    {
+      "id": "hubspot_scope_denied",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Declared provider fault was not independently observed; state alone cannot prove fault recovery"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Declared provider fault was not independently observed; state alone cannot prove fault recovery"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    },
+    {
+      "id": "slack_not_in_channel",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "slack_missing_scope",
+      "status": "violated",
+      "explanation": "expected exactly 1, found 0; stable under 2 repeats (0)"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "violated",
+      "explanation": "Provider-state assertion failed: expected exactly 1, found 0"
+    },
+    {
+      "id": "restart_during_confirmation",
+      "status": "unmeasured",
+      "explanation": "Provider fault was not observed before recovery; it was not cleared early"
+    },
+    {
+      "id": "slack_slow_network_single_post",
+      "status": "unmeasured",
+      "explanation": "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only."
+    },
+    {
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only."
+    }
+  ],
+  "recorded_at": "2026-11-14T06:53:22.971Z"
+}
