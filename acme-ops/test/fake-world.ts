@@ -62,10 +62,18 @@ export function seedState() {
       /** Lose this many transfer responses after the transfer was created (the effect happens, the reply doesn't). */
       loseTransferResponses: 0,
     },
-    hubspot: { contacts: [] as any[], subscriptions: new Map<string, string>() },
-    gmail: { messages: [] as { from: string }[], drafts: [] as any[] },
+    hubspot: { contacts: [] as any[], deals: [] as any[], subscriptions: new Map<string, string>() },
+    gmail: {
+      messages: [] as { id?: string; threadId?: string; from?: string; raw?: string; labelIds?: string[] }[],
+      drafts: [] as any[],
+      loseSendResponses: 0,
+      /** Commit then drop the stored message and destroy the response (unknown outcome, empty mailbox). */
+      loseSendAndDrop: false,
+      rejectSend: false,
+      lookupUnavailable: false,
+    },
     calendar: { busy: [] as { start: string; end: string }[], events: [] as any[] },
-    slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1"]), messages: [] as any[] },
+    slack: { channels: new Set(["C0SUPPORT1", "C0FINANCE1", "C0CSOPS001", "C0ONBOARD1", "C0SALES0001"]), messages: [] as any[] },
     zendesk: { tickets: [] as any[], comments: [] as any[], users: [] as any[], orgs: [] as any[] },
     workos: { users: [] as any[], memberships: [] as any[], sessions: [] as any[] },
     notion: { pages: [] as any[] },
@@ -381,22 +389,79 @@ export async function startWorld() {
       if (req.method === "PATCH") Object.assign(c.properties, body.properties);
       return send(200, c);
     }
+    if (req.method === "POST" && path === "/crm/v3/objects/deals/search") {
+      const filters: any[] = body.filterGroups?.[0]?.filters ?? [];
+      const ok = (d: any, f: any) => String(d.properties[f.propertyName] ?? "") === String(f.value ?? "");
+      const results = H.deals.filter((d) => filters.every((f) => ok(d, f)));
+      return send(200, { total: results.length, results });
+    }
+    if (req.method === "POST" && path === "/crm/v3/objects/deals") {
+      const name = body.properties?.dealname;
+      const existing = H.deals.find((d) => d.properties.dealname === name);
+      if (existing) return send(409, { status: "error", category: "CONFLICT", message: `Deal already exists. Existing ID: ${existing.id}` });
+      const d = { id: String(++seq), properties: { ...body.properties }, associations: body.associations ?? [], archived: false };
+      H.deals.push(d);
+      return send(201, d);
+    }
+    if ((r = m(/^\/crm\/v3\/objects\/deals\/(\d+)$/))) {
+      const d = H.deals.find((x) => x.id === r![1]);
+      if (!d) return send(404, { category: "OBJECT_NOT_FOUND" });
+      if (req.method === "PATCH") Object.assign(d.properties, body.properties);
+      return send(200, d);
+    }
 
     // ---- Gmail
     if (req.method === "GET" && path === "/gmail/v1/users/me/messages") {
-      const from = /from:(\S+)/.exec(q.get("q") ?? "")?.[1];
-      const msgs = state.gmail.messages.filter((x) => !from || x.from === from);
-      return send(200, { messages: msgs.map((_, i) => ({ id: `m${i}` })), resultSizeEstimate: msgs.length });
+      if (state.gmail.lookupUnavailable) return send(503, { error: { code: 503, message: "lookup unavailable" } });
+      const qstr = q.get("q") ?? "";
+      const from = /from:(\S+)/.exec(qstr)?.[1];
+      const rfc = /rfc822msgid:(\S+)/.exec(qstr)?.[1];
+      const msgs = state.gmail.messages.filter((x) => {
+        if (from && x.from !== from) return false;
+        if (rfc) {
+          const raw = x.raw ? Buffer.from(x.raw, "base64url").toString("utf8") : "";
+          return raw.toLowerCase().includes(`message-id: <${rfc.toLowerCase()}>`) || raw.toLowerCase().includes(`message-id: ${rfc.toLowerCase()}`);
+        }
+        return true;
+      });
+      return send(200, { messages: msgs.map((x) => ({ id: x.id, threadId: x.threadId })), resultSizeEstimate: msgs.length });
+    }
+    if (req.method === "GET" && (r = m(/^\/gmail\/v1\/users\/me\/messages\/([^/]+)$/))) {
+      if (state.gmail.lookupUnavailable) return send(503, { error: { code: 503, message: "lookup unavailable" } });
+      const msg = state.gmail.messages.find((x) => x.id === r![1]);
+      return msg ? send(200, { id: msg.id, threadId: msg.threadId, labelIds: msg.labelIds ?? ["SENT"] }) : send(404, { error: { code: 404 } });
     }
     if (req.method === "POST" && path === "/gmail/v1/users/me/drafts") {
       const d = { id: id("draft"), message: body.message };
       state.gmail.drafts.push(d);
       return send(200, d);
     }
+    if (req.method === "POST" && path === "/gmail/v1/users/me/messages/send") {
+      if (state.gmail.rejectSend) return send(403, { error: { code: 403, message: "send rejected" } });
+      const msg = { id: id("msg"), threadId: id("th"), raw: body.raw, labelIds: ["SENT"], from: "me" };
+      state.gmail.messages.push(msg);
+      if (state.gmail.loseSendAndDrop) {
+        state.gmail.loseSendAndDrop = false;
+        state.gmail.messages.pop();
+        req.socket.destroy();
+        return;
+      }
+      if (state.gmail.loseSendResponses > 0) {
+        state.gmail.loseSendResponses--;
+        req.socket.destroy();
+        return;
+      }
+      return send(200, { id: msg.id, threadId: msg.threadId, labelIds: msg.labelIds });
+    }
 
     // ---- Calendar
     if (req.method === "POST" && path === "/calendar/v3/freeBusy") {
       return send(200, { calendars: { [body.items[0].id]: { busy: state.calendar.busy } } });
+    }
+    if (req.method === "GET" && (r = m(/^\/calendar\/v3\/calendars\/([^/]+)\/events$/))) {
+      const want = (q.get("privateExtendedProperty") ?? "").replace(/^acmeKey=/, "");
+      const items = state.calendar.events.filter((e) => e.calendarId === r![1] && (!want || e.extendedProperties?.private?.acmeKey === want));
+      return send(200, { items });
     }
     if (req.method === "POST" && (r = m(/^\/calendar\/v3\/calendars\/([^/]+)\/events$/))) {
       const ev = { id: id("ev"), status: "confirmed", calendarId: r[1], sendUpdates: q.get("sendUpdates"), ...body };

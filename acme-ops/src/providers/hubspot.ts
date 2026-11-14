@@ -93,4 +93,46 @@ export class HubSpotClient {
   async gdprDelete(id: string): Promise<void> {
     await this.http.request("POST", "/crm/v3/objects/contacts/gdpr-delete", { json: { objectId: id } });
   }
+
+  /** Find a deal by exact dealname (used as the lead-id natural key). */
+  async findDealByName(dealname: string): Promise<HubSpotDeal | undefined> {
+    const { body } = await this.http.request<SearchResponse>("POST", "/crm/v3/objects/deals/search", {
+      json: { filterGroups: [{ filters: [{ propertyName: "dealname", operator: "EQ", value: dealname }] }], properties: DEAL_PROPS, limit: 10 },
+    });
+    return (body?.results ?? []).find((d) => !d.archived && d.properties.dealname === dealname) as HubSpotDeal | undefined;
+  }
+
+  async getDeal(id: string): Promise<HubSpotDeal> {
+    return (await this.http.request<HubSpotDeal>("GET", `/crm/v3/objects/deals/${encodeURIComponent(id)}`, { query: { properties: DEAL_PROPS.join(",") } })).body;
+  }
+
+  /**
+   * Create a deal associated to a contact, or return the existing deal with the
+   * same dealname. Association type 3 is HubSpot's default deal→contact link.
+   */
+  async ensureDeal(dealname: string, properties: Record<string, string>, contactId: string): Promise<{ deal: HubSpotDeal; created: boolean }> {
+    const existing = await this.findDealByName(dealname);
+    if (existing) return { deal: existing, created: false };
+    const { body, status } = await this.http.request<HubSpotDeal>("POST", "/crm/v3/objects/deals", {
+      json: {
+        properties: { dealname, ...properties },
+        associations: [{ to: { id: contactId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 3 }] }],
+      },
+      allow: [409],
+    });
+    if (status === 409) {
+      const again = await this.findDealByName(dealname);
+      if (again) return { deal: again, created: false };
+      throw new Error(`hubspot deal 409 without an existing deal for ${dealname}`);
+    }
+    return { deal: body, created: true };
+  }
 }
+
+export interface HubSpotDeal {
+  id: string;
+  properties: Record<string, string | null | undefined>;
+  archived?: boolean;
+}
+
+const DEAL_PROPS = ["dealname", "dealstage", "pipeline", "amount", "closedate", "hubspot_owner_id"];

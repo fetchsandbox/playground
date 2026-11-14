@@ -50,6 +50,31 @@ export class GmailClient {
     const { body } = await this.http.request<{ id: string }>("POST", `/gmail/v1/users/${this.userId}/drafts`, { json: { message: { raw } } });
     return { id: body.id };
   }
+
+  /** Direct send. Callers must look up by Message-ID before retrying a lost response. */
+  async sendMessage(mail: DraftEmail): Promise<{ id: string; threadId?: string }> {
+    const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
+    const { body } = await this.http.request<{ id: string; threadId?: string }>("POST", `/gmail/v1/users/${this.userId}/messages/send`, { json: { raw } });
+    return { id: body.id, threadId: body.threadId };
+  }
+
+  /** Find a mailbox message by its RFC 5322 Message-ID (includes Sent). */
+  async findByRfc822MessageId(messageId: string): Promise<{ id: string; threadId?: string; labelIds?: string[] } | undefined> {
+    const q = `rfc822msgid:${messageId.replace(/^<|>$/g, "")}`;
+    const { body } = await this.http.request<{ messages?: { id: string; threadId?: string }[] }>("GET", `/gmail/v1/users/${this.userId}/messages`, {
+      query: { q, maxResults: 5 },
+    });
+    const hit = body?.messages?.[0];
+    if (!hit?.id) return undefined;
+    return this.getMessage(hit.id);
+  }
+
+  async getMessage(id: string): Promise<{ id: string; threadId?: string; labelIds?: string[] }> {
+    const { body } = await this.http.request<{ id: string; threadId?: string; labelIds?: string[] }>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(id)}`, {
+      query: { format: "metadata", metadataHeaders: "Message-ID" },
+    });
+    return body;
+  }
 }
 
 export interface Slot {
@@ -97,6 +122,14 @@ export class CalendarClient {
 
   async getEvent(calendarId: string, eventId: string): Promise<CalendarEvent> {
     return (await this.http.request<CalendarEvent>("GET", `/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`)).body;
+  }
+
+  /** Find an event previously written with extendedProperties.private.acmeKey. */
+  async findEventByPrivateKey(calendarId: string, privateKey: string): Promise<CalendarEvent | undefined> {
+    const { body } = await this.http.request<{ items?: CalendarEvent[] }>("GET", `/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+      query: { privateExtendedProperty: `acmeKey=${privateKey}`, maxResults: 5, singleEvents: true },
+    });
+    return (body?.items ?? []).find((e) => e.status !== "cancelled");
   }
 }
 
