@@ -5,12 +5,12 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-catering-quote-1.0.0-38cc9cd",
-  "session_id": "vs_8c0f23358eec",
-  "run_id": "vr_fc7b58f615764623bb1ffc45d3c35802",
-  "receipt_url": "https://fetchsandbox.com/runs/405903a833?flow=vr_fc7b58f615764623bb1ffc45d3c35802",
+  "app_version": "acme-ops-catering-quote-1.0.0-7aa9614",
+  "session_id": "vs_3d4cdc6baff8",
+  "run_id": "vr_6d113a8a1bd84198bc1280c1e457bacc",
+  "receipt_url": "https://fetchsandbox.com/runs/86863f3bc0?flow=vr_6d113a8a1bd84198bc1280c1e457bacc",
   "status": null,
-  "verdict": "failing",
+  "verdict": "inconclusive",
   "app_verified": false,
   "complete": false,
   "checks": [
@@ -61,8 +61,8 @@
     },
     {
       "id": "booked_inquiry_not_requoted",
-      "status": "violated",
-      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 0"
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "headcount_below_minimum_declined",
@@ -160,5 +160,5 @@
       "explanation": "Reply parsing belongs to the inbox intake adapter, outside this runtime (which takes the parsed request or signal). The Gmail twin does not simulate users.history or users.watch, so mailbox-driven intake can't be exercised here."
     }
   ],
-  "recorded_at": "2026-11-14T22:22:58.532Z"
+  "recorded_at": "2026-11-14T22:29:27.912Z"
 }

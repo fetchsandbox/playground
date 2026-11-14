@@ -4,7 +4,7 @@
   "selection": "Latest saved snapshot timestamp among committed receipts and additional known observed runs; not an account-wide discovery of every run.",
   "scope": "Historical saved receipts, public summary read-back only. No workflow rerun.",
   "counts": {
-    "inconclusive": 20,
+    "inconclusive": 21,
     "failing": 23,
     "verified": 8
   },
@@ -1721,6 +1721,55 @@
         "overdue_escalated",
         "github_unreadable_blocks",
         "invalid_input_rejected"
+      ],
+      "scope": "application_workflow_v1"
+    },
+    "catering-quote": {
+      "workflow": "catering-quote",
+      "receipt_url": "https://fetchsandbox.com/runs/86863f3bc0?flow=vr_6d113a8a1bd84198bc1280c1e457bacc",
+      "source": "acme-ops/verify/receipts/catering-quote.json",
+      "checked_at": "2026-11-14T22:33:00+00:00",
+      "http": 200,
+      "snapshot_at": "2026-11-14T22:29:13.056393+00:00",
+      "app_version": {
+        "value": "acme-ops-catering-quote-1.0.0-7aa9614",
+        "source": "declared"
+      },
+      "verdict": "inconclusive",
+      "counts": {
+        "held": 25,
+        "unmeasured": 4
+      },
+      "check_ids": [
+        "baseline",
+        "stranger_cannot_approve",
+        "owner_rejects_quote",
+        "customer_declines",
+        "stranger_cannot_accept",
+        "accept_before_quote_sent_ignored",
+        "negotiated_within_floor",
+        "counter_below_floor_countered",
+        "superseded_revision_not_accepted",
+        "booked_inquiry_not_requoted",
+        "headcount_below_minimum_declined",
+        "short_notice_declined",
+        "date_conflict_declined",
+        "large_party_to_owner",
+        "invalid_input_rejected",
+        "duplicate_start",
+        "concurrent_start",
+        "concurrent_acceptance",
+        "gmail_send_rejected_then_resumed",
+        "gmail_response_lost_recovered",
+        "gmail_lookup_unavailable_not_resent",
+        "calendar_unavailable_to_owner",
+        "stripe_unavailable_to_owner",
+        "hubspot_down_quote_continues",
+        "restart_awaiting_acceptance",
+        "booking_reconciled_reminder_not_early",
+        "reminder_sent_day_before",
+        "quote_expires_unaccepted",
+        "inbound_reply_starts_or_accepts"
       ],
       "scope": "application_workflow_v1"
     }

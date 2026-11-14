@@ -39,8 +39,8 @@ not an exhaustive search of every account's runs. See the
 [receipt audit index](evidence/workflow-catalog-receipts.json) for app-declared
 versions, original machine statuses, timestamps and HTTP read-back results.
 
-All 51 main-table workflows have accessible receipts: **8 verified within their
-recorded scope, 23 with failed checks, and 20 with checks that could not all be
+All 52 main-table workflows have accessible receipts: **8 verified within their
+recorded scope, 23 with failed checks, and 21 with checks that could not all be
 verified**. Failed and not-checked cases remain visible below. The sweep's newer
 receipt supplements its original failed receipt; historical files are unchanged.
 A missing receipt requires the workflow's own build and verification path before
@@ -100,6 +100,9 @@ adding a result; a local build or a different workflow's receipt is not a substi
 | 49 | Supplier bank-detail change (fraud control) | Finance / `accounts-payable` | 4 | [supplier-bank-change](workflows/supplier-bank-change.md) | [2026-10-22 · 4 passed, 5 failed, 4 not checked](https://fetchsandbox.com/runs/855eccad90?flow=vr_1d352154f9af49b5b8738b1d015ff7e8) |
 | 50 | Vulnerability remediation SLA | IT Security / `appsec` | 1 | [vulnerability-remediation](workflows/vulnerability-remediation.md) | [2026-10-22 · 3 passed, 3 failed, 3 not checked](https://fetchsandbox.com/runs/5825e3a8cf?flow=vr_14858015802a4bd8bc7aff4532274dff) |
 | 51 | Support escalation | Support / `support-ops` | 5 | [support-escalation](workflows/support-escalation.md) | [2026-10-16 · 15 passed, 1 not checked](https://fetchsandbox.com/runs/a3e6951d42?flow=vr_560dd52d3f244aaba40f6d925ae8c5c7) |
+| 52 | Catering quote to booking | Restaurant Operations / `catering` | 4 | [catering-quote](workflows/catering-quote.md) | [2026-11-14 · 25 passed, 4 not checked](https://fetchsandbox.com/runs/86863f3bc0?flow=vr_6d113a8a1bd84198bc1280c1e457bacc) |
+
+Row 52, [catering quote to booking](workflows/catering-quote.md), was added on November 14, 2026, after the October 27 audit above; the definition and role totals in that audit paragraph describe revision `0da1ca6`. Its business design and industry pattern are in [the catering design note](workflows/catering-quote-design.md), and its measured attempts in the [verification record](evidence/catering-quote-verification.md).
 
 [Customer Operations](workflows/customer-operations.md) is also on `main`: six specialist roles plus an approval-controlled dispatch stage. Its own FetchSandbox runner/receipt is not present on `main`.
 
