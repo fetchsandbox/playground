@@ -266,7 +266,7 @@ export const checks = [
   ),
 
   // ---- Declared, not measurable with the current backend/runner --------------------------------------
-  blocked("midrun_provider_change_by_person", "A person creates the lead's deal or sends the follow-up by hand while the run waits; the run adopts it instead of duplicating", "engine_unsupported",
+  blocked("midrun_provider_change_by_person", "A person creates the lead's deal or sends the follow-up by hand while the run waits; the run adopts it instead of duplicating", "setup_missing",
     "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only.",
     ["validate_integration provider_contracts.<provider>.qualified_external_inputs = [] (session vs_1e66584ab3b8)", "acme-ops/src/workflows/lead-follow-up.ts reconcileThenWrite / sendFollowUp pre-send lookup", "acme-ops/test/lead-follow-up.test.ts 'an existing contact is adopted'"]),
   blocked("multi_worker_shared_store", "Two live workers drive the same stored run at once (multi-container): one claim owner, no duplicate effect, the run still finishes", "setup_missing",
