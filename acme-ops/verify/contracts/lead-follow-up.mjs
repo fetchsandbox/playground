@@ -5,9 +5,10 @@ import { action, blocked, check, command, eq, restart, runs, runsPath, start } f
 // the run record it saved, and independently asserts the session's HubSpot,
 // Gmail, Calendar and Slack twins.
 //
-// Timing (appEnv below). The email confirmation schedule is NOT compressed:
-// initial lookup right after an unknown send, then 15 and 30 minutes after
-// the send (production default, LEAD_EMAIL_CONFIRM_INTERVAL_MS unset). Other
+// Timing (appEnv below). The email confirmation interval is compressed to
+// 20 s here because the managed relay lease (1800 s) cannot hold the real
+// 30-minute schedule; the real schedule is measured through the
+// caller-executed path (email_confirmation_spacing_30_minutes). Other
 // settings are test settings, recorded here: re-check after a refused or
 // unknown HubSpot/Calendar/Slack write 15 s (production 2 min), client
 // timeouts 4 s (Slack 2 s) so held responses end in a real disconnect,
@@ -92,13 +93,17 @@ export const checks = [
     check("concurrent_first_submissions", "5 concurrent first submissions: one run, one of each effect", [submit("concurrent_first_submissions", {}, { concurrency: 5 })], runs([...done("ok"), ...allApplied, complete])),
     contacts(email("concurrent_first_submissions"), 1), deals(leadId("concurrent_first_submissions"), 1), sent(email("concurrent_first_submissions"), 1), events(leadId("concurrent_first_submissions"), 1), posted(leadId("concurrent_first_submissions"), 1),
   ),
-  // Probe: malformed submissions. Expect: 400, no run, no writes.
+  // Probe: malformed submissions, and run-state reads with no / a wrong token. Expect: 400 / 401, no run, no writes, no data.
   twin(
-    check("invalid_input_rejected", "Malformed submissions (bad email, unsafe lead ID, empty or blank name) are rejected before any write", [
+    check("invalid_input_rejected", "Malformed submissions are rejected before any write; saved run state is not readable without the verifier token", [
       submit("invalid_input_rejected", { email: "not-an-email" }, { expectStatus: 400 }),
       submit("invalid_input_rejected", { leadId: "L 1/../x" }, { expectStatus: 400 }),
       submit("invalid_input_rejected", { name: "" }, { expectStatus: 400 }),
       submit("invalid_input_rejected", { name: "   " }, { expectStatus: 400 }),
+      // Ownership of saved state (folded in from verifier_reads_require_token: the server allows 30 checks).
+      { method: "GET", path: "/verify/runtime", authentication: "omitted", expect_status: 401 },
+      { method: "GET", path: runsPath("baseline"), authentication: "omitted", expect_status: 401 },
+      { method: "GET", path: runsPath("baseline"), authentication: "invalid", expect_status: 401 },
     ], runs([], 0)),
     contacts(email("invalid_input_rejected"), 0), sent(email("invalid_input_rejected"), 0),
   ),
@@ -124,25 +129,25 @@ export const checks = [
       [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_confirmedBy", "confirmation lookup 1/3"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete], { evidence: "accepted_response_readback" }), 120),
     sent(email("gmail_send_response_loss"), 1), events(leadId("gmail_send_response_loss"), 1), posted(leadId("gmail_send_response_loss"), 1),
   ),
-  // Probe (REAL TIME, ~31 min): send accepted, response lost, every lookup unavailable; a real runtime restart
-  // inside the window. Expect: lookups at +0, +15, +30 min after the send (agreed schedule, durable across the
-  // restart), never a resend, no event, then the Slack handoff (person, lead, blocked step, instructions).
-  // Evidence: saved lookup log (+minutes since the send), run events, twin Gmail/Calendar/Slack state, and the
-  // receipt's timestamped messages.list requests. Replaces the compressed gmail_unresolved_handoff of revision 1.
+  // Probe: send accepted, response lost, every lookup unavailable; a real runtime restart inside the window.
+  // Expect: initial lookup, then 2 scheduled lookups (anchored to the send, durable across the restart), never a
+  // resend, no event, then the Slack handoff. Evidence: refusal, saved lookup log, run events, twin state.
+  // TIMING IS COMPRESSED in this relay suite (LEAD_EMAIL_CONFIRM_INTERVAL_MS=20000, lookups at +0/+20 s/+40 s):
+  // this check measures the behavior, not the 15/30-minute spacing (see email_confirmation_spacing_30_minutes).
   twin(
-    eventually(check("email_confirmation_spacing_30_minutes", "Email outcome unresolvable: lookups at +0, +15, +30 min (across a restart), no resend, no event, then a Slack handoff", [
-      submit("email_confirmation_spacing_30_minutes"),
+    eventually(check("gmail_unresolved_handoff", "Email outcome unresolvable: initial + 2 scheduled lookups (across a restart), no resend, no event, Slack handoff", [
+      submit("gmail_unresolved_handoff"),
       restart,
     ], runs([
       ...done("partial"),
-      action("gmail.send_followup", "failed", 1, [eq("errorCode", "gmail:delivery_unconfirmed"), contains("error", "after 3 lookups (+0."), contains("error", "; +15."), contains("error", "; +30.")]),
+      action("gmail.send_followup", "failed", 1, [eq("errorCode", "gmail:delivery_unconfirmed"), contains("error", "after 3 lookups (+0.")]),
       event("confirmation lookup 1/3 at +0."),
-      event("confirmation lookup 2/3 at +15."),
+      event("confirmation lookup 2/3 at "),
       ...skipped("calendar.followup_event"),
       handoff("gmail.send_followup"),
-    ]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 2100),
-    sent(email("email_confirmation_spacing_30_minutes"), 1), events(leadId("email_confirmation_spacing_30_minutes"), 0),
-    posted(leadId("email_confirmation_spacing_30_minutes"), 1, `<@${OWNER}>`, "blocked at *follow-up email (Gmail)*", email("email_confirmation_spacing_30_minutes"), "MAY have been sent", "rfc822msgid:"),
+    ]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 180),
+    sent(email("gmail_unresolved_handoff"), 1), events(leadId("gmail_unresolved_handoff"), 0),
+    posted(leadId("gmail_unresolved_handoff"), 1, `<@${OWNER}>`, "blocked at *follow-up email (Gmail)*", email("gmail_unresolved_handoff"), "MAY have been sent", "rfc822msgid:"),
   ),
 
   // ---- Refusals, permissions and rate limits: nothing accepted, bounded re-checks, then a person ----
@@ -250,13 +255,6 @@ export const checks = [
     deals("L-iso-a", 1, "Ada Lovelace"), deals("L-iso-b", 1, "Grace Hopper"),
     sent("iso-a@example.test", 1), sent("iso-b@example.test", 1), events("L-iso-a", 1), events("L-iso-b", 1), posted("L-iso-a", 1), posted("L-iso-b", 1),
   ),
-  // Probe: the protected run-state routes without / with a wrong token. Expect: 401 and no run data.
-  check("verifier_reads_require_token", "Saved run state is not readable without the verifier token", [
-    { method: "GET", path: "/verify/runtime", authentication: "omitted", expect_status: 401 },
-    { method: "GET", path: runsPath("baseline"), authentication: "omitted", expect_status: 401 },
-    { method: "GET", path: runsPath("baseline"), authentication: "invalid", expect_status: 401 },
-  ], runs([], 0)),
-
   // ---- Last: this fault permanently expires the session's HubSpot twin credential,
   //      so any check after it would be blocked at HubSpot (observed in revision 1, attempt 3).
   twin(
@@ -266,6 +264,9 @@ export const checks = [
   ),
 
   // ---- Declared, not measurable with the current backend/runner --------------------------------------
+  blocked("email_confirmation_spacing_30_minutes", "The confirmation lookups run right after the unknown send and 15 and 30 minutes after it, then the handoff", "setup_missing",
+    "Measured attempt (rev 2, vr_7f0015df...): the real-time check reached its +15.0 min lookup, then the managed relay lease expired (manage_tunnel expires_in_seconds 1800; a second open is refused until close, and a new tunnel gets a new URL the configured run cannot follow), so the observation returned HTTP 503 and every later check lost its app. The execution budget allows 3300 s but no relay lease outlives 1800 s, and the 30-minute schedule plus setup needs more. Measured separately through the caller-executed arm/probe path (provider traffic, app_verified false); see the evidence record.",
+    ["receipt vr_7f0015df3bd648dc9b52e798d52ea98c: email_confirmation_spacing_30_minutes 'state observation returned HTTP 503'", "manage_tunnel open: expires_in_seconds 1800; second open: 'Close the current tunnel before opening another'", "capabilities.http_contract_limits.execution_budget_seconds.maximum 3300"]),
   blocked("midrun_provider_change_by_person", "A person creates the lead's deal or sends the follow-up by hand while the run waits; the run adopts it instead of duplicating", "setup_missing",
     "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only.",
     ["validate_integration provider_contracts.<provider>.qualified_external_inputs = [] (session vs_1e66584ab3b8)", "acme-ops/src/workflows/lead-follow-up.ts reconcileThenWrite / sendFollowUp pre-send lookup", "acme-ops/test/lead-follow-up.test.ts 'an existing contact is adopted'"]),
@@ -305,7 +306,9 @@ export default {
   providers: ["hubspot", "gmail", "google-calendar", "slack"],
   seed,
   appEnv: {
-    // LEAD_EMAIL_CONFIRM_INTERVAL_MS deliberately unset: the production schedule (initial, +15, +30 min) runs.
+    // Compressed for the relay suite (production 15 min): the managed relay lease (1800 s) cannot hold the
+    // real 30-minute schedule; that timing is measured through the caller-executed path instead.
+    LEAD_EMAIL_CONFIRM_INTERVAL_MS: "20000",
     PROVIDER_TIMEOUT_MS: "4000",
     SLACK_TIMEOUT_MS: "2000",
     LEAD_RECONCILE_READ_TIMEOUT_MS: "15000",
@@ -316,11 +319,10 @@ export default {
     LEAD_FOLLOWUP_OWNER_SLACK_ID: OWNER,
     TICK_INTERVAL_MS: "1000",
   },
-  // The real 30-minute check needs more than the default 900 s execution budget.
-  applicationConfig: { execution_budget_seconds: 3300 },
+  applicationConfig: { execution_budget_seconds: 1500 },
   // The runner polls fast once this check starts, so the restart lands while the send is in flight.
   restartWatch: "restart-during-confirmation",
-  maxRunMinutes: 75,
+  maxRunMinutes: 40,
   context: {
     goal: "Validate the lead-follow-up runtime contract: lead form submission (leadId, name, email) → HubSpot contact found or created, exactly one deal per lead, exactly one Gmail follow-up email, a Calendar follow-up only after the email is confirmed, and a Slack completion or blocked-step handoff to a named person. Repeated and concurrent submissions are safe; a timeout is an unknown outcome reconciled before any repeat; an unconfirmed email gets an initial lookup and lookups 15 and 30 minutes after the send, then a person; a worker that dies mid-call is taken over without a resend.",
     workflow: "POST /invocations {action:start,input:{leadId,name,email}}; run id lead-<leadId>; reconcile-first steps (contact by email, deal by lead token + GET, email by RFC Message-ID + GET, event by derived id, Slack by marker in history); deferred re-checks woken by the runtime tick; stale claims taken over by reentrant steps. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",
@@ -331,18 +333,18 @@ export default {
   scope_review: checks.map((c) => ({ check_id: c.id, classification: "in_scope", reason: "Promised by the lead follow-up request (no duplicates, safe resubmission, reconcile unknown outcomes, agreed email schedule then a person, recovery and isolation).", evidence: ["acme-ops/src/workflows/lead-follow-up.ts"] })),
   coverage: {
     baseline: ["baseline"],
-    identity_and_access: ["verifier_reads_require_token"],
+    identity_and_access: ["invalid_input_rejected"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: "The deal is created without amount, currency or quantity; no money moves.",
     duplicate_replay: ["resubmitted_lead_joins_run", "hubspot_deal_response_loss", "gmail_send_response_loss", "existing_contact_adopted", "slack_slow_network_single_post"],
     concurrency: ["concurrent_first_submissions", "multi_worker_shared_store"],
     ordering_and_stale_events: ["midrun_resubmission_while_waiting", "midrun_provider_change_by_person", "baseline"],
-    delayed_or_missing_events: ["gmail_send_response_loss", "email_confirmation_spacing_30_minutes"],
+    delayed_or_missing_events: ["gmail_send_response_loss", "gmail_unresolved_handoff", "email_confirmation_spacing_30_minutes"],
     provider_auth_and_scopes: ["hubspot_auth_failure", "hubspot_scope_denied", "hubspot_token_expired", "gmail_auth_failure", "calendar_auth_failure", "slack_missing_scope", "slack_not_in_channel", "slack_channel_not_found"],
     rate_limit_server_error_timeout: ["hubspot_rate_limited", "gmail_rate_limited", "calendar_rate_limited", "slack_rate_limited", "slack_slow_network_single_post"],
-    accepted_effect_response_loss: ["hubspot_deal_response_loss", "gmail_send_response_loss", "email_confirmation_spacing_30_minutes", "restart_during_confirmation"],
+    accepted_effect_response_loss: ["hubspot_deal_response_loss", "gmail_send_response_loss", "gmail_unresolved_handoff", "restart_during_confirmation"],
     partial_effects_and_recovery: ["gmail_send_rejected", "gmail_send_rejected_once", "calendar_auth_failure", "hubspot_token_expired", "slack_rate_limited", "restart_during_confirmation"],
-    restart_and_durability: ["restart_during_confirmation", "email_confirmation_spacing_30_minutes", "multi_worker_shared_store"],
+    restart_and_durability: ["restart_during_confirmation", "gmail_unresolved_handoff", "multi_worker_shared_store"],
     reconciliation: ["reconcile_reads_back", "hubspot_deal_response_loss", "gmail_send_response_loss", "slack_slow_network_single_post"],
     cancellation_refund_entitlements: "The workflow promises no cancellation, refund or entitlement behavior.",
     data_and_privacy_boundaries: "Synthetic example.test leads only. The lead's name and email appear in the internal sales channel's handoff (requested); the follow-up email goes only to the submitted address (midrun_resubmission_while_waiting asserts nothing reaches a changed address); no calendar invitation is sent to the lead.",

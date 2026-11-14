@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-lead-follow-up-1.0.0-9a83348",
-  "session_id": "vs_c9c4b4575037",
-  "run_id": "vr_4189ea30a65d443fb39db3370daae9a2",
-  "receipt_url": "https://fetchsandbox.com/runs/cf367de3ef?flow=vr_4189ea30a65d443fb39db3370daae9a2",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-ecd867f",
+  "session_id": "vs_5f734cb8cf0c",
+  "run_id": "vr_7f0015df3bd648dc9b52e798d52ea98c",
+  "receipt_url": "https://fetchsandbox.com/runs/007251338f?flow=vr_7f0015df3bd648dc9b52e798d52ea98c",
   "status": null,
   "verdict": "inconclusive",
   "app_verified": false,
@@ -46,104 +46,124 @@
     },
     {
       "id": "hubspot_deal_response_loss",
+      "status": "held",
+      "explanation": "expected exactly 1, found 1"
+    },
+    {
+      "id": "gmail_send_response_loss",
       "status": "unmeasured",
       "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
     },
     {
-      "id": "gmail_send_response_loss",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
-    },
-    {
-      "id": "gmail_unresolved_handoff",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "state observation returned HTTP 503"
     },
     {
       "id": "gmail_send_rejected",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "gmail_send_rejected_once",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "gmail_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "gmail_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "hubspot_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "hubspot_scope_denied",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "hubspot_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "calendar_auth_failure",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "calendar_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "slack_channel_not_found",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "slack_not_in_channel",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "slack_missing_scope",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "slack_rate_limited",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
-    },
-    {
-      "id": "restart_during_confirmation",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
-    },
-    {
-      "id": "hubspot_token_expired",
-      "status": "held",
-      "explanation": "expected exactly 1, found 1"
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
       "id": "slack_slow_network_single_post",
       "status": "unmeasured",
-      "explanation": "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only."
+      "explanation": "Starting-state precondition was not established; app actions were not run"
     },
     {
-      "id": "email_confirmation_spacing_30_minutes",
+      "id": "restart_during_confirmation",
       "status": "unmeasured",
-      "explanation": "This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only."
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "midrun_resubmission_while_waiting",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "two_leads_isolated",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "verifier_reads_require_token",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "unmeasured",
+      "explanation": "Starting-state precondition was not established; app actions were not run"
+    },
+    {
+      "id": "midrun_provider_change_by_person",
+      "status": "unmeasured",
+      "explanation": "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only."
+    },
+    {
+      "id": "multi_worker_shared_store",
+      "status": "unmeasured",
+      "explanation": "The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine."
     }
   ],
-  "recorded_at": "2026-11-14T07:02:15.938Z"
+  "recorded_at": "2026-11-14T15:31:43.254Z"
 }
