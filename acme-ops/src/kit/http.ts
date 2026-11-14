@@ -31,6 +31,8 @@ export interface RequestOptions {
    * 429 (explicitly not accepted) is retried. Default: true.
    */
   idempotent?: boolean;
+  /** Overrides the endpoint's timeout for this request (e.g. a patient reconciliation read). */
+  timeoutMs?: number;
 }
 
 export interface HttpResult<T> {
@@ -131,7 +133,7 @@ export class ProviderHttp {
     const url = this.url(path, opts.query);
     let res: Response;
     try {
-      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(this.timeoutMs) });
+      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(opts.timeoutMs ?? this.timeoutMs) });
     } catch (err) {
       const timedOut = (err as Error)?.name === "TimeoutError";
       throw new ProviderError(this.provider, 0, timedOut ? "timeout" : "network", true, `${method} ${path}: ${(err as Error).message}`);

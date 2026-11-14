@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MemoryStore } from "../src/kit/store";
+import { type Item, MemoryStore } from "../src/kit/store";
 import { followUpEventId, followUpMessageId, followUpSlot, leadFollowUp, slackMarker } from "../src/workflows/lead-follow-up";
 import { NOW, startWorld, type World } from "./fake-world";
 
@@ -8,6 +8,40 @@ delete process.env.LEAD_EMAIL_CONFIRM_INTERVAL_MS;
 delete process.env.LEAD_RETRY_INTERVAL_MS;
 
 const MIN = 60_000;
+
+/** A store whose worker "dies" (every later write throws) right after a chosen write succeeds. */
+class KillableStore extends MemoryStore {
+  killAfter?: (item: Item) => boolean;
+  private dead = false;
+  constructor(private readonly inner: MemoryStore) {
+    super();
+  }
+  private check() {
+    if (this.dead) throw new Error("worker died");
+  }
+  override get(pk: string) {
+    return this.inner.get(pk);
+  }
+  override list(prefix: string) {
+    return this.inner.list(prefix);
+  }
+  override async create(item: Item) {
+    this.check();
+    const ok = await this.inner.create(item);
+    if (ok && this.killAfter?.(item)) this.dead = true;
+    return ok;
+  }
+  override async replace(item: Item) {
+    this.check();
+    const ok = await this.inner.replace(item);
+    if (ok && this.killAfter?.(item)) this.dead = true;
+    return ok;
+  }
+  override async delete(pk: string) {
+    this.check();
+    return this.inner.delete(pk);
+  }
+}
 const CHANNEL = "C0CSOPS001";
 const user = { userId: "U_WEBFORM" };
 const lead = (over: object = {}) => ({ leadId: "L-1001", name: "Ada Lovelace", email: "Ada@Example.test", salesChannel: CHANNEL, handoffUserId: "U0SALESLEAD", ...over });
@@ -141,44 +175,37 @@ describe("lead-follow-up", () => {
     expect(posts(w, /^\/crm\/v3\/objects\/deals$/)).toBe(2);
   });
 
-  it("email accepted but response lost: no resend; the first confirmation lookup (+10 min) confirms it, then the event is created", async () => {
+  it("email accepted but response lost: no resend; the initial lookup (right after the timeout) confirms it, then the event is created", async () => {
     w.lostResponses.push({ method: "POST", path: /messages\/send$/, times: 1 });
     const e = engine();
     const r = await e.handle({ action: "start", input: lead(), requestedBy: user });
-    expect(r.body.phase).toBe("WAITING");
-    expect(act(r.body, "gmail.send_followup")).toMatchObject({ status: "scheduled", errorCode: "gmail:outcome_unknown", waitUntil: new Date(NOW + 10 * MIN).toISOString() });
-    expect(act(r.body, "calendar.followup_event").status).toBe("scheduled");
-    expect(w.state.calendar.events).toHaveLength(0);
-    expect(w.state.slack.messages).toHaveLength(0);
-
-    await tickAt(e, NOW + 5 * MIN); // not due yet
-    expect(w.requests.filter((q) => q.method === "GET" && q.path === "/gmail/v1/users/me/messages").length).toBe(1); // only the pre-send lookup
-
-    await tickAt(e, NOW + 10 * MIN);
-    const s = await status(e);
-    expect(act(s, "gmail.send_followup")).toMatchObject({ status: "applied", detail: { state: "confirmed", confirmedBy: "confirmation lookup 1/3", sendAttempts: 1 } });
+    expect(act(r.body, "gmail.send_followup")).toMatchObject({ status: "applied", detail: { state: "confirmed", confirmedBy: "confirmation lookup 1/3", confirmedAfter: "+0.0 min", sendAttempts: 1 } });
     expect(posts(w, /messages\/send$/)).toBe(1);
     expect(w.state.gmail.sent).toHaveLength(1);
     expect(w.state.calendar.events).toHaveLength(1);
     expect(w.state.slack.messages[0].text).toContain("confirmed by confirmation lookup 1/3");
-    expect(s).toMatchObject({ phase: "DONE", outcome: "ok" });
+    expect(r.body).toMatchObject({ phase: "DONE", outcome: "ok" });
   });
 
-  it("unresolved email: 3 lookups at +10/+20/+30 min, then a Slack handoff to a person; no resend, no event", async () => {
+  it("unresolved email: lookups right after the send, at +15 and +30 min (agreed schedule), then a Slack handoff; no resend, no event", async () => {
     w.lostResponses.push({ method: "POST", path: /messages\/send$/, times: 1 });
-    // Every confirmation lookup fails (the pre-send lookup too).
+    // Every lookup fails (the pre-send lookup too).
     w.faults.push({ method: "GET", path: /^\/gmail\/v1\/users\/me\/messages$/, status: 503, body: { error: { code: 503, message: "backend error" } } });
     const e = engine();
-    await e.handle({ action: "start", input: lead(), requestedBy: user });
-    for (const [k, at] of [[1, 10], [2, 20]] as const) {
-      await tickAt(e, NOW + at * MIN);
-      const s = await status(e);
-      expect(act(s, "gmail.send_followup")).toMatchObject({ status: "scheduled", errorCode: "gmail:delivery_unknown", waitUntil: new Date(NOW + (at + 10) * MIN).toISOString() });
-      expect(act(s, "gmail.send_followup").error).toContain(`lookup ${k}/3`);
-    }
+    const r = await e.handle({ action: "start", input: lead(), requestedBy: user });
+    // Initial lookup already happened inside the first execution.
+    expect(act(r.body, "gmail.send_followup")).toMatchObject({ status: "scheduled", errorCode: "gmail:outcome_unknown", waitUntil: new Date(NOW + 15 * MIN).toISOString() });
+    expect(r.body.events.map((x: any) => x.msg).join("\n")).toContain("confirmation lookup 1/3 at +0.0 min: failed (gmail:503); next lookup at +15 min; not resending");
+    await tickAt(e, NOW + 14 * MIN); // not due yet
+    expect(w.requests.filter((q) => q.method === "GET" && q.path === "/gmail/v1/users/me/messages").length).toBe(2);
+    await tickAt(e, NOW + 15 * MIN + 7_000); // a late tick must not shift the next lookup
+    let s = await status(e);
+    expect(act(s, "gmail.send_followup")).toMatchObject({ status: "scheduled", errorCode: "gmail:delivery_unknown", waitUntil: new Date(NOW + 30 * MIN).toISOString() });
+    expect(act(s, "gmail.send_followup").error).toContain("lookup 2/3 at +15.1 min");
     await tickAt(e, NOW + 30 * MIN);
-    const s = await status(e);
+    s = await status(e);
     expect(act(s, "gmail.send_followup")).toMatchObject({ status: "failed", errorCode: "gmail:delivery_unconfirmed" });
+    expect(act(s, "gmail.send_followup").error).toContain("+0.0 min failed (gmail:503); +15.1 min failed (gmail:503); +30.0 min failed (gmail:503)");
     expect(act(s, "calendar.followup_event").status).toBe("skipped");
     expect(act(s, "slack.notify_team")).toMatchObject({ status: "applied", detail: { kind: "blocked", blockedStep: "gmail.send_followup" } });
     expect(s).toMatchObject({ phase: "DONE", outcome: "partial" });
@@ -193,7 +220,7 @@ describe("lead-follow-up", () => {
     expect(text).toContain("MAY have been sent");
     expect(text).toContain(`rfc822msgid:${followUpMessageId("L-1001").replace("<", "&lt;").replace(">", "&gt;")}`);
     expect(text).toContain("Done: HubSpot contact");
-    // Later lookups after the handoff do not happen on their own.
+    // No lookups after the handoff.
     await tickAt(e, NOW + 90 * MIN);
     expect(w.requests.filter((q) => q.method === "GET" && q.path === "/gmail/v1/users/me/messages").length).toBe(4);
   });
@@ -259,15 +286,68 @@ describe("lead-follow-up", () => {
     expect(r.body.outcome).toBe("partial");
   });
 
-  it("a restart during the confirmation window continues from the saved state", async () => {
+  it("a restart during the confirmation window continues from the saved state (lookup at +15 min confirms)", async () => {
     w.lostResponses.push({ method: "POST", path: /messages\/send$/, times: 1 });
+    w.faults.push({ method: "GET", path: /^\/gmail\/v1\/users\/me\/messages$/, status: 503, body: { error: { code: 503 } }, times: 2 }); // pre-send + initial lookup
     const store = new MemoryStore();
     await engine(store).handle({ action: "start", input: lead(), requestedBy: user });
     const fresh = engine(store); // a new process over the same durable store
-    await tickAt(fresh, NOW + 10 * MIN);
+    await tickAt(fresh, NOW + 15 * MIN);
     const s = await status(fresh);
     expect(s).toMatchObject({ phase: "DONE", outcome: "ok" });
+    expect(act(s, "gmail.send_followup").detail).toMatchObject({ confirmedBy: "confirmation lookup 2/3", confirmedAfter: "+15.0 min" });
     expect(posts(w, /messages\/send$/)).toBe(1);
+  });
+
+  it("stale worker: a process that died right after Gmail accepted the send is taken over; the email is confirmed by lookup, never resent", async () => {
+    const shared = new MemoryStore();
+    const dying = new KillableStore(shared);
+    const a = w.engine(leadFollowUp, { now: () => clock.t, store: dying, staleMs: 60_000, staleClaimMs: 60_000 });
+    // Worker A: the write-ahead "maybe sent" marker is saved, the send goes out, then the worker dies.
+    dying.killAfter = (item) => String(item.pk).endsWith("#email") && (item as any).value?.phase === "unknown";
+    await a.handle({ action: "start", input: lead(), requestedBy: user }).catch(() => undefined);
+    await a.idle();
+    expect(w.state.gmail.sent).toHaveLength(1);
+    const worker = () => w.engine(leadFollowUp, { now: () => clock.t, store: shared, staleMs: 60_000, staleClaimMs: 60_000 });
+    const b = worker();
+    // Not stale yet: nobody touches the claim.
+    await tickAt(b, NOW + 30_000);
+    expect((await status(b)).phase).toBe("RUNNING");
+    // Two live workers wake together once it is stale: one takeover, no resend.
+    const c = worker();
+    clock.t = NOW + 61_000;
+    await Promise.all([b.handle({ action: "tick" }), c.handle({ action: "tick" })]);
+    await Promise.all([b.idle(), c.idle()]);
+    const s = await status(b);
+    expect(s).toMatchObject({ phase: "DONE", outcome: "ok" });
+    expect(act(s, "gmail.send_followup").detail).toMatchObject({ confirmedBy: "confirmation lookup 1/3", sendAttempts: 1 });
+    expect(s.events.filter((x: any) => x.msg.includes("took over a stale claim")).length).toBe(1);
+    expect(posts(w, /messages\/send$/)).toBe(1);
+    expect([w.state.gmail.sent.length, w.state.calendar.events.length, w.state.slack.messages.length]).toEqual([1, 1, 1]);
+  });
+
+  it("two different leads in flight together never share or touch each other's records", async () => {
+    w.lostResponses.push({ method: "POST", path: /messages\/send$/, times: 1 });
+    const e = engine();
+    await Promise.all([e.handle({ action: "start", input: lead(), requestedBy: user }), e.handle({ action: "start", input: lead({ leadId: "L-2002", name: "Grace Hopper", email: "grace@example.test" }), requestedBy: user })]);
+    const [s1, s2] = [await status(e), await status(e, "L-2002")];
+    expect([s1.phase, s2.phase]).toEqual(["DONE", "DONE"]);
+    expect(w.state.hubspot.deals.map((d) => d.properties.dealname).sort()).toEqual(["Lead L-1001 · Ada Lovelace", "Lead L-2002 · Grace Hopper"]);
+    expect(w.state.gmail.sent.map((m) => m.messageId).sort()).toEqual([followUpMessageId("L-1001"), followUpMessageId("L-2002")].sort());
+    expect(w.state.slack.messages.filter((m) => m.text.includes(slackMarker("L-1001")))).toHaveLength(1);
+    expect(w.state.slack.messages.filter((m) => m.text.includes(slackMarker("L-2002")))).toHaveLength(1);
+    expect(act(s1, "hubspot.deal").detail.contactId).not.toBe(act(s2, "hubspot.deal").detail.contactId);
+  });
+
+  it("a resubmission with changed details while the run waits joins it; the first submission's data is used", async () => {
+    w.lostResponses.push({ method: "POST", path: /^\/crm\/v3\/objects\/deals$/, times: 1 });
+    const e = engine();
+    await e.handle({ action: "start", input: lead(), requestedBy: user });
+    const again = await e.handle({ action: "start", input: lead({ name: "Someone Else", email: "other@example.test" }), requestedBy: user });
+    expect(again.body).toMatchObject({ duplicate: true, phase: "WAITING" });
+    await tickAt(e, NOW + 2 * MIN);
+    expect(w.state.hubspot.deals.map((d) => d.properties.dealname)).toEqual(["Lead L-1001 · Ada Lovelace"]);
+    expect(w.state.gmail.sent.map((m) => /^To: (.+)$/m.exec(m.raw)![1]!.trim())).toEqual(["ada@example.test"]);
   });
 
   it("rejects invalid input without writing anything", async () => {

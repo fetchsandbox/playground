@@ -1,15 +1,17 @@
-import { action, blocked, check, command, eq, restart, runs, start } from "./lib.mjs";
+import { action, blocked, check, command, eq, restart, runs, runsPath, start } from "./lib.mjs";
 
-// Lead follow-up contract. Every check submits its own synthetic lead
-// (L-<check>, lead-<check>@example.test) to the real runtime, observes the
-// run record the runtime saved, and independently asserts the session's
-// HubSpot, Gmail, Calendar and Slack twins.
+// Lead follow-up contract (revision 2). Every check submits its own synthetic
+// lead (L-<check>, lead-<check>@example.test) to the real runtime, observes
+// the run record it saved, and independently asserts the session's HubSpot,
+// Gmail, Calendar and Slack twins.
 //
-// Timing is compressed for the run and recorded here (appEnv): the 3 email
-// confirmation lookups are 15 s apart instead of 10 minutes, re-checks after
-// a refused/unknown write wait 3 s instead of 2 minutes, and the client
-// timeout is 4 s so a held (accepted) response really ends in a disconnect.
-// The production spacing (+10/+20/+30 min) is covered by the local clock test.
+// Timing (appEnv below). The email confirmation schedule is NOT compressed:
+// initial lookup right after an unknown send, then 15 and 30 minutes after
+// the send (production default, LEAD_EMAIL_CONFIRM_INTERVAL_MS unset). Other
+// settings are test settings, recorded here: re-check after a refused or
+// unknown HubSpot/Calendar/Slack write 15 s (production 2 min), client
+// timeouts 4 s (Slack 2 s) so held responses end in a real disconnect,
+// stale-worker recovery after 20 s (production 1 min / claim 5 min).
 
 const CHANNEL = "C0SALES0001";
 const OWNER = "U0SALESLEAD";
@@ -20,19 +22,20 @@ const email = (c) => `lead-${slug(c)}@example.test`;
 // The Slack channel and the handoff person come from runtime config (appEnv), as a form adapter would supply them.
 const lead = (c, over = {}) => ({ leadId: leadId(c), name: "Ada Lovelace", email: email(c), ...over });
 const submit = (c, over = {}, opts = {}) => start(c, lead(c, over), opts);
+/** Start without waiting for the run to park (the verifier's next action runs while the workflow is mid-flight). */
+const submitNoWait = (c, over = {}) => {
+  const a = submit(c, over);
+  return { ...a, body: { ...a.body, wait: false } };
+};
 
 // --- Independent provider (twin) state for one lead ------------------------
 const contains = (select, text) => ({ select, contains: text, required: true });
-const contacts = (c, n) => ({ provider: "hubspot", collection: "contacts", assertion: { select: "records[*]", count: n, required: true, where: [eq("properties.email", email(c))] } });
-const deals = (c, n) => ({ provider: "hubspot", collection: "deals", assertion: { select: "records[*]", count: n, required: true, where: [contains("properties.dealname", `Lead ${leadId(c)} `)] } });
-const sent = (c, n) => ({
-  provider: "gmail",
-  collection: "messages",
-  // The lead's address appears only in the To header of messages sent to that lead.
-  assertion: { select: "records[*]", count: n, required: true, where: [{ select: "payload.headers[*]", count: 1, required: true, where: [eq("value", email(c))] }] },
-});
-const events = (c, n) => ({ provider: "google-calendar", collection: "events", assertion: { select: "records[*]", count: n, required: true, where: [contains("summary", `(lead ${leadId(c)})`)] } });
-const posted = (c, n, ...text) => ({ provider: "slack", collection: "messages", assertion: { select: "records[*]", count: n, required: true, where: [contains("text", `[lead-followup ${leadId(c)}]`), ...text.map((t) => contains("text", t))] } });
+const contacts = (addr, n) => ({ provider: "hubspot", collection: "contacts", assertion: { select: "records[*]", count: n, required: true, where: [eq("properties.email", addr)] } });
+const deals = (id, n, ...name) => ({ provider: "hubspot", collection: "deals", assertion: { select: "records[*]", count: n, required: true, where: [contains("properties.dealname", `Lead ${id} `), ...name.map((t) => contains("properties.dealname", t))] } });
+// The lead's address appears only in the To header of messages sent to that lead.
+const sent = (addr, n) => ({ provider: "gmail", collection: "messages", assertion: { select: "records[*]", count: n, required: true, where: [{ select: "payload.headers[*]", count: 1, required: true, where: [eq("value", addr)] }] } });
+const events = (id, n) => ({ provider: "google-calendar", collection: "events", assertion: { select: "records[*]", count: n, required: true, where: [contains("summary", `(lead ${id})`)] } });
+const posted = (id, n, ...text) => ({ provider: "slack", collection: "messages", assertion: { select: "records[*]", count: n, required: true, where: [contains("text", `[lead-followup ${id}]`), ...text.map((t) => contains("text", t))] } });
 const twin = (c, ...provider_assertions) => ({ ...c, provider_assertions });
 
 // --- Saved run state ---------------------------------------------------------
@@ -42,6 +45,8 @@ const allApplied = STEPS.map((id) => action(id, "applied"));
 const complete = action("slack.notify_team", "applied", 1, [eq("detail_kind", "complete")]);
 const handoff = (step) => action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked"), eq("detail_blockedStep", step)]);
 const skipped = (...ids) => ids.map((id) => action(id, "skipped"));
+/** Exactly one run event whose message contains `text`. */
+const event = (text) => ({ select: "events[*]", count: 1, required: true, where: [contains("msg", text)] });
 
 /** For runs that finish through durable re-checks: poll the saved state (no repeat) up to `seconds`. */
 function eventually(c, seconds) {
@@ -56,7 +61,9 @@ function faulted(id, name, provider, scenario, conds, { evidence = "refusal", ov
 }
 
 export const checks = [
-  // ---- Happy path, identity of effects, replay, concurrency, input ---------------------------
+  // ---- Happy path, effect identity, replay, concurrency, input ------------------------------
+  // Probe: one new lead. Expect: 1 contact, 1 deal (read back, associated), 1 confirmed email, then 1 event, then 1 Slack completion.
+  // Evidence: saved run (all applied, outcome ok) + each twin's records for this lead.
   twin(
     check("baseline", "New lead: one contact, one verified deal, one confirmed email, then one event, then one Slack completion", [submit("baseline")], runs([
       ...done("ok"),
@@ -66,21 +73,26 @@ export const checks = [
       action("calendar.followup_event", "applied"),
       complete,
     ])),
-    contacts("baseline", 1), deals("baseline", 1), sent("baseline", 1), events("baseline", 1), posted("baseline", 1, ":white_check_mark: Lead followed up"),
+    contacts(email("baseline"), 1), deals(leadId("baseline"), 1), sent(email("baseline"), 1), events(leadId("baseline"), 1), posted(leadId("baseline"), 1, ":white_check_mark: Lead followed up"),
   ),
+  // Probe: the lead's email is already a HubSpot contact (fixture). Expect: adopted, not duplicated or overwritten.
   twin(
     check("existing_contact_adopted", "Existing HubSpot contact is adopted, not duplicated or overwritten", [submit("existing_contact_adopted")], runs([...done("ok"), action("hubspot.contact", "applied", 1, [eq("detail_created", false)])])),
-    contacts("existing_contact_adopted", 1), deals("existing_contact_adopted", 1),
+    contacts(email("existing_contact_adopted"), 1), deals(leadId("existing_contact_adopted"), 1),
     { provider: "hubspot", collection: "contacts", assertion: { select: "records[*]", count: 1, required: true, where: [eq("properties.email", email("existing_contact_adopted")), eq("properties.firstname", "Augusta")] } },
   ),
+  // Probe: the same lead submitted again with another submission id. Expect: one run, nothing written twice
+  // (the verifier drives the check twice, so this is three submissions).
   twin(
     check("resubmitted_lead_joins_run", "Resubmitted lead (new submission id) joins the run; nothing written twice", [submit("resubmitted_lead_joins_run"), submit("resubmitted_lead_joins_run", { name: "Ada K. Lovelace" }, { runId: "resubmit-b-{{run_id}}" })], runs([...done("ok"), ...allApplied, complete])),
-    contacts("resubmitted_lead_joins_run", 1), deals("resubmitted_lead_joins_run", 1), sent("resubmitted_lead_joins_run", 1), events("resubmitted_lead_joins_run", 1), posted("resubmitted_lead_joins_run", 1),
+    contacts(email("resubmitted_lead_joins_run"), 1), deals(leadId("resubmitted_lead_joins_run"), 1), sent(email("resubmitted_lead_joins_run"), 1), events(leadId("resubmitted_lead_joins_run"), 1), posted(leadId("resubmitted_lead_joins_run"), 1),
   ),
+  // Probe: 5 concurrent first submissions. Expect: one run, one of each effect.
   twin(
     check("concurrent_first_submissions", "5 concurrent first submissions: one run, one of each effect", [submit("concurrent_first_submissions", {}, { concurrency: 5 })], runs([...done("ok"), ...allApplied, complete])),
-    contacts("concurrent_first_submissions", 1), deals("concurrent_first_submissions", 1), sent("concurrent_first_submissions", 1), events("concurrent_first_submissions", 1), posted("concurrent_first_submissions", 1),
+    contacts(email("concurrent_first_submissions"), 1), deals(leadId("concurrent_first_submissions"), 1), sent(email("concurrent_first_submissions"), 1), events(leadId("concurrent_first_submissions"), 1), posted(leadId("concurrent_first_submissions"), 1),
   ),
+  // Probe: malformed submissions. Expect: 400, no run, no writes.
   twin(
     check("invalid_input_rejected", "Malformed submissions (bad email, unsafe lead ID, empty or blank name) are rejected before any write", [
       submit("invalid_input_rejected", { email: "not-an-email" }, { expectStatus: 400 }),
@@ -88,124 +100,177 @@ export const checks = [
       submit("invalid_input_rejected", { name: "" }, { expectStatus: 400 }),
       submit("invalid_input_rejected", { name: "   " }, { expectStatus: 400 }),
     ], runs([], 0)),
-    contacts("invalid_input_rejected", 0), sent("invalid_input_rejected", 0),
+    contacts(email("invalid_input_rejected"), 0), sent(email("invalid_input_rejected"), 0),
   ),
+  // Probe: reconcile after completion. Expect: every effect reads back as `match`.
   check("reconcile_reads_back", "Reconcile reads every effect back from its provider: all match", [submit("reconcile_reads_back"), command("reconcile", 1)], runs([
     ...done("ok"),
     ...[...STEPS, "slack.notify_team"].map((id) => action(id, "applied", 1, [eq("reconciled", "match")])),
   ])),
 
-  // ---- Unknown outcomes: accepted writes whose response is lost ---------------------------
+  // ---- Lost responses after acceptance ----------------------------------------------------------
+  // Probe: HubSpot commits the deal and holds the response (~10 s); client times out at 4 s.
+  // Expect: no repeat; the re-check (15 s later, after the hold) finds the deal by token + GET; one deal.
+  // Evidence: accepted write + disconnect + later direct read (accepted_response_readback) + twin deal count.
   twin(
     eventually(faulted("hubspot_deal_response_loss", "Deal accepted, response lost: no repeat; re-check finds it by lead token and id, no second deal", "hubspot", "deal_accepted_response_loss",
-      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail_via", "lookup"), eq("detail_created", true), eq("detail_verified", true)]), complete], { evidence: "accepted_response_readback" }), 90),
-    deals("hubspot_deal_response_loss", 1), sent("hubspot_deal_response_loss", 1),
+      [...done("ok"), action("hubspot.deal", "applied", 1, [eq("detail_via", "lookup"), eq("detail_created", true), eq("detail_verified", true)]), complete], { evidence: "accepted_response_readback" }), 120),
+    deals(leadId("hubspot_deal_response_loss"), 1), sent(email("hubspot_deal_response_loss"), 1),
   ),
+  // Probe: Gmail commits the send and holds the response. Expect: no resend; the initial lookup (right after
+  // the timeout, per the agreed schedule) confirms it; then the event. Evidence: as above + Gmail count.
   twin(
-    eventually(faulted("gmail_send_response_loss", "Email accepted, response lost: no resend; confirmed by lookup 1, then booked", "gmail", "direct_send_accepted_response_loss",
+    eventually(faulted("gmail_send_response_loss", "Email accepted, response lost: no resend; initial lookup confirms it, then booked", "gmail", "direct_send_accepted_response_loss",
       [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_confirmedBy", "confirmation lookup 1/3"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete], { evidence: "accepted_response_readback" }), 120),
-    sent("gmail_send_response_loss", 1), events("gmail_send_response_loss", 1), posted("gmail_send_response_loss", 1),
+    sent(email("gmail_send_response_loss"), 1), events(leadId("gmail_send_response_loss"), 1), posted(leadId("gmail_send_response_loss"), 1),
   ),
+  // Probe (REAL TIME, ~31 min): send accepted, response lost, every lookup unavailable; a real runtime restart
+  // inside the window. Expect: lookups at +0, +15, +30 min after the send (agreed schedule, durable across the
+  // restart), never a resend, no event, then the Slack handoff (person, lead, blocked step, instructions).
+  // Evidence: saved lookup log (+minutes since the send), run events, twin Gmail/Calendar/Slack state, and the
+  // receipt's timestamped messages.list requests. Replaces the compressed gmail_unresolved_handoff of revision 1.
   twin(
-    eventually(faulted("gmail_unresolved_handoff", "Email outcome unresolvable: 3 lookups, no resend, no event, Slack handoff to a person", "gmail", "direct_send_accepted_lookup_unavailable",
-      [...done("partial"), action("gmail.send_followup", "failed", 1, [eq("errorCode", "gmail:delivery_unconfirmed")]), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]), 150),
-    sent("gmail_unresolved_handoff", 1), events("gmail_unresolved_handoff", 0),
-    posted("gmail_unresolved_handoff", 1, `<@${OWNER}>`, "blocked at *follow-up email (Gmail)*", email("gmail_unresolved_handoff"), "after 3 lookups", "MAY have been sent", "rfc822msgid:"),
+    eventually(check("email_confirmation_spacing_30_minutes", "Email outcome unresolvable: lookups at +0, +15, +30 min (across a restart), no resend, no event, then a Slack handoff", [
+      submit("email_confirmation_spacing_30_minutes"),
+      restart,
+    ], runs([
+      ...done("partial"),
+      action("gmail.send_followup", "failed", 1, [eq("errorCode", "gmail:delivery_unconfirmed"), contains("error", "after 3 lookups (+0."), contains("error", "; +15."), contains("error", "; +30.")]),
+      event("confirmation lookup 1/3 at +0."),
+      event("confirmation lookup 2/3 at +15."),
+      ...skipped("calendar.followup_event"),
+      handoff("gmail.send_followup"),
+    ]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 2100),
+    sent(email("email_confirmation_spacing_30_minutes"), 1), events(leadId("email_confirmation_spacing_30_minutes"), 0),
+    posted(leadId("email_confirmation_spacing_30_minutes"), 1, `<@${OWNER}>`, "blocked at *follow-up email (Gmail)*", email("email_confirmation_spacing_30_minutes"), "MAY have been sent", "rfc822msgid:"),
   ),
 
-  // ---- Refusals: nothing accepted, bounded re-checks, then a person ---------------------------
+  // ---- Refusals, permissions and rate limits: nothing accepted, bounded re-checks, then a person ----
   twin(
     eventually(faulted("gmail_send_rejected", "Send always refused: at most 3 tries, nothing sent or booked, handoff", "gmail", "direct_send_rejected",
-      [...done("partial"), action("gmail.send_followup", "failed"), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]), 90),
-    sent("gmail_send_rejected", 0), events("gmail_send_rejected", 0), posted("gmail_send_rejected", 1, "nothing was sent to the lead"),
+      [...done("partial"), action("gmail.send_followup", "failed"), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]), 120),
+    sent(email("gmail_send_rejected"), 0), events(leadId("gmail_send_rejected"), 0), posted(leadId("gmail_send_rejected"), 1, "nothing was sent to the lead"),
   ),
   twin(
     eventually(faulted("gmail_send_rejected_once", "Send refused once: re-checked, sent once, then booked", "gmail", "direct_send_rejected_once",
-      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_sendAttempts", 2)]), action("calendar.followup_event", "applied"), complete]), 90),
-    sent("gmail_send_rejected_once", 1), events("gmail_send_rejected_once", 1),
+      [...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_sendAttempts", 2)]), action("calendar.followup_event", "applied"), complete]), 120),
+    sent(email("gmail_send_rejected_once"), 1), events(leadId("gmail_send_rejected_once"), 1),
   ),
   twin(
     faulted("gmail_auth_failure", "Gmail auth failure: blocked at email, nothing sent or booked, handoff", "gmail", "auth_failure",
       [...done("partial"), action("gmail.send_followup", "failed"), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]),
-    deals("gmail_auth_failure", 1), sent("gmail_auth_failure", 0), events("gmail_auth_failure", 0), posted("gmail_auth_failure", 1),
+    deals(leadId("gmail_auth_failure"), 1), sent(email("gmail_auth_failure"), 0), events(leadId("gmail_auth_failure"), 0), posted(leadId("gmail_auth_failure"), 1),
   ),
   twin(
     eventually(faulted("gmail_rate_limited", "Gmail rate limited: bounded re-checks, nothing sent, handoff", "gmail", "rate_limited",
-      [...done("partial"), action("gmail.send_followup", "failed"), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]), 120),
-    sent("gmail_rate_limited", 0), events("gmail_rate_limited", 0),
+      [...done("partial"), action("gmail.send_followup", "failed"), ...skipped("calendar.followup_event"), handoff("gmail.send_followup")]), 150),
+    sent(email("gmail_rate_limited"), 0), events(leadId("gmail_rate_limited"), 0),
   ),
   twin(
     faulted("hubspot_auth_failure", "HubSpot auth failure: blocked at contact, nothing downstream, handoff", "hubspot", "auth_failure",
       [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]),
-    deals("hubspot_auth_failure", 0), sent("hubspot_auth_failure", 0), events("hubspot_auth_failure", 0), posted("hubspot_auth_failure", 1, "Nothing was emailed to the lead"),
+    deals(leadId("hubspot_auth_failure"), 0), sent(email("hubspot_auth_failure"), 0), events(leadId("hubspot_auth_failure"), 0), posted(leadId("hubspot_auth_failure"), 1, "Nothing was emailed to the lead"),
   ),
   twin(
     eventually(faulted("hubspot_scope_denied", "HubSpot writes forbidden: bounded re-checks, handoff, nothing downstream", "hubspot", "scope_denied",
-      [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]), 90),
-    contacts("hubspot_scope_denied", 0), deals("hubspot_scope_denied", 0), sent("hubspot_scope_denied", 0),
+      [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]), 120),
+    contacts(email("hubspot_scope_denied"), 0), deals(leadId("hubspot_scope_denied"), 0), sent(email("hubspot_scope_denied"), 0),
   ),
   twin(
     eventually(faulted("hubspot_rate_limited", "HubSpot rate limited: bounded re-checks, no writes, no email, handoff", "hubspot", "rate_limited",
-      [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]), 120),
-    contacts("hubspot_rate_limited", 0), deals("hubspot_rate_limited", 0), sent("hubspot_rate_limited", 0),
+      [...done("partial"), action("hubspot.contact", "failed"), ...skipped("hubspot.deal", "gmail.send_followup", "calendar.followup_event"), handoff("hubspot.contact")]), 150),
+    contacts(email("hubspot_rate_limited"), 0), deals(leadId("hubspot_rate_limited"), 0), sent(email("hubspot_rate_limited"), 0),
   ),
   twin(
     faulted("calendar_auth_failure", "Calendar auth failure: email stays single, handoff for the event only", "google-calendar", "auth_failure",
       [...done("partial"), action("gmail.send_followup", "applied"), action("calendar.followup_event", "failed"), handoff("calendar.followup_event")]),
-    sent("calendar_auth_failure", 1), events("calendar_auth_failure", 0), posted("calendar_auth_failure", 1, "Only the calendar event is missing"),
+    sent(email("calendar_auth_failure"), 1), events(leadId("calendar_auth_failure"), 0), posted(leadId("calendar_auth_failure"), 1, "Only the calendar event is missing"),
   ),
   twin(
     eventually(faulted("calendar_rate_limited", "Calendar rate limited: bounded re-checks, no second email, handoff", "google-calendar", "rate_limited",
-      [...done("partial"), action("gmail.send_followup", "applied"), action("calendar.followup_event", "failed"), handoff("calendar.followup_event")]), 120),
-    sent("calendar_rate_limited", 1), events("calendar_rate_limited", 0),
+      [...done("partial"), action("gmail.send_followup", "applied"), action("calendar.followup_event", "failed"), handoff("calendar.followup_event")]), 150),
+    sent(email("calendar_rate_limited"), 1), events(leadId("calendar_rate_limited"), 0),
   ),
 
-  // ---- Slack: the notification itself fails ---------------------------------------------------
+  // ---- Slack: the notification itself fails or is slow ------------------------------------------
   twin(
     faulted("slack_channel_not_found", "Slack channel_not_found: notification recorded failed, never as sent", "slack", "channel_not_found",
       [...done("partial"), ...allApplied, action("slack.notify_team", "failed", 1, [eq("errorCode", "slack:channel_not_found")])]),
-    posted("slack_channel_not_found", 0), sent("slack_channel_not_found", 1),
+    posted(leadId("slack_channel_not_found"), 0), sent(email("slack_channel_not_found"), 1),
   ),
   twin(
     faulted("slack_not_in_channel", "Slack not_in_channel: notification recorded failed", "slack", "not_in_channel",
       [...done("partial"), ...allApplied, action("slack.notify_team", "failed", 1, [eq("errorCode", "slack:not_in_channel")])]),
-    posted("slack_not_in_channel", 0),
+    posted(leadId("slack_not_in_channel"), 0),
   ),
   twin(
     faulted("slack_missing_scope", "Slack missing_scope: notification recorded failed", "slack", "missing_scope",
       [...done("partial"), ...allApplied, action("slack.notify_team", "failed", 1, [eq("errorCode", "slack:missing_scope")])]),
-    posted("slack_missing_scope", 0),
+    posted(leadId("slack_missing_scope"), 0),
   ),
   twin(
     eventually(faulted("slack_rate_limited", "Slack rate limited: bounded re-checks, recorded failed, effects single", "slack", "rate_limited",
-      [...done("partial"), ...allApplied, action("slack.notify_team", "failed")]), 120),
-    posted("slack_rate_limited", 0), sent("slack_rate_limited", 1), events("slack_rate_limited", 1),
+      [...done("partial"), ...allApplied, action("slack.notify_team", "failed")]), 150),
+    posted(leadId("slack_rate_limited"), 0), sent(email("slack_rate_limited"), 1), events(leadId("slack_rate_limited"), 1),
+  ),
+  // Probe: every Slack response delayed ~3 s; the post times out at 2 s (the twin still commits it).
+  // Expect: no blind repost; the patient history read finds the marker; exactly one post.
+  twin(
+    eventually(faulted("slack_slow_network_single_post", "Slack slower than the client timeout: the post is found in history, never posted twice", "slack", "slow_network",
+      [...done("ok"), ...allApplied, action("slack.notify_team", "applied", 1, [eq("detail_via", "readback"), eq("detail_kind", "complete")])], { evidence: "accepted_response_readback" }), 120),
+    posted(leadId("slack_slow_network_single_post"), 1),
   ),
 
-  // ---- Durability ------------------------------------------------------------------------------
+  // ---- Crash/restart, stale workers, mid-run state changes, isolation, ownership ----------------------
+  // Probe: the runtime is killed (SIGKILL) while the Gmail send it started is held by the twin; restarted on
+  // the same storage. Expect: the stale claim is taken over after 20 s, the "maybe sent" marker forces a
+  // lookup instead of a resend, the email is confirmed, then the event. Evidence: takeover event, sendAttempts 1,
+  // twin Gmail count 1, changed runtime instance id.
   twin(
-    eventually(check("restart_during_confirmation", "Restart while an unconfirmed email awaits lookups: no resend; confirmed after recovery, then booked", [
-      submit("restart_during_confirmation"),
+    eventually(check("restart_during_confirmation", "Runtime killed while its send is in flight: stale claim taken over, lookup confirms, never resent", [
+      submitNoWait("restart_during_confirmation"),
       restart,
-      { provider_control: { provider: "gmail", scenario: "default" } },
-    ], runs([...done("ok"), action("gmail.send_followup", "applied", 1, [eq("detail_state", "confirmed"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete]), { fault: { provider: "gmail", scenario: "direct_send_accepted_lookup_unavailable", evidence: "refusal" } }), 150),
-    sent("restart_during_confirmation", 1), events("restart_during_confirmation", 1),
+    ], runs([...done("ok"), event("gmail.send_followup: took over a stale claim"), action("gmail.send_followup", "applied", 1, [eq("detail_confirmedBy", "confirmation lookup 1/3"), eq("detail_sendAttempts", 1)]), action("calendar.followup_event", "applied"), complete]), { fault: { provider: "gmail", scenario: "direct_send_accepted_response_loss", evidence: "accepted_response_readback" } }), 150),
+    sent(email("restart_during_confirmation"), 1), events(leadId("restart_during_confirmation"), 1), posted(leadId("restart_during_confirmation"), 1),
   ),
+  // Probe: while the run waits on the deal re-check, the lead is resubmitted with a different name and email.
+  // Expect: it joins the run; the first submission's data is used; nothing goes to the changed address.
+  twin(
+    eventually(faulted("midrun_resubmission_while_waiting", "Resubmission with changed details while the run waits: joins it, first data used, nothing to the new address", "hubspot", "deal_accepted_response_loss",
+      [...done("ok"), ...allApplied, complete], { evidence: "accepted_response_readback", extra: [submit("midrun_resubmission_while_waiting", { name: "Changed Person", email: "changed-midrun@example.test" }, { runId: "midrun-b-{{run_id}}" })] }), 120),
+    deals(leadId("midrun_resubmission_while_waiting"), 1, "Ada Lovelace"), sent(email("midrun_resubmission_while_waiting"), 1), sent("changed-midrun@example.test", 0), contacts("changed-midrun@example.test", 0),
+  ),
+  // Probe: two different leads in the same check. Expect: two runs, each with only its own records.
+  twin(
+    check("two_leads_isolated", "Two different leads: two runs, each with only its own contact, deal, email, event and post", [
+      start("two_leads_isolated", { leadId: "L-iso-a", name: "Ada Lovelace", email: "iso-a@example.test" }, { runId: "iso-a-{{run_id}}" }),
+      start("two_leads_isolated", { leadId: "L-iso-b", name: "Grace Hopper", email: "iso-b@example.test" }, { runId: "iso-b-{{run_id}}" }),
+    ], runs([...done("ok"), ...allApplied, complete], 2)),
+    contacts("iso-a@example.test", 1), contacts("iso-b@example.test", 1), deals("L-iso-a", 1, "Ada Lovelace"), deals("L-iso-b", 1, "Grace Hopper"),
+    sent("iso-a@example.test", 1), sent("iso-b@example.test", 1), events("L-iso-a", 1), events("L-iso-b", 1), posted("L-iso-a", 1), posted("L-iso-b", 1),
+  ),
+  // Probe: the protected run-state routes without / with a wrong token. Expect: 401 and no run data.
+  check("verifier_reads_require_token", "Saved run state is not readable without the verifier token", [
+    { method: "GET", path: "/verify/runtime", authentication: "omitted", expect_status: 401 },
+    { method: "GET", path: runsPath("baseline"), authentication: "omitted", expect_status: 401 },
+    { method: "GET", path: runsPath("baseline"), authentication: "invalid", expect_status: 401 },
+  ], runs([], 0)),
 
   // ---- Last: this fault permanently expires the session's HubSpot twin credential,
-  //      so any check after it would be blocked at HubSpot (observed in attempt 3).
+  //      so any check after it would be blocked at HubSpot (observed in revision 1, attempt 3).
   twin(
     eventually(faulted("hubspot_token_expired", "HubSpot token dies mid-run: stops at the failing step, handoff, no email", "hubspot", "token_expired",
-      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 90),
-    deals("hubspot_token_expired", 0), sent("hubspot_token_expired", 0), events("hubspot_token_expired", 0),
+      [...done("partial"), action("slack.notify_team", "applied", 1, [eq("detail_kind", "blocked")]), ...skipped("gmail.send_followup", "calendar.followup_event")]), 120),
+    deals(leadId("hubspot_token_expired"), 0), sent(email("hubspot_token_expired"), 0), events(leadId("hubspot_token_expired"), 0),
   ),
-  // ---- Declared but not measurable on this backend --------------------------------------------
-  blocked("slack_slow_network_single_post", "A Slack post whose response arrives after the client timeout is reconciled through conversations.history and never posted twice", "observation_missing",
-    "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only.",
-    ["fetchsandbox list_scenarios slack: slow_network = 'Every response delayed 3000ms'", "validate_integration capabilities.http_contract_limits.fault_evidence: refusal, accepted_response_loss, accepted_response_retry, accepted_response_readback, webhook_withheld", "acme-ops/test/lead-follow-up.test.ts 'Slack post accepted but response lost'"]),
-  blocked("email_confirmation_spacing_30_minutes", "The three confirmation lookups are spaced 10 minutes apart (+10/+20/+30 min) before the handoff", "setup_missing",
-    "This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only.",
-    ["acme-ops/verify/contracts/lead-follow-up.mjs appEnv", "acme-ops/test/lead-follow-up.test.ts 'unresolved email: 3 lookups at +10/+20/+30 min'"]),
+
+  // ---- Declared, not measurable with the current backend/runner --------------------------------------
+  blocked("midrun_provider_change_by_person", "A person creates the lead's deal or sends the follow-up by hand while the run waits; the run adopts it instead of duplicating", "engine_unsupported",
+    "Driving a provider-side change between app actions needs a qualified external_operator input; discovery returns qualified_external_inputs: [] for hubspot, gmail, google-calendar and slack. The app's reconcile-first lookups would adopt such records (deal by lead token, email by Message-ID); covered by local tests only.",
+    ["validate_integration provider_contracts.<provider>.qualified_external_inputs = [] (session vs_1e66584ab3b8)", "acme-ops/src/workflows/lead-follow-up.ts reconcileThenWrite / sendFollowUp pre-send lookup", "acme-ops/test/lead-follow-up.test.ts 'an existing contact is adopted'"]),
+  blocked("multi_worker_shared_store", "Two live workers drive the same stored run at once (multi-container): one claim owner, no duplicate effect, the run still finishes", "setup_missing",
+    "The relay runner starts exactly one runtime process with a local file store; FetchSandbox cannot start a second worker against the same storage. Measured locally only: two engines on one store race a stale claim (one takeover, no resend), which exposed and fixed a stranded-WAITING settle race in the engine.",
+    ["acme-ops/verify/relay-proof.mjs startApp (single process)", "acme-ops/src/kit/store.ts FileStore (single-process)", "acme-ops/test/lead-follow-up.test.ts 'stale worker ... taken over'"]),
 ];
 
 /** The existing HubSpot contact for existing_contact_adopted, prepared and read back through FetchSandbox fixtures. */
@@ -239,39 +304,48 @@ export default {
   providers: ["hubspot", "gmail", "google-calendar", "slack"],
   seed,
   appEnv: {
+    // LEAD_EMAIL_CONFIRM_INTERVAL_MS deliberately unset: the production schedule (initial, +15, +30 min) runs.
     PROVIDER_TIMEOUT_MS: "4000",
-    LEAD_EMAIL_CONFIRM_INTERVAL_MS: "15000",
+    SLACK_TIMEOUT_MS: "2000",
+    LEAD_RECONCILE_READ_TIMEOUT_MS: "15000",
+    LEAD_RETRY_INTERVAL_MS: "15000",
+    STALE_RUN_MS: "20000",
+    STALE_CLAIM_MS: "20000",
     LEAD_FOLLOWUP_SLACK_CHANNEL: CHANNEL,
     LEAD_FOLLOWUP_OWNER_SLACK_ID: OWNER,
-    LEAD_RETRY_INTERVAL_MS: "3000",
     TICK_INTERVAL_MS: "1000",
   },
+  // The real 30-minute check needs more than the default 900 s execution budget.
+  applicationConfig: { execution_budget_seconds: 3300 },
+  // The runner polls fast once this check starts, so the restart lands while the send is in flight.
+  restartWatch: "restart-during-confirmation",
+  maxRunMinutes: 75,
   context: {
-    goal: "Prove the lead-follow-up AgentCore runtime: a lead form submission (leadId, name, email) → HubSpot contact found or created, one sales deal, one Gmail follow-up email, a Calendar follow-up only after the email is confirmed, and a Slack completion or blocked-step handoff. No duplicate deals, emails or posts; repeated submissions safe; a timeout means an unknown outcome that is reconciled before any repeat; an unconfirmed email gets 3 confirmation lookups, then a person.",
-    workflow: "POST /invocations {action:start,input:{leadId,name,email,salesChannel,handoffUserId}}; the run id is lead-<leadId> so every submission of a lead joins one run. Steps reconcile first (contact by email, deal by lead token + GET, email by RFC Message-ID + GET, event by derived id, Slack by marker in history); an unknown or refused write becomes a durable scheduled re-check woken by the runtime's tick. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",
-    entry_points: ["POST /invocations"],
-    state_store: "Run records exposed read-only at GET /verify/runs/{run_id}/cases/{check_id}/runs → {runs:[...]}, bearer-protected; durable file store across restarts.",
+    goal: "Validate the lead-follow-up runtime contract: lead form submission (leadId, name, email) → HubSpot contact found or created, exactly one deal per lead, exactly one Gmail follow-up email, a Calendar follow-up only after the email is confirmed, and a Slack completion or blocked-step handoff to a named person. Repeated and concurrent submissions are safe; a timeout is an unknown outcome reconciled before any repeat; an unconfirmed email gets an initial lookup and lookups 15 and 30 minutes after the send, then a person; a worker that dies mid-call is taken over without a resend.",
+    workflow: "POST /invocations {action:start,input:{leadId,name,email}}; run id lead-<leadId>; reconcile-first steps (contact by email, deal by lead token + GET, email by RFC Message-ID + GET, event by derived id, Slack by marker in history); deferred re-checks woken by the runtime tick; stale claims taken over by reentrant steps. GET /verify/runs/{run}/cases/{case}/runs reads saved run state.",
+    entry_points: ["POST /invocations", "GET /verify/runtime", "GET /verify/runs/{run_id}/cases/{case}/runs"],
+    state_store: "Durable file store (compare-and-swap runs, per-effect claims), reused across restarts; run records exposed read-only and bearer-protected.",
   },
   checks,
-  scope_review: checks.map((c) => ({ check_id: c.id, classification: "in_scope", reason: "Promised by the lead follow-up request (no duplicates, safe resubmission, reconcile unknown outcomes, 3 lookups then a person).", evidence: ["acme-ops/src/workflows/lead-follow-up.ts"] })),
+  scope_review: checks.map((c) => ({ check_id: c.id, classification: "in_scope", reason: "Promised by the lead follow-up request (no duplicates, safe resubmission, reconcile unknown outcomes, agreed email schedule then a person, recovery and isolation).", evidence: ["acme-ops/src/workflows/lead-follow-up.ts"] })),
   coverage: {
     baseline: ["baseline"],
-    identity_and_access: "No requester identity or tenant: the trigger is an internal lead form and every lead is processed for the one sales team; POST /invocations is reached only through the AgentCore runtime (IAM) and the verifier read routes require the handoff bearer token. No webhook handler is exposed.",
+    identity_and_access: ["verifier_reads_require_token"],
     schema_and_value_boundaries: ["invalid_input_rejected"],
     amount_currency_quantity: "The deal is created without amount, currency or quantity; no money moves.",
-    duplicate_replay: ["resubmitted_lead_joins_run", "hubspot_deal_response_loss", "gmail_send_response_loss", "existing_contact_adopted"],
-    concurrency: ["concurrent_first_submissions"],
-    ordering_and_stale_events: ["baseline", "gmail_send_response_loss", "gmail_unresolved_handoff"],
-    delayed_or_missing_events: ["gmail_send_response_loss", "gmail_unresolved_handoff", "restart_during_confirmation", "email_confirmation_spacing_30_minutes"],
+    duplicate_replay: ["resubmitted_lead_joins_run", "hubspot_deal_response_loss", "gmail_send_response_loss", "existing_contact_adopted", "slack_slow_network_single_post"],
+    concurrency: ["concurrent_first_submissions", "multi_worker_shared_store"],
+    ordering_and_stale_events: ["midrun_resubmission_while_waiting", "midrun_provider_change_by_person", "baseline"],
+    delayed_or_missing_events: ["gmail_send_response_loss", "email_confirmation_spacing_30_minutes"],
     provider_auth_and_scopes: ["hubspot_auth_failure", "hubspot_scope_denied", "hubspot_token_expired", "gmail_auth_failure", "calendar_auth_failure", "slack_missing_scope", "slack_not_in_channel", "slack_channel_not_found"],
     rate_limit_server_error_timeout: ["hubspot_rate_limited", "gmail_rate_limited", "calendar_rate_limited", "slack_rate_limited", "slack_slow_network_single_post"],
-    accepted_effect_response_loss: ["hubspot_deal_response_loss", "gmail_send_response_loss", "gmail_unresolved_handoff"],
-    partial_effects_and_recovery: ["gmail_send_rejected", "gmail_send_rejected_once", "calendar_auth_failure", "hubspot_token_expired", "slack_rate_limited"],
-    restart_and_durability: ["restart_during_confirmation"],
-    reconciliation: ["reconcile_reads_back", "hubspot_deal_response_loss", "gmail_send_response_loss"],
+    accepted_effect_response_loss: ["hubspot_deal_response_loss", "gmail_send_response_loss", "email_confirmation_spacing_30_minutes", "restart_during_confirmation"],
+    partial_effects_and_recovery: ["gmail_send_rejected", "gmail_send_rejected_once", "calendar_auth_failure", "hubspot_token_expired", "slack_rate_limited", "restart_during_confirmation"],
+    restart_and_durability: ["restart_during_confirmation", "email_confirmation_spacing_30_minutes", "multi_worker_shared_store"],
+    reconciliation: ["reconcile_reads_back", "hubspot_deal_response_loss", "gmail_send_response_loss", "slack_slow_network_single_post"],
     cancellation_refund_entitlements: "The workflow promises no cancellation, refund or entitlement behavior.",
-    data_and_privacy_boundaries: "Synthetic example.test leads only. The lead's name and email appear in the internal sales channel's handoff (requested); the follow-up email goes only to the submitted address; no calendar invitation is sent to the lead.",
-    cleanup_and_isolation: ["baseline", "concurrent_first_submissions", "invalid_input_rejected"],
+    data_and_privacy_boundaries: "Synthetic example.test leads only. The lead's name and email appear in the internal sales channel's handoff (requested); the follow-up email goes only to the submitted address (midrun_resubmission_while_waiting asserts nothing reaches a changed address); no calendar invitation is sent to the lead.",
+    cleanup_and_isolation: ["two_leads_isolated", "concurrent_first_submissions", "invalid_input_rejected"],
   },
-  evidence: ["acme-ops/src/workflows/lead-follow-up.ts", "acme-ops/src/kit/engine.ts (runKey, RetryLater)", "acme-ops/src/kit/http.ts (idempotent:false)", "acme-ops/src/providers/{hubspot,google,slack}.ts", "acme-ops/test/lead-follow-up.test.ts"],
+  evidence: ["acme-ops/src/workflows/lead-follow-up.ts", "acme-ops/src/kit/engine.ts (runKey, RetryLater, stale claims, stale runs)", "acme-ops/src/kit/http.ts", "acme-ops/src/providers/{hubspot,google,slack}.ts", "acme-ops/test/lead-follow-up.test.ts"],
 };

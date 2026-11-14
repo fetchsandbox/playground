@@ -30,8 +30,8 @@ export class SlackClient {
   }
 
   /** Latest messages of a channel (conversations.history). */
-  async history(channel: string, limit = 100): Promise<{ ts: string; text: string }[]> {
-    const { body } = await this.http.request<any>("GET", "/api/conversations.history", { query: { channel, limit } });
+  async history(channel: string, limit = 100, timeoutMs?: number): Promise<{ ts: string; text: string }[]> {
+    const { body } = await this.http.request<any>("GET", "/api/conversations.history", { query: { channel, limit }, ...(timeoutMs ? { timeoutMs } : {}) });
     if (body?.ok !== true) {
       const code = String(body?.error ?? "not_ok");
       throw new ProviderError("slack", 200, code, code === "ratelimited", `conversations.history → ${code}`);

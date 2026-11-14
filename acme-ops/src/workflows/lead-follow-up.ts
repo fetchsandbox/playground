@@ -49,8 +49,10 @@ const num = (name: string, dflt: number) => {
   const v = Number(process.env[name]);
   return Number.isFinite(v) && v > 0 ? v : dflt;
 };
-/** Gap between email confirmation lookups: 3 lookups over 30 minutes. */
-const confirmIntervalMs = () => num("LEAD_EMAIL_CONFIRM_INTERVAL_MS", 10 * 60_000);
+/** Gap between email confirmation lookups: initial, +15 min, +30 min (agreed schedule). */
+const confirmIntervalMs = () => num("LEAD_EMAIL_CONFIRM_INTERVAL_MS", 15 * 60_000);
+/** Timeout for reconciliation reads, which are safe to wait on longer than a write. */
+const reconcileReadTimeoutMs = () => num("LEAD_RECONCILE_READ_TIMEOUT_MS", 15_000);
 export const EMAIL_CONFIRMATION_LOOKUPS = 3;
 /** Re-check delay after an unknown or refused HubSpot / Calendar / Slack write. */
 const retryIntervalMs = () => num("LEAD_RETRY_INTERVAL_MS", 2 * 60_000);
@@ -182,15 +184,19 @@ async function reconcileThenWrite<T>(
 }
 
 // ---------------------------------------------------------------------------
-// The email: one send, then up to three confirmation lookups, never a resend
+// The email: one send; if its outcome is unknown, an initial lookup and then
+// lookups 15 and 30 minutes after the send; never a resend
 // ---------------------------------------------------------------------------
 
 interface EmailState {
   /** unsent: no send attempt can have been accepted. unknown: a send may have been accepted. */
   phase: "unsent" | "unknown";
   sendAttempts: number;
+  /** When the send whose outcome is unknown was made: the lookup schedule is anchored here. */
+  sentAt?: string;
   lookups: number;
-  lastLookup?: string;
+  /** "+0.1 min failed (gmail:503)", "+15.0 min not found"... one entry per confirmation lookup. */
+  lookupLog: string[];
 }
 
 export function followUpEmail(i: Input) {
@@ -203,64 +209,82 @@ export function followUpEmail(i: Input) {
   };
 }
 
+/** Minutes after the send at which confirmation lookup k (1-based) is due: 0, 15, 30 by default. */
+export const lookupOffsetMs = (k: number) => (k - 1) * confirmIntervalMs();
+
+type Lookup = { found?: { id: string; duplicates: number }; error?: unknown };
+
+/** The follow-up in the mailbox by its Message-ID, read back by id; SENT is Gmail's confirmation it went out. */
+async function lookUp(ctx: Ctx, messageId: string): Promise<Lookup> {
+  try {
+    const ids = await ctx.providers.gmail!.findByMessageId(messageId);
+    if (!ids.length) return {};
+    const msg = await ctx.providers.gmail!.getMessage(ids[0]!);
+    if (msg.labelIds.includes("SENT")) return { found: { id: msg.id, duplicates: ids.length - 1 } };
+    return { error: new ProviderError("gmail", 200, "not_sent_label", true, `message ${msg.id} has no SENT label`) };
+  } catch (err) {
+    return { error: err };
+  }
+}
+
 async function sendFollowUp(ctx: Ctx): Promise<ActionReceipt> {
   const { input, providers, checkpoint } = ctx;
-  const gmail = providers.gmail!;
   const messageId = followUpMessageId(input.leadId);
-  const st: EmailState = (await checkpoint.load<EmailState>("email")) ?? { phase: "unsent", sendAttempts: 0, lookups: 0 };
+  const saved = await checkpoint.load<EmailState>("email");
+  const st: EmailState = { phase: "unsent", sendAttempts: 0, lookups: 0, ...saved, lookupLog: saved?.lookupLog ?? [] };
 
-  // 1. Reconcile first: is the follow-up already in the mailbox?
-  let lookupError: unknown;
-  try {
-    const ids = await gmail.findByMessageId(messageId);
-    if (ids.length) {
-      // Read the effect itself back; SENT is Gmail's confirmation that it went out.
-      const msg = await gmail.getMessage(ids[0]!);
-      if (msg.labelIds.includes("SENT")) {
-        const by = st.phase === "unknown" ? `confirmation lookup ${st.lookups + 1}/${EMAIL_CONFIRMATION_LOOKUPS}` : "existing message";
-        return { ref: msg.id, detail: { state: "confirmed", confirmedBy: by, messageId, sendAttempts: st.sendAttempts, lookups: st.phase === "unknown" ? st.lookups + 1 : st.lookups, duplicates: ids.length - 1 } };
+  if (st.phase === "unsent") {
+    // Reconcile first: is the follow-up already in the mailbox? (A failed lookup here cannot hide
+    // a send of ours: none can have been accepted while the phase is "unsent".)
+    const pre = await lookUp(ctx, messageId);
+    if (pre.found) return { ref: pre.found.id, detail: { state: "confirmed", confirmedBy: "existing message", messageId, sendAttempts: st.sendAttempts, lookups: 0 } };
+
+    // Send once. Mark the outcome unknown first, so a crash mid-send counts as "maybe sent".
+    st.phase = "unknown";
+    st.sendAttempts += 1;
+    st.sentAt = new Date(ctx.now()).toISOString();
+    st.lookups = 0;
+    st.lookupLog = [];
+    await checkpoint.save("email", st);
+    try {
+      const sent = await providers.gmail!.sendOnce(followUpEmail(input));
+      if (!sent.labelIds.includes("SENT")) throw new ProviderError("gmail", 200, "not_sent_label", true, "send answered without the SENT label");
+      return { ref: sent.id, detail: { state: "confirmed", confirmedBy: "send response", messageId, sendAttempts: st.sendAttempts, lookups: 0 } };
+    } catch (err) {
+      if (!ambiguous(err) && !(err instanceof ProviderError && err.code === "not_sent_label")) {
+        // Refused (403, 429, 401...): Gmail did not accept it, nothing was sent.
+        st.phase = "unsent";
+        delete st.sentAt;
+        await checkpoint.save("email", st);
+        if (!permanent(err) && st.sendAttempts < maxAttempts()) {
+          throw new RetryLater(retryIntervalMs(), `Gmail refused the send (${errorCode(err)}); nothing was sent; attempt ${st.sendAttempts}/${maxAttempts()}`, errorCode(err));
+        }
+        await checkpoint.save("blocked:gmail.send_followup", { code: errorCode(err), message: errorMessage(err), attempts: st.sendAttempts } satisfies Blocked);
+        throw err;
       }
-      lookupError = new ProviderError("gmail", 200, "not_sent_label", true, `message ${msg.id} has no SENT label`);
+      // Timeout / 5xx: the outcome is unknown. Fall through to the initial confirmation lookup now.
     }
-  } catch (err) {
-    lookupError = err;
   }
 
-  // 2. A send may already have been accepted: only look, never send again.
-  if (st.phase === "unknown") {
-    st.lookups += 1;
-    st.lastLookup = lookupError ? `lookup failed (${errorCode(lookupError)})` : "not found";
-    await checkpoint.save("email", st);
-    if (st.lookups >= EMAIL_CONFIRMATION_LOOKUPS) {
-      const message = `Gmail did not confirm the follow-up email after ${st.lookups} lookups (last: ${st.lastLookup}); it may or may not have been sent`;
-      await checkpoint.save("blocked:gmail.send_followup", { code: "gmail:delivery_unconfirmed", message, attempts: st.sendAttempts, unconfirmed: true } satisfies Blocked);
-      throw new ProviderError("gmail", 0, "delivery_unconfirmed", false, message);
-    }
-    throw new RetryLater(confirmIntervalMs(), `email not confirmed yet: lookup ${st.lookups}/${EMAIL_CONFIRMATION_LOOKUPS} ${st.lastLookup}; not resending`, "gmail:delivery_unknown");
-  }
-
-  // 3. Nothing can have been accepted yet: send once. Mark the outcome unknown first,
-  //    so a crash or restart mid-send is treated as "maybe sent", never as "unsent".
-  st.phase = "unknown";
-  st.sendAttempts += 1;
+  // The send may have been accepted: confirmation lookup k of 3 (initial, +15 min, +30 min). Never resend.
+  const k = st.lookups + 1;
+  const sentAt = Date.parse(st.sentAt ?? new Date(ctx.now()).toISOString());
+  const after = `+${((ctx.now() - sentAt) / 60_000).toFixed(1)} min`;
+  const r = await lookUp(ctx, messageId);
+  st.lookups = k;
+  st.lookupLog = [...st.lookupLog, `${after} ${r.found ? "found" : r.error ? `failed (${errorCode(r.error)})` : "not found"}`];
   await checkpoint.save("email", st);
-  try {
-    const sent = await gmail.sendOnce(followUpEmail(input));
-    if (!sent.labelIds.includes("SENT")) throw new ProviderError("gmail", 200, "not_sent_label", true, `send answered without the SENT label`);
-    return { ref: sent.id, detail: { state: "confirmed", confirmedBy: "send response", messageId, sendAttempts: st.sendAttempts, lookups: 0 } };
-  } catch (err) {
-    if (ambiguous(err) || (err instanceof ProviderError && err.code === "not_sent_label")) {
-      throw new RetryLater(confirmIntervalMs(), `send outcome unknown (${errorMessage(err)}): not resending; confirmation lookup 1/${EMAIL_CONFIRMATION_LOOKUPS} scheduled`, "gmail:outcome_unknown");
-    }
-    // Refused (403, 429, 401...): Gmail did not accept it, nothing was sent.
-    st.phase = "unsent";
-    await checkpoint.save("email", st);
-    if (!permanent(err) && st.sendAttempts < maxAttempts()) {
-      throw new RetryLater(retryIntervalMs(), `Gmail refused the send (${errorCode(err)}); nothing was sent; attempt ${st.sendAttempts}/${maxAttempts()}`, errorCode(err));
-    }
-    await checkpoint.save("blocked:gmail.send_followup", { code: errorCode(err), message: errorMessage(err), attempts: st.sendAttempts } satisfies Blocked);
-    throw err;
+  if (r.found) {
+    return { ref: r.found.id, detail: { state: "confirmed", confirmedBy: `confirmation lookup ${k}/${EMAIL_CONFIRMATION_LOOKUPS}`, confirmedAfter: after, lookupSchedule: st.lookupLog.join("; "), messageId, sendAttempts: st.sendAttempts, lookups: k, duplicates: r.found.duplicates } };
   }
+  if (k >= EMAIL_CONFIRMATION_LOOKUPS) {
+    const message = `Gmail did not confirm the follow-up email after ${k} lookups (${st.lookupLog.join("; ")}); it may or may not have been sent`;
+    await checkpoint.save("blocked:gmail.send_followup", { code: "gmail:delivery_unconfirmed", message, attempts: st.sendAttempts, unconfirmed: true } satisfies Blocked);
+    throw new ProviderError("gmail", 0, "delivery_unconfirmed", false, message);
+  }
+  // Anchor the next lookup to the send time, so wake-up latency never shifts the schedule.
+  const dueIn = Math.max(0, sentAt + lookupOffsetMs(k + 1) - ctx.now());
+  throw new RetryLater(dueIn, `confirmation lookup ${k}/${EMAIL_CONFIRMATION_LOOKUPS} at ${after}: ${st.lookupLog.at(-1)!.split(" ").slice(2).join(" ")}; next lookup at +${(lookupOffsetMs(k + 1) / 60_000).toFixed(0)} min; not resending`, k === 1 ? "gmail:outcome_unknown" : "gmail:delivery_unknown");
 }
 
 // ---------------------------------------------------------------------------
@@ -341,11 +365,13 @@ export const leadFollowUp: WorkflowDef<Input> = {
   org: "Sales",
   team: "sales-team",
   description:
-    "On a lead form submission: find or create the HubSpot contact, create one sales deal, send one follow-up email through Gmail, book a Calendar follow-up only after the email is confirmed, and tell the team in Slack it is done or exactly which step is blocked. Every write reconciles before it repeats; an unconfirmed email gets 3 lookups over 30 minutes, then a person.",
+    "On a lead form submission: find or create the HubSpot contact, create one sales deal, send one follow-up email through Gmail, book a Calendar follow-up only after the email is confirmed, and tell the team in Slack it is done or exactly which step is blocked. Every write reconciles before it repeats; an unconfirmed email gets an initial lookup and lookups 15 and 30 minutes after the send, then a person.",
   input: Input,
   runKey: (i) => `lead-${i.leadId}`,
   // Re-checks and confirmation lookups are durable timers: the deployed stack must wake them.
   tickEvery: "rate(1 minute)",
+  // A worker that dies mid-run leaves the run RUNNING: the tick picks it up again (steps are reentrant).
+  recoverStaleRuns: true,
   agents: [],
 
   plan({ input, startedAt }) {
@@ -357,6 +383,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
         provider: "hubspot",
         agent: "lead-intake",
         gate: "auto",
+        reentrant: true,
         summary: { email: input.email },
         execute: (ctx) =>
           attempt(ctx, "hubspot.contact", async () => {
@@ -386,6 +413,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
         provider: "hubspot",
         agent: "lead-intake",
         gate: "auto",
+        reentrant: true,
         requires: ["hubspot.contact"],
         summary: { dealname: dealName(input), pipeline: process.env.LEAD_DEAL_PIPELINE ?? "default", dealstage: process.env.LEAD_DEAL_STAGE ?? "appointmentscheduled" },
         execute: (ctx) =>
@@ -423,6 +451,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
         provider: "gmail",
         agent: "lead-intake",
         gate: "auto",
+        reentrant: true,
         requires: ["hubspot.deal"],
         summary: { to: input.email, messageId: followUpMessageId(input.leadId), sends: true, confirmationLookups: EMAIL_CONFIRMATION_LOOKUPS },
         execute: sendFollowUp,
@@ -438,6 +467,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
         provider: "calendar",
         agent: "lead-intake",
         gate: "auto",
+        reentrant: true,
         // Only after the email is confirmed: a failed or unconfirmed email skips it.
         requires: ["gmail.send_followup"],
         summary: { calendarId: input.calendarId, eventId: followUpEventId(input.leadId), start: slot.start, end: slot.end, invitesLead: false },
@@ -477,6 +507,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
         provider: "slack",
         agent: "lead-intake",
         gate: "auto",
+        reentrant: true,
         // Waits for every step to settle (including the 30-minute email confirmation window).
         after: STEPS.map((s) => s.id),
         summary: { channel: channelOf(input), handoffUserId: handoffOf(input) ?? null, marker: slackMarker(input.leadId) },
@@ -489,7 +520,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
             const r = await reconcileThenWrite(
               ctx,
               "slack.notify_team",
-              async () => (await slack.history(channel, 100)).find((m) => m.text.includes(marker))?.ts,
+              async () => (await slack.history(channel, 100, reconcileReadTimeoutMs())).find((m) => m.text.includes(marker))?.ts,
               async () => (await slack.postMessageOnce(channel, msg.text)).ts,
             );
             return { ref: r.value, detail: { kind: msg.kind, blockedStep: msg.blockedStep ?? null, channel, created: r.created, via: r.via } };
@@ -519,7 +550,7 @@ export const leadFollowUp: WorkflowDef<Input> = {
   catalog: [
     { kind: "hubspot.find_or_create_contact", provider: "hubspot", gate: "auto", description: "Find the contact by email or create it (409 adopts the existing one)" },
     { kind: "hubspot.create_deal", provider: "hubspot", gate: "auto", description: "Create the lead's one sales deal (named 'Lead <leadId> · <name>'), associated to the contact" },
-    { kind: "gmail.send_followup", provider: "gmail", gate: "auto", description: "Send the follow-up email once (deterministic Message-ID); unknown outcomes get 3 confirmation lookups, never a resend" },
+    { kind: "gmail.send_followup", provider: "gmail", gate: "auto", description: "Send the follow-up email once (deterministic Message-ID); an unknown outcome gets an initial lookup, then lookups 15 and 30 minutes after the send, never a resend" },
     { kind: "calendar.create_followup_event", provider: "calendar", gate: "auto", description: "After the email is confirmed, create the follow-up call event (deterministic event id, no invitation sent)" },
     { kind: "slack.notify_team", provider: "slack", gate: "auto", description: "Tell the team the lead is done, or hand the blocked step to a person with instructions" },
   ],
