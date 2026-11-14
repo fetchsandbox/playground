@@ -5,144 +5,144 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-catering-quote-1.0.0-1b363af",
-  "session_id": "vs_e597e8aa7719",
-  "run_id": "vr_df2bbe2ecfb744d5b78768a9b7f043fe",
-  "receipt_url": "https://fetchsandbox.com/runs/b18653b341?flow=vr_df2bbe2ecfb744d5b78768a9b7f043fe",
+  "app_version": "acme-ops-catering-quote-1.0.0-ecea639",
+  "session_id": "vs_ead70fd76d0c",
+  "run_id": "vr_fb5af0316147447fb51fea2691f8b71a",
+  "receipt_url": "https://fetchsandbox.com/runs/f8942e0f7f?flow=vr_fb5af0316147447fb51fea2691f8b71a",
   "status": null,
-  "verdict": "inconclusive",
+  "verdict": "failing",
   "app_verified": false,
   "complete": false,
   "checks": [
     {
       "id": "baseline",
-      "status": "unmeasured",
-      "explanation": "required observation 'detail.amountDue' is missing"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "stranger_cannot_approve",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "owner_rejects_quote",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "customer_declines",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "stranger_cannot_accept",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "accept_before_quote_sent_ignored",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "negotiated_within_floor",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "counter_below_floor_countered",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "superseded_revision_not_accepted",
       "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "explanation": "assertion could not read evidence: required observation 'input.revision' is missing"
     },
     {
       "id": "booked_inquiry_not_requoted",
       "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "explanation": "assertion could not read evidence: required observation 'input.revision' is missing"
     },
     {
       "id": "headcount_below_minimum_declined",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "short_notice_declined",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "date_conflict_declined",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "large_party_to_owner",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "invalid_input_rejected",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 0, found 0; stable under 2 repeats (0)"
     },
     {
       "id": "duplicate_start",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
     },
     {
       "id": "concurrent_start",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "violated",
+      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
     },
     {
       "id": "concurrent_acceptance",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "gmail_send_rejected_then_resumed",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "gmail_response_lost_recovered",
       "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "explanation": "Accepted response read-back needs an accepted write, observed client disconnect and subsequent direct read of the same provider effect"
     },
     {
       "id": "gmail_lookup_unavailable_not_resent",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "calendar_unavailable_to_owner",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "stripe_unavailable_to_owner",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "hubspot_down_quote_continues",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "restart_awaiting_acceptance",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "booking_reconciled_reminder_not_early",
-      "status": "unmeasured",
-      "explanation": "Baseline did not pass; failure checks were not run"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "reminder_sent_day_before",
@@ -160,5 +160,5 @@
       "explanation": "Reply parsing belongs to the inbox intake adapter, outside this runtime (which takes the parsed request or signal). The Gmail twin does not simulate users.history or users.watch, so mailbox-driven intake can't be exercised here."
     }
   ],
-  "recorded_at": "2026-11-14T22:12:35.492Z"
+  "recorded_at": "2026-11-14T22:17:31.893Z"
 }
