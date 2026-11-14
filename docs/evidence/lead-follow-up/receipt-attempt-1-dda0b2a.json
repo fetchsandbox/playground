@@ -1,0 +1,149 @@
+{
+  "workflow": "lead-follow-up",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-lead-follow-up-1.0.0-dda0b2a",
+  "session_id": "vs_5d3011999cd8",
+  "run_id": "vr_dd3b2f5575264676b683b4ebff213060",
+  "receipt_url": "https://fetchsandbox.com/runs/65843524b8?flow=vr_dd3b2f5575264676b683b4ebff213060",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "unmeasured",
+      "explanation": "required observation 'detail.verified' is missing"
+    },
+    {
+      "id": "existing_contact_adopted",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "resubmitted_lead_joins_run",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "concurrent_first_submissions",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "reconcile_reads_back",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_deal_response_loss",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_send_response_loss",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_unresolved_handoff",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_send_rejected",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_send_rejected_once",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_scope_denied",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_token_expired",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "calendar_auth_failure",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "calendar_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "slack_channel_not_found",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "slack_not_in_channel",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "slack_missing_scope",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "slack_rate_limited",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "restart_during_confirmation",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "slack_slow_network_single_post",
+      "status": "unmeasured",
+      "explanation": "slack:slow_network only delays every response by 3 s; it records no refusal and no archived accepted write, so neither refusal nor accepted_response_readback evidence can be produced, and Slack has no direct GET of a message by ts for a read-back. The reconcile path (lost post found by its marker, no second post) is covered by the local fake-world test only."
+    },
+    {
+      "id": "email_confirmation_spacing_30_minutes",
+      "status": "unmeasured",
+      "explanation": "This run compresses the interval to 15 s (LEAD_EMAIL_CONFIRM_INTERVAL_MS) so the suite fits the default 900 s execution budget; the twin run measures the count, order and outcome of the lookups, not the 30-minute wall-clock spacing. The production spacing is asserted with an injected clock in the local test only."
+    }
+  ],
+  "recorded_at": "2026-11-14T06:37:38.925Z"
+}

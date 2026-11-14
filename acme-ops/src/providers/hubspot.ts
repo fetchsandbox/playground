@@ -6,6 +6,13 @@ export interface HubSpotContact {
   archived?: boolean;
 }
 
+export interface HubSpotDeal {
+  id: string;
+  properties: Record<string, string | null | undefined>;
+  archived?: boolean;
+  associations?: { contacts?: { results?: { id: string; type?: string }[] } };
+}
+
 interface SearchResponse {
   total: number;
   results: HubSpotContact[];
@@ -87,6 +94,41 @@ export class HubSpotClient {
     const id = /Existing ID:\s*(\d+)/.exec(String(res.body?.message ?? ""))?.[1];
     if (!id) throw new Error(`hubspot 409 without an existing id for ${email}`);
     return { contact: await this.update(id, properties), created: false };
+  }
+
+  /**
+   * Single create, never retried on timeout/5xx (the contact may exist): the
+   * caller reconciles with findByEmail. A 409 (HubSpot's unique email) names
+   * the existing contact, which is adopted.
+   */
+  async createContactOnce(email: string, properties: Record<string, string>): Promise<{ contact: HubSpotContact; created: boolean }> {
+    const res = await this.http.request<any>("POST", "/crm/v3/objects/contacts", { json: { properties: { email, ...properties } }, allow: [409], idempotent: false });
+    if (res.status !== 409) return { contact: res.body as HubSpotContact, created: true };
+    const id = /Existing ID:\s*(\d+)/.exec(String(res.body?.message ?? ""))?.[1];
+    if (!id) throw new Error(`hubspot 409 without an existing id for ${email}`);
+    return { contact: await this.get(id), created: false };
+  }
+
+  /** Deals whose name contains `token` (CRM v3 deal search, CONTAINS_TOKEN). */
+  async searchDealsByNameToken(token: string): Promise<HubSpotDeal[]> {
+    const { body } = await this.http.request<{ results?: HubSpotDeal[] }>("POST", "/crm/v3/objects/deals/search", {
+      json: { filterGroups: [{ filters: [{ propertyName: "dealname", operator: "CONTAINS_TOKEN", value: token }] }], properties: ["dealname", "pipeline", "dealstage"], limit: 100 },
+    });
+    return (body?.results ?? []).filter((d) => !d.archived);
+  }
+
+  /** Single deal create associated to a contact; never retried on timeout/5xx (see createContactOnce). */
+  async createDealOnce(properties: Record<string, string>, contactId: string): Promise<HubSpotDeal> {
+    const { body } = await this.http.request<HubSpotDeal>("POST", "/crm/v3/objects/deals", {
+      // 3 = HubSpot-defined deal → contact association.
+      json: { properties, associations: [{ to: { id: contactId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 3 }] }] },
+      idempotent: false,
+    });
+    return body;
+  }
+
+  async getDeal(id: string): Promise<HubSpotDeal> {
+    return (await this.http.request<HubSpotDeal>("GET", `/crm/v3/objects/deals/${encodeURIComponent(id)}`, { query: { properties: "dealname,pipeline,dealstage", associations: "contacts" } })).body;
   }
 
   /** Permanent GDPR deletion (not the recoverable archive). */

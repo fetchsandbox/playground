@@ -211,7 +211,12 @@ const VENDOR_HEADERS: Partial<Record<ProviderName, Record<string, string>>> = {
 /** Builds per-run clients that stamp `headers` (e.g. X-Flow-Run-Id) on every provider request. */
 export function providerFactory(endpoints: Partial<Record<ProviderName, ProviderEndpoint>>, env: NodeJS.ProcessEnv = process.env): ProviderFactory {
   return (headers) => {
-    const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, { ...VENDOR_HEADERS[p], ...headers }) : undefined);
+    // Optional per-provider timeout (<PREFIX>_TIMEOUT_MS) over the shared PROVIDER_TIMEOUT_MS.
+    const timeout = (p: ProviderName) => {
+      const v = Number(pick(env, PREFIX[p].map((x) => `${x}_TIMEOUT_MS`)));
+      return Number.isFinite(v) && v > 0 ? v : undefined;
+    };
+    const http = (p: ProviderName) => (endpoints[p] ? new ProviderHttp(endpoints[p]!, { ...VENDOR_HEADERS[p], ...headers }, undefined, timeout(p)) : undefined);
     const h = Object.fromEntries(PROVIDERS.map((p) => [p, http(p)])) as Record<ProviderName, ProviderHttp | undefined>;
     return {
       stripe: h.stripe && new StripeClient(h.stripe),

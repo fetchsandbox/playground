@@ -17,6 +17,8 @@ export interface RunContext<I> {
   startedAt: Date;
   /** Durable progress for long agents (Kit v2): a restart continues from the last saved value. */
   checkpoint: Checkpoints;
+  /** The engine's clock (injectable in tests). Use it for schedules instead of Date.now(). */
+  now(): number;
 }
 
 export interface Checkpoints {
@@ -74,6 +76,11 @@ export interface PlannedAction<I> {
   requires?: string[];
   /** "compensate": if this action fails, stop the run and undo every applied action that can be undone. */
   onFailure?: "continue" | "compensate";
+  /**
+   * The action reconciles before it writes, so a claim left "running" by a worker that died
+   * mid-call (older than the engine's staleClaimMs) may be taken over instead of blocking forever.
+   */
+  reentrant?: boolean;
 }
 
 export interface AwaitSignal {
@@ -139,8 +146,16 @@ export interface WorkflowDef<I> {
    * null to acknowledge and ignore. Equal run ids make redeliveries one run.
    */
   events?: { stripe?(event: ProviderEvent, providers: Providers): Promise<EventStart | null> };
+  /**
+   * Business identity of a run (e.g. `lead-<leadId>`). When set it IS the run id:
+   * every start with the same key (a resubmitted form, concurrent deliveries,
+   * a different caller-supplied runId) joins the one existing run.
+   */
+  runKey?(input: I): string;
   /** Kit v2: how often waiting runs are woken in production (EventBridge Scheduler expression, e.g. "rate(5 minutes)"). */
   tickEvery?: string;
+  /** Kit v2: a tick also resumes RUNNING/APPROVED runs nobody has touched for staleMs (a worker died mid-run). */
+  recoverStaleRuns?: boolean;
   /** Kit v2: keep a hash-chained audit trail of every event (SOC 2 / SOX evidence); see the `evidence` command. */
   audit?: boolean;
   /** Static catalogue for `describe`: every action kind this workflow may take. */

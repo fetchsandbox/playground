@@ -1,0 +1,100 @@
+{
+  "what": "Real-time (production 15-minute interval) email confirmation schedule, caller-executed FetchSandbox path",
+  "session_id": "vs_e1add4a4b703",
+  "armed_probe": "gmail:direct_send_accepted_lookup_unavailable",
+  "flow_run_id": "vr_f4732f6e48a940458d69a1ea90c8e673",
+  "app_commit": "7e90d57 (bundle; later commits before the run changed only the contract)",
+  "runtime": "acme-ops dist/main.mjs, WORKFLOW=lead-follow-up, local process, twins of the session, X-Flow-Run-Id on every provider request",
+  "app_saved_email_state": {
+    "phase": "unknown",
+    "sendAttempts": 1,
+    "lookups": 3,
+    "lookupLog": [
+      "+0.1 min failed (gmail:UNAVAILABLE)",
+      "+15.0 min failed (gmail:UNAVAILABLE)",
+      "+30.0 min failed (gmail:UNAVAILABLE)"
+    ],
+    "sentAt": "2026-11-14T15:36:48.169Z"
+  },
+  "app_run_phase": "DONE",
+  "app_run_outcome": "partial",
+  "app_actions": [
+    {
+      "id": "hubspot.contact",
+      "status": "applied",
+      "errorCode": null,
+      "error": null
+    },
+    {
+      "id": "hubspot.deal",
+      "status": "applied",
+      "errorCode": null,
+      "error": null
+    },
+    {
+      "id": "gmail.send_followup",
+      "status": "failed",
+      "errorCode": "gmail:delivery_unconfirmed",
+      "error": "gmail 0 delivery_unconfirmed: Gmail did not confirm the follow-up email after 3 lookups (+0.1 min failed (gmail:UNAVAILABLE); +15.0 min failed (gmail:UNAVAILABLE); +30.0 min failed (gmail:UNAVAILABLE)); it may or may not have been sent"
+    },
+    {
+      "id": "calendar.followup_event",
+      "status": "skipped",
+      "errorCode": null,
+      "error": null
+    },
+    {
+      "id": "slack.notify_team",
+      "status": "applied",
+      "errorCode": null,
+      "error": null
+    }
+  ],
+  "app_events": [
+    "2026-11-14T15:36:46.589Z started by U_FETCHSANDBOX",
+    "2026-11-14T15:36:46.591Z agents: ",
+    "2026-11-14T15:36:46.593Z planned 5 action(s): 0 need approval",
+    "2026-11-14T15:36:47.158Z hubspot.contact: applied",
+    "2026-11-14T15:36:47.522Z hubspot.deal: applied",
+    "2026-11-14T15:36:52.848Z gmail.send_followup: scheduled (gmail:outcome_unknown)",
+    "2026-11-14T15:36:52.849Z gmail.send_followup: deferred: confirmation lookup 1/3 at +0.1 min: failed (gmail:UNAVAILABLE); next lookup at +15 min; not resending",
+    "2026-11-14T15:36:52.849Z calendar.followup_event: scheduled",
+    "2026-11-14T15:36:52.850Z slack.notify_team: scheduled",
+    "2026-11-14T15:36:52.851Z waiting until 2026-11-14T15:51:48.170Z",
+    "2026-11-14T15:51:49.078Z gmail.send_followup: scheduled (gmail:delivery_unknown)",
+    "2026-11-14T15:51:49.081Z gmail.send_followup: deferred: confirmation lookup 2/3 at +15.0 min: failed (gmail:UNAVAILABLE); next lookup at +30 min; not resending",
+    "2026-11-14T15:51:49.081Z waiting until 2026-11-14T16:06:48.170Z",
+    "2026-11-14T16:06:49.296Z gmail.send_followup: failed (gmail:delivery_unconfirmed)",
+    "2026-11-14T16:06:49.297Z calendar.followup_event: skipped",
+    "2026-11-14T16:06:49.884Z slack.notify_team: applied",
+    "2026-11-14T16:06:49.884Z done (partial)"
+  ],
+  "fetchsandbox_probe": {
+    "observed": "inconclusive",
+    "evidence": "attempt expired before evaluation",
+    "arm_expires_in_seconds": 900,
+    "evidence_scope": "correlated_provider_traffic",
+    "app_verified": false
+  },
+  "fetchsandbox_list_runs_gmail_sandbox_16f8c2b0da": {
+    "flow_run_id": "vr_f4732f6e48a940458d69a1ea90c8e673",
+    "started_at": "2026-11-14T15:36:47.573550Z",
+    "last_activity_at": "2026-11-14T16:06:49.245415Z",
+    "request_count": 13,
+    "share_url_status": "renders 'Sandbox not found' (not publicly viewable)"
+  },
+  "twin_state_read_back": {
+    "gmail_messages_to_lead": 1,
+    "gmail_message_internalDate": "2026-11-14T15:36:48.233Z",
+    "calendar_events_for_lead": 0,
+    "slack_handoff_posts": 1,
+    "slack_handoff_contains": [
+      "<@U0SALESLEAD>",
+      "+0.1 min",
+      "+15.0 min",
+      "+30.0 min",
+      "MAY have been sent",
+      "rfc822msgid:"
+    ]
+  }
+}

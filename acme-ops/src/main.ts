@@ -44,6 +44,8 @@ const engine = new Engine(workflow, {
   log,
   approvers: (process.env.APPROVER_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
   approvalTtlMs: Number(process.env.APPROVAL_TTL_HOURS ?? 24) * 3_600_000,
+  ...(Number(process.env.STALE_RUN_MS) > 0 ? { staleMs: Number(process.env.STALE_RUN_MS) } : {}),
+  ...(Number(process.env.STALE_CLAIM_MS) > 0 ? { staleClaimMs: Number(process.env.STALE_CLAIM_MS) } : {}),
 });
 
 const server = createAgentServer(engine as Engine<unknown>, log, {

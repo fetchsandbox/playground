@@ -125,6 +125,8 @@ async function settle(mcp, res, label) {
 // The runtime under test
 // ---------------------------------------------------------------------------
 let app;
+let fastPollUntil = 0;
+let killed = false;
 process.once("exit",()=>{app?.kill("SIGKILL");});
 const stateFile = join(OUT_DIR, "state.json");
 
@@ -161,7 +163,7 @@ function twinEnv(legs) {
 }
 
 async function startApp({ legs, credentialFile, flowRunId } = {}) {
-  if (app) {
+  if (app && app.exitCode === null && app.signalCode === null) {
     const stopped=new Promise(resolve=>app.once("exit",resolve));
     app.kill("SIGKILL");
     await stopped;
@@ -187,7 +189,26 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
   await requireFreePort(PORT);
   app = spawn("node", args, { env, stdio: ["ignore", "pipe", "inherit"] });
   const listening=waitForOwnListener(app,PORT,workflow);
-  app.stdout.on("data", (d) => process.env.PROOF_VERBOSE && process.stdout.write(d));
+  app.stdout.on("data", (d) => {
+    if (process.env.PROOF_VERBOSE) process.stdout.write(d);
+    // A contract can ask for fast status polling once a given submission reaches the runtime,
+    // so a requested restart lands while that run is still mid-flight.
+    // A contract can name a log line (all substrings) at which the runtime is SIGKILLed mid-call,
+    // once: a worker dying while its provider request is in flight. The verifier's restart revives it.
+    if (contract.killWhen && !killed && contract.killWhen.every((x) => String(d).includes(x))) {
+      killed = true;
+      const victim = app;
+      // Optional delay so the in-flight request has reached the provider before the worker dies.
+      setTimeout(() => {
+        victim.kill("SIGKILL");
+        log("killWhen: SIGKILL runtime mid-call on", JSON.stringify(contract.killWhen), `after ${contract.killDelayMs ?? 0} ms`);
+      }, contract.killDelayMs ?? 0);
+    }
+    if (contract.restartWatch && String(d).includes(contract.restartWatch) && Date.now() > fastPollUntil) {
+      fastPollUntil = Date.now() + 90_000;
+      log("restartWatch: fast polling for", contract.restartWatch);
+    }
+  });
   await listening;
   for (let i = 0; i < 100; i++) {
     try {
@@ -279,6 +300,15 @@ if (!runId) {
   await finish(4);
 }
 log("run", runId);
+if (process.env.PROOF_CONFIGURE_ONLY) {
+  // Dry configuration: report what the server accepted or rejected, then cancel; nothing is executed.
+  log("configure-only:", JSON.stringify(cfg.contract_readiness ?? {}).slice(0, 1500));
+  log("execution_budget_seconds:", JSON.stringify(cfg.execution_budget_seconds));
+  const cancelled = await settle(mcp, await mcp.call("validate_integration", { session_id: sid, run_id: runId, cancel: true }), "cancel");
+  save("cancel", cancelled);
+  log("cancelled:", cancelled?.status ?? cancelled?.step ?? JSON.stringify(cancelled).slice(0, 200));
+  await finish(0);
+}
 
 const creds = await settle(mcp, await mcp.call("install_test_credentials", { session_id: sid, run_id: runId, ...(contract.envMapping ? { env_mapping: contract.envMapping } : {}) }), "credentials");
 save("credentials", { variable_names: creds.variable_names, expires_in_seconds: creds.expires_in_seconds });
@@ -312,8 +342,9 @@ log("execute", exe.status ?? exe.step ?? "", exe.message_for_user ?? "");
 let final = exe;
 let settledPolls = 0;
 const TERMINAL = ["passed", "failed", "failing", "completed", "error", "done", "inconclusive", "verified", "partially_verified"];
-for (let i = 0; i < 120; i++) {
-  await sleep(final.client_checkpoint ? 2_000 : Math.max(10_000, (final.retry_after_seconds ?? 10) * 1000));
+const pollDeadline = Date.now() + (contract.maxRunMinutes ?? 20) * 60_000;
+for (let i = 0; Date.now() < pollDeadline; i++) {
+  await sleep(Date.now() < fastPollUntil ? 500 : final.client_checkpoint ? 2_000 : Math.max(10_000, (final.retry_after_seconds ?? 10) * 1000));
   const st = await settle(mcp, await mcp.call("validate_integration", { session_id: sid }), `status-${i}`);
   final = st;
   save("status", st);

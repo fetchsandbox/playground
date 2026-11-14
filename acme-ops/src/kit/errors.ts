@@ -47,6 +47,25 @@ export class SkipAction extends Error {
   override name = "SkipAction";
 }
 
+/**
+ * Kit v2: the action cannot finish now but must not be treated as failed or
+ * blindly repeated (an unknown provider outcome that needs a later read-back,
+ * a pending confirmation lookup, a transient refusal). The engine releases the
+ * effect claim, records the action as `scheduled` until `delayMs` from now and
+ * wakes the run then; the next execute must reconcile before writing again.
+ */
+export class RetryLater extends Error {
+  override name = "RetryLater";
+  constructor(
+    readonly delayMs: number,
+    message: string,
+    /** Short label for the run record, e.g. "gmail:outcome_unknown". */
+    readonly code = "retry_later",
+  ) {
+    super(message);
+  }
+}
+
 export function isRetryable(err: unknown): boolean {
   return err instanceof ProviderError && err.retryable;
 }

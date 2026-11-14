@@ -24,6 +24,15 @@ export interface RequestOptions {
   /** Treat these statuses as data rather than errors (e.g. HubSpot 409). */
   allow?: number[];
   headers?: Record<string, string>;
+  /**
+   * false for a write that the provider does not deduplicate (send an email,
+   * create a deal). A timeout, network error or 5xx may mean the write was
+   * accepted, so it is NOT retried here: the caller reconciles first. Only a
+   * 429 (explicitly not accepted) is retried. Default: true.
+   */
+  idempotent?: boolean;
+  /** Overrides the endpoint's timeout for this request (e.g. a patient reconciliation read). */
+  timeoutMs?: number;
 }
 
 export interface HttpResult<T> {
@@ -92,6 +101,7 @@ export class ProviderHttp {
         return await this.once<T>(method, path, opts);
       } catch (err) {
         if (!(err instanceof ProviderError) || !err.retryable || attempt >= this.retries) throw err;
+        if (opts.idempotent === false && err.status !== 429) throw err;
         const backoff = Math.random() * Math.min(4_000, 250 * 2 ** attempt);
         await sleep(Math.min(4_000, err.retryAfterMs ?? backoff));
       }
@@ -123,9 +133,10 @@ export class ProviderHttp {
     const url = this.url(path, opts.query);
     let res: Response;
     try {
-      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(this.timeoutMs) });
+      res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(opts.timeoutMs ?? this.timeoutMs) });
     } catch (err) {
-      throw new ProviderError(this.provider, 0, "network", true, `${method} ${path}: ${(err as Error).message}`);
+      const timedOut = (err as Error)?.name === "TimeoutError";
+      throw new ProviderError(this.provider, 0, timedOut ? "timeout" : "network", true, `${method} ${path}: ${(err as Error).message}`);
     }
     if (res.ok && opts.responseType && opts.responseType !== "json") {
       const body = opts.responseType === "base64" ? Buffer.from(await res.arrayBuffer()).toString("base64") : await res.text();

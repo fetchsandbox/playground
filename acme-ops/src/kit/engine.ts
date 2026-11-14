@@ -3,7 +3,7 @@ import { z } from "zod";
 import { checkpoint, validateReviewed, sameScope, isSelfReview, type ControlConfig } from "./looplabs-control";
 import type { ProviderFactory } from "../providers";
 import type { Drafter } from "./drafter";
-import { errorCode, errorMessage, SkipAction } from "./errors";
+import { errorCode, errorMessage, RetryLater, SkipAction } from "./errors";
 import type { Logger } from "./log";
 import type { Item, KvStore } from "./store";
 import {
@@ -89,6 +89,8 @@ export interface EngineDeps {
   agentTimeoutMs?: number;
   /** A RUNNING/APPROVED run untouched this long may be resumed by anyone. */
   staleMs?: number;
+  /** A "running" effect claim older than this belongs to a dead worker (taken over only by reentrant actions). */
+  staleClaimMs?: number;
   now?: () => number;
 }
 
@@ -196,7 +198,8 @@ export class Engine<I> {
     if (!parsed.success) {
       return { status: 400, body: { error: "invalid input", issues: parsed.error.issues.map((i) => `${i.path.join(".") || "input"}: ${i.message}`) } };
     }
-    const runId = cmd.runId ?? `run_${randomUUID()}`;
+    // A workflow with a business key runs once per key: the key is the run id.
+    const runId = this.workflow.runKey ? this.workflow.runKey(parsed.data) : (cmd.runId ?? `run_${randomUUID()}`);
     const at = new Date(this.now()).toISOString();
     const run: RunRecord = {
       pk: pk(runId),
@@ -207,7 +210,7 @@ export class Engine<I> {
       phase: "RUNNING",
       input: parsed.data,
       requestedBy: cmd.requestedBy,
-      labels: cmd.labels ?? {},
+      labels: { ...(cmd.labels ?? {}), ...(this.workflow.runKey && cmd.runId && cmd.runId !== runId ? { submissionId: cmd.runId } : {}) },
       correlation,
       agents: [],
       actions: [],
@@ -291,10 +294,14 @@ export class Engine<I> {
 
       if ((await this.execute(runId, ctx, planned, "auto")) === "compensated") return;
       run = (await this.load(runId))!;
-      if (run.phase !== "RUNNING") return; // cancelled meanwhile
+      // Cancelled meanwhile; WAITING means another worker settled while this one still applied effects.
+      if (run.phase !== "RUNNING" && run.phase !== "WAITING") return;
 
       const needsApproval = run.actions.some((a) => a.status === "pending_approval");
       run = (await this.mutate(runId, (r) => {
+        // Another worker may have settled this run to WAITING while this one was still applying
+        // effects (it saw them claimed): settle again with the final statuses.
+        if (r.phase === "WAITING" && !needsApproval) return void this.settle(r);
         if (r.phase !== "RUNNING") return;
         if (needsApproval) {
           const fromInput = (r.input as { approvers?: string[] })?.approvers;
@@ -396,8 +403,14 @@ export class Engine<I> {
         const claim = await this.deps.store.get(claimKey);
         if (claim?.state === "applied") {
           await this.updateAction(runId, p.id, { status: "applied", ref: claim.ref as string, detail: claim.detail as Record<string, unknown> });
+          continue;
         }
-        continue;
+        // A worker that died mid-call leaves its claim "running" forever. A reentrant action
+        // (it reconciles before writing) may take it over once the claim is stale.
+        const staleAfter = this.deps.staleClaimMs ?? 5 * 60_000;
+        const stale = claim?.state === "running" && this.now() - Date.parse(String(claim.at)) > staleAfter;
+        if (!(p.reentrant && stale && claim && (await this.deps.store.replace({ ...claim, at: new Date(this.now()).toISOString(), takenOverFrom: claim.at })))) continue;
+        await this.mutate(runId, (r) => this.event(r, `${p.id}: took over a stale claim from ${String(claim.at)} (a worker stopped mid-call); reconciling before any write`));
       }
 
       const fresh = (await this.load(runId))!;
@@ -410,6 +423,14 @@ export class Engine<I> {
         await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "applied", ref: receipt.ref, detail: receipt.detail ?? {} });
         await this.updateAction(runId, p.id, { status: "applied", ref: receipt.ref, detail: receipt.detail, appliedAt: new Date(this.now()).toISOString() });
       } catch (err) {
+        if (err instanceof RetryLater) {
+          // Not failed and not to be repeated blindly: wake later, reconcile, then decide.
+          await this.deps.store.delete(claimKey);
+          ctx.log.info("action deferred", { action: p.id, code: err.code, reason: err.message });
+          await this.updateAction(runId, p.id, { status: "scheduled", waitUntil: new Date(this.now() + err.delayMs).toISOString(), error: err.message, errorCode: err.code });
+          await this.mutate(runId, (r) => this.event(r, `${p.id}: deferred: ${err.message}`.slice(0, 500)));
+          continue;
+        }
         if (err instanceof SkipAction) {
           // Decided not to apply: final, not retried.
           await this.deps.store.replace({ ...(await this.deps.store.get(claimKey))!, state: "skipped" });
@@ -433,6 +454,8 @@ export class Engine<I> {
   private readiness(p: PlannedAction<I>, rec: ActionRecord, all: ActionRecord[] = []): "ready" | { status: ActionStatus; signal?: ActionRecord["signal"]; error?: string; waitUntil?: string } {
     const now = this.now();
     if (p.waitUntil && Date.parse(p.waitUntil) > now) return { status: "scheduled" };
+    // A deferred action (RetryLater) waits for its own recorded time.
+    if (rec.status === "scheduled" && rec.waitUntil && Date.parse(rec.waitUntil) > now) return { status: "scheduled" };
     if (p.delayAfter) {
       const dep = all.find((a) => a.id === p.delayAfter!.action);
       if (dep && dep.status !== "applied" && !SETTLED.has(dep.status)) return { status: "scheduled" };
@@ -659,6 +682,7 @@ export class Engine<I> {
       log: this.deps.log.child({ runId: run.runId, workflow: run.workflow }),
       startedAt: new Date(run.createdAt),
       checkpoint: this.checkpoints(run.runId),
+      now: this.now,
     };
   }
 
@@ -772,6 +796,12 @@ export class Engine<I> {
     const now = this.now();
     const all = (await this.deps.store.list("run#")) as unknown as RunRecord[];
     const due = all.filter((r) => (r.phase === "WAITING" || r.phase === "AWAITING_APPROVAL") && r.wakeAt && Date.parse(r.wakeAt) <= now);
+    // A run left RUNNING/APPROVED by a worker that died is picked up again once it is stale.
+    if (this.workflow.recoverStaleRuns) {
+      const staleAfter = this.deps.staleMs ?? 60_000;
+      const stuck = (r: RunRecord) => r.phase === "RUNNING" || r.phase === "APPROVED" || (r.phase === "WAITING" && !r.wakeAt);
+      for (const r of all) if (stuck(r) && !due.includes(r) && !this.driving.has(r.runId) && now - Date.parse(r.updatedAt) > staleAfter) due.push(r);
+    }
     for (const r of all.filter((x) => x.phase === "AWAITING_APPROVAL")) await this.expireIfDue(r);
     const jobs = due.map((r) => this.drive(r.runId));
     if (wait) await Promise.all(jobs);
@@ -825,6 +855,9 @@ export class Engine<I> {
   /** What `status` returns: everything a control plane needs to render and steer the run. */
   view(r: RunRecord) {
     const count = (s: string) => r.actions.filter((a) => a.status === s).length;
+    // Flattened fields are present on EVERY action (null when not applicable), so a verifier
+    // predicate on one action never finds the field "missing" on its siblings.
+    const detailKeys = [...new Set(r.actions.flatMap((a) => Object.keys(flatDetail(a.detail))))];
     return {
       runId: r.runId,
       workflow: r.workflow,
@@ -838,8 +871,11 @@ export class Engine<I> {
       labels: r.labels,
       duplicateStarts: r.duplicateStarts,
       agents: r.agents.map(({ name, status, summary, error, errorCode, durationMs }) => ({ name, status, summary, error, errorCode, durationMs })),
-      // `reconciled` flattens the last read-back for consumers that can't reach into objects.
-      actions: r.actions.map((a) => ({ ...a, reconciled: a.reconcile?.status ?? null })),
+      // `reconciled` (and `detail_<key>` for scalar receipt details) flatten state for consumers that can't reach into objects.
+      actions: r.actions.map((a) => {
+        const flat = flatDetail(a.detail);
+        return { ...a, error: a.error ?? null, errorCode: a.errorCode ?? null, reconciled: a.reconcile?.status ?? null, ...Object.fromEntries(detailKeys.map((k) => [k, flat[k] ?? null])) };
+      }),
       counts: {
         applied: count("applied"),
         failed: count("failed"),
@@ -872,6 +908,13 @@ export class Engine<I> {
 }
 
 const pk = (runId: string) => `run#${runId}`;
+
+/** Scalar receipt details as top-level `detail_<key>` fields of the run view (read-only observation aid). */
+function flatDetail(detail: Record<string, unknown> | undefined): Record<string, string | number | boolean | null> {
+  const out: Record<string, string | number | boolean | null> = {};
+  for (const [k, v] of Object.entries(detail ?? {})) if (v === null || ["string", "number", "boolean"].includes(typeof v)) out[`detail_${k}`] = v as string | number | boolean | null;
+  return out;
+}
 
 function notFound(runId: string): Reply {
   return { status: 404, body: { result: "not_found", runId } };

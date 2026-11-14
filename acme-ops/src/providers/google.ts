@@ -45,6 +45,29 @@ export class GmailClient {
     return body?.messages?.length ?? 0;
   }
 
+  /**
+   * Sends (not drafts) one message. Never retried on timeout/5xx: Gmail may
+   * have accepted it, so the caller looks it up by Message-ID before any
+   * further send. Returns Gmail's message id and labels (SENT on success).
+   */
+  async sendOnce(mail: DraftEmail): Promise<{ id: string; labelIds: string[] }> {
+    const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
+    const { body } = await this.http.request<{ id: string; labelIds?: string[] }>("POST", `/gmail/v1/users/${this.userId}/messages/send`, { json: { raw }, idempotent: false });
+    return { id: String(body.id), labelIds: body.labelIds ?? [] };
+  }
+
+  /** Ids of mailbox messages with this RFC 5322 Message-ID (Gmail search `rfc822msgid:`). */
+  async findByMessageId(messageId: string): Promise<string[]> {
+    const { body } = await this.http.request<{ messages?: { id: string }[] }>("GET", `/gmail/v1/users/${this.userId}/messages`, { query: { q: `rfc822msgid:${messageId}`, maxResults: 10 } });
+    return (body?.messages ?? []).map((m) => String(m.id));
+  }
+
+  async getMessage(id: string): Promise<{ id: string; labelIds: string[]; messageIdHeader?: string }> {
+    const { body } = await this.http.request<any>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(id)}`, { query: { format: "metadata" } });
+    const headers: { name: string; value: string }[] = body?.payload?.headers ?? [];
+    return { id: String(body.id), labelIds: body?.labelIds ?? [], messageIdHeader: headers.find((h) => h.name.toLowerCase() === "message-id")?.value };
+  }
+
   async createDraft(mail: DraftEmail): Promise<{ id: string }> {
     const raw = Buffer.from(rfc822(mail), "utf8").toString("base64url");
     const { body } = await this.http.request<{ id: string }>("POST", `/gmail/v1/users/${this.userId}/drafts`, { json: { message: { raw } } });
@@ -93,6 +116,22 @@ export class CalendarClient {
       },
     });
     return body;
+  }
+
+  /**
+   * Insert with a client-chosen event id (base32hex, 5-1024 chars). Google
+   * rejects a second insert with the same id (409), which makes the write
+   * idempotent; it is still not auto-retried, the caller reads back first.
+   */
+  async insertEventWithId(calendarId: string, eventId: string, event: { summary: string; description: string; start: string; end: string }): Promise<{ event: CalendarEvent; created: boolean }> {
+    const res = await this.http.request<CalendarEvent>("POST", `/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+      query: { sendUpdates: "none" },
+      json: { id: eventId, summary: event.summary, description: event.description, start: { dateTime: event.start }, end: { dateTime: event.end } },
+      allow: [409],
+      idempotent: false,
+    });
+    if (res.status === 409) return { event: await this.getEvent(calendarId, eventId), created: false };
+    return { event: res.body, created: true };
   }
 
   async getEvent(calendarId: string, eventId: string): Promise<CalendarEvent> {
