@@ -1,0 +1,164 @@
+{
+  "workflow": "catering-quote",
+  "mcp_observed": {
+    "name": "fetchsandbox",
+    "version": "0.7.30"
+  },
+  "mcp_source": "npm_package",
+  "app_version": "acme-ops-catering-quote-1.0.0-1b363af",
+  "session_id": "vs_e597e8aa7719",
+  "run_id": "vr_df2bbe2ecfb744d5b78768a9b7f043fe",
+  "receipt_url": "https://fetchsandbox.com/runs/b18653b341?flow=vr_df2bbe2ecfb744d5b78768a9b7f043fe",
+  "status": null,
+  "verdict": "inconclusive",
+  "app_verified": false,
+  "complete": false,
+  "checks": [
+    {
+      "id": "baseline",
+      "status": "unmeasured",
+      "explanation": "required observation 'detail.amountDue' is missing"
+    },
+    {
+      "id": "stranger_cannot_approve",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "owner_rejects_quote",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "customer_declines",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "stranger_cannot_accept",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "accept_before_quote_sent_ignored",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "negotiated_within_floor",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "counter_below_floor_countered",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "superseded_revision_not_accepted",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "booked_inquiry_not_requoted",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "headcount_below_minimum_declined",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "short_notice_declined",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "date_conflict_declined",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "large_party_to_owner",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "invalid_input_rejected",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "duplicate_start",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "concurrent_start",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "concurrent_acceptance",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_send_rejected_then_resumed",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_response_lost_recovered",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "gmail_lookup_unavailable_not_resent",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "calendar_unavailable_to_owner",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "stripe_unavailable_to_owner",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "hubspot_down_quote_continues",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "restart_awaiting_acceptance",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "booking_reconciled_reminder_not_early",
+      "status": "unmeasured",
+      "explanation": "Baseline did not pass; failure checks were not run"
+    },
+    {
+      "id": "reminder_sent_day_before",
+      "status": "unmeasured",
+      "explanation": "The reminder fires at event − 24 h, at least a day after booking; the runtime's timers use the real clock and the verifier's execution budget is under an hour, so the send can't be observed in a twin run. It is exercised with a controlled clock in acme-ops/test/catering-quote.test.ts; here the check above only proves it is scheduled for the right time and not sent early."
+    },
+    {
+      "id": "quote_expires_unaccepted",
+      "status": "unmeasured",
+      "explanation": "Expiry is a signal deadline days after sending; it needs the runtime's clock to advance, which a twin run can't do. Covered with a controlled clock in acme-ops/test/catering-quote.test.ts."
+    },
+    {
+      "id": "inbound_reply_starts_or_accepts",
+      "status": "unmeasured",
+      "explanation": "Reply parsing belongs to the inbox intake adapter, outside this runtime (which takes the parsed request or signal). The Gmail twin does not simulate users.history or users.watch, so mailbox-driven intake can't be exercised here."
+    }
+  ],
+  "recorded_at": "2026-11-14T22:12:35.492Z"
+}
