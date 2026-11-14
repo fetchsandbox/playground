@@ -34,13 +34,25 @@ Providers discovered via FetchSandbox MCP `0.7.30`: `hubspot`, `gmail`, `google-
 | Anonymous `validate_integration` session | Twins created; matrix listed; `authenticated_session: false` |
 | Protected `application_context` / suite execute | **Blocked** — device auth required (`FETCHSANDBOX_API_KEY` / `~/.fetchsandbox/credentials.json` missing) |
 | `node verify/relay-proof.mjs lead-follow-up` | **Not run** — same auth blocker |
+| CI on `cursor/lead-follow-up-b8e2` | **Passed** (2/2), Pacific 2026-11-14 ~12:54 |
+
+### Auth attempts (still blocked)
+
+| Pacific time | Device code | Outcome |
+|---|---|---|
+| ~12:50 | `F6SG-EDH2` | Expired / unused; poll kept returning anonymous |
+| ~13:00 | `DMYQ-SZ5W` | Timer follow-up; still no credentials |
+| ~13:01 | `YJNT-QC66` | Active poll restarted; awaiting approval |
+
+Open https://fetchsandbox.com/device?code=YJNT-QC66 to approve. Codes expire in about 15 minutes.
 
 ## Receipt
 
-No owned FetchSandbox receipt URL yet. Anonymous sessions cannot be upgraded; after sign-in a **fresh** owned session must run `relay-proof.mjs`.
+No owned FetchSandbox receipt URL yet. No receipt was invented. Anonymous sessions cannot be upgraded; after sign-in a **fresh** owned session must run `relay-proof.mjs`.
 
 ## Remaining limits
 
 - No live HubSpot / Gmail / Calendar / Slack customer traffic (by request).
 - Twin email proof ≠ SMTP inbox delivery (`live_inbox_delivery` blocked).
 - Catalog / generated business guide omitted until a saved receipt exists (`export-docs` skips workflows without `verify/receipts/<id>.json`).
+- **Hard blocker for twin proof receipt:** FetchSandbox account device auth on this Cloud Agent VM.
