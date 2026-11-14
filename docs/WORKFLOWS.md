@@ -115,6 +115,14 @@ These guides describe code outside `main`; follow the source branch/PR and its s
 
 [PR #68](https://github.com/fetchsandbox/playground/pull/68) merged on October 19, 2026. Duplicate-charge remediation and privacy-erasure are included in the main catalog above. Merge status does not establish deployment or a fresh verification result.
 
+## Pending Acme workflow (receipt not yet catalogued)
+
+Built on `main` workflow layout under `acme-ops`, with local tests and an executable FetchSandbox contract. Omitted from the 51-row receipt table until an owned relay-proof receipt exists.
+
+| Workflow | Department / team | Guide / evidence |
+|---|---|---|
+| Lead follow-up | Sales / `sales-ops` | [lead-follow-up](workflows/lead-follow-up.md) · [verification status](evidence/lead-follow-up-verification.md) |
+
 ## Small integration apps and planted-bug exercises
 
 These are separate from the enterprise workflow catalog. Read their own setup and findings; do not infer a blanket verification result.
