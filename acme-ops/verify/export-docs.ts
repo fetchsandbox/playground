@@ -10,7 +10,9 @@ for(const id of ids){
  const receipt=JSON.parse(readFileSync(new URL(`./receipts/${id}.json`,import.meta.url),'utf8'));
  const baseline=contract.checks.find((c:any)=>c.id==='baseline');
  const start=baseline?.actions?.find((a:any)=>a.body?.action==='start');
- if(!start || !wf.input.safeParse(start.body.input).success)throw new Error(`Invalid baseline example for ${id}`);
+ // Validate what the verifier actually sends: it substitutes {{run_id}} before the request.
+ const sent=start&&JSON.parse(JSON.stringify(start.body.input).replaceAll('{{run_id}}','vr_00000000000000000000000000000000'));
+ if(!start || !wf.input.safeParse(sent).success)throw new Error(`Invalid baseline example for ${id}`);
  output.push({id,title:wf.title,department:wf.org,team:wf.team,business:wf.description,agents:wf.agents.map(a=>({name:a.name,providers:a.needs})),compose:wf.compose?.name??null,actions:wf.catalog,input:z.toJSONSchema(wf.input,{unrepresentable:'any'}),example:baseline?.actions?.find((a:any)=>a.body?.action==='start')?.body??null,tickEvery:wf.tickEvery??null,audit:!!wf.audit,checks:contract.checks.map((c:any)=>({id:c.id,label:c.name,blocked:c.blocker??null})),receipt});
 }
 process.stdout.write(JSON.stringify(output,null,2));
