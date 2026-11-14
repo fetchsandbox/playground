@@ -42,9 +42,11 @@ Providers discovered via FetchSandbox MCP `0.7.30`: `hubspot`, `gmail`, `google-
 |---|---|---|
 | ~12:50 | `F6SG-EDH2` | Expired / unused; poll kept returning anonymous |
 | ~13:00 | `DMYQ-SZ5W` | Timer follow-up; still no credentials |
-| ~13:01 | `YJNT-QC66` | Active poll restarted; awaiting approval |
+| ~13:01 | `YJNT-QC66` | Poll ran ~10 min; unused / expired |
+| ~13:11 | `KMV5-XM4Q` | Issued; superseded by restarted poll |
+| ~13:11 | `UBE9-5XA4` | Active poll; awaiting approval |
 
-Open https://fetchsandbox.com/device?code=YJNT-QC66 to approve. Codes expire in about 15 minutes.
+Open https://fetchsandbox.com/device?code=UBE9-5XA4 to approve. Codes expire in about 15 minutes.
 
 ## Receipt
 
