@@ -162,12 +162,17 @@ export function decide(input: Input, now: Date, facts: Facts): Decision {
 
   const declines: string[] = [];
   const manual: string[] = [];
-  if (input.event.headcount < POLICY.minHeadcount) declines.push("headcount_below_minimum");
-  if (start - now.getTime() < POLICY.minLeadHours * HOUR) declines.push("short_notice");
-  if (start - now.getTime() > POLICY.maxLeadDays * DAY) declines.push("too_far_ahead");
-  if (facts.calendarConflict === true) declines.push("date_unavailable");
+  // A booked customer is never declined automatically: changes to a confirmed booking are the owner's call,
+  // and the booking itself now fills the slot (it isn't a conflict with someone else).
   const st = facts.inquiryState ?? "";
-  if (st.endsWith("|accepted") && !st.startsWith(`${quoteId}|`)) manual.push("already_booked");
+  const alreadyBooked = st.endsWith("|accepted") && !st.startsWith(`${quoteId}|`);
+  if (alreadyBooked) manual.push("already_booked");
+  if (!alreadyBooked) {
+    if (input.event.headcount < POLICY.minHeadcount) declines.push("headcount_below_minimum");
+    if (start - now.getTime() < POLICY.minLeadHours * HOUR) declines.push("short_notice");
+    if (start - now.getTime() > POLICY.maxLeadDays * DAY) declines.push("too_far_ahead");
+    if (facts.calendarConflict === true) declines.push("date_unavailable");
+  }
   if (input.revision > POLICY.maxRevisions) manual.push("negotiation_rounds_exceeded");
   if (input.event.headcount > POLICY.maxAutoHeadcount) manual.push("large_party");
   if (facts.calendarConflict === null) manual.push("availability_unknown");

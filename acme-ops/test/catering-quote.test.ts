@@ -62,6 +62,13 @@ describe("pricing and policy (pure)", () => {
     expect(decide(input(), now, { calendarConflict: null, inquiryState: null }).reasons).toEqual(["availability_unknown", "billing_unavailable"]);
   });
 
+  it("a counter-offer on an already-booked inquiry goes to the owner, even though its own booking now fills the slot", () => {
+    // Regression (FetchSandbox attempt 3, booked_inquiry_not_requoted): the booked event made the slot busy,
+    // and the revision was declined as "date_unavailable" to a customer who was already booked.
+    const d = decide(input({ revision: 2, requestedPerHeadMinor: 1500 }), new Date(T0), { calendarConflict: true, inquiryState: "CAT-2026-0142-r1|accepted" });
+    expect(d).toMatchObject({ kind: "manual", reasons: ["already_booked"] });
+  });
+
   it("holds a quote 7 days but never closer than 48 h to the event; invoices fall due 72 h before", () => {
     expect(decide(input(), new Date(T0), facts).validUntil).toBe(new Date(T0 + 7 * DAY).toISOString());
     const soon = at(4);
@@ -150,7 +157,9 @@ describe("catering-quote runs", () => {
     await e.handle({ action: "signal", runId: "r2", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
     expect(w.state.stripe.invoices.filter((i) => i.metadata?.catering_inquiry === "CAT-2026-0142")).toEqual([expect.objectContaining({ amount_due: 51_500 })]);
     expect(w.state.calendar.events).toHaveLength(1);
-    // A third revision after booking goes to the owner instead of quoting.
+    // A third revision after booking goes to the owner instead of quoting, even though (as on the
+    // real calendar) the booking now shows the slot as busy.
+    w.state.calendar.busy.push({ start: at(10), end: new Date(Date.parse(at(10)) + 2 * HOUR).toISOString() });
     const r3 = await e.handle({ action: "start", runId: "r3", input: input({ revision: 3, requestedPerHeadMinor: 1500 }), requestedBy: user });
     expect(r3.body.output).toMatchObject({ decision: "manual", reasons: ["already_booked"] });
   });

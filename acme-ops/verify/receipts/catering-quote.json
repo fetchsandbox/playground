@@ -5,10 +5,10 @@
     "version": "0.7.30"
   },
   "mcp_source": "npm_package",
-  "app_version": "acme-ops-catering-quote-1.0.0-ecea639",
-  "session_id": "vs_ead70fd76d0c",
-  "run_id": "vr_fb5af0316147447fb51fea2691f8b71a",
-  "receipt_url": "https://fetchsandbox.com/runs/f8942e0f7f?flow=vr_fb5af0316147447fb51fea2691f8b71a",
+  "app_version": "acme-ops-catering-quote-1.0.0-38cc9cd",
+  "session_id": "vs_8c0f23358eec",
+  "run_id": "vr_fc7b58f615764623bb1ffc45d3c35802",
+  "receipt_url": "https://fetchsandbox.com/runs/405903a833?flow=vr_fc7b58f615764623bb1ffc45d3c35802",
   "status": null,
   "verdict": "failing",
   "app_verified": false,
@@ -56,13 +56,13 @@
     },
     {
       "id": "superseded_revision_not_accepted",
-      "status": "unmeasured",
-      "explanation": "assertion could not read evidence: required observation 'input.revision' is missing"
+      "status": "held",
+      "explanation": "runs[*]: expected exactly 2, found 2; runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 1"
     },
     {
       "id": "booked_inquiry_not_requoted",
-      "status": "unmeasured",
-      "explanation": "assertion could not read evidence: required observation 'input.revision' is missing"
+      "status": "violated",
+      "explanation": "runs[*]: expected exactly 1, found 1; runs[*]: expected exactly 1, found 0"
     },
     {
       "id": "headcount_below_minimum_declined",
@@ -91,13 +91,13 @@
     },
     {
       "id": "duplicate_start",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "concurrent_start",
-      "status": "violated",
-      "explanation": "not stable under repeat: 1 -> 0 after 2 identical drives"
+      "status": "held",
+      "explanation": "expected exactly 1, found 1; stable under 2 repeats (1)"
     },
     {
       "id": "concurrent_acceptance",
@@ -160,5 +160,5 @@
       "explanation": "Reply parsing belongs to the inbox intake adapter, outside this runtime (which takes the parsed request or signal). The Gmail twin does not simulate users.history or users.watch, so mailbox-driven intake can't be exercised here."
     }
   ],
-  "recorded_at": "2026-11-14T22:17:31.893Z"
+  "recorded_at": "2026-11-14T22:22:58.532Z"
 }
