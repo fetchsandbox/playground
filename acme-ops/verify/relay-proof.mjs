@@ -58,7 +58,9 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 // ---------------------------------------------------------------------------
 function mcpClient() {
   const apiKey = process.env.FETCHSANDBOX_API_KEY ?? JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
-  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.32"]];
+  const version = process.env.FETCHSANDBOX_MCP_VERSION ?? "0.7.32";
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("Explicit MCP version must be a pinned release");
+  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", `fetchsandbox-mcp@${version}`]];
   const child = spawn(cmd[0], cmd[1], {
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, FETCHSANDBOX_BASE_URL: "https://fetchsandbox.com", FETCHSANDBOX_API_KEY: apiKey },
