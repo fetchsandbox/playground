@@ -33,7 +33,10 @@ if (!workflow) {
 }
 // Contracts date their inputs from PROOF_NOW: the real time in a proof, a fixed date in generated docs.
 process.env.PROOF_NOW ??= new Date().toISOString();
-const contract = (await import(`./contracts/${workflow}.mjs`)).default;
+const contractModule = await import(`./contracts/${workflow}.mjs`);
+const profileName = process.env.PROOF_CONTRACT_PROFILE;
+if (profileName && typeof contractModule.profiles?.[profileName] !== "function") throw new Error("Unknown explicitly requested contract profile: " + profileName);
+const contract = profileName ? contractModule.profiles[profileName](Date.parse(process.env.PROOF_NOW)) : contractModule.default;
 const PORT = Number(process.env.PROOF_PORT ?? 8080);
 // PROOF_BUNDLE lets several builders prove different workflows at once without sharing dist/main.mjs.
 const BUNDLE = process.env.PROOF_BUNDLE ? join(ROOT, process.env.PROOF_BUNDLE) : join(ROOT, "dist", "main.mjs");
@@ -55,7 +58,7 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 // ---------------------------------------------------------------------------
 function mcpClient() {
   const apiKey = process.env.FETCHSANDBOX_API_KEY ?? JSON.parse(readFileSync(join(homedir(), ".fetchsandbox", "credentials.json"), "utf8")).apiKey;
-  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.30"]];
+  const cmd = process.env.FETCHSANDBOX_MCP_BIN ? ["node", [process.env.FETCHSANDBOX_MCP_BIN]] : ["npx", ["-y", "fetchsandbox-mcp@0.7.32"]];
   const child = spawn(cmd[0], cmd[1], {
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env, FETCHSANDBOX_BASE_URL: "https://fetchsandbox.com", FETCHSANDBOX_API_KEY: apiKey },

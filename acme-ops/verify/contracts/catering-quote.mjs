@@ -340,7 +340,7 @@ async function seed(legs, log) {
   return { conflictEvent: body.id, slot: startIso };
 }
 
-export default {
+const historicalContract = {
   workflow: "catering-quote",
   providers: ["stripe", "hubspot", "gmail", "google-calendar"],
   seed,
@@ -374,4 +374,16 @@ export default {
     cleanup_and_isolation: ["baseline", "date_conflict_declined"],
   },
   evidence: ["acme-ops/src/workflows/catering-quote.ts", "acme-ops/src/kit/engine.ts", "acme-ops/src/kit/server.ts", "acme-ops/src/providers/{stripe,hubspot,google}.ts", "acme-ops/test/catering-quote.test.ts"],
+};
+
+export default historicalContract;
+
+// Explicit profile; historical receipts and the default contract stay unchanged.
+export const profiles = {
+  clock: epochMs => ({
+    ...historicalContract,
+    checks: withRuntimeClock(epochMs),
+    applicationConfig: { application_clock: { advance_path: "/verify/clock/advance", observe_path: "/verify/clock" } },
+    appEnv: { ...historicalContract.appEnv, FETCHSANDBOX_TEST_CLOCK_EPOCH_MS: String(epochMs) },
+  }),
 };
