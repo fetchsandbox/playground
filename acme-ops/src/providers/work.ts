@@ -250,7 +250,7 @@ export class TwilioClient {
     return { sid: res.sid, status: res.status };
   }
 
-  async getMessage(sid: string): Promise<{ sid: string; status: string; to: string }> {
+  async getMessage(sid: string): Promise<{ sid: string; status: string; to: string; from: string; body: string; direction: string }> {
     return (await this.http.request<any>("GET", `/2010-04-01/Accounts/${this.accountSid}/Messages/${encodeURIComponent(sid)}.json`)).body;
   }
 }

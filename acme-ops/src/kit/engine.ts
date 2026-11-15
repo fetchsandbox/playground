@@ -41,6 +41,8 @@ export const CommandSchema = z.discriminatedUnion("action", [
     wait: z.boolean().optional(),
   }),
   z.object({ action: z.literal("status"), runId: z.string().min(1) }),
+  z.object({ action: z.literal("ingest_sms_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256) }),
+  z.object({ action: z.literal("decide_sms_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256), userId: z.string().min(1), decision: z.enum(["approve", "reject"]) }),
   z.object({ action: z.literal("ingest_email_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256) }),
   z.object({ action: z.literal("decide_email_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256), userId: z.string().min(1), decision: z.enum(["approve", "reject"]) }),
   z.object({
@@ -148,6 +150,8 @@ export class Engine<I> {
 
   async handle(cmd: Command, correlation: Record<string, string> = {}): Promise<Reply> {
     switch (cmd.action) {
+      case "ingest_sms_reply":
+      case "decide_sms_reply":
       case "ingest_email_reply":
       case "decide_email_reply":
         return this.emailReply(cmd);
@@ -176,26 +180,35 @@ export class Engine<I> {
     }
   }
 
-  private async emailReply(cmd: Extract<Command, { action: "ingest_email_reply" | "decide_email_reply" }>): Promise<Reply> {
+  private async emailReply(cmd: Extract<Command, { action: "ingest_email_reply" | "decide_email_reply" | "ingest_sms_reply" | "decide_sms_reply" }>): Promise<Reply> {
     const run = await this.load(cmd.runId);
     if (!run) return notFound(cmd.runId);
     const policy = this.workflow.emailReply;
     const owners = run.approval?.approvers ?? [];
     if (!policy || !owners.length) return { status: 409, body: { error: "email review requires a workflow policy and explicit owners" } };
-    const pk = `email-review#${this.workflow.id}#${run.runId}#${cmd.messageId}`;
+    const channel = cmd.action.includes("sms") ? "sms" : "email";
+    const pk = `${channel}-review#${this.workflow.id}#${run.runId}#${cmd.messageId}`;
     let review = await this.deps.store.get(pk);
     if (review && review.runId !== cmd.runId) return { status: 409, body: { error: "message already bound to another run" } };
-    if (cmd.action === "ingest_email_reply") {
+    if (cmd.action === "ingest_email_reply" || cmd.action === "ingest_sms_reply") {
       if (!review) {
-        const gmail = this.context(run).providers.gmail;
-        if (!gmail) return { status: 409, body: { error: "mailbox unavailable" } };
-        const message = await gmail.readMessage(cmd.messageId);
-        const payload = message.payload;
-        const header = (name: string) => payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
-        if (payload?.mimeType !== "text/plain" || typeof payload.body?.data !== "string" || payload.body.data.length > 90000) return { status: 422, body: { error: "reply needs supported plain-text MIME" } };
-        const observed = { id: message.id, from: header("From"), subject: header("Subject"), text: Buffer.from(payload.body.data, "base64url").toString("utf8") };
+        const providers = this.context(run).providers;
+        let observed: { id: string; from: string; to: string; subject: string; text: string; channel: "email" | "sms" };
+        if (channel === "sms") {
+          if (!providers.twilio) return { status: 409, body: { error: "SMS provider unavailable" } };
+          const message = await providers.twilio.getMessage(cmd.messageId);
+          if (message.sid !== cmd.messageId || message.direction !== "inbound" || typeof message.body !== "string" || message.body.length > 10000 || typeof message.from !== "string" || typeof message.to !== "string") return { status: 422, body: { error: "supported inbound SMS required" } };
+          observed = { id: message.sid, from: message.from, to: message.to, subject: "", text: message.body, channel };
+        } else {
+          if (!providers.gmail) return { status: 409, body: { error: "mailbox unavailable" } };
+          const message = await providers.gmail.readMessage(cmd.messageId);
+          const payload = message.payload;
+          const header = (name: string) => payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+          if (message.id !== cmd.messageId || payload?.mimeType !== "text/plain" || typeof payload.body?.data !== "string" || payload.body.data.length > 90000) return { status: 422, body: { error: "reply needs supported plain-text MIME" } };
+          observed = { id: message.id, from: header("From"), to: header("To"), subject: header("Subject"), text: Buffer.from(payload.body.data, "base64url").toString("utf8"), channel };
+        }
         const proposal = policy(this.context(run), observed);
-        await this.deps.store.create({ pk, runId: run.runId, messageId: message.id, observed, proposal, state: proposal ? "pending_owner" : "needs_human", receivedAt: new Date(this.now()).toISOString() });
+        await this.deps.store.create({ pk, runId: run.runId, messageId: observed.id, observed, proposal, state: proposal ? "pending_owner" : "needs_human", receivedAt: new Date(this.now()).toISOString() });
         review = await this.deps.store.get(pk);
       }
       if (!review || review.runId !== cmd.runId) return { status: 409, body: { error: "message binding changed; review again" } };
@@ -203,7 +216,7 @@ export class Engine<I> {
     }
     if (!owners.includes(cmd.userId)) return { status: 403, body: { error: "owner required" } };
     if (!review) return { status: 404, body: { error: "reply not ingested" } };
-    const proposal = review.proposal as { actionId: string; value: "approve" | "reject" } | null;
+    const proposal = review.proposal as { actionId: string; value: "approve" | "reject" } | { revisionInput: I } | null;
     if (cmd.decision === "approve" && !proposal) return { status: 409, body: { error: "reply needs manual interpretation" } };
     const target = cmd.decision === "approve" ? "approved" : "rejected";
     if (review.state !== target) {
@@ -213,6 +226,13 @@ export class Engine<I> {
     // Persist the decision first. A restart/retry reuses the same idempotent
     // signal rather than treating an acknowledgement as a completed booking.
     if (target === "approved" && proposal) {
+      if ("revisionInput" in proposal) {
+        // Stable child identity survives response loss, restart and repeated approval.
+        // Starting the revision still uses the existing input validation and owner gate.
+        const childId = `reply-${createHash("sha256").update(pk).digest("hex").slice(0, 32)}`;
+        const result = await this.start({ action: "start", runId: childId, input: proposal.revisionInput, requestedBy: { userId: cmd.userId }, labels: run.labels, wait: true }, run.correlation ?? {});
+        return { status: result.status, body: { ...result.body, review: await this.deps.store.get(pk) } };
+      }
       const result = await this.signal({ action: "signal", runId: run.runId, actionId: proposal.actionId, value: proposal.value, userId: cmd.userId });
       return { status: result.status, body: { ...result.body, review: await this.deps.store.get(pk) } };
     }
@@ -231,7 +251,7 @@ export class Engine<I> {
       agents: wf.agents.map((a) => ({ name: a.name, needs: a.needs })).concat(wf.compose ? [{ name: wf.compose.name, needs: [] }] : []),
       actions: wf.catalog,
       input: z.toJSONSchema(wf.input as z.ZodType, { unrepresentable: "any" }),
-      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence", ...(wf.emailReply ? ["ingest_email_reply", "decide_email_reply"] : [])],
+      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence", ...(wf.emailReply ? ["ingest_email_reply", "decide_email_reply", "ingest_sms_reply", "decide_sms_reply"] : [])],
     };
   }
 

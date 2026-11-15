@@ -139,7 +139,7 @@ export interface WorkflowDef<I> {
   description: string;
   input: z.ZodType<I>;
   /** Interpret a provider-read reply; every proposed signal still requires an owner decision. */
-  emailReply?: (ctx: RunContext<I>, message: { id: string; from: string; subject: string; text: string }) => { actionId: string; value: "approve" | "reject" } | null;
+  emailReply?: (ctx: RunContext<I>, message: { id: string; from: string; to?: string; subject: string; text: string; channel?: "email" | "sms" }) => { actionId: string; value: "approve" | "reject" } | { revisionInput: I } | null;
   agents: AgentDef<I>[];
   /** Optional second stage that sees every agent's result (typically drafting). */
   compose?: { name: string; run(ctx: RunContext<I>, results: AgentResults): Promise<AgentOutput> };

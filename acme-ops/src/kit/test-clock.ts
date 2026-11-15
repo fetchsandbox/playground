@@ -4,10 +4,11 @@ import type { KvStore } from "./store";
 export class TestClock {
   private current = 0;
   private constructor(private store: KvStore, readonly runId: string) {}
-  static async open(store: KvStore, runId: string): Promise<TestClock> {
+  static async open(store: KvStore, runId: string, initialEpochMs = Date.now()): Promise<TestClock> {
     if (!/^vr_[a-zA-Z0-9]+$/.test(runId)) throw new Error("invalid test clock run identity");
+    if (!Number.isSafeInteger(initialEpochMs) || initialEpochMs < 946684800000 || initialEpochMs > 4102444800000) throw new Error("invalid test clock epoch");
     const clock = new TestClock(store, runId);
-    await store.create({ pk: clock.key, now: Date.now() });
+    await store.create({ pk: clock.key, now: initialEpochMs });
     await clock.refresh();
     return clock;
   }

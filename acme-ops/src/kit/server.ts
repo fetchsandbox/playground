@@ -128,7 +128,7 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         if (!parsed.success) {
           return send(400, { error: "invalid command", issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) });
         }
-        if ((parsed.data.action === "ingest_email_reply" || parsed.data.action === "decide_email_reply") && (!opts.verifierToken || !bearerOk(req, opts.verifierToken))) return send(401, { error: "protected email-review adapter required" });
+        if ((["ingest_email_reply", "decide_email_reply", "ingest_sms_reply", "decide_sms_reply"].includes(parsed.data.action)) && (!opts.verifierToken || !bearerOk(req, opts.verifierToken))) return send(401, { error: "protected email-review adapter required" });
         const correlation: Record<string, string> = { ...opts.defaultCorrelation };
         for (const h of CORRELATION_HEADERS) {
           const v = req.headers[h];

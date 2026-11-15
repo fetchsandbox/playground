@@ -17,6 +17,17 @@ describe("verifier business clock", () => {
       expect(restored.now()).toBe(before + 7 * 86400 * 1000);
     } finally { await rm(dir, { recursive: true, force: true }); }
   });
+  it("starts at an explicit epoch and never rewinds persisted time on restart", async () => {
+    const store = new MemoryStore(), epoch = Date.parse("2026-11-14T12:00:00Z");
+    const first = await TestClock.open(store, "vr_epoch", epoch);
+    expect(first.now()).toBe(epoch);
+    await first.advance("vr_epoch", 0.001);
+    const restored = await TestClock.open(store, "vr_epoch", epoch);
+    expect(restored.now()).toBe(epoch + 1);
+  });
+  it.each([NaN, Infinity, -1, 0, 946684799999, 4102444800001, 1.5])("rejects invalid initial epoch %s", async epoch => {
+    await expect(TestClock.open(new MemoryStore(), "vr_epoch", epoch)).rejects.toThrow("invalid test clock epoch");
+  });
   it("isolates run clocks and preserves concurrent increments through CAS", async () => {
     const store = new MemoryStore();
     const a = await TestClock.open(store, "vr_first");

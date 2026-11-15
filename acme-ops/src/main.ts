@@ -37,7 +37,7 @@ const endpoints = endpointsFromEnv();
 
 const testClockId = process.env.FETCHSANDBOX_TEST_CLOCK_RUN_ID;
 if (testClockId && !process.env.FETCHSANDBOX_VERIFIER_TOKEN) throw new Error("test clock requires verifier authentication");
-const testClock = testClockId ? await TestClock.open(store, testClockId) : undefined;
+const testClock = testClockId ? await TestClock.open(store, testClockId, process.env.FETCHSANDBOX_TEST_CLOCK_EPOCH_MS === undefined ? undefined : Number(process.env.FETCHSANDBOX_TEST_CLOCK_EPOCH_MS)) : undefined;
 const control=readControlConfig(process.env);
 if(control&&workflow.id!=="product-cancellation")throw Error("LoopLabs adapter is scoped to product cancellation");
 const engine = new Engine(workflow, {

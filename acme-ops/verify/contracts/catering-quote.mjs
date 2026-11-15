@@ -164,6 +164,159 @@ export const checks = [
   blocked("inbound_reply_starts_or_accepts", "A customer's email/SMS reply is parsed into a new revision or an acceptance signal", "setup_missing", "Reply parsing belongs to the inbox intake adapter, outside this runtime (which takes the parsed request or signal). The Gmail twin does not simulate users.history or users.watch, so mailbox-driven intake can't be exercised here.", ["validate_integration provider_contracts.gmail.unsupported_operations: /gmail/v1/users/{userId}/history, /watch", "acme-ops/src/workflows/catering-quote.ts CUSTOMER_REPLY_ACTOR"]),
 ];
 
+/**
+ * Explicit clock-capable revision of this same contract. Original IDs and all
+ * other checks stay intact. Incoming email/SMS parsing remains declared blocked
+ * until the full original intake boundary is implemented and exercised.
+ * Accelerated business time is not proof of a real cloud scheduler's timing.
+ */
+export function withRuntimeClock(epochMs) {
+  if (!Number.isSafeInteger(epochMs)) throw new Error("exact business-clock epoch required");
+  const timed = (id, code, mailCount) => {
+    const c = JSON.parse(JSON.stringify(checks[0]).replaceAll("baseline", id).replaceAll("base-", code + "-").replaceAll("base@", code + "@"));
+    c.id = id;
+    c.actions[0].body.input.event.start = new Date(epochMs + 180 * DAY).toISOString();
+    c.assertion.repeat = 1;
+    c.assertion.stable_under_repeat = false;
+    const mail = c.provider_assertions.find(a => a.provider === "gmail");
+    mail.assertion.count = mailCount;
+    return c;
+  };
+  const expiry = timed("quote_expires_unaccepted", "expires", 1);
+  expiry.name = "At the seven-day deadline an unanswered quote expires; no event or invoice is created, including after restart";
+  expiry.actions = expiry.actions.slice(0, 2).concat([
+    { advance_time: 7 * DAY / 1000 }, restart,
+    { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 },
+  ]);
+  expiry.assertion = { ...runs([action(ACCEPT, "rejected"), action("calendar.book_event", "skipped"), action("stripe.send_invoice", "skipped")]), repeat: 1 };
+  for (const a of expiry.provider_assertions) if (a.provider !== "gmail") a.assertion.count = 0;
+  const reminder = timed("reminder_sent_day_before", "reminder", 3);
+  reminder.name = "Exactly 24 hours before the event, the booked customer receives one reminder, including after restart and repeated tick";
+  reminder.actions[0].body.input.event.start = new Date(epochMs + 184*DAY).toISOString();
+  const cancelled = timed("reminder_sent_day_before", "cancelled", 2);
+  cancelled.actions[0].body.runId = "cancelled-reminder-{{run_id}}";
+  const voided = timed("reminder_sent_day_before", "voided", 2);
+  voided.actions[0].body.runId = "voided-reminder-{{run_id}}";
+  voided.actions[0].body.input.event.start = new Date(epochMs + 182*DAY).toISOString();
+  const acceptRun = runId => ({method:"POST",path:"/invocations",body:{action:"signal",runId,actionId:ACCEPT,value:"approve",userId:OWNER},expect_status:200});
+  const approveRun = runId => ({method:"POST",path:"/invocations",body:{action:"decide",runId,decision:"approve",userId:OWNER},expect_status:200});
+  reminder.actions.push(cancelled.actions[0],approveRun("cancelled-reminder-{{run_id}}"),acceptRun("cancelled-reminder-{{run_id}}"),
+    {provider_input:{actor:"external_operator",provider:"google-calendar",method:"PATCH",path:"/calendar/v3/calendars/primary/events/{{step6.actions[4].ref}}",body:{status:"cancelled"}}},
+    voided.actions[0],approveRun("voided-reminder-{{run_id}}"),acceptRun("voided-reminder-{{run_id}}"),
+    {provider_input:{actor:"external_operator",provider:"stripe",method:"POST",path:"/v1/invoices/{{step10.actions[5].ref}}/void",body:{}}},
+    { advance_time: 176*DAY/1000 }, restart,
+    { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 },
+    { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 });
+  reminder.name = "The day-before reminder sends once after restart, but an externally cancelled event or voided invoice prevents it";
+  const matchQuote = (code,status) => runs([eq("output.quoteId",quoteId(code)),action("gmail.send_reminder",status)]);
+  reminder.assertion = {all_of:[runs([],3),matchQuote("reminder","applied"),matchQuote("cancelled","skipped"),matchQuote("voided","skipped")]};
+  reminder.provider_assertions = [
+    {provider:"gmail",collection:"messages",assertion:{all_of:[sentTo("reminder",3).assertion,sentTo("cancelled",2).assertion,sentTo("voided",2).assertion]}},
+    {provider:"stripe",collection:"invoices",assertion:{all_of:[...reminder.provider_assertions.filter(a=>a.provider==="stripe").map(a=>a.assertion),{select:"records[*]",count:1,required:true,where:[has("metadata.catering_quote",quoteId("voided")),eq("status","void")]}]}},
+    {provider:"google-calendar",collection:"events",assertion:{all_of:[...reminder.provider_assertions.filter(a=>a.provider==="google-calendar").map(a=>a.assertion),{select:"records[*]",count:1,required:true,where:[has("extendedProperties.private.cateringQuote",quoteId("cancelled")),eq("status","cancelled")]}]}}
+  ];
+  const rest = checks.filter(c => ![expiry.id, reminder.id].includes(c.id));
+  return [...rest, expiry, reminder];
+}
+
+/** Provider-read inbox fixtures are declared setup, not native mail/SMS delivery. */
+export function withRuntimeClockAndIntake(epochMs) {
+  const contract = withRuntimeClock(epochMs);
+  const original = contract.find(c => c.id === "inbound_reply_starts_or_accepts");
+  const id = original.id;
+  const inputs = ["inmail", "insms", "incounter"].map((code,i) => request(code, { event: { start: new Date(epochMs + (60+2*i)*DAY).toISOString() } }));
+  inputs[1].source = "sms";
+  const invoke = body => ({ method: "POST", path: "/invocations", body, expect_status: 200 });
+  const begin = (code, input) => start(id, input, { runId: `${code}-{{run_id}}` });
+  const decide = runId => invoke({ action: "decide", runId, userId: OWNER, decision: "approve" });
+  const ingest = (channel, runId, messageId) => invoke({ action: `ingest_${channel}_reply`, runId, messageId });
+  const review = (channel, runId, messageId) => invoke({ action: `decide_${channel}_reply`, runId, messageId, userId: OWNER, decision: "approve" });
+  const actions = [];
+  for (const [i, code] of ["inmail", "insms", "incounter"].entries()) {
+    const channel = i === 1 ? "sms" : "email", runId = `${code}-{{run_id}}`, messageId = i === 1 ? "SM11111111111111111111111111111111" : `${code}-message-{{run_id}}`;
+    actions.push(begin(code, inputs[i]), decide(runId), ingest(channel, runId, messageId));
+    const stranger = review(channel, runId, messageId);
+    stranger.body.userId = "U_STRANGER"; stranger.expect_status = 403;
+    actions.push(stranger);
+    if (i === 0) actions.push(restart);
+    actions.push(review(channel, runId, messageId), review(channel, runId, messageId));
+  }
+  const matches = (code, where) => runs([eq("output.quoteId", quoteId(code)), ...where]);
+  const c = check(id, "Provider-read email and SMS acceptances require owner approval; a price counter-offer creates one owner-gated revision, despite restart and duplicate review", actions,
+    { all_of: [runs([],4), matches("inmail", booked(57500)), matches("insms", booked(57500)),
+      runs([eq("output.quoteId", quoteId("incounter",2)), eq("phase","AWAITING_APPROVAL"), eq("output.perHeadMinor",1600), action("gmail.send_quote","pending_approval"), action("calendar.book_event","scheduled")])] },
+    { provider_assertions: [{provider:"gmail",collection:"messages",assertion:{all_of:[sentTo("inmail",2).assertion,sentTo("insms",2).assertion,sentTo("incounter",1).assertion]}},
+      ...["inmail","insms","incounter"].flatMap(code => [
+        {provider:"stripe",collection:"invoices",assertion:{select:"records[*]",count:code === "incounter" ? 0 : 1,required:true,where:[has("metadata.catering_quote",quoteId(code))]}},
+        {provider:"google-calendar",collection:"events",assertion:{select:"records[*]",count:code === "incounter" ? 0 : 1,required:true,where:[has("extendedProperties.private.cateringQuote",quoteId(code))]}}
+      ])] });
+  // Keep the exact original check ID. The original blocked historical contract
+  // remains unchanged; this executable revision explicitly supplies its setup.
+  const badId = "inbound_sender_mismatch_held";
+  const badActions = [];
+  for (const [channel,code,messageId] of [["email","wrongmail","wrongmail-message-{{run_id}}"],["sms","wrongsms","SM22222222222222222222222222222222"]]) {
+    const input = request(code, {source:channel,event:{start:new Date(epochMs + (channel === "sms" ? 68 : 66)*DAY).toISOString()}});
+    const runId = `${code}-{{run_id}}`;
+    const denied = review(channel,runId,messageId); denied.expect_status = 409;
+    badActions.push(start(badId,input,{runId}),decide(runId),ingest(channel,runId,messageId),denied);
+  }
+  const bad = check(badId,"Messages from another sender remain held, even if the owner asks to approve their interpretation",badActions,
+    runs([action(ACCEPT,"awaiting_signal"),action("calendar.book_event","scheduled"),action("stripe.send_invoice","scheduled")],2),
+    {provider_assertions:[{provider:"gmail",collection:"messages",assertion:{all_of:[sentTo("wrongmail",1).assertion,sentTo("wrongsms",1).assertion]}},
+      ...["wrongmail","wrongsms"].flatMap(code=>[
+        {provider:"stripe",collection:"invoices",assertion:{select:"records[*]",count:0,required:true,where:[has("metadata.catering_quote",quoteId(code))]}},
+        {provider:"google-calendar",collection:"events",assertion:{select:"records[*]",count:0,required:true,where:[has("extendedProperties.private.cateringQuote",quoteId(code))]}}
+      ])]});
+  const mapped = contract.map(old => old.id === id ? c : old);
+  const temporal = new Set(["quote_expires_unaccepted","reminder_sent_day_before"]);
+  // All ordinary requests must execute before this suite advances business time.
+  return [...mapped.filter(c=>!temporal.has(c.id)),bad,...mapped.filter(c=>temporal.has(c.id))];
+}
+
+/** App-agent scope review. This is not an independent review or exhaustive coverage. */
+export function runtimeReview(executable) {
+  const links = {
+    baseline:["baseline"], identity_and_access:["stranger_cannot_approve","stranger_cannot_accept","inbound_sender_mismatch_held"],
+    schema_and_value_boundaries:["invalid_input_rejected","headcount_below_minimum_declined","short_notice_declined","large_party_to_owner"],
+    amount_currency_quantity:["baseline","negotiated_within_floor","counter_below_floor_countered","inbound_reply_starts_or_accepts"],
+    duplicate_replay:["duplicate_start","booked_inquiry_not_requoted","inbound_reply_starts_or_accepts"],
+    concurrency:["concurrent_start","concurrent_acceptance"],ordering_and_stale_events:["superseded_revision_not_accepted","accept_before_quote_sent_ignored"],
+    delayed_or_missing_events:["quote_expires_unaccepted","inbound_reply_starts_or_accepts"],provider_auth_and_scopes:["hubspot_down_quote_continues"],
+    rate_limit_server_error_timeout:["calendar_unavailable_to_owner","stripe_unavailable_to_owner"],
+    accepted_effect_response_loss:["gmail_response_lost_recovered","gmail_lookup_unavailable_not_resent"],
+    partial_effects_and_recovery:["gmail_send_rejected_then_resumed","gmail_lookup_unavailable_not_resent"],
+    restart_and_durability:["restart_awaiting_acceptance","reminder_sent_day_before","inbound_reply_starts_or_accepts"],
+    reconciliation:["booking_reconciled_reminder_not_early"],
+    cancellation_refund_entitlements:["owner_rejects_quote","customer_declines","reminder_sent_day_before"],
+    data_and_privacy_boundaries:["baseline","inbound_sender_mismatch_held"],cleanup_and_isolation:["baseline","date_conflict_declined"]
+  };
+  const reasons = {
+    baseline:"Owner-approved email quote and acceptance produce the declared booking, invoice and customer communications.",
+    identity_and_access:"Configured owners gate decisions; mismatched message senders cannot be interpreted as acceptance. Actor IDs are verifier-supplied, not an authenticated human UI proof.",
+    schema_and_value_boundaries:"The existing input parser and decision rules reject malformed requests and route party-size/notice boundaries explicitly.",
+    amount_currency_quantity:"Per-head price, delivery total and negotiation floor are deterministic; a provider-read counter-offer preserves minor units in one new revision.",
+    duplicate_replay:"Re-delivery and repeated owner review reuse saved runs and effect identities instead of creating another booking.",
+    concurrency:"Concurrent starts and acceptances are exercised through the same real application entry point.",
+    ordering_and_stale_events:"Only the latest sent quote may book; an early acceptance cannot release downstream actions.",
+    delayed_or_missing_events:"Persistent controlled business time exercises expiry; provider-read incoming replies go through saved review. Native Gmail watch and Twilio webhook delivery are not measured.",
+    provider_auth_and_scopes:"The declared HubSpot refusal is exercised; this does not establish every provider/scope failure combination.",
+    rate_limit_server_error_timeout:"Declared Calendar and Stripe outage paths are measured; no claim covers every rate-limit variant.",
+    accepted_effect_response_loss:"Gmail acceptance with lost response and unavailable lookup must recover or hold without resending.",
+    partial_effects_and_recovery:"The original refused-send/resume and unknown-send boundaries preserve the original application and provider assertions.",
+    restart_and_durability:"Real local process restarts use one immutable bundle and the same durable FileStore; managed cloud host crashes and PostgreSQL workflow integration remain separate.",
+    reconciliation:"The application independently re-reads saved Calendar and Stripe records through their twin HTTP APIs.",
+    cancellation_refund_entitlements:"Quote rejection and external event cancellation/invoice voiding suppress the corresponding effects. Refunds and entitlements are not features of this quote workflow.",
+    data_and_privacy_boundaries:"This bounded suite verifies recipient-scoped synthetic communications and mismatched-sender holds; it is not an exhaustive privacy/redaction audit.",
+    cleanup_and_isolation:"Each case has a distinct inquiry/customer/slot and filtered provider observations in a disposable local session; production account deletion is not claimed."
+  };
+  const ids = new Set(executable.map(c=>c.id));
+  for (const rules of Object.values(links)) for (const id of rules) if (!ids.has(id)) throw new Error(`missing reviewed check ${id}`);
+  return {
+    coverage_review:Object.entries(links).map(([dimension,rule_ids])=>({dimension,relevance:"relevant",reason:reasons[dimension],rule_ids})),
+    scope_review:executable.map(c=>({check_id:c.id,classification:"in_scope",reason:c.name,evidence:["acme-ops/src/workflows/catering-quote.ts cateringQuote plan and reply policy","acme-ops/src/kit/engine.ts Engine execution/review persistence","acme-ops/verify/contracts/catering-quote.mjs runtime contract"]}))
+  };
+}
+
 /** One existing booking on the owner's calendar, at the slot the date-conflict check asks for. */
 async function seed(legs, log) {
   const leg = legs["google-calendar"];

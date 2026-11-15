@@ -294,14 +294,22 @@ export const cateringQuote: WorkflowDef<Input> = {
     "A catering request (email, text or ad lead) is priced per head in code, negotiated down to a floor, and quoted only after the owner approves. The latest quote, once the customer accepts, books the owner's calendar, sends a Stripe invoice due 72 h before the event, confirms with follow-up instructions, and reminds the customer a day before.",
   input: Input,
   emailReply({ input }, message) {
-    const from = (/<([^<>]+)>/.exec(message.from)?.[1] ?? message.from).trim().toLowerCase();
     const quote = `${input.inquiryId}-r${input.revision}`;
-    const tokens = message.subject.split(/\s+/).map(t => t.replace(/[():,]/g, ""));
-    if (from !== input.customer.email.toLowerCase() || !tokens.includes(quote)) return null;
-    const line = message.text.split(/\r?\n/).find(t => t.trim())?.trim().toLowerCase();
+    const address = (s: string) => (/<([^<>]+)>/.exec(s)?.[1] ?? s).trim().toLowerCase();
+    const phone = (s: string) => s.replace(/[ ()-]/g, "");
+    const sms = message.channel === "sms";
+    if (sms ? phone(message.from) !== phone(input.customer.phone ?? "") || phone(message.to ?? "") !== phone(input.owner.phone)
+      : address(message.from) !== input.customer.email.toLowerCase() || (message.to !== undefined && address(message.to) !== input.owner.email.toLowerCase())) return null;
+    const tokenText = sms ? message.text : message.subject;
+    const tokens = tokenText.split(/\s+/).map(t => t.replace(/[():,]/g, ""));
+    if (!tokens.includes(quote)) return null;
+    const line = (sms ? message.text.replace(quote, "") : message.text).trim().toLowerCase();
     if (line && /^(yes|accept|accepted|approve)[.!]?$/.test(line)) return { actionId: A.accept, value: "approve" };
     if (line && /^(no|decline|reject)[.!]?$/.test(line)) return { actionId: A.accept, value: "reject" };
-    return null; // Negotiation/free text requires human interpretation, never guessed acceptance.
+    // Deliberately bounded grammar. Free prose is held for manual interpretation.
+    const counter = line && /^\$(\d{1,3})(?:\.(\d{2}))?\s*(?:\/\s*(?:head|person)|per (?:head|person))[.!]?$/.exec(line);
+    if (counter && input.revision < POLICY.maxRevisions) return { revisionInput: { ...input, revision: input.revision + 1, requestedPerHeadMinor: Number(counter[1])*100 + Number(counter[2] ?? 0) } };
+    return null;
   },
   audit: true,
   tickEvery: "rate(15 minutes)",
