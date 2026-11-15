@@ -99,7 +99,10 @@ describe("catering-quote runs", () => {
     const e = engine();
     await e.handle({ action: "start", runId: "equal-time", input: input(), requestedBy: user });
     await e.handle({ action: "decide", runId: "equal-time", decision: "approve", userId: OWNER });
-    const result = await e.handle({ action: "signal", runId: "equal-time", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    const bypass = await e.handle({ action: "signal", runId: "equal-time", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    expect(bypass.status).toBe(403);
+    expect(act(bypass.body, "calendar.book_event").status).toBe("scheduled");
+    const result = await e.handle({ action: "signal", runId: "equal-time", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(act(result.body, "quote.customer_acceptance").status).toBe("applied");
     expect(act(result.body, "calendar.book_event").status).toBe("applied");
     expect(act(result.body, "quote.customer_acceptance").signal.appliedActionIds).toContain("gmail.send_quote");
@@ -125,7 +128,7 @@ describe("catering-quote runs", () => {
 
     expect((await e.handle({ action: "signal", runId: "CAT-2026-0142-r1", actionId: "quote.customer_acceptance", value: "approve", userId: "U_STRANGER" })).status).toBe(403);
     clock.t += HOUR;
-    const s = await e.handle({ action: "signal", runId: "CAT-2026-0142-r1", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    const s = await e.handle({ action: "signal", runId: "CAT-2026-0142-r1", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(s.body.phase).toBe("WAITING");
     expect(cus.metadata[stateKey("CAT-2026-0142")]).toBe("CAT-2026-0142-r1|accepted");
     expect(w.state.calendar.events).toEqual([expect.objectContaining({ start: { dateTime: at(10) }, reminders: { useDefault: false, overrides: [{ method: "popup", minutes: 1440 }, { method: "popup", minutes: 120 }] } })]);
@@ -161,10 +164,10 @@ describe("catering-quote runs", () => {
     expect(r2.body.output).toMatchObject({ perHeadMinor: 1600, negotiation: "accepted_counter", totalMinor: 51_500 });
     await e.handle({ action: "decide", runId: "r2", decision: "approve", userId: OWNER });
     clock.t += HOUR;
-    const old = await e.handle({ action: "signal", runId: "r1", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    const old = await e.handle({ action: "signal", runId: "r1", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(act(old.body, "quote.customer_acceptance")).toMatchObject({ status: "skipped", detail: { reason: "superseded by CAT-2026-0142-r2" } });
     expect(act(old.body, "stripe.send_invoice").status).toBe("skipped");
-    await e.handle({ action: "signal", runId: "r2", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    await e.handle({ action: "signal", runId: "r2", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(w.state.stripe.invoices.filter((i) => i.metadata?.catering_inquiry === "CAT-2026-0142")).toEqual([expect.objectContaining({ amount_due: 51_500 })]);
     expect(w.state.calendar.events).toHaveLength(1);
     // A third revision after booking goes to the owner instead of quoting, even though (as on the
@@ -177,7 +180,7 @@ describe("catering-quote runs", () => {
   it("an acceptance recorded before the owner approved the quote doesn't book anything", async () => {
     const e = engine();
     await e.handle({ action: "start", runId: "q", input: input(), requestedBy: user });
-    await e.handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    await e.handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     clock.t += HOUR;
     const r = await e.handle({ action: "decide", runId: "q", decision: "approve", userId: OWNER });
     expect(act(r.body, "quote.customer_acceptance")).toMatchObject({ status: "skipped", detail: { reason: "acceptance arrived before the quote was sent" } });
@@ -236,7 +239,7 @@ describe("catering-quote runs", () => {
     expect(act(again.body, "stripe.record_quote").status).toBe("applied");
     expect(act(again.body, "quote.customer_acceptance").status).toBe("awaiting_signal");
     clock.t += HOUR;
-    const booked = await e.handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    const booked = await e.handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(act(booked.body, "gmail.send_confirmation").status).toBe("applied");
   });
 
@@ -277,7 +280,7 @@ describe("catering-quote runs", () => {
     await engine(store).handle({ action: "start", runId: "q", input: input(), requestedBy: user });
     await engine(store).handle({ action: "decide", runId: "q", decision: "approve", userId: OWNER });
     clock.t += HOUR;
-    const r = await engine(store).handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    const r = await engine(store).handle({ action: "signal", runId: "q", actionId: "quote.customer_acceptance", value: "approve", userId: OWNER });
     expect(act(r.body, "stripe.send_invoice")).toMatchObject({ status: "applied", attempts: 1 });
     expect(w.state.calendar.events).toHaveLength(1);
   });

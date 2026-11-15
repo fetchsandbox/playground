@@ -804,7 +804,7 @@ export class Engine<I> {
     if (!p || !rec || !p.awaitSignal) return { status: 404, body: { result: "no_such_signal", runId: cmd.runId, actionId: cmd.actionId } };
     const w = p.awaitSignal;
     const sameAsOther = w.distinctFrom?.some((id) => run.actions.find((a) => a.id === id)?.signal?.by === cmd.userId);
-    if ((w.from?.length && !w.from.includes(cmd.userId)) || w.notFrom?.includes(cmd.userId) || sameAsOther) {
+    if ((w.from?.length && !w.from.includes(cmd.userId)) || (cmd.value === "approve" && w.approveFrom !== undefined && !w.approveFrom.includes(cmd.userId)) || w.notFrom?.includes(cmd.userId) || sameAsOther) {
       await this.mutate(cmd.runId, (r) => this.event(r, `signal for ${cmd.actionId} by ${cmd.userId} refused`));
       return { status: 403, body: { ...this.view((await this.load(cmd.runId))!), result: "forbidden" } };
     }

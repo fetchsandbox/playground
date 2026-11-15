@@ -464,9 +464,9 @@ export const cateringQuote: WorkflowDef<Input> = {
         provider: "stripe",
         agent: "quote-desk",
         gate: "auto",
-        summary: { quoteId: d.quoteId, acceptBy: d.validUntil, acceptedVia: [CUSTOMER_REPLY_ACTOR, ...input.approvers] },
+        summary: { quoteId: d.quoteId, acceptBy: d.validUntil, acceptedVia: input.source === "email" ? input.approvers : [CUSTOMER_REPLY_ACTOR, ...input.approvers] },
         dependsOn: [A.quote, A.record],
-        awaitSignal: { from: [CUSTOMER_REPLY_ACTOR, ...input.approvers], deadline: d.validUntil, onDeadline: "reject" },
+        awaitSignal: { from: [CUSTOMER_REPLY_ACTOR, ...input.approvers], ...(input.source === "email" ? { approveFrom: input.approvers } : {}), deadline: d.validUntil, onDeadline: "reject" },
         async execute({ providers, applied, signal }) {
           const sentAt = applied[A.quote]?.detail?.sentAt as string | undefined;
           if (signal && !signal.defaulted && (signal.appliedActionIds ? !signal.appliedActionIds.includes(A.quote) : sentAt && Date.parse(signal.at) < Date.parse(sentAt))) throw new SkipAction("acceptance arrived before the quote was sent");

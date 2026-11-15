@@ -85,6 +85,8 @@ export interface PlannedAction<I> {
 }
 
 export interface AwaitSignal {
+  /** Optional narrower approval authority; rejection still follows from/notFrom. Empty means nobody may approve. */
+  approveFrom?: string[];
   /** Users allowed to send the signal (empty or absent: anyone the control plane forwards). */
   from?: string[];
   /** Users who may never send it, e.g. the requester or whoever set the record up (segregation of duties). */
