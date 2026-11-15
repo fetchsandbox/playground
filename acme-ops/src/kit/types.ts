@@ -15,6 +15,8 @@ export interface RunContext<I> {
   log: Logger;
   /** Run creation time. Use it instead of Date.now() so plans stay reproducible. */
   startedAt: Date;
+  /** Current business time, supplied by the runtime (test clock only when explicitly enabled). */
+  now?: () => number;
   /** Durable progress for long agents (Kit v2): a restart continues from the last saved value. */
   checkpoint: Checkpoints;
 }
@@ -96,6 +98,8 @@ export interface AwaitSignal {
 }
 
 export interface SignalRecord {
+  /** Runtime-recorded causal boundary, independent of wall-clock precision. */
+  appliedActionIds?: string[];
   value: "approve" | "reject";
   by: string;
   at: string;
@@ -132,6 +136,8 @@ export interface WorkflowDef<I> {
   team: string;
   description: string;
   input: z.ZodType<I>;
+  /** Interpret a provider-read reply; every proposed signal still requires an owner decision. */
+  emailReply?: (ctx: RunContext<I>, message: { id: string; from: string; subject: string; text: string }) => { actionId: string; value: "approve" | "reject" } | null;
   agents: AgentDef<I>[];
   /** Optional second stage that sees every agent's result (typically drafting). */
   compose?: { name: string; run(ctx: RunContext<I>, results: AgentResults): Promise<AgentOutput> };

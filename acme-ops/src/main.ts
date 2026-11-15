@@ -7,6 +7,7 @@
 import { GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
 import { ClaudeDrafter, templateDrafter } from "./kit/drafter";
 import { Engine } from "./kit/engine";
+import { TestClock } from "./kit/test-clock";
 import {readControlConfig} from "./kit/looplabs-control";
 import { createLogger } from "./kit/log";
 import { createAgentServer } from "./kit/server";
@@ -34,11 +35,15 @@ const store: KvStore = process.env.DYNAMODB_TABLE
     : new MemoryStore();
 const endpoints = endpointsFromEnv();
 
+const testClockId = process.env.FETCHSANDBOX_TEST_CLOCK_RUN_ID;
+if (testClockId && !process.env.FETCHSANDBOX_VERIFIER_TOKEN) throw new Error("test clock requires verifier authentication");
+const testClock = testClockId ? await TestClock.open(store, testClockId) : undefined;
 const control=readControlConfig(process.env);
 if(control&&workflow.id!=="product-cancellation")throw Error("LoopLabs adapter is scoped to product cancellation");
 const engine = new Engine(workflow, {
   control,controlSink:(event)=>console.log(JSON.stringify(event)),
   store,
+  ...(testClock ? { now: testClock.now } : {}),
   providers: providerFactory(endpoints),
   drafter: process.env.ANTHROPIC_API_KEY ? new ClaudeDrafter(process.env.ANTHROPIC_API_KEY, log) : templateDrafter,
   log,
@@ -49,6 +54,7 @@ const engine = new Engine(workflow, {
 const server = createAgentServer(engine as Engine<unknown>, log, {
   ...(control?{control:{config:control,store}}:{}),
   verifierToken: process.env.FETCHSANDBOX_VERIFIER_TOKEN || undefined,
+  testClock,
   defaultCorrelation: process.env.X_FLOW_RUN_ID ? { "x-flow-run-id": process.env.X_FLOW_RUN_ID } : {},
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || undefined,
 });
@@ -60,7 +66,7 @@ server.listen(port, process.env.HOST ?? "0.0.0.0", () =>
 // Kit v2 timers outside AgentCore (containers, local): wake due runs on an interval.
 // On AgentCore the stack's EventBridge schedule sends {action:"tick"} instead.
 const tickMs = Number(process.env.TICK_INTERVAL_MS ?? 0);
-if (tickMs > 0) setInterval(() => void engine.handle({ action: "tick", wait: false }).catch((err) => log.warn("tick failed", { err: String(err) })), tickMs).unref();
+if (tickMs > 0 && !testClock) setInterval(() => void engine.handle({ action: "tick", wait: false }).catch((err) => log.warn("tick failed", { err: String(err) })), tickMs).unref();
 
 process.on("SIGTERM", () => {
   log.info("SIGTERM: draining");

@@ -5,6 +5,7 @@ import { errorMessage } from "./errors";
 import type { Logger } from "./log";
 import {controlEnvelope,type ControlConfig} from "./looplabs-control";
 import type {KvStore} from "./store";
+import type { TestClock } from "./test-clock";
 import { handleStripeWebhook } from "./webhooks";
 
 const MAX_BODY = 1_000_000;
@@ -30,6 +31,7 @@ function bearerOk(req: IncomingMessage, token: string): boolean {
 }
 
 export interface ServerOptions {
+  testClock?: TestClock;
   control?: {config:ControlConfig;store:KvStore};
   /**
    * Enables the read-only verifier routes (GET /verify/...), each requiring
@@ -80,6 +82,18 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         log,
       });
     try {
+      if (path === "/verify/clock" || path === "/verify/clock/advance") {
+        if (!opts.verifierToken || !opts.testClock) return send(404, { error: "not enabled" });
+        if (!bearerOk(req, opts.verifierToken)) return send(401, { error: "unauthorized" });
+        if (req.headers["x-flow-run-id"] !== opts.testClock.runId) return send(403, { error: "wrong clock run" });
+        if (req.method === "GET" && path === "/verify/clock") return send(200, await opts.testClock.refresh());
+        if (req.method === "POST" && path === "/verify/clock/advance") {
+          await engine.idle();
+          const body = JSON.parse(await readBody(req));
+          return send(200, await opts.testClock.advance(body.run_id, body.advance_seconds));
+        }
+        return send(405, { error: "method not allowed" });
+      }
       // Stripe delivers straight to this route (local runs, the FetchSandbox relay)...
       if (req.method === "POST" && path === STRIPE_WEBHOOK_PATH) {
         const reply = await stripeEvent(await readBody(req), req.headers);
@@ -114,6 +128,7 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         if (!parsed.success) {
           return send(400, { error: "invalid command", issues: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) });
         }
+        if ((parsed.data.action === "ingest_email_reply" || parsed.data.action === "decide_email_reply") && (!opts.verifierToken || !bearerOk(req, opts.verifierToken))) return send(401, { error: "protected email-review adapter required" });
         const correlation: Record<string, string> = { ...opts.defaultCorrelation };
         for (const h of CORRELATION_HEADERS) {
           const v = req.headers[h];
@@ -121,6 +136,10 @@ export function createAgentServer(engine: Engine<unknown>, log: Logger, opts: Se
         }
         const session = req.headers["x-amzn-bedrock-agentcore-runtime-session-id"];
         log.info("invocation", { action: parsed.data.action, runId: "runId" in parsed.data ? parsed.data.runId : undefined, session });
+        if (opts.testClock) {
+          if (correlation["x-flow-run-id"] !== opts.testClock.runId) return send(403, { error: "wrong clock run" });
+          await opts.testClock.refresh();
+        }
         const reply = await engine.handle(parsed.data, correlation);
         return send(reply.status, reply.body);
       }

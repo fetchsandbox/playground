@@ -38,6 +38,12 @@ export class GmailClient {
     private readonly userId = "me",
   ) {}
 
+  async readMessage(id: string): Promise<{ id: string; payload?: { mimeType?: string; headers?: { name: string; value: string }[]; body?: { data?: string } } }> {
+    const { body } = await this.http.request<any>("GET", `/gmail/v1/users/${this.userId}/messages/${encodeURIComponent(id)}`, { query: { format: "full" } });
+    if (body?.id !== id) throw new Error("Mailbox message identity mismatch");
+    return body;
+  }
+
   async countMessages(q: string): Promise<number> {
     const { body } = await this.http.request<{ messages?: unknown[]; resultSizeEstimate?: number }>("GET", `/gmail/v1/users/${this.userId}/messages`, {
       query: { q, maxResults: 50 },

@@ -95,6 +95,16 @@ describe("catering-quote runs", () => {
   const engine = (store = new MemoryStore()) => w.engine(cateringQuote, { store, now: () => clock.t });
   const customerMails = () => w.state.gmail.sent.filter((m) => m.to === "dana@party.example");
 
+  it("uses causal action state when send and acceptance share a frozen timestamp", async () => {
+    const e = engine();
+    await e.handle({ action: "start", runId: "equal-time", input: input(), requestedBy: user });
+    await e.handle({ action: "decide", runId: "equal-time", decision: "approve", userId: OWNER });
+    const result = await e.handle({ action: "signal", runId: "equal-time", actionId: "quote.customer_acceptance", value: "approve", userId: CUSTOMER_REPLY_ACTOR });
+    expect(act(result.body, "quote.customer_acceptance").status).toBe("applied");
+    expect(act(result.body, "calendar.book_event").status).toBe("applied");
+    expect(act(result.body, "quote.customer_acceptance").signal.appliedActionIds).toContain("gmail.send_quote");
+  });
+
   it("quote → owner approval → customer acceptance → calendar, invoice, confirmation, day-before reminder", async () => {
     const e = engine();
     const r = await e.handle({ action: "start", runId: "CAT-2026-0142-r1", input: input(), requestedBy: user });

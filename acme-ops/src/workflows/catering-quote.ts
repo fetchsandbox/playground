@@ -293,6 +293,16 @@ export const cateringQuote: WorkflowDef<Input> = {
   description:
     "A catering request (email, text or ad lead) is priced per head in code, negotiated down to a floor, and quoted only after the owner approves. The latest quote, once the customer accepts, books the owner's calendar, sends a Stripe invoice due 72 h before the event, confirms with follow-up instructions, and reminds the customer a day before.",
   input: Input,
+  emailReply({ input }, message) {
+    const from = (/<([^<>]+)>/.exec(message.from)?.[1] ?? message.from).trim().toLowerCase();
+    const quote = `${input.inquiryId}-r${input.revision}`;
+    const tokens = message.subject.split(/\s+/).map(t => t.replace(/[():,]/g, ""));
+    if (from !== input.customer.email.toLowerCase() || !tokens.includes(quote)) return null;
+    const line = message.text.split(/\r?\n/).find(t => t.trim())?.trim().toLowerCase();
+    if (line && /^(yes|accept|accepted|approve)[.!]?$/.test(line)) return { actionId: A.accept, value: "approve" };
+    if (line && /^(no|decline|reject)[.!]?$/.test(line)) return { actionId: A.accept, value: "reject" };
+    return null; // Negotiation/free text requires human interpretation, never guessed acceptance.
+  },
   audit: true,
   tickEvery: "rate(15 minutes)",
   agents: [
@@ -424,7 +434,7 @@ export const cateringQuote: WorkflowDef<Input> = {
           const st = cust?.metadata?.[key] ?? "";
           if (st.endsWith("|accepted") && !st.startsWith(`${d.quoteId}|`)) throw new SkipAction(`inquiry already booked (${st.split("|")[0]})`);
           const sent = await sendOnce(ctx.providers.gmail!, { to: input.customer.email, subject: desk.quoteMail.subject, body: desk.quoteMail.body, messageId: id("quote") }, retrying(ctx, A.quote));
-          return { ref: sent.id, detail: { messageId: id("quote"), recovered: sent.recovered, sentAt: new Date().toISOString() } };
+          return { ref: sent.id, detail: { messageId: id("quote"), recovered: sent.recovered, sentAt: new Date(ctx.now?.() ?? Date.now()).toISOString() } };
         },
       });
       actions.push({
@@ -459,7 +469,7 @@ export const cateringQuote: WorkflowDef<Input> = {
         awaitSignal: { from: [CUSTOMER_REPLY_ACTOR, ...input.approvers], deadline: d.validUntil, onDeadline: "reject" },
         async execute({ providers, applied, signal }) {
           const sentAt = applied[A.quote]?.detail?.sentAt as string | undefined;
-          if (signal && !signal.defaulted && sentAt && Date.parse(signal.at) < Date.parse(sentAt)) throw new SkipAction("acceptance arrived before the quote was sent");
+          if (signal && !signal.defaulted && (signal.appliedActionIds ? !signal.appliedActionIds.includes(A.quote) : sentAt && Date.parse(signal.at) < Date.parse(sentAt))) throw new SkipAction("acceptance arrived before the quote was sent");
           const stripe = providers.stripe!;
           const customerId = applied[A.record]!.ref;
           const st = (await stripe.getCustomer(customerId)).metadata?.[key] ?? "";
@@ -514,13 +524,13 @@ export const cateringQuote: WorkflowDef<Input> = {
         gate: "auto",
         summary: { to: input.customer.email, total: money(d.totalMinor), dueBeforeEventHours: POLICY.invoiceDueBeforeEventHours },
         dependsOn: [A.accept],
-        async execute({ providers, applied }) {
+        async execute({ providers, applied, now }) {
           const stripe = providers.stripe!;
           const customer = applied[A.record]!.ref;
           // Twins (and timeouts) can't promise Idempotency-Key replay: find this quote's invoice before creating one.
           let inv = (await stripe.listCustomerInvoices(customer)).find((x) => x.metadata?.catering_quote === d.quoteId && x.status !== "void");
           if (!inv) {
-            inv = await stripe.createSendInvoiceDraft(customer, `Catering ${d.quoteId}: ${input.event.headcount} guests on ${when(start, tz)}`, invoiceDueSec(start, Date.now()), { catering_quote: d.quoteId, catering_inquiry: input.inquiryId }, `catering-${d.quoteId}-invoice`);
+            inv = await stripe.createSendInvoiceDraft(customer, `Catering ${d.quoteId}: ${input.event.headcount} guests on ${when(start, tz)}`, invoiceDueSec(start, now?.() ?? Date.now()), { catering_quote: d.quoteId, catering_inquiry: input.inquiryId }, `catering-${d.quoteId}-invoice`);
           }
           if (inv.status === "draft") {
             if (inv.amount_due === 0) {

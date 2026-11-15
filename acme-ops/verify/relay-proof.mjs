@@ -181,7 +181,8 @@ async function startApp({ legs, credentialFile, flowRunId } = {}) {
     // Optional runtime settings a contract needs (e.g. a shorter provider timeout), recorded in its source.
     ...(contract.appEnv ?? {}),
     ...twinEnv(legs),
-    ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId } : {}),
+    ...(flowRunId ? { X_FLOW_RUN_ID: flowRunId,
+      ...(contract.applicationConfig?.application_clock ? { FETCHSANDBOX_TEST_CLOCK_RUN_ID: flowRunId } : {}) } : {}),
   };
   const args = [...(credentialFile ? [`--env-file=${credentialFile}`] : []), BUNDLE];
   await requireFreePort(PORT);

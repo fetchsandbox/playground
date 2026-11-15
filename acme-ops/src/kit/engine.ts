@@ -41,6 +41,8 @@ export const CommandSchema = z.discriminatedUnion("action", [
     wait: z.boolean().optional(),
   }),
   z.object({ action: z.literal("status"), runId: z.string().min(1) }),
+  z.object({ action: z.literal("ingest_email_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256) }),
+  z.object({ action: z.literal("decide_email_reply"), runId: z.string().min(1), messageId: z.string().min(1).max(256), userId: z.string().min(1), decision: z.enum(["approve", "reject"]) }),
   z.object({
     action: z.literal("decide"),
     runId: z.string().min(1),
@@ -146,6 +148,9 @@ export class Engine<I> {
 
   async handle(cmd: Command, correlation: Record<string, string> = {}): Promise<Reply> {
     switch (cmd.action) {
+      case "ingest_email_reply":
+      case "decide_email_reply":
+        return this.emailReply(cmd);
       case "describe":
         return { status: 200, body: this.describe() };
       case "start":
@@ -171,6 +176,49 @@ export class Engine<I> {
     }
   }
 
+  private async emailReply(cmd: Extract<Command, { action: "ingest_email_reply" | "decide_email_reply" }>): Promise<Reply> {
+    const run = await this.load(cmd.runId);
+    if (!run) return notFound(cmd.runId);
+    const policy = this.workflow.emailReply;
+    const owners = run.approval?.approvers ?? [];
+    if (!policy || !owners.length) return { status: 409, body: { error: "email review requires a workflow policy and explicit owners" } };
+    const pk = `email-review#${this.workflow.id}#${run.runId}#${cmd.messageId}`;
+    let review = await this.deps.store.get(pk);
+    if (review && review.runId !== cmd.runId) return { status: 409, body: { error: "message already bound to another run" } };
+    if (cmd.action === "ingest_email_reply") {
+      if (!review) {
+        const gmail = this.context(run).providers.gmail;
+        if (!gmail) return { status: 409, body: { error: "mailbox unavailable" } };
+        const message = await gmail.readMessage(cmd.messageId);
+        const payload = message.payload;
+        const header = (name: string) => payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? "";
+        if (payload?.mimeType !== "text/plain" || typeof payload.body?.data !== "string" || payload.body.data.length > 90000) return { status: 422, body: { error: "reply needs supported plain-text MIME" } };
+        const observed = { id: message.id, from: header("From"), subject: header("Subject"), text: Buffer.from(payload.body.data, "base64url").toString("utf8") };
+        const proposal = policy(this.context(run), observed);
+        await this.deps.store.create({ pk, runId: run.runId, messageId: message.id, observed, proposal, state: proposal ? "pending_owner" : "needs_human", receivedAt: new Date(this.now()).toISOString() });
+        review = await this.deps.store.get(pk);
+      }
+      if (!review || review.runId !== cmd.runId) return { status: 409, body: { error: "message binding changed; review again" } };
+      return { status: 200, body: { review } };
+    }
+    if (!owners.includes(cmd.userId)) return { status: 403, body: { error: "owner required" } };
+    if (!review) return { status: 404, body: { error: "reply not ingested" } };
+    const proposal = review.proposal as { actionId: string; value: "approve" | "reject" } | null;
+    if (cmd.decision === "approve" && !proposal) return { status: 409, body: { error: "reply needs manual interpretation" } };
+    const target = cmd.decision === "approve" ? "approved" : "rejected";
+    if (review.state !== target) {
+      if (review.state !== "pending_owner" && review.state !== "needs_human") return { status: 409, body: { error: "review decision conflicts" } };
+      if (!(await this.deps.store.replace({ ...review, state: target, decidedBy: cmd.userId }))) return { status: 409, body: { error: "review changed; read again" } };
+    }
+    // Persist the decision first. A restart/retry reuses the same idempotent
+    // signal rather than treating an acknowledgement as a completed booking.
+    if (target === "approved" && proposal) {
+      const result = await this.signal({ action: "signal", runId: run.runId, actionId: proposal.actionId, value: proposal.value, userId: cmd.userId });
+      return { status: result.status, body: { ...result.body, review: await this.deps.store.get(pk) } };
+    }
+    return { status: 200, body: { review: await this.deps.store.get(pk) } };
+  }
+
   describe() {
     const wf = this.workflow;
     return {
@@ -183,7 +231,7 @@ export class Engine<I> {
       agents: wf.agents.map((a) => ({ name: a.name, needs: a.needs })).concat(wf.compose ? [{ name: wf.compose.name, needs: [] }] : []),
       actions: wf.catalog,
       input: z.toJSONSchema(wf.input as z.ZodType, { unrepresentable: "any" }),
-      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence"],
+      commands: ["describe", "start", "status", "decide", "cancel", "resume", "reconcile", "signal", "tick", "evidence", ...(wf.emailReply ? ["ingest_email_reply", "decide_email_reply"] : [])],
     };
   }
 
@@ -669,6 +717,7 @@ export class Engine<I> {
       drafter: this.deps.drafter,
       log: this.deps.log.child({ runId: run.runId, workflow: run.workflow }),
       startedAt: new Date(run.createdAt),
+      now: this.now,
       checkpoint: this.checkpoints(run.runId),
     };
   }
@@ -765,7 +814,7 @@ export class Engine<I> {
       if (CLOSED.includes(r.phase)) return void (result = "closed");
       if (a.signal) return void (result = a.signal.value === cmd.value ? "already_signalled" : "conflict");
       if (!isWaiting(a) && a.status !== "planned" && a.status !== "pending_approval") return void (result = "not_waiting");
-      a.signal = { value: cmd.value, by: cmd.userId, at: new Date(this.now()).toISOString(), ...(cmd.note ? { note: cmd.note } : {}) };
+      a.signal = { value: cmd.value, by: cmd.userId, at: new Date(this.now()).toISOString(), appliedActionIds: r.actions.filter(x => x.status === "applied").map(x => x.id), ...(cmd.note ? { note: cmd.note } : {}) };
       if (cmd.value === "reject") a.status = "rejected";
       this.event(r, `signal ${cmd.value} for ${cmd.actionId} by ${cmd.userId}`);
       if (r.phase === "WAITING" || r.phase === "AWAITING_APPROVAL") setWake(r);
