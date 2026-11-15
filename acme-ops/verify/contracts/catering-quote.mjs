@@ -232,10 +232,22 @@ export function withRuntimeClockAndIntake(epochMs) {
   const decide = runId => invoke({ action: "decide", runId, userId: OWNER, decision: "approve" });
   const ingest = (channel, runId, messageId) => invoke({ action: `ingest_${channel}_reply`, runId, messageId });
   const review = (channel, runId, messageId) => invoke({ action: `decide_${channel}_reply`, runId, messageId, userId: OWNER, decision: "approve" });
+  const received = (channel, code, messageId, wrongSender = false) => ({provider_input:{
+    actor:"fixture", provider:channel === "sms" ? "twilio" : "gmail", method:"POST", path:"/__fetchsandbox/fixtures/record",
+    body:{resource:"messages",profile:"received_message",record: channel === "sms" ? {
+      sid:messageId,account_sid:"AC_ACME_DEMO",direction:"inbound",from:wrongSender ? "+15550999" : "+15550100",to:"+15550199",
+      body:`CAT-${code}-{{run_id}}-r1 yes`,status:"received"
+    } : {
+      id:messageId,user_id:"me",labelIds:["INBOX"],payload:{mimeType:"text/plain",headers:[
+        {name:"From",value:`${wrongSender ? "stranger" : code}@party.example.test`},
+        {name:"To",value:"owner@tonys-pizza.example.test"},{name:"Subject",value:`Re: CAT-${code}-{{run_id}}-r1`}],
+        body:{data:Buffer.from(code === "incounter" ? "$16/head" : "yes").toString("base64url")}}
+    }}
+  }});
   const actions = [];
   for (const [i, code] of ["inmail", "insms", "incounter"].entries()) {
     const channel = i === 1 ? "sms" : "email", runId = `${code}-{{run_id}}`, messageId = i === 1 ? "SM11111111111111111111111111111111" : `${code}-message-{{run_id}}`;
-    actions.push(begin(code, inputs[i]), decide(runId), ingest(channel, runId, messageId));
+    actions.push(begin(code, inputs[i]), decide(runId), received(channel,code,messageId), ingest(channel, runId, messageId));
     const stranger = review(channel, runId, messageId);
     stranger.body.userId = "U_STRANGER"; stranger.expect_status = 403;
     actions.push(stranger);
@@ -259,7 +271,7 @@ export function withRuntimeClockAndIntake(epochMs) {
     const input = request(code, {source:channel,event:{start:new Date(epochMs + (channel === "sms" ? 68 : 66)*DAY).toISOString()}});
     const runId = `${code}-{{run_id}}`;
     const denied = review(channel,runId,messageId); denied.expect_status = 409;
-    badActions.push(start(badId,input,{runId}),decide(runId),ingest(channel,runId,messageId),denied);
+    badActions.push(start(badId,input,{runId}),decide(runId),received(channel,code,messageId,true),ingest(channel,runId,messageId),denied);
   }
   const bad = check(badId,"Messages from another sender remain held, even if the owner asks to approve their interpretation",badActions,
     runs([action(ACCEPT,"awaiting_signal"),action("calendar.book_event","scheduled"),action("stripe.send_invoice","scheduled")],2),
@@ -380,6 +392,13 @@ export default historicalContract;
 
 // Explicit profile; historical receipts and the default contract stay unchanged.
 export const profiles = {
+  intake: epochMs => ({
+    ...historicalContract,
+    providers: [...historicalContract.providers, "twilio"],
+    checks: withRuntimeClockAndIntake(epochMs),
+    applicationConfig: { ...runtimeReview(withRuntimeClockAndIntake(epochMs)), application_clock: { advance_path: "/verify/clock/advance", observe_path: "/verify/clock" } },
+    appEnv: { ...historicalContract.appEnv, FETCHSANDBOX_TEST_CLOCK_EPOCH_MS: String(epochMs) },
+  }),
   clock: epochMs => ({
     ...historicalContract,
     checks: withRuntimeClock(epochMs),
