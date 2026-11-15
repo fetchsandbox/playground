@@ -192,19 +192,20 @@ export function withRuntimeClock(epochMs) {
   for (const a of expiry.provider_assertions) if (a.provider !== "gmail") a.assertion.count = 0;
   const reminder = timed("reminder_sent_day_before", "reminder", 3);
   reminder.name = "Exactly 24 hours before the event, the booked customer receives one reminder, including after restart and repeated tick";
-  reminder.actions[0].body.input.event.start = new Date(epochMs + 184*DAY).toISOString();
+  reminder.actions[0].body.input.event.start = new Date(epochMs + 150*DAY).toISOString();
   const cancelled = timed("reminder_sent_day_before", "cancelled", 2);
   cancelled.actions[0].body.runId = "cancelled-reminder-{{run_id}}";
+  cancelled.actions[0].body.input.event.start = new Date(epochMs + 146*DAY).toISOString();
   const voided = timed("reminder_sent_day_before", "voided", 2);
   voided.actions[0].body.runId = "voided-reminder-{{run_id}}";
-  voided.actions[0].body.input.event.start = new Date(epochMs + 182*DAY).toISOString();
+  voided.actions[0].body.input.event.start = new Date(epochMs + 148*DAY).toISOString();
   const acceptRun = runId => ({method:"POST",path:"/invocations",body:{action:"signal",runId,actionId:ACCEPT,value:"approve",userId:OWNER},expect_status:200});
   const approveRun = runId => ({method:"POST",path:"/invocations",body:{action:"decide",runId,decision:"approve",userId:OWNER},expect_status:200});
   reminder.actions.push(cancelled.actions[0],approveRun("cancelled-reminder-{{run_id}}"),acceptRun("cancelled-reminder-{{run_id}}"),
     {provider_input:{actor:"external_operator",provider:"google-calendar",method:"PATCH",path:"/calendar/v3/calendars/primary/events/{{step6.actions[4].ref}}",body:{status:"cancelled"}}},
     voided.actions[0],approveRun("voided-reminder-{{run_id}}"),acceptRun("voided-reminder-{{run_id}}"),
     {provider_input:{actor:"external_operator",provider:"stripe",method:"POST",path:"/v1/invoices/{{step10.actions[5].ref}}/void",body:{}}},
-    { advance_time: 176*DAY/1000 }, restart,
+    { advance_time: 142*DAY/1000 }, restart,
     { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 },
     { method: "POST", path: "/invocations", body: { action: "tick" }, expect_status: 200 });
   reminder.name = "The day-before reminder sends once after restart, but an externally cancelled event or voided invoice prevents it";
