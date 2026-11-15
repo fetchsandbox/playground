@@ -160,6 +160,31 @@ describe("duplicate-charge-remediation runs", () => {
     expect(w.state.stripe.refunds.filter((x) => x.payment_intent === dup.id)).toHaveLength(1);
   });
 
+  it("identifies the fresh concurrent claimant without assuming the first request wins", async () => {
+    pay("cus_alice", 0);
+    const dup = pay("cus_alice", 1);
+    const e = w.engine(duplicateChargeRemediation, { now: () => NOW });
+    const deliveries = ["delivery-a", "delivery-b", "delivery-c", "delivery-d"];
+    const replies = await Promise.all(deliveries.map(delivery_id => e.handle({
+      action: "start", runId: "fresh-claim", input: input(), requestedBy: user, labels: { delivery_id },
+    })));
+    await e.idle();
+    const winners = replies.flatMap((reply, index) => reply.body.duplicate === false ? [index] : []);
+    expect(winners).toHaveLength(1);
+    expect(replies.filter(reply => reply.body.duplicate === true)).toHaveLength(3);
+    const saved = await e.handle({ action: "status", runId: "fresh-claim" });
+    const winner = deliveries[winners[0]!];
+    expect(saved.body.labels.delivery_id).toBe(winner);
+    expect(saved.body.duplicateStarts).toBe(3);
+    const refunds = w.state.stripe.refunds.filter(x => x.payment_intent === dup.id);
+    expect(refunds).toHaveLength(1);
+    expect(kind(saved.body, "stripe.refund_duplicate")[0].ref).toBe(refunds[0].id);
+    const replay = await e.handle({action:"start",runId:"fresh-claim",input:input(),requestedBy:user,labels:{delivery_id:"late-replay"}});
+    expect(replay.body.duplicate).toBe(true);
+    expect(replay.body.labels.delivery_id).toBe(winner);
+    expect(w.state.stripe.refunds.filter(x => x.payment_intent === dup.id)).toHaveLength(1);
+  });
+
   it("without a window, scans the 72 hours before the run", async () => {
     pay("cus_alice", -70 * 60);
     const dup = pay("cus_alice", -70 * 60 + 2);
